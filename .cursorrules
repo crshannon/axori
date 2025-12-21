@@ -1,0 +1,26 @@
+# Axori Project Rules
+
+## UI Component Conversion
+
+When working with UI components from AI Studio or other sources:
+
+1. **Always use @axori/ui design system components** when possible
+2. **Convert raw HTML elements** to design system components:
+   - `<button>` → `<Button>` from @axori/ui
+   - `<input>` → `<Input>` from @axori/ui
+   - Card divs → `<Card>`, `<CardHeader>`, `<CardContent>` from @axori/ui
+3. **Extract reusable components** to `packages/ui/src/components/`
+4. **Use TypeScript** with proper interfaces for all components
+5. **Follow Tailwind CSS** patterns and use `cn()` utility for class merging
+
+## Component Structure
+
+- **Reusable components** → `packages/ui/src/components/`
+- **Page-specific components** → `apps/web/src/components/`
+- **Pages/routes** → `apps/web/src/routes/`
+
+## Design System
+
+Always check `packages/ui/` for available components before creating new ones.
+See `packages/ui/.cursorrules` for detailed conversion guidelines.
+
