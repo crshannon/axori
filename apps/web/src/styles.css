@@ -4,6 +4,59 @@
 @custom-variant system (&:where(.system, .system *));
 @custom-variant not-system (&:where(:not(.system), :not(.system) *));
 
+/* Design System Color Variables */
+@theme {
+  /* Brand Colors */
+  --color-primary: 139 92 246; /* violet-600 */
+  --color-primary-dark: 124 58 237; /* violet-700 */
+  --color-primary-light: 167 139 250; /* violet-400 */
+  --color-accent: 232 255 77; /* #E8FF4D - Yellow-lime accent */
+  
+  /* Dark Mode Backgrounds */
+  --color-bg-dark: 15 17 21; /* #0F1115 - Main dark background */
+  --color-bg-dark-card: 26 26 26; /* #1A1A1A - Card dark background */
+  --color-bg-dark-hover: 37 37 37; /* #252525 - Hover state */
+  
+  /* Semantic Colors */
+  --color-success: 34 197 94; /* green-600 */
+  --color-danger: 239 68 68; /* red-600 */
+  --color-warning: 234 179 8; /* yellow-600 */
+  
+  /* Border Colors */
+  --color-border-light: 0 0 0 / 0.05; /* black/5 */
+  --color-border-dark: 255 255 255 / 0.05; /* white/5 */
+  --color-border-dark-hover: 255 255 255 / 0.1; /* white/10 */
+  
+  /* Shadow Colors */
+  --color-shadow-primary: 139 92 246 / 0.2; /* violet-200 */
+  --color-shadow-accent: 232 255 77 / 0.2; /* accent/20 */
+  --color-shadow-dark: 0 0 0 / 0.3; /* black/30 */
+  
+  /* Typography Sizes */
+  --font-size-huge: 3rem; /* 48px - Used for page headings */
+}
+
+/* Typography Utilities */
+.text-huge {
+  font-size: var(--font-size-huge);
+  line-height: 1;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+}
+
+@media (min-width: 768px) {
+  .text-huge {
+    font-size: 3.75rem; /* 60px */
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-huge {
+    font-size: 4.5rem; /* 72px */
+  }
+}
+
 body {
   @apply m-0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",

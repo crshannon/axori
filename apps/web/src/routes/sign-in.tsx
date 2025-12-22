@@ -1,6 +1,7 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useSignIn, useUser } from '@clerk/tanstack-react-start'
 import { useEffect, useState } from 'react'
+import { useOnboardingStatus } from '@/utils/onboarding'
 
 export const Route = createFileRoute('/sign-in')({
   component: SignInPage,
@@ -17,13 +18,40 @@ function SignInPage() {
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [justSignedIn, setJustSignedIn] = useState(false)
 
-  // Redirect to dashboard if already signed in
+  const { completed: onboardingCompleted, isLoading: onboardingLoading } =
+    useOnboardingStatus()
+
+  // Redirect if already signed in - check onboarding status first
   useEffect(() => {
-    if (isSignedIn) {
-      navigate({ to: '/dashboard' as any })
+    if (isSignedIn && !onboardingLoading && !justSignedIn) {
+      // If onboarding not completed, redirect to onboarding
+      if (!onboardingCompleted) {
+        navigate({ to: '/onboarding' as any })
+      } else {
+        navigate({ to: '/dashboard' as any })
+      }
     }
-  }, [isSignedIn, navigate])
+  }, [
+    isSignedIn,
+    onboardingCompleted,
+    onboardingLoading,
+    justSignedIn,
+    navigate,
+  ])
+
+  // Check onboarding after successful sign-in
+  useEffect(() => {
+    if (justSignedIn && !onboardingLoading) {
+      setJustSignedIn(false)
+      if (!onboardingCompleted) {
+        navigate({ to: '/onboarding' as any })
+      } else {
+        navigate({ to: '/dashboard' as any })
+      }
+    }
+  }, [justSignedIn, onboardingCompleted, onboardingLoading, navigate])
 
   const handleBack = () => {
     navigate({ to: '/' })
@@ -35,8 +63,8 @@ function SignInPage() {
     try {
       await signIn.authenticateWithRedirect({
         strategy,
-        redirectUrl: '/dashboard',
-        redirectUrlComplete: '/dashboard',
+        redirectUrl: '/onboarding', // Will check onboarding status on redirect
+        redirectUrlComplete: '/onboarding',
       })
     } catch (err: any) {
       setError(err.errors?.[0]?.message || 'An error occurred during sign in')
@@ -60,7 +88,7 @@ function SignInPage() {
 
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId })
-        navigate({ to: '/dashboard' as any })
+        setJustSignedIn(true)
       } else {
         // Handle two-factor authentication or other incomplete statuses
         if (result.status === 'needs_second_factor') {
@@ -93,7 +121,7 @@ function SignInPage() {
 
       if (completeSignIn.status === 'complete') {
         await setActive({ session: completeSignIn.createdSessionId })
-        navigate({ to: '/dashboard' as any })
+        setJustSignedIn(true)
       }
     } catch (err: any) {
       setError(err.errors?.[0]?.message || 'Invalid verification code')

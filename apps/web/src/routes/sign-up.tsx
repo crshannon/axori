@@ -18,10 +18,12 @@ function SignUpPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  // Redirect to dashboard if already signed in
+  // Redirect if already signed in - check onboarding status
   useEffect(() => {
     if (isSignedIn) {
-      navigate({ to: '/dashboard' as any })
+      // Always redirect new sign-ups to onboarding
+      // The onboarding route will check if they've already completed it
+      navigate({ to: '/onboarding' as any })
     }
   }, [isSignedIn, navigate])
 

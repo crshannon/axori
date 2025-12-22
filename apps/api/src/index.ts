@@ -1,3 +1,39 @@
+// Load environment variables from root .env.local or .env
+import { config } from "dotenv";
+import { resolve } from "path";
+import { existsSync } from "fs";
+
+// Try to load .env files in order of precedence
+// Check both relative to __dirname (for compiled code) and process.cwd() (for tsx watch)
+const cwd = process.cwd();
+const envPaths = [
+  resolve(__dirname, "../../.env.local"), // Root .env.local (from src/)
+  resolve(__dirname, "../../.env"), // Root .env (from src/)
+  resolve(cwd, "../../.env.local"), // Root .env.local (from cwd)
+  resolve(cwd, "../../.env"), // Root .env (from cwd)
+  resolve(cwd, ".env.local"), // Current dir .env.local
+  resolve(cwd, ".env"), // Current dir .env
+  resolve(__dirname, "../.env.local"), // apps/.env.local
+  resolve(__dirname, "../.env"), // apps/.env
+  resolve(__dirname, ".env.local"), // apps/api/.env.local
+  resolve(__dirname, ".env"), // apps/api/.env
+];
+
+// Load the first existing .env file
+let loaded = false;
+for (const envPath of envPaths) {
+  if (existsSync(envPath)) {
+    config({ path: envPath });
+    console.log(`✓ Loaded environment variables from ${envPath}`);
+    loaded = true;
+    break;
+  }
+}
+
+if (!loaded) {
+  console.warn("⚠️  No .env file found. Make sure DATABASE_URL is set in your environment.");
+}
+
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -24,7 +60,13 @@ app.get("/health", (c) => {
 
 // API routes
 import propertiesRouter from "./routes/properties";
+import onboardingRouter from "./routes/onboarding";
+import usersRouter from "./routes/users";
+import marketsRouter from "./routes/markets";
 app.route("/api/properties", propertiesRouter);
+app.route("/api/onboarding", onboardingRouter);
+app.route("/api/users", usersRouter);
+app.route("/api/markets", marketsRouter);
 
 const port = Number(process.env.PORT) || 3001;
 
