@@ -18,6 +18,10 @@ export const users = pgTable("users", {
   lastName: text("last_name"),
   name: text("name"), // Keep for backward compatibility
   clerkId: text("clerk_id").unique().notNull(),
+  // Onboarding tracking
+  onboardingStep: text("onboarding_step"), // Current step (1-5) or null if completed/not started
+  onboardingCompleted: timestamp("onboarding_completed"), // Timestamp when onboarding was completed, null if not completed
+  onboardingData: text("onboarding_data"), // JSON string storing onboarding responses (phase, persona, ownership, freedomNumber, strategy)
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

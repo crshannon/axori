@@ -10,9 +10,107 @@ export const propertySchema = z.object({
   propertyType: z.string().min(1, "Property type is required"),
 });
 
-export const userSchema = z.object({
+// Name validation pattern: letters, spaces, hyphens, apostrophes
+const namePattern = /^[a-zA-Z\s'-]+$/;
+
+// User Insert Schema - excludes auto-generated fields (id, clerkId, createdAt, updatedAt)
+export const userInsertSchema = z.object({
   email: z.string().email("Invalid email address"),
-  name: z.string().min(1, "Name is required").optional(),
+  firstName: z
+    .string()
+    .max(50, "First name must be 50 characters or less")
+    .regex(namePattern, "First name can only contain letters, spaces, hyphens, and apostrophes")
+    .trim()
+    .optional(),
+  lastName: z
+    .string()
+    .max(50, "Last name must be 50 characters or less")
+    .regex(namePattern, "Last name can only contain letters, spaces, hyphens, and apostrophes")
+    .trim()
+    .optional(),
+  name: z.string().min(1, "Name is required").optional(), // Keep for backward compatibility
+});
+
+// User Select Schema - includes all fields from database
+export const userSelectSchema = userInsertSchema.extend({
+  id: z.string().uuid(),
+  clerkId: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+// User Update Schema - all fields optional except ID
+export const userUpdateSchema = z.object({
+  id: z.string().uuid(),
+  email: z.string().email("Invalid email address").optional(),
+  firstName: z
+    .string()
+    .max(50, "First name must be 50 characters or less")
+    .regex(namePattern, "First name can only contain letters, spaces, hyphens, and apostrophes")
+    .trim()
+    .optional(),
+  lastName: z
+    .string()
+    .max(50, "Last name must be 50 characters or less")
+    .regex(namePattern, "Last name can only contain letters, spaces, hyphens, and apostrophes")
+    .trim()
+    .optional(),
+  name: z.string().min(1).optional(),
+});
+
+// Legacy schema for backward compatibility (deprecated - use userInsertSchema/userSelectSchema)
+export const userSchema = userInsertSchema;
+
+// Onboarding schemas
+export const onboardingDataSchema = z.object({
+  phase: z.enum(["Explorer", "Starting", "Building", "Optimizing"]).optional(),
+  persona: z
+    .enum([
+      "House Hacker",
+      "Accidental Landlord",
+      "Aggressive Grower",
+      "Passive Income Seeker",
+      "Value-Add Investor",
+    ])
+    .optional(),
+  ownership: z.enum(["Personal", "LLC"]).optional(),
+  freedomNumber: z.number().int().min(1000).max(100000).optional(),
+  strategy: z.enum(["Cash Flow", "Appreciation", "BRRRR"]).optional(),
+});
+
+export const onboardingStepSchema = z
+  .union([
+    z.literal("1"),
+    z.literal("2"),
+    z.literal("3"),
+    z.literal("4"),
+    z.literal("5"),
+  ])
+  .nullable();
+
+// Onboarding update schema - for updating user onboarding progress
+export const onboardingUpdateSchema = z.object({
+  step: onboardingStepSchema,
+  data: onboardingDataSchema.optional(),
+  firstName: z
+    .string()
+    .max(50, "First name must be 50 characters or less")
+    .regex(namePattern, "First name can only contain letters, spaces, hyphens, and apostrophes")
+    .trim()
+    .optional(),
+  lastName: z
+    .string()
+    .max(50, "Last name must be 50 characters or less")
+    .regex(namePattern, "Last name can only contain letters, spaces, hyphens, and apostrophes")
+    .trim()
+    .optional(),
+});
+
+// User Select Schema - update to include onboarding fields
+export const userSelectSchemaWithOnboarding = userSelectSchema.extend({
+  onboardingStep: onboardingStepSchema,
+  onboardingCompleted: z.date().nullable(),
+  onboardingData: z.string().nullable(), // JSON string, parse with onboardingDataSchema
 });
 
 

@@ -7,6 +7,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
     "lint": "eslint",
     "format": "prettier",
     "check": "prettier --write . && eslint --fix",
@@ -47,6 +50,7 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@tanstack/devtools-event-client": "^0.3.2",
     "@tanstack/devtools-vite": "^0.3.11",
     "@tanstack/eslint-config": "^0.3.0",
@@ -59,6 +63,7 @@
     "@vitejs/plugin-react": "^5.0.4",
     "dotenv": "^16.0.0",
     "jsdom": "^27.0.0",
+    "playwright": "^1.57.0",
     "prettier": "^3.5.3",
     "tsx": "^4.0.0",
     "typescript": "^5.7.2",

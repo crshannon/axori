@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PublicRouteImport } from './routes/_public'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
@@ -42,6 +43,11 @@ const SignUpRoute = SignUpRouteImport.update({
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PublicRoute = PublicRouteImport.update({
@@ -155,6 +161,7 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/onboarding': typeof OnboardingRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/dashboard': typeof AuthedDashboardRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/onboarding': typeof OnboardingRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/dashboard': typeof AuthedDashboardRoute
@@ -206,6 +214,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
+  '/onboarding': typeof OnboardingRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
@@ -232,6 +241,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/onboarding'
     | '/sign-in'
     | '/sign-up'
     | '/dashboard'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/onboarding'
     | '/sign-in'
     | '/sign-up'
     | '/dashboard'
@@ -282,6 +293,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authed'
     | '/_public'
+    | '/onboarding'
     | '/sign-in'
     | '/sign-up'
     | '/_authed/dashboard'
@@ -309,6 +321,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   PublicRoute: typeof PublicRouteWithChildren
+  OnboardingRoute: typeof OnboardingRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   DemoClerkRoute: typeof DemoClerkRoute
@@ -341,6 +354,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_public': {
@@ -532,6 +552,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   PublicRoute: PublicRouteWithChildren,
+  OnboardingRoute: OnboardingRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   DemoClerkRoute: DemoClerkRoute,
