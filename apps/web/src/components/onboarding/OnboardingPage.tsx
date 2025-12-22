@@ -38,6 +38,7 @@ export function OnboardingPage() {
       phase: onboardingData?.data?.phase,
       persona: onboardingData?.data?.persona,
       ownership: onboardingData?.data?.ownership || 'Personal',
+      llcName: onboardingData?.data?.llcName || undefined,
       freedomNumber: onboardingData?.data?.freedomNumber || 5000,
       strategy: onboardingData?.data?.strategy,
       markets: onboardingData?.data?.markets || [],
@@ -180,6 +181,7 @@ export function OnboardingPage() {
           <Step2JourneyPhase
             form={form}
             onNext={() => nextStep({ phase: form.state.values.phase })}
+            onBack={() => setNamesSubmitted(false)}
             isDark={isDark}
           />
         )
@@ -195,7 +197,12 @@ export function OnboardingPage() {
         return (
           <Step4Ownership
             form={form}
-            onNext={() => nextStep({ ownership: form.state.values.ownership })}
+            onNext={() =>
+              nextStep({
+                ownership: form.state.values.ownership,
+                llcName: form.state.values.llcName,
+              })
+            }
             isDark={isDark}
           />
         )
@@ -214,7 +221,6 @@ export function OnboardingPage() {
           <Step6Strategy
             form={form}
             onComplete={(strategy) => nextStep({ strategy })}
-            onBack={prevStep}
             isDark={isDark}
           />
         )
@@ -223,7 +229,6 @@ export function OnboardingPage() {
           <Step7MarketSelection
             form={form}
             onComplete={handleComplete}
-            onBack={prevStep}
             isDark={isDark}
           />
         )
@@ -252,7 +257,7 @@ export function OnboardingPage() {
           {renderStep()}
 
           {/* General Navigation (Back button) */}
-          {step > 1 && step < 7 && (
+          {step > 1 && step <= 7 && (
             <button
               onClick={prevStep}
               className="mt-12 text-[10px] font-black uppercase tracking-[0.3em] opacity-40 hover:opacity-100 transition-opacity"

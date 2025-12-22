@@ -4,7 +4,6 @@ import type { OnboardingStrategy } from '../types'
 interface Step6StrategyProps {
   form: OnboardingForm
   onComplete: (strategy: OnboardingStrategy) => void
-  onBack: () => void
   isDark: boolean
 }
 
@@ -28,12 +27,16 @@ const strategies: Array<{
     desc: 'Recycling capital through value-add force.',
     color: 'bg-amber-500',
   },
+  {
+    id: 'Hybrid',
+    desc: 'Balanced approach combining cash flow and growth.',
+    color: 'bg-purple-500',
+  },
 ]
 
 export function Step6Strategy({
   form,
   onComplete,
-  onBack,
   isDark,
 }: Step6StrategyProps) {
   return (
@@ -41,66 +44,54 @@ export function Step6Strategy({
       <h3 className="text-huge mb-12">Strategy Focus</h3>
       <form.Field name="strategy">
         {(field) => (
-          <>
-            <div className="grid grid-cols-1 gap-6 mb-12">
-              {strategies.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => field.handleChange(s.id)}
-                  className={`p-10 rounded-[2.5rem] border text-left transition-all relative overflow-hidden group ${
-                    field.state.value === s.id
-                      ? isDark
-                        ? 'bg-white text-black border-white shadow-2xl'
-                        : 'bg-slate-900 text-white border-slate-900 shadow-2xl'
-                      : isDark
-                        ? 'bg-white/5 border-white/5'
-                        : 'bg-white border-black/5 shadow-sm'
-                  }`}
-                >
-                  <div
-                    className={`absolute top-0 right-0 h-full w-1.5 ${s.color}`}
-                  ></div>
-                  <h4 className="text-2xl font-black uppercase mb-2">
+          <div className="grid grid-cols-1 gap-4">
+            {strategies.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => {
+                  field.handleChange(s.id)
+                  onComplete(s.id)
+                }}
+                className={`p-8 rounded-[2rem] border flex items-center justify-between transition-all group ${
+                  field.state.value === s.id
+                    ? isDark
+                      ? 'bg-[#E8FF4D] text-black border-[#E8FF4D]'
+                      : 'bg-violet-600 text-white border-violet-600 shadow-xl'
+                    : isDark
+                      ? 'bg-white/5 border-white/10 hover:bg-white/10'
+                      : 'bg-white border-black/5 hover:border-slate-200 shadow-sm'
+                }`}
+              >
+                <div className="text-left">
+                  <h4 className="text-lg font-black uppercase tracking-tight">
                     {s.id}
                   </h4>
-                  <p className="text-sm font-medium opacity-60">{s.desc}</p>
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={onBack}
-                className={`flex-1 py-6 rounded-3xl font-black text-xs uppercase tracking-widest border ${
-                  isDark
-                    ? 'border-white/10 text-white/40'
-                    : 'border-black/10 text-slate-400'
-                }`}
-              >
-                Back
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+                    {s.desc}
+                  </p>
+                </div>
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center border ${
+                    field.state.value === s.id
+                      ? 'border-current'
+                      : 'border-current opacity-10'
+                  }`}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  >
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </div>
               </button>
-              <button
-                type="button"
-                disabled={!field.state.value}
-                onClick={() => {
-                  if (field.state.value) {
-                    onComplete(field.state.value)
-                  }
-                }}
-                className={`flex-[2] py-6 rounded-3xl font-black text-xs uppercase tracking-widest transition-all ${
-                  field.state.value
-                    ? isDark
-                      ? 'bg-[#E8FF4D] text-black shadow-lg shadow-[#E8FF4D]/30 hover:scale-105'
-                      : 'bg-violet-600 text-white shadow-xl shadow-violet-200 hover:scale-105'
-                    : 'opacity-20 cursor-not-allowed'
-                }`}
-              >
-                Continue
-              </button>
-            </div>
-          </>
+            ))}
+          </div>
         )}
       </form.Field>
     </div>

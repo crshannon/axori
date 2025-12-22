@@ -36,6 +36,23 @@ export function OnboardingSidebar({
     }
   }
 
+  const getFunFact = () => {
+    const facts = [
+      "The average real estate investor owns 3-5 properties before achieving financial independence.",
+      "Cap rates in secondary markets average 2-3% higher than primary markets.",
+      "The BRRRR method can recycle capital up to 10x faster than traditional buy-and-hold.",
+      "LLC structures can provide liability protection for up to $1M+ in assets.",
+      "Cash flow-focused investors typically achieve positive returns within 6-12 months.",
+      "The median rent-to-price ratio in investor-friendly markets is 0.8-1.2%.",
+      "Value-add properties can increase NOI by 20-40% within the first year.",
+      "Diversifying across 3+ markets reduces portfolio risk by 35%.",
+      "The top 10% of real estate investors use data-driven market selection.",
+      "House hacking can reduce housing costs by 50-100% while building equity.",
+    ]
+    // Use step as seed for consistent fact per step
+    return facts[step % facts.length]
+  }
+
   return (
     <aside
       className={`w-full md:w-[350px] lg:w-[450px] p-8 md:p-12 flex flex-col border-b md:border-b-0 md:border-r transition-all duration-500 relative overflow-hidden ${
@@ -120,7 +137,7 @@ export function OnboardingSidebar({
 
           {/* Live Data Cards */}
           <div className="space-y-4">
-            {formData.phase && (
+            {formData.phase && step >= 2 && (
               <div
                 className={`p-5 rounded-3xl border animate-in slide-in-from-left-4 ${
                   isDark
@@ -129,12 +146,45 @@ export function OnboardingSidebar({
                 }`}
               >
                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">
-                  Phase
+                  Journey Phase
                 </p>
                 <p className="text-sm font-black uppercase">{formData.phase}</p>
               </div>
             )}
-            {formData.freedomNumber && formData.freedomNumber > 0 && step >= 4 && (
+            {formData.persona && step >= 3 && (
+              <div
+                className={`p-5 rounded-3xl border animate-in slide-in-from-left-4 ${
+                  isDark
+                    ? 'bg-white/5 border-white/5'
+                    : 'bg-slate-50 border-black/5'
+                }`}
+              >
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                  Investor Persona
+                </p>
+                <p className="text-sm font-black uppercase">{formData.persona}</p>
+              </div>
+            )}
+            {formData.ownership && step >= 4 && (
+              <div
+                className={`p-5 rounded-3xl border animate-in slide-in-from-left-4 ${
+                  isDark
+                    ? 'bg-white/5 border-white/5'
+                    : 'bg-slate-50 border-black/5'
+                }`}
+              >
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                  Ownership Structure
+                </p>
+                <p className="text-sm font-black uppercase">{formData.ownership}</p>
+                {formData.ownership === 'LLC' && formData.llcName && (
+                  <p className="text-xs font-medium mt-2 opacity-70">
+                    {formData.llcName}
+                  </p>
+                )}
+              </div>
+            )}
+            {formData.freedomNumber && formData.freedomNumber > 0 && step >= 5 && (
               <div
                 className={`p-5 rounded-3xl border animate-in slide-in-from-left-4 ${
                   isDark
@@ -150,10 +200,56 @@ export function OnboardingSidebar({
                 </p>
               </div>
             )}
+            {formData.strategy && step >= 6 && (
+              <div
+                className={`p-5 rounded-3xl border animate-in slide-in-from-left-4 ${
+                  isDark
+                    ? 'bg-white/5 border-white/5'
+                    : 'bg-slate-50 border-black/5'
+                }`}
+              >
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                  Strategy Focus
+                </p>
+                <p className="text-sm font-black uppercase">{formData.strategy}</p>
+              </div>
+            )}
+            {formData.markets && formData.markets.length > 0 && step >= 7 && (
+              <div
+                className={`p-5 rounded-3xl border animate-in slide-in-from-left-4 ${
+                  isDark
+                    ? 'bg-white/5 border-white/5'
+                    : 'bg-slate-50 border-black/5'
+                }`}
+              >
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                  Target Markets
+                </p>
+                <p className="text-sm font-black tabular-nums">
+                  {formData.markets.length} market{formData.markets.length !== 1 ? 's' : ''} selected
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="mt-auto pt-8 border-t border-white/10">
+        <div className="mt-auto pt-8 space-y-6 border-t border-white/10">
+          {/* Fun Fact */}
+          <div
+            className={`p-5 rounded-2xl border ${
+              isDark
+                ? 'bg-white/5 border-white/10'
+                : 'bg-slate-50 border-black/5'
+            }`}
+          >
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">
+              💡 Did You Know?
+            </p>
+            <p className="text-xs font-medium leading-relaxed opacity-80">
+              {getFunFact()}
+            </p>
+          </div>
+
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 leading-relaxed">
             Initializing secure institutional environment... <br />
             <span className="opacity-40 italic">

@@ -85,22 +85,37 @@ export const userMarketSchema = z.object({
 });
 
 // Onboarding schemas
-export const onboardingDataSchema = z.object({
-  phase: z.enum(["Explorer", "Starting", "Building", "Optimizing"]).optional(),
-  persona: z
-    .enum([
-      "House Hacker",
-      "Accidental Landlord",
-      "Aggressive Grower",
-      "Passive Income Seeker",
-      "Value-Add Investor",
-    ])
-    .optional(),
-  ownership: z.enum(["Personal", "LLC"]).optional(),
-  freedomNumber: z.number().int().min(1000).max(100000).optional(),
-  strategy: z.enum(["Cash Flow", "Appreciation", "BRRRR"]).optional(),
-  markets: z.array(z.string().uuid()).max(3, "Select at most 3 markets").optional(), // Array of market IDs (0-3)
-});
+export const onboardingDataSchema = z
+  .object({
+    phase: z.enum(["Explorer", "Starting", "Building", "Optimizing"]).optional(),
+    persona: z
+      .enum([
+        "House Hacker",
+        "Accidental Landlord",
+        "Aggressive Grower",
+        "Passive Income Seeker",
+        "Value-Add Investor",
+      ])
+      .optional(),
+    ownership: z.enum(["Personal", "LLC"]).optional(),
+    llcName: z.string().optional(),
+    freedomNumber: z.number().int().min(1000).max(100000).optional(),
+    strategy: z.enum(["Cash Flow", "Appreciation", "BRRRR", "Hybrid"]).optional(),
+    markets: z.array(z.string().uuid()).max(3, "Select at most 3 markets").optional(), // Array of market IDs (0-3)
+  })
+  .refine(
+    (data) => {
+      // If ownership is LLC, llcName is required
+      if (data.ownership === "LLC") {
+        return data.llcName && data.llcName.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: "LLC name is required when ownership structure is LLC",
+      path: ["llcName"],
+    }
+  );
 
 export const onboardingStepSchema = z
   .union([

@@ -9,13 +9,14 @@ export interface UseMarketsOptions {
   investmentProfile?: 'cash_flow' | 'appreciation' | 'hybrid'
   active?: boolean
   trending?: boolean
+  ids?: string[] // Array of market IDs to fetch
 }
 
 export function useMarkets(options: UseMarketsOptions = {}) {
-  const { search, state, investmentProfile, active = true, trending } = options
+  const { search, state, investmentProfile, active = true, trending, ids } = options
 
   return useQuery({
-    queryKey: ['markets', search, state, investmentProfile, active, trending],
+    queryKey: ['markets', search, state, investmentProfile, active, trending, ids],
     queryFn: async () => {
       const params = new URLSearchParams()
       if (search) params.append('search', search)
@@ -23,6 +24,7 @@ export function useMarkets(options: UseMarketsOptions = {}) {
       if (investmentProfile) params.append('investment_profile', investmentProfile)
       if (active !== undefined) params.append('active', active.toString())
       if (trending) params.append('trending', 'true')
+      if (ids && ids.length > 0) params.append('ids', ids.join(','))
 
       const response = await fetch(`${API_BASE_URL}/api/markets?${params.toString()}`)
       if (!response.ok) {

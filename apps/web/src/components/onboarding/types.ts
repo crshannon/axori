@@ -9,7 +9,7 @@ export type OnboardingPersona =
 
 export type OnboardingOwnership = 'Personal' | 'LLC'
 
-export type OnboardingStrategy = 'Cash Flow' | 'Appreciation' | 'BRRRR'
+export type OnboardingStrategy = 'Cash Flow' | 'Appreciation' | 'BRRRR' | 'Hybrid'
 
 export type MarketRelationshipType = 'owns_property' | 'watching' | 'target_market'
 
@@ -42,6 +42,7 @@ export interface OnboardingFormData {
   phase?: OnboardingPhase
   persona?: OnboardingPersona
   ownership: OnboardingOwnership
+  llcName?: string // Required when ownership is 'LLC'
   freedomNumber: number
   strategy?: OnboardingStrategy
   markets?: string[] // Array of market IDs
@@ -55,6 +56,7 @@ export interface OnboardingData {
     phase?: OnboardingPhase
     persona?: OnboardingPersona
     ownership?: OnboardingOwnership
+    llcName?: string
     freedomNumber?: number
     strategy?: OnboardingStrategy
     markets?: string[] // Array of market IDs

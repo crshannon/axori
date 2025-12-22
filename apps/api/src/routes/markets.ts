@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { db } from "@axori/db";
 import { markets } from "@axori/db/src/schema";
-import { eq, ilike, and, or, sql, desc } from "drizzle-orm";
+import { eq, ilike, and, or, sql, desc, inArray } from "drizzle-orm";
 
 const marketsRouter = new Hono();
 
@@ -12,6 +12,7 @@ marketsRouter.get("/", async (c) => {
   const investmentProfile = c.req.query("investment_profile");
   const active = c.req.query("active");
   const trending = c.req.query("trending");
+  const ids = c.req.query("ids"); // Comma-separated market IDs
 
   // If trending is requested and no filters are applied, return top 4 markets by cap rate
   if (trending === "true" && !search && !state && !investmentProfile) {
@@ -60,6 +61,14 @@ marketsRouter.get("/", async (c) => {
     conditions.push(eq(markets.active, false));
   } else {
     conditions.push(eq(markets.active, true));
+  }
+
+  // Filter by IDs if provided
+  if (ids) {
+    const idArray = ids.split(",").map((id) => id.trim()).filter(Boolean);
+    if (idArray.length > 0) {
+      conditions.push(inArray(markets.id, idArray));
+    }
   }
 
   // Search by name or state
