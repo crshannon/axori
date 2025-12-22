@@ -18,7 +18,9 @@ export function OnboardingSidebar({
   const getMotivation = () => {
     switch (step) {
       case 1:
-        return "First, let's locate you on the map."
+        return formData.firstName
+          ? "Great! Now, where are you on your journey?"
+          : "First, let's locate you on the map."
       case 2:
         return 'Your persona dictates your risk appetite.'
       case 3:
@@ -27,6 +29,8 @@ export function OnboardingSidebar({
         return 'Visibility of the target is half the battle.'
       case 5:
         return 'Finalizing your proprietary algorithm.'
+      case 6:
+        return 'Select your target markets.'
       default:
         return 'Initializing Axori Intel...'
     }

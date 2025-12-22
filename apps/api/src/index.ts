@@ -62,9 +62,11 @@ app.get("/health", (c) => {
 import propertiesRouter from "./routes/properties";
 import onboardingRouter from "./routes/onboarding";
 import usersRouter from "./routes/users";
+import marketsRouter from "./routes/markets";
 app.route("/api/properties", propertiesRouter);
 app.route("/api/onboarding", onboardingRouter);
 app.route("/api/users", usersRouter);
+app.route("/api/markets", marketsRouter);
 
 const port = Number(process.env.PORT) || 3001;
 

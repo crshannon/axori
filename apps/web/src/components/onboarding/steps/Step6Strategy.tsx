@@ -3,7 +3,7 @@ import type { OnboardingStrategy } from '../types'
 
 interface Step6StrategyProps {
   form: OnboardingForm
-  onComplete: () => void
+  onComplete: (strategy: OnboardingStrategy) => void
   onBack: () => void
   isDark: boolean
 }
@@ -84,7 +84,11 @@ export function Step6Strategy({
               <button
                 type="button"
                 disabled={!field.state.value}
-                onClick={onComplete}
+                onClick={() => {
+                  if (field.state.value) {
+                    onComplete(field.state.value)
+                  }
+                }}
                 className={`flex-[2] py-6 rounded-3xl font-black text-xs uppercase tracking-widest transition-all ${
                   field.state.value
                     ? isDark
@@ -93,7 +97,7 @@ export function Step6Strategy({
                     : 'opacity-20 cursor-not-allowed'
                 }`}
               >
-                Finalize Intelligence
+                Continue
               </button>
             </div>
           </>

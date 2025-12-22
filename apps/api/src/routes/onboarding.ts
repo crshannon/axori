@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { db } from "@axori/db";
-import { users } from "@axori/db/src/schema";
-import { eq, and } from "drizzle-orm";
+import { users, userMarkets } from "@axori/db/src/schema";
+import { eq, and, inArray } from "drizzle-orm";
 import {
   onboardingUpdateSchema,
   onboardingDataSchema,
@@ -140,6 +140,30 @@ onboardingRouter.put("/", async (c) => {
     updateData.onboardingStep = validated.step;
   }
 
+  // Handle markets separately - save to user_markets table
+  if (validated.markets && Array.isArray(validated.markets) && validated.markets.length > 0) {
+    // Delete existing target_market relationships for this user
+    await db
+      .delete(userMarkets)
+      .where(
+        and(
+          eq(userMarkets.userId, user.id),
+          eq(userMarkets.relationshipType, "target_market")
+        )
+      );
+
+    // Insert new target_market relationships
+    if (validated.markets.length > 0) {
+      await db.insert(userMarkets).values(
+        validated.markets.map((marketId) => ({
+          userId: user.id,
+          marketId,
+          relationshipType: "target_market",
+        }))
+      );
+    }
+  }
+
   // Update onboarding data (merge with existing)
   if (validated.data) {
     let existingData = {};
@@ -151,7 +175,23 @@ onboardingRouter.put("/", async (c) => {
       }
     }
     const mergedData = { ...existingData, ...validated.data };
+    // Include markets in onboarding data if provided
+    if (validated.markets) {
+      mergedData.markets = validated.markets;
+    }
     updateData.onboardingData = JSON.stringify(mergedData);
+  } else if (validated.markets) {
+    // If only markets are provided without other data, still update onboardingData
+    let existingData = {};
+    if (user.onboardingData) {
+      try {
+        existingData = JSON.parse(user.onboardingData);
+      } catch {
+        existingData = {};
+      }
+    }
+    existingData.markets = validated.markets;
+    updateData.onboardingData = JSON.stringify(existingData);
   }
 
   // If step is null (completed), set onboardingCompleted timestamp

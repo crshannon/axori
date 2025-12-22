@@ -32,6 +32,7 @@
     "db:push": "pnpm --filter @axori/db db:push",
     "db:pull": "pnpm --filter @axori/web db:pull",
     "db:studio": "pnpm --filter @axori/db db:studio",
+    "db:seed": "pnpm --filter @axori/db db:seed",
     "clean": "turbo run clean"
   },
   "devDependencies": {

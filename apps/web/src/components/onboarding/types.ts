@@ -11,6 +11,31 @@ export type OnboardingOwnership = 'Personal' | 'LLC'
 
 export type OnboardingStrategy = 'Cash Flow' | 'Appreciation' | 'BRRRR'
 
+export type MarketRelationshipType = 'owns_property' | 'watching' | 'target_market'
+
+export interface Market {
+  id: string
+  name: string
+  state: string
+  region?: string
+  investmentProfile?: Array<'cash_flow' | 'appreciation' | 'hybrid'>
+  avgCapRate?: number
+  medianPrice?: number
+  rentToPriceRatio?: number
+  active: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface UserMarket {
+  id: string
+  userId: string
+  marketId: string
+  relationshipType: MarketRelationshipType
+  createdAt: Date
+  market?: Market // Populated when fetching with join
+}
+
 export interface OnboardingFormData {
   firstName: string
   lastName: string
@@ -19,6 +44,7 @@ export interface OnboardingFormData {
   ownership: OnboardingOwnership
   freedomNumber: number
   strategy?: OnboardingStrategy
+  markets?: string[] // Array of market IDs
 }
 
 export interface OnboardingData {
@@ -31,6 +57,7 @@ export interface OnboardingData {
     ownership?: OnboardingOwnership
     freedomNumber?: number
     strategy?: OnboardingStrategy
+    markets?: string[] // Array of market IDs
   } | null
   firstName: string | null
   lastName: string | null
@@ -39,6 +66,7 @@ export interface OnboardingData {
 export interface OnboardingUpdate {
   step: string | null
   data?: Partial<OnboardingFormData>
+  markets?: string[] // Array of market IDs for step 7
   firstName?: string | null
   lastName?: string | null
 }

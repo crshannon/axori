@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { db } from "@axori/db";
-import { users } from "@axori/db/src/schema";
+import { users, userMarkets, markets } from "@axori/db/src/schema";
 import { eq } from "drizzle-orm";
 
 const usersRouter = new Hono();
@@ -112,6 +112,87 @@ usersRouter.get("/me", async (c) => {
     lastName: user.lastName,
     clerkId: user.clerkId,
   });
+});
+
+// GET /api/users/me/markets - Get current user's markets
+usersRouter.get("/me/markets", async (c) => {
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "User not found" }, 404);
+  }
+
+  // Get user markets with market details
+  const userMarketsList = await db
+    .select({
+      id: userMarkets.id,
+      userId: userMarkets.userId,
+      marketId: userMarkets.marketId,
+      relationshipType: userMarkets.relationshipType,
+      createdAt: userMarkets.createdAt,
+      market: {
+        id: markets.id,
+        name: markets.name,
+        state: markets.state,
+        region: markets.region,
+        investmentProfile: markets.investmentProfile,
+        avgCapRate: markets.avgCapRate,
+        medianPrice: markets.medianPrice,
+        rentToPriceRatio: markets.rentToPriceRatio,
+        active: markets.active,
+        createdAt: markets.createdAt,
+        updatedAt: markets.updatedAt,
+      },
+    })
+    .from(userMarkets)
+    .innerJoin(markets, eq(userMarkets.marketId, markets.id))
+    .where(eq(userMarkets.userId, user.id));
+
+  // Parse investment profiles from JSON strings
+  const parsedMarkets = userMarketsList.map((um) => {
+    let investmentProfile: string[] = [];
+    if (um.market.investmentProfile) {
+      try {
+        investmentProfile = JSON.parse(um.market.investmentProfile);
+      } catch {
+        investmentProfile = [];
+      }
+    }
+
+    return {
+      id: um.id,
+      userId: um.userId,
+      marketId: um.marketId,
+      relationshipType: um.relationshipType,
+      createdAt: um.createdAt,
+      market: {
+        ...um.market,
+        investmentProfile,
+        avgCapRate: um.market.avgCapRate
+          ? parseFloat(um.market.avgCapRate)
+          : null,
+        medianPrice: um.market.medianPrice
+          ? parseFloat(um.market.medianPrice)
+          : null,
+        rentToPriceRatio: um.market.rentToPriceRatio
+          ? parseFloat(um.market.rentToPriceRatio)
+          : null,
+      },
+    };
+  });
+
+  return c.json(parsedMarkets);
 });
 
 export default usersRouter;

@@ -20,6 +20,7 @@ const onboardingSchema = z.object({
   ownership: z.enum(['Personal', 'LLC']).default('Personal'),
   freedomNumber: z.number().min(1000).max(100000).default(5000),
   strategy: z.enum(['Cash Flow', 'Appreciation', 'BRRRR']).optional(),
+  markets: z.array(z.string().uuid()).max(3, 'Select at most 3 markets').optional(),
 })
 
 export function useOnboardingForm(initialData?: Partial<OnboardingFormData>) {
@@ -32,6 +33,7 @@ export function useOnboardingForm(initialData?: Partial<OnboardingFormData>) {
       ownership: initialData?.ownership || 'Personal',
       freedomNumber: initialData?.freedomNumber || 5000,
       strategy: initialData?.strategy,
+      markets: initialData?.markets || [],
     } as OnboardingFormData,
     validators: {
       onChange: ({ value }) => {

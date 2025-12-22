@@ -9,6 +9,7 @@ import { Step3Persona } from './steps/Step3Persona'
 import { Step4Ownership } from './steps/Step4Ownership'
 import { Step5FreedomNumber } from './steps/Step5FreedomNumber'
 import { Step6Strategy } from './steps/Step6Strategy'
+import { Step7MarketSelection } from './steps/Step7MarketSelection'
 import type { OnboardingFormData } from './types'
 
 export function OnboardingPage() {
@@ -25,7 +26,7 @@ export function OnboardingPage() {
 
   // Initialize step from saved data or default to 1 (1-indexed for user-friendly display)
   const [step, setStep] = useState(1)
-  const totalSteps = 6
+  const totalSteps = 7
 
   // Track if names have been submitted (to prevent premature step switching)
   const [namesSubmitted, setNamesSubmitted] = useState(false)
@@ -34,12 +35,13 @@ export function OnboardingPage() {
   const form = useOnboardingForm({
     firstName: onboardingData?.firstName || undefined,
     lastName: onboardingData?.lastName || undefined,
-    phase: onboardingData?.data?.phase,
-    persona: onboardingData?.data?.persona,
-    ownership: onboardingData?.data?.ownership || 'Personal',
-    freedomNumber: onboardingData?.data?.freedomNumber || 5000,
-    strategy: onboardingData?.data?.strategy,
-  })
+      phase: onboardingData?.data?.phase,
+      persona: onboardingData?.data?.persona,
+      ownership: onboardingData?.data?.ownership || 'Personal',
+      freedomNumber: onboardingData?.data?.freedomNumber || 5000,
+      strategy: onboardingData?.data?.strategy,
+      markets: onboardingData?.data?.markets || [],
+    })
 
   // Redirect to dashboard if onboarding is already completed
   useEffect(() => {
@@ -80,7 +82,7 @@ export function OnboardingPage() {
   ) => {
     try {
       const formValues = form.state.values
-      await updateOnboarding.mutateAsync({
+      const updatePayload: any = {
         step: newStep ? newStep.toString() : null,
         data: {
           ...(onboardingData?.data || {}),
@@ -88,7 +90,12 @@ export function OnboardingPage() {
         },
         ...(formValues.firstName && { firstName: formValues.firstName }),
         ...(formValues.lastName && { lastName: formValues.lastName }),
-      })
+      }
+      // Include markets separately for step 7
+      if (formValues.markets && formValues.markets.length > 0) {
+        updatePayload.markets = formValues.markets
+      }
+      await updateOnboarding.mutateAsync(updatePayload)
     } catch (error) {
       console.error('Failed to save onboarding progress:', error)
     }
@@ -110,11 +117,10 @@ export function OnboardingPage() {
 
   const handleComplete = async () => {
     const formValues = form.state.values
-    if (formValues.strategy) {
-      await saveProgress(null, { strategy: formValues.strategy })
-    } else {
-      await saveProgress(null)
-    }
+    await saveProgress(null, {
+      strategy: formValues.strategy,
+      markets: formValues.markets,
+    })
     // Redirect to dashboard after completion
     navigate({ to: '/dashboard' as any })
   }
@@ -207,6 +213,15 @@ export function OnboardingPage() {
         return (
           <Step6Strategy
             form={form}
+            onComplete={(strategy) => nextStep({ strategy })}
+            onBack={prevStep}
+            isDark={isDark}
+          />
+        )
+      case 6:
+        return (
+          <Step7MarketSelection
+            form={form}
             onComplete={handleComplete}
             onBack={prevStep}
             isDark={isDark}
@@ -237,7 +252,7 @@ export function OnboardingPage() {
           {renderStep()}
 
           {/* General Navigation (Back button) */}
-          {step > 1 && step < 5 && (
+          {step > 1 && step < 7 && (
             <button
               onClick={prevStep}
               className="mt-12 text-[10px] font-black uppercase tracking-[0.3em] opacity-40 hover:opacity-100 transition-opacity"

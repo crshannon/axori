@@ -61,6 +61,29 @@ export const userUpdateSchema = z.object({
 // Legacy schema for backward compatibility (deprecated - use userInsertSchema/userSelectSchema)
 export const userSchema = userInsertSchema;
 
+// Market schemas
+export const marketSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  state: z.string().length(2),
+  region: z.string().optional(),
+  investmentProfile: z.array(z.enum(["cash_flow", "appreciation", "hybrid"])).optional(),
+  avgCapRate: z.number().optional(),
+  medianPrice: z.number().optional(),
+  rentToPriceRatio: z.number().optional(),
+  active: z.boolean(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export const userMarketSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+  marketId: z.string().uuid(),
+  relationshipType: z.enum(["owns_property", "watching", "target_market"]),
+  createdAt: z.date(),
+});
+
 // Onboarding schemas
 export const onboardingDataSchema = z.object({
   phase: z.enum(["Explorer", "Starting", "Building", "Optimizing"]).optional(),
@@ -76,6 +99,7 @@ export const onboardingDataSchema = z.object({
   ownership: z.enum(["Personal", "LLC"]).optional(),
   freedomNumber: z.number().int().min(1000).max(100000).optional(),
   strategy: z.enum(["Cash Flow", "Appreciation", "BRRRR"]).optional(),
+  markets: z.array(z.string().uuid()).max(3, "Select at most 3 markets").optional(), // Array of market IDs (0-3)
 });
 
 export const onboardingStepSchema = z
@@ -85,6 +109,8 @@ export const onboardingStepSchema = z
     z.literal("3"),
     z.literal("4"),
     z.literal("5"),
+    z.literal("6"),
+    z.literal("7"),
   ])
   .nullable();
 
@@ -92,6 +118,7 @@ export const onboardingStepSchema = z
 export const onboardingUpdateSchema = z.object({
   step: onboardingStepSchema,
   data: onboardingDataSchema.optional(),
+  markets: z.array(z.string().uuid()).max(3, "Select at most 3 markets").optional(), // Array of market IDs for step 7 (0-3)
   firstName: z
     .string()
     .max(50, "First name must be 50 characters or less")
