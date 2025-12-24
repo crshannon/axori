@@ -23,6 +23,9 @@ import { Route as PublicPricingRouteImport } from './routes/_public/pricing'
 import { Route as PublicContactRouteImport } from './routes/_public/contact'
 import { Route as PublicAnalysisRouteImport } from './routes/_public/analysis'
 import { Route as PublicAboutRouteImport } from './routes/_public/about'
+import { Route as AuthedWealthJourneyRouteImport } from './routes/_authed/wealth-journey'
+import { Route as AuthedPropertyHubRouteImport } from './routes/_authed/property-hub'
+import { Route as AuthedExploreRouteImport } from './routes/_authed/explore'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
@@ -103,6 +106,21 @@ const PublicAboutRoute = PublicAboutRouteImport.update({
   path: '/about',
   getParentRoute: () => PublicRoute,
 } as any)
+const AuthedWealthJourneyRoute = AuthedWealthJourneyRouteImport.update({
+  id: '/wealth-journey',
+  path: '/wealth-journey',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedPropertyHubRoute = AuthedPropertyHubRouteImport.update({
+  id: '/property-hub',
+  path: '/property-hub',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedExploreRoute = AuthedExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -165,6 +183,9 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/explore': typeof AuthedExploreRoute
+  '/property-hub': typeof AuthedPropertyHubRoute
+  '/wealth-journey': typeof AuthedWealthJourneyRoute
   '/about': typeof PublicAboutRoute
   '/analysis': typeof PublicAnalysisRoute
   '/contact': typeof PublicContactRoute
@@ -190,6 +211,9 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/explore': typeof AuthedExploreRoute
+  '/property-hub': typeof AuthedPropertyHubRoute
+  '/wealth-journey': typeof AuthedWealthJourneyRoute
   '/about': typeof PublicAboutRoute
   '/analysis': typeof PublicAnalysisRoute
   '/contact': typeof PublicContactRoute
@@ -218,6 +242,9 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
+  '/_authed/explore': typeof AuthedExploreRoute
+  '/_authed/property-hub': typeof AuthedPropertyHubRoute
+  '/_authed/wealth-journey': typeof AuthedWealthJourneyRoute
   '/_public/about': typeof PublicAboutRoute
   '/_public/analysis': typeof PublicAnalysisRoute
   '/_public/contact': typeof PublicContactRoute
@@ -245,6 +272,9 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/dashboard'
+    | '/explore'
+    | '/property-hub'
+    | '/wealth-journey'
     | '/about'
     | '/analysis'
     | '/contact'
@@ -270,6 +300,9 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/dashboard'
+    | '/explore'
+    | '/property-hub'
+    | '/wealth-journey'
     | '/about'
     | '/analysis'
     | '/contact'
@@ -297,6 +330,9 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/_authed/dashboard'
+    | '/_authed/explore'
+    | '/_authed/property-hub'
+    | '/_authed/wealth-journey'
     | '/_public/about'
     | '/_public/analysis'
     | '/_public/contact'
@@ -440,6 +476,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicAboutRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_authed/wealth-journey': {
+      id: '/_authed/wealth-journey'
+      path: '/wealth-journey'
+      fullPath: '/wealth-journey'
+      preLoaderRoute: typeof AuthedWealthJourneyRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/property-hub': {
+      id: '/_authed/property-hub'
+      path: '/property-hub'
+      fullPath: '/property-hub'
+      preLoaderRoute: typeof AuthedPropertyHubRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/explore': {
+      id: '/_authed/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof AuthedExploreRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/dashboard': {
       id: '/_authed/dashboard'
       path: '/dashboard'
@@ -522,10 +579,16 @@ declare module '@tanstack/react-router' {
 
 interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
+  AuthedExploreRoute: typeof AuthedExploreRoute
+  AuthedPropertyHubRoute: typeof AuthedPropertyHubRoute
+  AuthedWealthJourneyRoute: typeof AuthedWealthJourneyRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
+  AuthedExploreRoute: AuthedExploreRoute,
+  AuthedPropertyHubRoute: AuthedPropertyHubRoute,
+  AuthedWealthJourneyRoute: AuthedWealthJourneyRoute,
 }
 
 const AuthedRouteWithChildren =

@@ -11,6 +11,12 @@ export * from "./components/Loading";
 export * from "./components/ThemeToggle";
 export * from "./components/NavLink";
 export * from "./components/OnboardingCard";
+export * from "./components/DashboardCard";
+export * from "./components/StatCard";
+export * from "./components/ProgressBar";
+export * from "./components/Avatar";
+export * from "./components/StatusBadge";
+export * from "./components/PropertyCard";
 
 // Contexts
 export * from "./contexts/ThemeContext";

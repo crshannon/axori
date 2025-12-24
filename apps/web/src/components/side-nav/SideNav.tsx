@@ -1,5 +1,6 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { useUser } from '@clerk/tanstack-react-start'
+import { Building, Compass, Layers, LayoutDashboard } from 'lucide-react'
 import { ThemeToggle } from '../theme-toggle/ThemeToggle'
 import { SignOutButton } from '@/components/sign-out-button/SignOutButton'
 import { cn } from '@/utils/helpers'
@@ -13,66 +14,22 @@ export const SideNav = () => {
     {
       id: 'dashboard',
       path: '/dashboard',
-      icon: (
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect x="3" y="3" width="7" height="7" />
-          <rect x="14" y="3" width="7" height="7" />
-          <rect x="14" y="14" width="7" height="7" />
-          <rect x="3" y="14" width="7" height="7" />
-        </svg>
-      ),
+      icon: <LayoutDashboard size={20} />,
+    },
+    {
+      id: 'wealth-journey',
+      path: '/wealth-journey',
+      icon: <Layers size={20} />,
     },
     {
       id: 'explore',
       path: '/explore',
-      icon: (
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <path d="m16.2 7.8-2 5.6-5.6 2 2-5.6 5.6-2z" />
-        </svg>
-      ),
+      icon: <Compass size={20} />,
     },
     {
-      id: 'properties',
-      path: '/properties',
-      icon: (
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M3 21h18" />
-          <path d="M3 7v1a3 3 0 0 0 6 0V7" />
-          <path d="M9 7v1a3 3 0 0 0 6 0V7" />
-          <path d="M15 7v1a3 3 0 0 0 6 0V7" />
-          <path d="M19 21V11" />
-          <path d="m5 11 7-7 7 7" />
-          <path d="M5 21v-10" />
-        </svg>
-      ),
+      id: 'property-hub',
+      path: '/property-hub',
+      icon: <Building size={20} />,
     },
   ]
 

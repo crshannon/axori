@@ -23,8 +23,8 @@ export const SignOutButton = ({
 
   const defaultClassName =
     variant === 'default'
-      ? 'p-3 rounded-full transition-all transform hover:scale-110 cursor-pointer dark:bg-white/5 dark:hover:bg-red-500/20 dark:text-white/40 dark:hover:text-red-500 bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600'
-      : 'p-3 rounded-full transition-colors cursor-pointer dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700'
+      ? 'p-3 rounded-full transition-all transform cursor-pointer flex items-center justify-center bg-slate-900 dark:bg-[#1A1A1A] dark:shadow-black/20 dark:hover:bg-red-500/20 dark:text-slate-300 dark:hover:text-red-500 bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600'
+      : 'p-3 rounded-full transition-colors cursor-pointer flex items-center justify-center dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700'
 
   const defaultIconClassName = 'h-[18px] w-[18px] stroke-2'
 
