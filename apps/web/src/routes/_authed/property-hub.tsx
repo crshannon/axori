@@ -1,10 +1,16 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import {
+  Outlet,
+  createFileRoute,
+  useLocation,
+  useNavigate,
+} from '@tanstack/react-router'
 import { useUser } from '@clerk/clerk-react'
 import { useEffect, useState } from 'react'
 import { ChevronRight, Plus } from 'lucide-react'
 import {
   Body,
   Caption,
+  Card,
   Heading,
   Overline,
   PropertyCard,
@@ -113,6 +119,7 @@ const alerts = [
 
 function RouteComponent() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { isSignedIn, isLoaded, user } = useUser()
   const { completed: onboardingCompleted, isLoading: onboardingLoading } =
     useOnboardingStatus()
@@ -123,6 +130,11 @@ function RouteComponent() {
   const [strategyFilter, setStrategyFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
   const [isWizardOpen, setIsWizardOpen] = useState(false)
+
+  // Check if we're on a property detail route by checking if pathname matches pattern
+  const isPropertyDetailRoute =
+    location.pathname !== '/property-hub' &&
+    location.pathname.startsWith('/property-hub/')
 
   // Redirect to onboarding if not completed
   useEffect(() => {
@@ -142,8 +154,10 @@ function RouteComponent() {
   }
 
   const onNavigatePropertyAnalysis = (id: string) => {
-    // TODO: Navigate to property analysis page
-    navigate({ to: `/analysis/${id}` as any })
+    navigate({
+      to: '/property-hub/$propertyId' as any,
+      params: { propertyId: id } as any,
+    })
   }
 
   const filteredProps = mockProperties.filter((p) => {
@@ -170,12 +184,10 @@ function RouteComponent() {
     mockProperties.reduce((acc, p) => acc + p.score, 0) / mockProperties.length,
   )
 
-  const cardClass = cn(
-    'p-8 rounded-[3rem] border transition-all duration-500',
-    isDark
-      ? 'bg-[#1A1A1A] border-white/5'
-      : 'bg-white border-slate-200 shadow-sm',
-  )
+  // If we're on a property detail route, render the outlet (child route)
+  if (isPropertyDetailRoute) {
+    return <Outlet />
+  }
 
   return (
     <main className="flex-grow flex flex-col overflow-y-auto max-h-screen">
@@ -252,7 +264,7 @@ function RouteComponent() {
             { l: 'Portfolio IQ', v: `${avgScore}`, s: 'Avg Score' },
             { l: 'Asset Count', v: `${mockProperties.length}`, s: 'Units' },
           ].map((stat, i) => (
-            <div key={i} className={cardClass}>
+            <Card key={i} variant="rounded" padding="md" radius="lg">
               <Overline
                 className={cn(
                   'mb-2',
@@ -283,7 +295,7 @@ function RouteComponent() {
                   {stat.s}
                 </Overline>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
 
@@ -312,11 +324,13 @@ function RouteComponent() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {alerts.map((alert, i) => (
-              <div
+              <Card
                 key={i}
+                variant="rounded"
+                padding="sm"
+                radius="lg"
                 className={cn(
-                  cardClass,
-                  'p-4 flex items-center justify-between gap-4 group cursor-pointer transition-all',
+                  'flex items-center justify-between gap-4 group cursor-pointer transition-all',
                   isDark
                     ? 'hover:bg-white/10 border-white/10'
                     : 'hover:bg-white border-slate-200 hover:shadow-md',
@@ -372,7 +386,7 @@ function RouteComponent() {
                     isDark ? 'text-white/40' : 'text-slate-400',
                   )}
                 />
-              </div>
+              </Card>
             ))}
           </div>
         </section>
@@ -495,7 +509,12 @@ function RouteComponent() {
 
         {/* List View */}
         {viewMode === 'list' && (
-          <div className={cn(cardClass, 'p-0 overflow-hidden')}>
+          <Card
+            variant="rounded"
+            padding="md"
+            radius="lg"
+            className="p-0 overflow-hidden"
+          >
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr
@@ -650,7 +669,7 @@ function RouteComponent() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </Card>
         )}
 
         {/* Management View */}
@@ -674,7 +693,7 @@ function RouteComponent() {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Self Managed */}
-            <div className={cardClass}>
+            <Card variant="rounded" padding="md" radius="lg">
               <div className="flex justify-between items-center mb-8">
                 <Heading
                   level={3}
@@ -756,10 +775,10 @@ function RouteComponent() {
                     </div>
                   ))}
               </div>
-            </div>
+            </Card>
 
             {/* PM Managed */}
-            <div className={cardClass}>
+            <Card variant="rounded" padding="md" radius="lg">
               <div className="flex justify-between items-center mb-8">
                 <Heading
                   level={3}
@@ -843,7 +862,7 @@ function RouteComponent() {
                   )
                 })}
               </div>
-            </div>
+            </Card>
           </div>
         </section>
       </div>

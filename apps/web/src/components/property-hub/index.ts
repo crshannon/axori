@@ -1,0 +1,2 @@
+export { PropertyScoreGauge } from './PropertyScoreGauge'
+

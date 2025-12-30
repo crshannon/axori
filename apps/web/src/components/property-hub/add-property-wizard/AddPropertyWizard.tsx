@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
-import { Caption, Heading, Overline } from '@axori/ui'
+import { Caption, Card, Heading, Overline } from '@axori/ui'
 import { ProgressHeader } from './components'
 import {
   Step1Address,
@@ -85,12 +85,6 @@ export const AddPropertyWizard = ({
     return numeric.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   }
 
-  const cardClass = cn(
-    'p-10 rounded-[3rem] border transition-all duration-500',
-    'bg-white border-slate-200 shadow-xl',
-    'dark:bg-[#1A1A1A] dark:border-white/5',
-  )
-
   const renderStep = () => {
     const stepProps = {
       formData,
@@ -127,8 +121,11 @@ export const AddPropertyWizard = ({
   if (isSuccess) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in">
-        <div
-          className={`max-w-xl w-full ${cardClass} text-center overflow-hidden relative`}
+        <Card
+          variant="rounded"
+          padding="lg"
+          radius="lg"
+          className="max-w-xl w-full text-center overflow-hidden relative"
         >
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-sky-500 to-[#E8FF4D]"></div>
 
@@ -195,15 +192,18 @@ export const AddPropertyWizard = ({
               Add Another Asset
             </button>
           </div>
-        </div>
+        </Card>
       </div>
     )
   }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in overflow-y-auto">
-      <div
-        className={`max-w-4xl w-full ${cardClass} relative overflow-hidden flex flex-col min-h-[700px]`}
+      <Card
+        variant="rounded"
+        padding="lg"
+        radius="lg"
+        className="max-w-4xl w-full relative overflow-hidden flex flex-col min-h-[700px]"
       >
         {/* Header Control */}
         <div className="flex justify-between items-center mb-8 relative z-10">
@@ -229,7 +229,6 @@ export const AddPropertyWizard = ({
           {renderStep()}
         </div>
 
-        {/* Footer Navigation */}
         <div className="mt-6 pt-6 flex items-center justify-between border-t transition-colors sticky bottom-0 z-20 bg-white border-slate-200 dark:bg-[#1A1A1A] dark:border-white/5">
           <div className="flex gap-4">
             {step > 1 && (
@@ -260,7 +259,7 @@ export const AddPropertyWizard = ({
             </button>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

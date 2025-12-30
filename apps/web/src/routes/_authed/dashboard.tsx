@@ -71,13 +71,7 @@ function RouteComponent() {
                 }`}
               />
             </div>
-            <button
-              className={`relative p-2.5 rounded-full transition-all hover:scale-110 ${
-                isDark
-                  ? 'bg-white/5 hover:bg-white/10'
-                  : 'bg-slate-100 hover:bg-slate-200'
-              }`}
-            >
+            <button className="relative cursor-pointer bg-slate-900 dark:bg-[#1A1A1A] hover:bg-black dark:hover:bg-[#252525] text-white dark:text-slate-300 text-xs font-bold p-3 rounded-full transition-all border border-white/5 shadow-sm dark:shadow-black/20">
               <svg
                 width="20"
                 height="20"
@@ -101,17 +95,12 @@ function RouteComponent() {
               }`}
             >
               <div className="text-right hidden sm:block">
-                <Overline
-                  className={cn(isDark ? 'text-white/40' : 'text-slate-400')}
-                >
+                <Overline className="dark:text-white text-slate-400">
                   Account #{user?.id ? user.id.slice(-4) : '9042'}
                 </Overline>
                 <Label
                   size="sm"
-                  className={cn(
-                    'mt-1 block',
-                    isDark ? 'text-[#E8FF4D]' : 'text-violet-600',
-                  )}
+                  className={'mt-1 block dark:text-[#E8FF4D] text-violet-600'}
                 >
                   Private Equity
                 </Label>

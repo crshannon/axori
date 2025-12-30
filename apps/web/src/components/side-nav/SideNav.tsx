@@ -1,7 +1,7 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { useUser } from '@clerk/tanstack-react-start'
-import { Building, Compass, Layers, LayoutDashboard } from 'lucide-react'
 import { ThemeToggle } from '../theme-toggle/ThemeToggle'
+import { getEnabledNavItems } from '@/lib/navigation'
 import { SignOutButton } from '@/components/sign-out-button/SignOutButton'
 import { cn } from '@/utils/helpers'
 
@@ -10,28 +10,8 @@ export const SideNav = () => {
   const routerState = useRouterState()
   const currentPath = routerState.location.pathname
 
-  const navItems = [
-    {
-      id: 'dashboard',
-      path: '/dashboard',
-      icon: <LayoutDashboard size={20} />,
-    },
-    {
-      id: 'wealth-journey',
-      path: '/wealth-journey',
-      icon: <Layers size={20} />,
-    },
-    {
-      id: 'explore',
-      path: '/explore',
-      icon: <Compass size={20} />,
-    },
-    {
-      id: 'property-hub',
-      path: '/property-hub',
-      icon: <Building size={20} />,
-    },
-  ]
+  // Get enabled navigation items (can be extended with PostHog feature flags)
+  const navItems = getEnabledNavItems()
 
   const isActive = (path: string) => {
     return currentPath === path || currentPath.startsWith(path + '/')
@@ -53,6 +33,7 @@ export const SideNav = () => {
       <nav className="flex flex-col gap-6 flex-grow">
         {navItems.map((item) => {
           const active = isActive(item.path)
+          const IconComponent = item.icon
           return (
             <Link
               key={item.id}
@@ -64,7 +45,7 @@ export const SideNav = () => {
                   : 'dark:text-white/40 dark:hover:text-white text-slate-400 hover:text-slate-900',
               )}
             >
-              {item.icon}
+              <IconComponent size={20} />
             </Link>
           )
         })}

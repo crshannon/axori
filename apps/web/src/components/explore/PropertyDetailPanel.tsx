@@ -1,4 +1,11 @@
-import { Body, Heading, Overline, ProgressBar, Typography } from '@axori/ui'
+import {
+  Body,
+  Card,
+  Heading,
+  Overline,
+  ProgressBar,
+  Typography,
+} from '@axori/ui'
 import { cn } from '@/utils/helpers'
 
 interface Property {
@@ -32,13 +39,6 @@ export const PropertyDetailPanel = ({
   onClose,
   onActivateIntel,
 }: PropertyDetailPanelProps) => {
-  const cardClass = cn(
-    'p-5 rounded-2xl border',
-    isDark
-      ? 'bg-white/5 border-white/5'
-      : 'bg-white border-slate-200 shadow-sm',
-  )
-
   if (!property) return null
 
   return (
@@ -123,11 +123,11 @@ export const PropertyDetailPanel = ({
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-12">
-          <div
-            className={cn(
-              cardClass,
-              'flex flex-col justify-between group overflow-hidden',
-            )}
+          <Card
+            variant="rounded"
+            padding="sm"
+            radius="sm"
+            className="rounded-2xl flex flex-col justify-between group overflow-hidden"
           >
             <Overline
               className={cn(
@@ -154,12 +154,12 @@ export const PropertyDetailPanel = ({
             >
               Covers 8% of your goal
             </Overline>
-          </div>
-          <div
-            className={cn(
-              cardClass,
-              'flex flex-col justify-between group overflow-hidden',
-            )}
+          </Card>
+          <Card
+            variant="rounded"
+            padding="sm"
+            radius="sm"
+            className="rounded-2xl flex flex-col justify-between group overflow-hidden"
           >
             <Overline
               className={cn(
@@ -186,7 +186,7 @@ export const PropertyDetailPanel = ({
                 className="flex-1"
               />
             </div>
-          </div>
+          </Card>
         </div>
 
         <section className="mb-12">

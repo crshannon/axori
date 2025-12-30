@@ -33,10 +33,20 @@ import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
 import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
 import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
+import { Route as AuthedPropertyHubPropertyIdRouteImport } from './routes/_authed/property-hub.$propertyId'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
+import { Route as AuthedPropertyHubPropertyIdIndexRouteImport } from './routes/_authed/property-hub.$propertyId/index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
+import { Route as AuthedPropertyHubPropertyIdStrategyRouteImport } from './routes/_authed/property-hub.$propertyId/strategy'
+import { Route as AuthedPropertyHubPropertyIdSettingsRouteImport } from './routes/_authed/property-hub.$propertyId/settings'
+import { Route as AuthedPropertyHubPropertyIdManagementRouteImport } from './routes/_authed/property-hub.$propertyId/management'
+import { Route as AuthedPropertyHubPropertyIdLegalRouteImport } from './routes/_authed/property-hub.$propertyId/legal'
+import { Route as AuthedPropertyHubPropertyIdFinancialsRouteImport } from './routes/_authed/property-hub.$propertyId/financials'
+import { Route as AuthedPropertyHubPropertyIdDocumentsRouteImport } from './routes/_authed/property-hub.$propertyId/documents'
+import { Route as AuthedPropertyHubPropertyIdCommunicationsRouteImport } from './routes/_authed/property-hub.$propertyId/communications'
+import { Route as AuthedPropertyHubPropertyIdAnalyticsRouteImport } from './routes/_authed/property-hub.$propertyId/analytics'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -156,11 +166,23 @@ const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
   path: '/demo/api/names',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedPropertyHubPropertyIdRoute =
+  AuthedPropertyHubPropertyIdRouteImport.update({
+    id: '/$propertyId',
+    path: '/$propertyId',
+    getParentRoute: () => AuthedPropertyHubRoute,
+  } as any)
 const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
   id: '/demo/start/ssr/',
   path: '/demo/start/ssr/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedPropertyHubPropertyIdIndexRoute =
+  AuthedPropertyHubPropertyIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
+  } as any)
 const DemoStartSsrSpaModeRoute = DemoStartSsrSpaModeRouteImport.update({
   id: '/demo/start/ssr/spa-mode',
   path: '/demo/start/ssr/spa-mode',
@@ -176,6 +198,54 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
   path: '/demo/start/ssr/data-only',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedPropertyHubPropertyIdStrategyRoute =
+  AuthedPropertyHubPropertyIdStrategyRouteImport.update({
+    id: '/strategy',
+    path: '/strategy',
+    getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
+  } as any)
+const AuthedPropertyHubPropertyIdSettingsRoute =
+  AuthedPropertyHubPropertyIdSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
+  } as any)
+const AuthedPropertyHubPropertyIdManagementRoute =
+  AuthedPropertyHubPropertyIdManagementRouteImport.update({
+    id: '/management',
+    path: '/management',
+    getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
+  } as any)
+const AuthedPropertyHubPropertyIdLegalRoute =
+  AuthedPropertyHubPropertyIdLegalRouteImport.update({
+    id: '/legal',
+    path: '/legal',
+    getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
+  } as any)
+const AuthedPropertyHubPropertyIdFinancialsRoute =
+  AuthedPropertyHubPropertyIdFinancialsRouteImport.update({
+    id: '/financials',
+    path: '/financials',
+    getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
+  } as any)
+const AuthedPropertyHubPropertyIdDocumentsRoute =
+  AuthedPropertyHubPropertyIdDocumentsRouteImport.update({
+    id: '/documents',
+    path: '/documents',
+    getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
+  } as any)
+const AuthedPropertyHubPropertyIdCommunicationsRoute =
+  AuthedPropertyHubPropertyIdCommunicationsRouteImport.update({
+    id: '/communications',
+    path: '/communications',
+    getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
+  } as any)
+const AuthedPropertyHubPropertyIdAnalyticsRoute =
+  AuthedPropertyHubPropertyIdAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -184,7 +254,7 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/explore': typeof AuthedExploreRoute
-  '/property-hub': typeof AuthedPropertyHubRoute
+  '/property-hub': typeof AuthedPropertyHubRouteWithChildren
   '/wealth-journey': typeof AuthedWealthJourneyRoute
   '/about': typeof PublicAboutRoute
   '/analysis': typeof PublicAnalysisRoute
@@ -194,15 +264,25 @@ export interface FileRoutesByFullPath {
   '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdRouteWithChildren
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/property-hub/$propertyId/analytics': typeof AuthedPropertyHubPropertyIdAnalyticsRoute
+  '/property-hub/$propertyId/communications': typeof AuthedPropertyHubPropertyIdCommunicationsRoute
+  '/property-hub/$propertyId/documents': typeof AuthedPropertyHubPropertyIdDocumentsRoute
+  '/property-hub/$propertyId/financials': typeof AuthedPropertyHubPropertyIdFinancialsRoute
+  '/property-hub/$propertyId/legal': typeof AuthedPropertyHubPropertyIdLegalRoute
+  '/property-hub/$propertyId/management': typeof AuthedPropertyHubPropertyIdManagementRoute
+  '/property-hub/$propertyId/settings': typeof AuthedPropertyHubPropertyIdSettingsRoute
+  '/property-hub/$propertyId/strategy': typeof AuthedPropertyHubPropertyIdStrategyRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/property-hub/$propertyId/': typeof AuthedPropertyHubPropertyIdIndexRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
 }
 export interface FileRoutesByTo {
@@ -212,7 +292,7 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/explore': typeof AuthedExploreRoute
-  '/property-hub': typeof AuthedPropertyHubRoute
+  '/property-hub': typeof AuthedPropertyHubRouteWithChildren
   '/wealth-journey': typeof AuthedWealthJourneyRoute
   '/about': typeof PublicAboutRoute
   '/analysis': typeof PublicAnalysisRoute
@@ -228,9 +308,18 @@ export interface FileRoutesByTo {
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/property-hub/$propertyId/analytics': typeof AuthedPropertyHubPropertyIdAnalyticsRoute
+  '/property-hub/$propertyId/communications': typeof AuthedPropertyHubPropertyIdCommunicationsRoute
+  '/property-hub/$propertyId/documents': typeof AuthedPropertyHubPropertyIdDocumentsRoute
+  '/property-hub/$propertyId/financials': typeof AuthedPropertyHubPropertyIdFinancialsRoute
+  '/property-hub/$propertyId/legal': typeof AuthedPropertyHubPropertyIdLegalRoute
+  '/property-hub/$propertyId/management': typeof AuthedPropertyHubPropertyIdManagementRoute
+  '/property-hub/$propertyId/settings': typeof AuthedPropertyHubPropertyIdSettingsRoute
+  '/property-hub/$propertyId/strategy': typeof AuthedPropertyHubPropertyIdStrategyRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdIndexRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
 }
 export interface FileRoutesById {
@@ -243,7 +332,7 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/explore': typeof AuthedExploreRoute
-  '/_authed/property-hub': typeof AuthedPropertyHubRoute
+  '/_authed/property-hub': typeof AuthedPropertyHubRouteWithChildren
   '/_authed/wealth-journey': typeof AuthedWealthJourneyRoute
   '/_public/about': typeof PublicAboutRoute
   '/_public/analysis': typeof PublicAnalysisRoute
@@ -253,15 +342,25 @@ export interface FileRoutesById {
   '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/_authed/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdRouteWithChildren
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/_authed/property-hub/$propertyId/analytics': typeof AuthedPropertyHubPropertyIdAnalyticsRoute
+  '/_authed/property-hub/$propertyId/communications': typeof AuthedPropertyHubPropertyIdCommunicationsRoute
+  '/_authed/property-hub/$propertyId/documents': typeof AuthedPropertyHubPropertyIdDocumentsRoute
+  '/_authed/property-hub/$propertyId/financials': typeof AuthedPropertyHubPropertyIdFinancialsRoute
+  '/_authed/property-hub/$propertyId/legal': typeof AuthedPropertyHubPropertyIdLegalRoute
+  '/_authed/property-hub/$propertyId/management': typeof AuthedPropertyHubPropertyIdManagementRoute
+  '/_authed/property-hub/$propertyId/settings': typeof AuthedPropertyHubPropertyIdSettingsRoute
+  '/_authed/property-hub/$propertyId/strategy': typeof AuthedPropertyHubPropertyIdStrategyRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/_authed/property-hub/$propertyId/': typeof AuthedPropertyHubPropertyIdIndexRoute
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
 }
 export interface FileRouteTypes {
@@ -283,15 +382,25 @@ export interface FileRouteTypes {
     | '/demo/drizzle'
     | '/demo/store'
     | '/demo/tanstack-query'
+    | '/property-hub/$propertyId'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/form/address'
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/property-hub/$propertyId/analytics'
+    | '/property-hub/$propertyId/communications'
+    | '/property-hub/$propertyId/documents'
+    | '/property-hub/$propertyId/financials'
+    | '/property-hub/$propertyId/legal'
+    | '/property-hub/$propertyId/management'
+    | '/property-hub/$propertyId/settings'
+    | '/property-hub/$propertyId/strategy'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/property-hub/$propertyId/'
     | '/demo/start/ssr'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -317,9 +426,18 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/property-hub/$propertyId/analytics'
+    | '/property-hub/$propertyId/communications'
+    | '/property-hub/$propertyId/documents'
+    | '/property-hub/$propertyId/financials'
+    | '/property-hub/$propertyId/legal'
+    | '/property-hub/$propertyId/management'
+    | '/property-hub/$propertyId/settings'
+    | '/property-hub/$propertyId/strategy'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/property-hub/$propertyId'
     | '/demo/start/ssr'
   id:
     | '__root__'
@@ -341,15 +459,25 @@ export interface FileRouteTypes {
     | '/demo/drizzle'
     | '/demo/store'
     | '/demo/tanstack-query'
+    | '/_authed/property-hub/$propertyId'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/form/address'
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/_authed/property-hub/$propertyId/analytics'
+    | '/_authed/property-hub/$propertyId/communications'
+    | '/_authed/property-hub/$propertyId/documents'
+    | '/_authed/property-hub/$propertyId/financials'
+    | '/_authed/property-hub/$propertyId/legal'
+    | '/_authed/property-hub/$propertyId/management'
+    | '/_authed/property-hub/$propertyId/settings'
+    | '/_authed/property-hub/$propertyId/strategy'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/_authed/property-hub/$propertyId/'
     | '/demo/start/ssr/'
   fileRoutesById: FileRoutesById
 }
@@ -546,12 +674,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoApiNamesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/property-hub/$propertyId': {
+      id: '/_authed/property-hub/$propertyId'
+      path: '/$propertyId'
+      fullPath: '/property-hub/$propertyId'
+      preLoaderRoute: typeof AuthedPropertyHubPropertyIdRouteImport
+      parentRoute: typeof AuthedPropertyHubRoute
+    }
     '/demo/start/ssr/': {
       id: '/demo/start/ssr/'
       path: '/demo/start/ssr'
       fullPath: '/demo/start/ssr'
       preLoaderRoute: typeof DemoStartSsrIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authed/property-hub/$propertyId/': {
+      id: '/_authed/property-hub/$propertyId/'
+      path: '/'
+      fullPath: '/property-hub/$propertyId/'
+      preLoaderRoute: typeof AuthedPropertyHubPropertyIdIndexRouteImport
+      parentRoute: typeof AuthedPropertyHubPropertyIdRoute
     }
     '/demo/start/ssr/spa-mode': {
       id: '/demo/start/ssr/spa-mode'
@@ -574,20 +716,127 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoStartSsrDataOnlyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/property-hub/$propertyId/strategy': {
+      id: '/_authed/property-hub/$propertyId/strategy'
+      path: '/strategy'
+      fullPath: '/property-hub/$propertyId/strategy'
+      preLoaderRoute: typeof AuthedPropertyHubPropertyIdStrategyRouteImport
+      parentRoute: typeof AuthedPropertyHubPropertyIdRoute
+    }
+    '/_authed/property-hub/$propertyId/settings': {
+      id: '/_authed/property-hub/$propertyId/settings'
+      path: '/settings'
+      fullPath: '/property-hub/$propertyId/settings'
+      preLoaderRoute: typeof AuthedPropertyHubPropertyIdSettingsRouteImport
+      parentRoute: typeof AuthedPropertyHubPropertyIdRoute
+    }
+    '/_authed/property-hub/$propertyId/management': {
+      id: '/_authed/property-hub/$propertyId/management'
+      path: '/management'
+      fullPath: '/property-hub/$propertyId/management'
+      preLoaderRoute: typeof AuthedPropertyHubPropertyIdManagementRouteImport
+      parentRoute: typeof AuthedPropertyHubPropertyIdRoute
+    }
+    '/_authed/property-hub/$propertyId/legal': {
+      id: '/_authed/property-hub/$propertyId/legal'
+      path: '/legal'
+      fullPath: '/property-hub/$propertyId/legal'
+      preLoaderRoute: typeof AuthedPropertyHubPropertyIdLegalRouteImport
+      parentRoute: typeof AuthedPropertyHubPropertyIdRoute
+    }
+    '/_authed/property-hub/$propertyId/financials': {
+      id: '/_authed/property-hub/$propertyId/financials'
+      path: '/financials'
+      fullPath: '/property-hub/$propertyId/financials'
+      preLoaderRoute: typeof AuthedPropertyHubPropertyIdFinancialsRouteImport
+      parentRoute: typeof AuthedPropertyHubPropertyIdRoute
+    }
+    '/_authed/property-hub/$propertyId/documents': {
+      id: '/_authed/property-hub/$propertyId/documents'
+      path: '/documents'
+      fullPath: '/property-hub/$propertyId/documents'
+      preLoaderRoute: typeof AuthedPropertyHubPropertyIdDocumentsRouteImport
+      parentRoute: typeof AuthedPropertyHubPropertyIdRoute
+    }
+    '/_authed/property-hub/$propertyId/communications': {
+      id: '/_authed/property-hub/$propertyId/communications'
+      path: '/communications'
+      fullPath: '/property-hub/$propertyId/communications'
+      preLoaderRoute: typeof AuthedPropertyHubPropertyIdCommunicationsRouteImport
+      parentRoute: typeof AuthedPropertyHubPropertyIdRoute
+    }
+    '/_authed/property-hub/$propertyId/analytics': {
+      id: '/_authed/property-hub/$propertyId/analytics'
+      path: '/analytics'
+      fullPath: '/property-hub/$propertyId/analytics'
+      preLoaderRoute: typeof AuthedPropertyHubPropertyIdAnalyticsRouteImport
+      parentRoute: typeof AuthedPropertyHubPropertyIdRoute
+    }
   }
 }
+
+interface AuthedPropertyHubPropertyIdRouteChildren {
+  AuthedPropertyHubPropertyIdAnalyticsRoute: typeof AuthedPropertyHubPropertyIdAnalyticsRoute
+  AuthedPropertyHubPropertyIdCommunicationsRoute: typeof AuthedPropertyHubPropertyIdCommunicationsRoute
+  AuthedPropertyHubPropertyIdDocumentsRoute: typeof AuthedPropertyHubPropertyIdDocumentsRoute
+  AuthedPropertyHubPropertyIdFinancialsRoute: typeof AuthedPropertyHubPropertyIdFinancialsRoute
+  AuthedPropertyHubPropertyIdLegalRoute: typeof AuthedPropertyHubPropertyIdLegalRoute
+  AuthedPropertyHubPropertyIdManagementRoute: typeof AuthedPropertyHubPropertyIdManagementRoute
+  AuthedPropertyHubPropertyIdSettingsRoute: typeof AuthedPropertyHubPropertyIdSettingsRoute
+  AuthedPropertyHubPropertyIdStrategyRoute: typeof AuthedPropertyHubPropertyIdStrategyRoute
+  AuthedPropertyHubPropertyIdIndexRoute: typeof AuthedPropertyHubPropertyIdIndexRoute
+}
+
+const AuthedPropertyHubPropertyIdRouteChildren: AuthedPropertyHubPropertyIdRouteChildren =
+  {
+    AuthedPropertyHubPropertyIdAnalyticsRoute:
+      AuthedPropertyHubPropertyIdAnalyticsRoute,
+    AuthedPropertyHubPropertyIdCommunicationsRoute:
+      AuthedPropertyHubPropertyIdCommunicationsRoute,
+    AuthedPropertyHubPropertyIdDocumentsRoute:
+      AuthedPropertyHubPropertyIdDocumentsRoute,
+    AuthedPropertyHubPropertyIdFinancialsRoute:
+      AuthedPropertyHubPropertyIdFinancialsRoute,
+    AuthedPropertyHubPropertyIdLegalRoute:
+      AuthedPropertyHubPropertyIdLegalRoute,
+    AuthedPropertyHubPropertyIdManagementRoute:
+      AuthedPropertyHubPropertyIdManagementRoute,
+    AuthedPropertyHubPropertyIdSettingsRoute:
+      AuthedPropertyHubPropertyIdSettingsRoute,
+    AuthedPropertyHubPropertyIdStrategyRoute:
+      AuthedPropertyHubPropertyIdStrategyRoute,
+    AuthedPropertyHubPropertyIdIndexRoute:
+      AuthedPropertyHubPropertyIdIndexRoute,
+  }
+
+const AuthedPropertyHubPropertyIdRouteWithChildren =
+  AuthedPropertyHubPropertyIdRoute._addFileChildren(
+    AuthedPropertyHubPropertyIdRouteChildren,
+  )
+
+interface AuthedPropertyHubRouteChildren {
+  AuthedPropertyHubPropertyIdRoute: typeof AuthedPropertyHubPropertyIdRouteWithChildren
+}
+
+const AuthedPropertyHubRouteChildren: AuthedPropertyHubRouteChildren = {
+  AuthedPropertyHubPropertyIdRoute:
+    AuthedPropertyHubPropertyIdRouteWithChildren,
+}
+
+const AuthedPropertyHubRouteWithChildren =
+  AuthedPropertyHubRoute._addFileChildren(AuthedPropertyHubRouteChildren)
 
 interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedExploreRoute: typeof AuthedExploreRoute
-  AuthedPropertyHubRoute: typeof AuthedPropertyHubRoute
+  AuthedPropertyHubRoute: typeof AuthedPropertyHubRouteWithChildren
   AuthedWealthJourneyRoute: typeof AuthedWealthJourneyRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedExploreRoute: AuthedExploreRoute,
-  AuthedPropertyHubRoute: AuthedPropertyHubRoute,
+  AuthedPropertyHubRoute: AuthedPropertyHubRouteWithChildren,
   AuthedWealthJourneyRoute: AuthedWealthJourneyRoute,
 }
 
