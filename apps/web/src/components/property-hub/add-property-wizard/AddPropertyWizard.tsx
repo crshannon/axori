@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { Caption, Card, Heading, Overline } from '@axori/ui'
 import { ProgressHeader } from './components'
@@ -12,27 +12,63 @@ import {
 } from './steps'
 import type { PropertyFormData } from './types'
 import { cn } from '@/utils/helpers'
+import {
+  useCompleteProperty,
+  useCreateProperty,
+  useCurrentUser,
+  useDefaultPortfolio,
+  useLatestDraft,
+  useProperty,
+  useUpdateProperty,
+} from '@/hooks/api'
 
 interface AddPropertyWizardProps {
   onClose: () => void
   onComplete: () => void
+  portfolioId?: string // Optional - defaults to user's first portfolio or creates one
+  draftId?: string // Optional - resume specific draft property
 }
 
 export const AddPropertyWizard = ({
   onClose,
   onComplete,
+  portfolioId: propPortfolioId,
+  draftId: propDraftId,
 }: AddPropertyWizardProps) => {
   const [step, setStep] = useState(1)
   const totalSteps = 6
   const [isSuccess, setIsSuccess] = useState(false)
+  const [draftId, setDraftId] = useState<string | null>(propDraftId || null)
+
+  // React Query hooks for data fetching
+  const { data: userData } = useCurrentUser()
+  const { data: portfolio } = useDefaultPortfolio()
+
+  // If a specific draftId prop was passed, fetch that property
+  // Otherwise, check for the most recent draft to auto-resume
+  const { data: specificDraft } = useProperty(propDraftId)
+  const { data: latestDraft } = useLatestDraft({
+    enabled: !propDraftId && !draftId, // Only check for latest draft if not resuming a specific one
+  })
+
+  // Use specific draft if provided, otherwise use latest draft
+  const draftToLoad = specificDraft || latestDraft
+  const createProperty = useCreateProperty()
+  const updateProperty = useUpdateProperty()
+  const completeProperty = useCompleteProperty()
+
+  // Derived state
+  const userId = userData?.id || null
+  const portfolioId = propPortfolioId || portfolio?.id || null
+  const isSaving = createProperty.isPending || updateProperty.isPending
 
   // Form State
   const [formData, setFormData] = useState<PropertyFormData>({
     address: '',
     city: '',
     state: '',
-    zip: '',
-    propType: 'Single Family',
+    zipCode: '', // Updated from 'zip' to match schema
+    propertyType: 'Single Family', // Updated from 'propType' to match schema
     beds: 3,
     baths: 2,
     sqft: 1800,
@@ -64,6 +100,84 @@ export const AddPropertyWizard = ({
   )
   const [isAddressSelected, setIsAddressSelected] = useState(false)
 
+  // Load draft data into form when available
+  // This happens when:
+  // 1. User opens wizard and has an existing draft (auto-resume)
+  // 2. User clicks on a draft property from the list (specific draftId prop)
+  useEffect(() => {
+    if (draftToLoad && !draftId) {
+      // Only auto-load if we don't already have a draft loaded
+      // This prevents overwriting form data if user is actively filling it out
+      setFormData((prev) => ({
+        ...prev,
+        address: draftToLoad.address || '',
+        city: draftToLoad.city || '',
+        state: draftToLoad.state || '',
+        zipCode: draftToLoad.zipCode || '',
+        propertyType: draftToLoad.propertyType || 'Single Family',
+        latitude: draftToLoad.latitude
+          ? parseFloat(draftToLoad.latitude)
+          : null,
+        longitude: draftToLoad.longitude
+          ? parseFloat(draftToLoad.longitude)
+          : null,
+        mapboxPlaceId: draftToLoad.mapboxPlaceId || null,
+        fullAddress: draftToLoad.fullAddress || null,
+      }))
+      setDraftId(draftToLoad.id)
+      setIsAddressSelected(!!draftToLoad.address)
+
+      // Resume at step 2 if address is already set
+      if (draftToLoad.address) {
+        setStep(2)
+      }
+    }
+  }, [draftToLoad, draftId])
+
+  // Auto-save draft after each step
+  const saveDraft = useCallback(async () => {
+    // Don't save if missing required fields or context
+    if (!userId || !portfolioId || !isAddressSelected) return
+
+    const saveData = {
+      portfolioId,
+      addedBy: userId,
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      zipCode: formData.zipCode,
+      latitude: formData.latitude?.toString() || null,
+      longitude: formData.longitude?.toString() || null,
+      mapboxPlaceId: formData.mapboxPlaceId || null,
+      fullAddress: formData.fullAddress || null,
+      propertyType: formData.propertyType || null, // Optional for drafts
+    }
+
+    try {
+      if (draftId) {
+        // Update existing draft
+        await updateProperty.mutateAsync({
+          id: draftId,
+          ...saveData,
+        })
+      } else {
+        // Create new draft
+        const result = await createProperty.mutateAsync(saveData)
+        setDraftId(result.property.id)
+      }
+    } catch (error) {
+      console.error('Error saving draft:', error)
+    }
+  }, [
+    userId,
+    portfolioId,
+    isAddressSelected,
+    formData,
+    draftId,
+    createProperty,
+    updateProperty,
+  ])
+
   const calculatePI = () => {
     const p = parseFloat(formData.loanAmount.replace(/,/g, '')) || 0
     const r = (parseFloat(formData.interestRate) || 0) / 100 / 12
@@ -73,9 +187,56 @@ export const AddPropertyWizard = ({
     return pi.toLocaleString(undefined, { maximumFractionDigits: 0 })
   }
 
-  const nextStep = () => {
-    if (step < totalSteps) setStep(step + 1)
-    else setIsSuccess(true)
+  const nextStep = async () => {
+    if (step < totalSteps) {
+      // Save before moving to next step
+      if (isAddressSelected && userId && portfolioId) {
+        await saveDraft()
+      }
+      setStep(step + 1)
+    } else {
+      // Final step - complete the property
+      await handleFinalSave()
+    }
+  }
+
+  const handleFinalSave = async () => {
+    if (!userId || !portfolioId) {
+      console.error('Missing user or portfolio')
+      return
+    }
+
+    // If no draft exists, create one first
+    if (!draftId && isAddressSelected) {
+      await saveDraft()
+      // Wait a moment for draft ID to be set
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+
+    // Mark as active/complete
+    if (draftId) {
+      try {
+        // Update propertyType if not set before completing
+        if (!formData.propertyType) {
+          await updateProperty.mutateAsync({
+            id: draftId,
+            propertyType: 'Single Family', // Default
+          })
+        }
+
+        await completeProperty.mutateAsync(draftId)
+        setIsSuccess(true)
+      } catch (error) {
+        console.error('Error completing property:', error)
+      }
+    } else {
+      console.error('No draft to complete')
+    }
+  }
+
+  const handleClose = () => {
+    // Don't save on close - user can resume from where they left off
+    onClose()
   }
 
   const prevStep = () => setStep(Math.max(1, step - 1))
@@ -215,12 +376,19 @@ export const AddPropertyWizard = ({
               System Asset Deployment
             </Overline>
           </div>
-          <button
-            onClick={onClose}
-            className="p-3 rounded-xl transition-all opacity-40 hover:opacity-100 text-slate-900 hover:bg-red-50 hover:text-red-600 dark:text-white dark:hover:bg-red-500/10 dark:hover:text-red-500"
-          >
-            <X size={24} strokeWidth={3} />
-          </button>
+          <div className="flex items-center gap-2">
+            {isSaving && (
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Saving...
+              </span>
+            )}
+            <button
+              onClick={handleClose}
+              className="p-3 rounded-xl transition-all opacity-40 hover:opacity-100 text-slate-900 hover:bg-red-50 hover:text-red-600 dark:text-white dark:hover:bg-red-500/10 dark:hover:text-red-500"
+            >
+              <X size={24} strokeWidth={3} />
+            </button>
+          </div>
         </div>
 
         <ProgressHeader step={step} totalSteps={totalSteps} />

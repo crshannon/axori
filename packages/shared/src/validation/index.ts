@@ -2,13 +2,126 @@ import { z } from "zod";
 
 // Common validation schemas
 
-export const propertySchema = z.object({
-  address: z.string().min(1, "Address is required"),
-  city: z.string().min(1, "City is required"),
-  state: z.string().length(2, "State must be 2 characters"),
-  zipCode: z.string().regex(/^\d{5}(-\d{4})?$/, "Invalid ZIP code"),
-  propertyType: z.string().min(1, "Property type is required"),
+// Portfolio Insert Schema - excludes auto-generated fields (id, createdAt, updatedAt)
+// createdBy comes from auth context, not user input
+export const portfolioInsertSchema = z.object({
+  name: z.string().min(1, "Portfolio name is required").max(255, "Portfolio name must be 255 characters or less"),
+  description: z.string().max(1000, "Description must be 1000 characters or less").optional().nullable(),
+  createdBy: z.string().uuid("Created by user ID must be a valid UUID"), // From auth context
 });
+
+// Portfolio Select Schema - includes all fields from database
+export const portfolioSelectSchema = portfolioInsertSchema.extend({
+  id: z.string().uuid(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+// Portfolio Update Schema - all fields optional except ID
+export const portfolioUpdateSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(255).optional(),
+  description: z.string().max(1000).optional().nullable(),
+});
+
+// User-Portfolio relationship schemas
+export const userPortfolioInsertSchema = z.object({
+  userId: z.string().uuid("User ID must be a valid UUID"),
+  portfolioId: z.string().uuid("Portfolio ID must be a valid UUID"),
+  role: z.enum(["owner", "admin", "member", "viewer"], {
+    errorMap: () => ({ message: "Role must be owner, admin, member, or viewer" }),
+  }),
+});
+
+export const userPortfolioSelectSchema = userPortfolioInsertSchema.extend({
+  id: z.string().uuid(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export const userPortfolioUpdateSchema = z.object({
+  id: z.string().uuid(),
+  role: z.enum(["owner", "admin", "member", "viewer"]).optional(),
+});
+
+// Property Insert Schema - excludes auto-generated fields (id, createdAt, updatedAt)
+// portfolioId and addedBy come from context, not user input
+export const propertyInsertSchema = z.object({
+  portfolioId: z.string().uuid("Portfolio ID must be a valid UUID"), // From portfolio context
+  addedBy: z.string().uuid("Added by user ID must be a valid UUID"), // From auth context
+  address: z
+    .string()
+    .min(1, "Address is required")
+    .refine(
+      (val) => {
+        // Address should include a street number (starts with a digit)
+        // Pattern matches addresses like "123 Main St", "456 Oak Ave", etc.
+        // Also allows addresses without numbers for edge cases (e.g., PO Box, "Main Street")
+        const hasStreetNumber = /^\d+\s/.test(val.trim())
+        const isPOBoxOrSpecial = /^(P\.?O\.?\s*Box|PO\s*Box)/i.test(val.trim())
+        // Allow addresses without numbers for edge cases, but prefer addresses with numbers
+        return val.trim().length > 0 && (hasStreetNumber || isPOBoxOrSpecial || val.trim().length >= 5)
+      },
+      {
+        message: "Address should include a street number (e.g., '123 Main Street')",
+      },
+    ),
+  city: z.string().min(1, "City is required"),
+  state: z.string().length(2, "State must be 2 characters (e.g., TX)"),
+  zipCode: z.string().regex(/^\d{5}(-\d{4})?$/, "Invalid ZIP code (must be 5 or 9 digits)"),
+  // Mapbox geocoding fields - optional but recommended
+  latitude: z
+    .union([z.string(), z.number()])
+    .optional()
+    .transform((val) => (val === undefined ? null : String(val))),
+  longitude: z
+    .union([z.string(), z.number()])
+    .optional()
+    .transform((val) => (val === undefined ? null : String(val))),
+  mapboxPlaceId: z.string().optional().nullable(),
+  fullAddress: z.string().optional().nullable(), // Full formatted address from Mapbox
+  propertyType: z.string().min(1, "Property type is required").optional().nullable(), // Optional for drafts
+  status: z.enum(["draft", "active", "archived"]).default("draft"), // Draft until wizard completed
+});
+
+// Property Select Schema - includes all fields from database
+export const propertySelectSchema = propertyInsertSchema.extend({
+  id: z.string().uuid(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  // Numeric fields from DB are strings, convert to numbers for select
+  latitude: z
+    .union([z.string(), z.number(), z.null()])
+    .transform((val) => (val === null || val === undefined ? null : Number(val))),
+  longitude: z
+    .union([z.string(), z.number(), z.null()])
+    .transform((val) => (val === null || val === undefined ? null : Number(val))),
+});
+
+// Property Update Schema - all fields optional except ID
+export const propertyUpdateSchema = z.object({
+  id: z.string().uuid(),
+  address: z.string().min(1).optional(),
+  city: z.string().min(1).optional(),
+  state: z.string().length(2).optional(),
+  zipCode: z.string().regex(/^\d{5}(-\d{4})?$/).optional(),
+  latitude: z
+    .union([z.string(), z.number()])
+    .optional()
+    .transform((val) => (val === undefined ? undefined : String(val))),
+  longitude: z
+    .union([z.string(), z.number()])
+    .optional()
+    .transform((val) => (val === undefined ? undefined : String(val))),
+  mapboxPlaceId: z.string().optional().nullable(),
+  fullAddress: z.string().optional().nullable(),
+  propertyType: z.string().min(1).optional().nullable(),
+  status: z.enum(["draft", "active", "archived"]).optional(),
+});
+
+// Legacy schema for backward compatibility (deprecated - use propertyInsertSchema)
+// Note: This schema is kept for backwards compatibility but should be updated to use portfolioId
+export const propertySchema = propertyInsertSchema.omit({ portfolioId: true, addedBy: true });
 
 // Name validation pattern: letters, spaces, hyphens, apostrophes
 const namePattern = /^[a-zA-Z\s'-]+$/;

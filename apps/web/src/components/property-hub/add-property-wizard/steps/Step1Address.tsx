@@ -1,7 +1,13 @@
+import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
+import { parseMapboxFeature } from '@axori/shared'
 import { Heading, Overline } from '@axori/ui'
-import type { PropertyFormData } from '../types'
 import { StepperTitle } from '../components'
+import type {
+  MapboxAddressSuggestion,
+  MapboxGeocodingResponse,
+} from '@axori/shared'
+import type { PropertyFormData } from '../types'
 
 interface Step1AddressProps {
   formData: PropertyFormData
@@ -15,33 +21,97 @@ interface Step1AddressProps {
 export const Step1Address = ({
   formData,
   setFormData,
-  addressSuggestions,
   setAddressSuggestions,
   isAddressSelected,
   setIsAddressSelected,
 }: Step1AddressProps) => {
-  const handleAddressChange = (val: string) => {
-    setFormData({ ...formData, address: val })
-    if (val.length > 5) {
-      setAddressSuggestions([
-        `${val} Blvd, Austin, TX 78704`,
-        `${val} Lane, Greensboro, NC 27401`,
-        `${val} St, Denver, CO 80202`,
-      ])
-    } else {
+  const [suggestions, setSuggestions] = useState<
+    Array<MapboxAddressSuggestion>
+  >([])
+  const [isLoading, setIsLoading] = useState(false)
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const MAPBOX_TOKEN =
+    import.meta.env.VITE_MAPBOX_ACCESS_TOKEN ||
+    'pk.eyJ1IjoidGVzdCIsImEiOiJjbGV4YW1wbGUifQ.example'
+
+  // Fetch address suggestions from Mapbox Geocoding API
+  const fetchAddressSuggestions = async (query: string) => {
+    if (!query || query.length < 3) {
+      setSuggestions([])
       setAddressSuggestions([])
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&limit=5&types=address&country=us`
+
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error('Failed to fetch address suggestions')
+      }
+
+      const data: MapboxGeocodingResponse = await response.json()
+
+      console.log('data', data)
+
+      // Use shared utility to parse Mapbox features
+      const parsedSuggestions = data.features.map(parseMapboxFeature)
+
+      setSuggestions(parsedSuggestions)
+      // Update parent component's suggestions array with formatted strings
+      setAddressSuggestions(
+        parsedSuggestions.map((s: MapboxAddressSuggestion) => s.placeName),
+      )
+    } catch (error) {
+      console.error('Error fetching address suggestions:', error)
+      setSuggestions([])
+      setAddressSuggestions([])
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const selectAddress = (addr: string) => {
-    const parts = addr.split(', ')
+  // Debounced address change handler
+  const handleAddressChange = (val: string) => {
+    setFormData({ ...formData, address: val })
+
+    // Clear previous timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    // Set new timer for debounced API call
+    debounceTimerRef.current = setTimeout(() => {
+      fetchAddressSuggestions(val)
+    }, 300) // 300ms debounce
+  }
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [])
+
+  const selectAddress = (suggestion: MapboxAddressSuggestion) => {
+    console.log('suggestion', suggestion)
     setFormData({
       ...formData,
-      address: parts[0],
-      city: parts[1],
-      state: parts[2].split(' ')[0],
-      zip: parts[2].split(' ')[1],
+      address: suggestion.address,
+      city: suggestion.city,
+      state: suggestion.state,
+      zipCode: suggestion.zip, // Updated to match schema field name
+      // Store Mapbox geocoding data for database persistence
+      latitude: suggestion.latitude,
+      longitude: suggestion.longitude,
+      mapboxPlaceId: suggestion.mapboxPlaceId,
+      fullAddress: suggestion.fullAddress,
     })
+    setSuggestions([])
     setAddressSuggestions([])
     setIsAddressSelected(true)
   }
@@ -79,15 +149,23 @@ export const Step1Address = ({
           </>
         )}
 
-        {addressSuggestions.length > 0 && (
+        {isLoading && (
+          <div className="absolute top-full left-0 right-0 mt-4 p-4 rounded-3xl border shadow-2xl z-50 bg-white border-slate-200 dark:bg-[#1A1A1A] dark:border-white/10">
+            <div className="p-6 text-center text-sm font-black text-slate-500 dark:text-white/40 uppercase">
+              Searching...
+            </div>
+          </div>
+        )}
+
+        {!isLoading && suggestions.length > 0 && (
           <div className="absolute top-full left-0 right-0 mt-4 p-4 rounded-3xl border shadow-2xl z-50 overflow-hidden bg-white border-slate-200 dark:bg-[#1A1A1A] dark:border-white/10">
-            {addressSuggestions.map((s, idx) => (
+            {suggestions.map((suggestion, idx) => (
               <button
-                key={idx}
-                onClick={() => selectAddress(s)}
+                key={`${suggestion.placeName}-${idx}`}
+                onClick={() => selectAddress(suggestion)}
                 className="w-full p-6 text-left text-sm font-black text-black dark:text-white uppercase tracking-tight rounded-2xl transition-all hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
               >
-                {s}
+                {suggestion.placeName}
               </button>
             ))}
           </div>
@@ -124,7 +202,7 @@ export const Step1Address = ({
                 {formData.address}
               </Heading>
               <Overline className="opacity-40 mt-1 text-black dark:text-white">
-                {formData.city}, {formData.state} {formData.zip}
+                {formData.city}, {formData.state} {formData.zipCode}
               </Overline>
             </div>
           </div>
@@ -136,7 +214,11 @@ export const Step1Address = ({
                 address: '',
                 city: '',
                 state: '',
-                zip: '',
+                zipCode: '',
+                latitude: null,
+                longitude: null,
+                mapboxPlaceId: null,
+                fullAddress: null,
               })
             }}
             className="p-2 rounded-xl transition-all opacity-40 hover:opacity-100 text-slate-900 hover:bg-slate-100 dark:text-white dark:hover:bg-white/10 shrink-0 cursor-pointer"
@@ -148,4 +230,3 @@ export const Step1Address = ({
     </div>
   )
 }
-

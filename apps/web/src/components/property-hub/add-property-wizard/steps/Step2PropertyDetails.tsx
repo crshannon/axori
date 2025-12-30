@@ -1,10 +1,7 @@
-import type { StepProps } from '../types'
 import { FormLabel, StepperTitle, inputClass } from '../components'
+import type { StepProps } from '../types'
 
-export const Step2PropertyDetails = ({
-  formData,
-  setFormData,
-}: StepProps) => {
+export const Step2PropertyDetails = ({ formData, setFormData }: StepProps) => {
   return (
     <div className="w-full max-w-3xl animate-in slide-in-from-right-8 duration-500">
       <StepperTitle
@@ -16,9 +13,9 @@ export const Step2PropertyDetails = ({
         <div className="space-y-1">
           <FormLabel>Property Type</FormLabel>
           <select
-            value={formData.propType}
+            value={formData.propertyType}
             onChange={(e) =>
-              setFormData({ ...formData, propType: e.target.value })
+              setFormData({ ...formData, propertyType: e.target.value })
             }
             className={inputClass}
           >
@@ -105,4 +102,3 @@ export const Step2PropertyDetails = ({
     </div>
   )
 }
-

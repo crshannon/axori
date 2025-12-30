@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@axori/ui": "workspace:*",
+    "@axori/shared": "workspace:*",
     "@clerk/clerk-react": "^5.49.0",
     "@clerk/tanstack-react-start": "^0.27.12",
     "@tailwindcss/vite": "^4.0.6",
