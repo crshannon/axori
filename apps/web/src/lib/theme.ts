@@ -16,14 +16,14 @@ export type AppTheme = z.infer<typeof AppThemeSchema>
 const themeStorageKey = '_preferred-theme'
 
 // Server functions
-export const getThemeServerFn = createServerFn().handler(async () => {
+export const getThemeServerFn = createServerFn().handler(() => {
   const cookieValue = getCookie(themeStorageKey)
   return UserThemeSchema.parse(cookieValue || 'system')
 })
 
 export const setThemeServerFn = createServerFn({ method: 'POST' })
   .inputValidator(UserThemeSchema)
-  .handler(async ({ data }) => {
+  .handler(({ data }) => {
     setCookie(themeStorageKey, data)
     return data
   })

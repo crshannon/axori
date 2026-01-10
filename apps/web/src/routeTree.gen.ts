@@ -33,6 +33,7 @@ import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
 import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
 import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
+import { Route as AuthedPropertyHubAddRouteImport } from './routes/_authed/property-hub.add'
 import { Route as AuthedPropertyHubPropertyIdRouteImport } from './routes/_authed/property-hub.$propertyId'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as AuthedPropertyHubPropertyIdIndexRouteImport } from './routes/_authed/property-hub.$propertyId/index'
@@ -166,6 +167,11 @@ const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
   path: '/demo/api/names',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedPropertyHubAddRoute = AuthedPropertyHubAddRouteImport.update({
+  id: '/add',
+  path: '/add',
+  getParentRoute: () => AuthedPropertyHubRoute,
+} as any)
 const AuthedPropertyHubPropertyIdRoute =
   AuthedPropertyHubPropertyIdRouteImport.update({
     id: '/$propertyId',
@@ -265,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdRouteWithChildren
+  '/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
@@ -302,6 +309,7 @@ export interface FileRoutesByTo {
   '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
@@ -343,6 +351,7 @@ export interface FileRoutesById {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/_authed/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdRouteWithChildren
+  '/_authed/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
@@ -383,6 +392,7 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/property-hub/$propertyId'
+    | '/property-hub/add'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/form/address'
@@ -420,6 +430,7 @@ export interface FileRouteTypes {
     | '/demo/drizzle'
     | '/demo/store'
     | '/demo/tanstack-query'
+    | '/property-hub/add'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/form/address'
@@ -460,6 +471,7 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/_authed/property-hub/$propertyId'
+    | '/_authed/property-hub/add'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/form/address'
@@ -674,6 +686,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoApiNamesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/property-hub/add': {
+      id: '/_authed/property-hub/add'
+      path: '/add'
+      fullPath: '/property-hub/add'
+      preLoaderRoute: typeof AuthedPropertyHubAddRouteImport
+      parentRoute: typeof AuthedPropertyHubRoute
+    }
     '/_authed/property-hub/$propertyId': {
       id: '/_authed/property-hub/$propertyId'
       path: '/$propertyId'
@@ -816,11 +835,13 @@ const AuthedPropertyHubPropertyIdRouteWithChildren =
 
 interface AuthedPropertyHubRouteChildren {
   AuthedPropertyHubPropertyIdRoute: typeof AuthedPropertyHubPropertyIdRouteWithChildren
+  AuthedPropertyHubAddRoute: typeof AuthedPropertyHubAddRoute
 }
 
 const AuthedPropertyHubRouteChildren: AuthedPropertyHubRouteChildren = {
   AuthedPropertyHubPropertyIdRoute:
     AuthedPropertyHubPropertyIdRouteWithChildren,
+  AuthedPropertyHubAddRoute: AuthedPropertyHubAddRoute,
 }
 
 const AuthedPropertyHubRouteWithChildren =

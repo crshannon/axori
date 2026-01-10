@@ -1,17 +1,17 @@
 import { Caption, Heading } from '@axori/ui'
-import { cn } from '@/utils/helpers'
-import type { StepProps } from '../types'
 import { StepperTitle } from '../components'
+import type { StepProps } from '../types'
+import { cn } from '@/utils/helpers'
 
 export const Step6Strategy = ({ formData, setFormData }: StepProps) => {
   return (
-    <div className="w-full max-w-4xl animate-in slide-in-from-right-8 duration-500">
+    <div className="w-full animate-in slide-in-from-right-8 duration-500">
       <StepperTitle
         title="What's your strategy for this property?"
         subtitle="Select the primary investment thesis"
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
         {[
           {
             id: 'Primary',

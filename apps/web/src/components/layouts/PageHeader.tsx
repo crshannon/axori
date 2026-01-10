@@ -1,6 +1,6 @@
-import { ReactNode } from 'react'
 import { Caption, Heading } from '@axori/ui'
 import { useUser } from '@clerk/clerk-react'
+import type { ReactNode } from 'react'
 import { useTheme } from '@/utils/providers/theme-provider'
 import { cn } from '@/utils/helpers'
 

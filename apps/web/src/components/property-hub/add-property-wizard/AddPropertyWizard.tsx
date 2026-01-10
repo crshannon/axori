@@ -1,7 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
-import { X } from 'lucide-react'
-import { Caption, Card, Heading, Overline } from '@axori/ui'
-import { ProgressHeader } from './components'
+import { IntelligenceSidebar, PropertyHeader, WizardFooter } from './components'
 import {
   Step1Address,
   Step2PropertyDetails,
@@ -10,173 +7,87 @@ import {
   Step5Management,
   Step6Strategy,
 } from './steps'
-import type { PropertyFormData } from './types'
-import { cn } from '@/utils/helpers'
 import {
-  useCompleteProperty,
-  useCreateProperty,
-  useCurrentUser,
-  useDefaultPortfolio,
-  useLatestDraft,
-  useProperty,
-  useUpdateProperty,
-} from '@/hooks/api'
+  usePropertyFormData,
+  usePropertyPersistence,
+  useWizardNavigation,
+} from './hooks'
+import { AsyncLoader } from '@/components/loader/async-loader'
+import { useCurrentUser, useDefaultPortfolio } from '@/hooks/api'
 
 interface AddPropertyWizardProps {
   onClose: () => void
-  onComplete: () => void
+  onComplete: (propertyId?: string) => void
   portfolioId?: string // Optional - defaults to user's first portfolio or creates one
-  draftId?: string // Optional - resume specific draft property
+  existingPropertyId?: string // Optional - resume an existing property (from URL)
+  initialStep?: number // Optional - for URL-based step tracking
+  onStepChange?: (step: number, propertyId?: string) => void // Optional - callback when step changes, with optional propertyId to update URL
 }
 
 export const AddPropertyWizard = ({
   onClose,
   onComplete,
   portfolioId: propPortfolioId,
-  draftId: propDraftId,
+  existingPropertyId,
+  initialStep = 1,
+  onStepChange,
 }: AddPropertyWizardProps) => {
-  const [step, setStep] = useState(1)
   const totalSteps = 6
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [draftId, setDraftId] = useState<string | null>(propDraftId || null)
 
-  // React Query hooks for data fetching
+  // Get user and portfolio data
   const { data: userData } = useCurrentUser()
   const { data: portfolio } = useDefaultPortfolio()
-
-  // If a specific draftId prop was passed, fetch that property
-  // Otherwise, check for the most recent draft to auto-resume
-  const { data: specificDraft } = useProperty(propDraftId)
-  const { data: latestDraft } = useLatestDraft({
-    enabled: !propDraftId && !draftId, // Only check for latest draft if not resuming a specific one
-  })
-
-  // Use specific draft if provided, otherwise use latest draft
-  const draftToLoad = specificDraft || latestDraft
-  const createProperty = useCreateProperty()
-  const updateProperty = useUpdateProperty()
-  const completeProperty = useCompleteProperty()
-
-  // Derived state
   const userId = userData?.id || null
   const portfolioId = propPortfolioId || portfolio?.id || null
-  const isSaving = createProperty.isPending || updateProperty.isPending
 
-  // Form State
-  const [formData, setFormData] = useState<PropertyFormData>({
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '', // Updated from 'zip' to match schema
-    propertyType: 'Single Family', // Updated from 'propType' to match schema
-    beds: 3,
-    baths: 2,
-    sqft: 1800,
-    yearBuilt: 2010,
-    lotSize: 5000,
-    purchaseDate: '',
-    purchasePrice: '',
-    closingCosts: '',
-    currentValue: '450,000',
-    entityType: 'Personal',
-    entityName: '',
-    financeType: 'Mortgage',
-    loanType: 'Conventional',
-    loanAmount: '',
-    interestRate: '6.5',
-    loanTerm: '30',
-    provider: '',
-    isRented: 'Yes',
-    rentAmount: '2,500',
-    leaseEnd: '',
-    tenantName: '',
-    mgmtType: 'Self-Managed',
-    pmCompany: '',
-    strategy: '',
-  })
-
-  const [addressSuggestions, setAddressSuggestions] = useState<Array<string>>(
-    [],
-  )
-  const [isAddressSelected, setIsAddressSelected] = useState(false)
-
-  // Load draft data into form when available
-  // This happens when:
-  // 1. User opens wizard and has an existing draft (auto-resume)
-  // 2. User clicks on a draft property from the list (specific draftId prop)
-  useEffect(() => {
-    if (draftToLoad && !draftId) {
-      // Only auto-load if we don't already have a draft loaded
-      // This prevents overwriting form data if user is actively filling it out
-      setFormData((prev) => ({
-        ...prev,
-        address: draftToLoad.address || '',
-        city: draftToLoad.city || '',
-        state: draftToLoad.state || '',
-        zipCode: draftToLoad.zipCode || '',
-        propertyType: draftToLoad.propertyType || 'Single Family',
-        latitude: draftToLoad.latitude
-          ? parseFloat(draftToLoad.latitude)
-          : null,
-        longitude: draftToLoad.longitude
-          ? parseFloat(draftToLoad.longitude)
-          : null,
-        mapboxPlaceId: draftToLoad.mapboxPlaceId || null,
-        fullAddress: draftToLoad.fullAddress || null,
-      }))
-      setDraftId(draftToLoad.id)
-      setIsAddressSelected(!!draftToLoad.address)
-
-      // Resume at step 2 if address is already set
-      if (draftToLoad.address) {
-        setStep(2)
-      }
-    }
-  }, [draftToLoad, draftId])
-
-  // Auto-save draft after each step
-  const saveDraft = useCallback(async () => {
-    // Don't save if missing required fields or context
-    if (!userId || !portfolioId || !isAddressSelected) return
-
-    const saveData = {
-      portfolioId,
-      addedBy: userId,
-      address: formData.address,
-      city: formData.city,
-      state: formData.state,
-      zipCode: formData.zipCode,
-      latitude: formData.latitude?.toString() || null,
-      longitude: formData.longitude?.toString() || null,
-      mapboxPlaceId: formData.mapboxPlaceId || null,
-      fullAddress: formData.fullAddress || null,
-      propertyType: formData.propertyType || null, // Optional for drafts
-    }
-
-    try {
-      if (draftId) {
-        // Update existing draft
-        await updateProperty.mutateAsync({
-          id: draftId,
-          ...saveData,
-        })
-      } else {
-        // Create new draft
-        const result = await createProperty.mutateAsync(saveData)
-        setDraftId(result.property.id)
-      }
-    } catch (error) {
-      console.error('Error saving draft:', error)
-    }
-  }, [
+  // Property persistence - handles saving/loading/completing
+  const {
+    propertyId,
+    setPropertyId,
+    existingProperty,
+    isSaving,
+    saveProperty,
+    completePropertyWizard,
+  } = usePropertyPersistence({
+    existingPropertyId,
     userId,
     portfolioId,
-    isAddressSelected,
+  })
+
+  // Property form data management (uses existingProperty from above)
+  const {
     formData,
-    draftId,
-    createProperty,
-    updateProperty,
-  ])
+    setFormData,
+    isAddressSelected,
+    addressSuggestions,
+    setAddressSuggestions,
+    setIsAddressSelected,
+    handleAddressSelected,
+    fetchRentcastData,
+    resetForm,
+    formatCurrency,
+  } = usePropertyFormData({
+    propertyId,
+    userId,
+    step: initialStep,
+    existingProperty,
+    existingPropertyId,
+  })
+
+  // Wizard navigation
+  const { step, isFetchingData, isSuccess, setIsSuccess, nextStep, prevStep } =
+    useWizardNavigation({
+      initialStep,
+      totalSteps,
+      onStepChange,
+      isAddressSelected,
+      userId,
+      portfolioId,
+      saveProperty,
+      fetchRentcastData,
+      completePropertyWizard,
+      formData, // Pass formData for saving
+    })
 
   const calculatePI = () => {
     const p = parseFloat(formData.loanAmount.replace(/,/g, '')) || 0
@@ -187,63 +98,8 @@ export const AddPropertyWizard = ({
     return pi.toLocaleString(undefined, { maximumFractionDigits: 0 })
   }
 
-  const nextStep = async () => {
-    if (step < totalSteps) {
-      // Save before moving to next step
-      if (isAddressSelected && userId && portfolioId) {
-        await saveDraft()
-      }
-      setStep(step + 1)
-    } else {
-      // Final step - complete the property
-      await handleFinalSave()
-    }
-  }
-
-  const handleFinalSave = async () => {
-    if (!userId || !portfolioId) {
-      console.error('Missing user or portfolio')
-      return
-    }
-
-    // If no draft exists, create one first
-    if (!draftId && isAddressSelected) {
-      await saveDraft()
-      // Wait a moment for draft ID to be set
-      await new Promise((resolve) => setTimeout(resolve, 100))
-    }
-
-    // Mark as active/complete
-    if (draftId) {
-      try {
-        // Update propertyType if not set before completing
-        if (!formData.propertyType) {
-          await updateProperty.mutateAsync({
-            id: draftId,
-            propertyType: 'Single Family', // Default
-          })
-        }
-
-        await completeProperty.mutateAsync(draftId)
-        setIsSuccess(true)
-      } catch (error) {
-        console.error('Error completing property:', error)
-      }
-    } else {
-      console.error('No draft to complete')
-    }
-  }
-
   const handleClose = () => {
-    // Don't save on close - user can resume from where they left off
     onClose()
-  }
-
-  const prevStep = () => setStep(Math.max(1, step - 1))
-
-  const formatCurrency = (val: string) => {
-    const numeric = val.replace(/\D/g, '')
-    return numeric.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   }
 
   const renderStep = () => {
@@ -262,6 +118,7 @@ export const AddPropertyWizard = ({
             setAddressSuggestions={setAddressSuggestions}
             isAddressSelected={isAddressSelected}
             setIsAddressSelected={setIsAddressSelected}
+            onAddressSelected={handleAddressSelected}
           />
         )
       case 2:
@@ -281,17 +138,10 @@ export const AddPropertyWizard = ({
 
   if (isSuccess) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in">
-        <Card
-          variant="rounded"
-          padding="lg"
-          radius="lg"
-          className="max-w-xl w-full text-center overflow-hidden relative"
-        >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-sky-500 to-[#E8FF4D]"></div>
-
-          <div className="my-10">
-            <div className="w-24 h-24 rounded-full mx-auto flex items-center justify-center mb-8 bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-500">
+      <div className="min-h-screen flex flex-col items-center justify-center p-12 bg-slate-50 dark:bg-black transition-colors duration-500">
+        <div className="max-w-5xl w-full animate-in fade-in duration-1000">
+          <div className="text-center mb-16">
+            <div className="w-24 h-24 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto mb-8 shadow-2xl">
               <svg
                 width="48"
                 height="48"
@@ -299,135 +149,116 @@ export const AddPropertyWizard = ({
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="3"
-                className="animate-in zoom-in duration-500"
+                className="animate-bounce"
               >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <Heading level={2} className="mb-4 text-black dark:text-white">
-              Property Added!
-            </Heading>
-            <Caption className="text-slate-500 dark:text-white/70">
-              Mission Intel Successfully Logged
-            </Caption>
+            <h1 className="text-6xl font-black uppercase tracking-tighter mb-4 leading-none text-slate-900 dark:text-white">
+              Intelligence Initialized.
+            </h1>
+            <p className="text-xl text-slate-500 font-bold uppercase tracking-widest italic">
+              {formData.address} is now on the radar.
+            </p>
           </div>
 
-          <div className="p-6 rounded-[2.5rem] border text-left mb-10 flex items-center gap-6 bg-slate-50 border-slate-100 dark:bg-black/40 dark:border-white/10">
-            <div className="w-20 h-20 rounded-2xl bg-slate-500/10 flex items-center justify-center text-3xl font-black opacity-20">
-              A
+          <div className="p-10 rounded-[3.5rem] border bg-white border-slate-200 shadow-sm dark:bg-[#1A1A1A] dark:border-white/5 mb-10 flex items-center gap-8">
+            <div className="w-32 h-32 rounded-[2rem] bg-slate-300 overflow-hidden shrink-0 relative shadow-2xl border-4 border-white/10">
+              <div className="w-full h-full bg-gradient-to-br from-slate-400 to-slate-600"></div>
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center font-black text-white text-[9px] tracking-[0.2em] text-center px-4">
+                ASSET VERIFIED
+              </div>
             </div>
             <div>
-              <Heading level={5} className="text-black dark:text-white">
+              <h3 className="text-2xl font-black uppercase tracking-tighter leading-none text-slate-900 dark:text-white">
                 {formData.address}
-              </Heading>
-              <Overline className="opacity-40 text-black dark:text-white">
-                {formData.city}, {formData.state}
-              </Overline>
-              <div className="flex gap-4 mt-2">
-                <div className="flex items-center gap-1">
-                  <span className="text-[9px] font-black uppercase text-emerald-500">
-                    Score Pending
-                  </span>
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></div>
-                </div>
+              </h3>
+              <p className="text-[11px] font-bold uppercase tracking-widest opacity-40 mt-3">
+                {formData.city}, {formData.state} {formData.zipCode}
+              </p>
+              <div className="mt-4 flex gap-4">
+                <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-500">
+                  ✓ Deployment Ready
+                </span>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row gap-6">
             <button
-              onClick={onComplete}
-              className="w-full py-6 rounded-3xl text-black text-xs uppercase tracking-widest transition-all hover:scale-105 bg-violet-600 text-white shadow-xl shadow-violet-200 dark:bg-[#E8FF4D] dark:text-black dark:shadow-lg dark:shadow-[#E8FF4D]/20"
+              onClick={() => onComplete(propertyId || undefined)}
+              className="flex-grow py-7 rounded-[2.5rem] font-black text-xs uppercase tracking-widest transition-all hover:scale-105 bg-violet-600 text-white shadow-xl shadow-violet-200 dark:bg-[#E8FF4D] dark:text-black dark:shadow-lg dark:shadow-[#E8FF4D]/20"
             >
-              View Property Details
+              Deploy Full Asset Analysis
             </button>
             <button
               onClick={() => {
                 setIsSuccess(false)
-                setStep(1)
-                setFormData({ ...formData, address: '', strategy: '' })
-                setIsAddressSelected(false)
+                resetForm()
+                setPropertyId(null)
               }}
-              className="w-full py-6 rounded-3xl font-black text-xs uppercase tracking-widest border transition-all border-slate-200 text-slate-900 hover:bg-slate-50 dark:border-white/10 dark:text-white dark:hover:bg-white/5"
+              className="px-12 py-7 rounded-[2.5rem] font-black text-xs uppercase tracking-widest border transition-all border-slate-200 text-slate-900 hover:bg-slate-50 dark:border-white/10 dark:text-white dark:hover:bg-white/5"
             >
               Add Another Asset
             </button>
           </div>
-        </Card>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in overflow-y-auto">
-      <Card
-        variant="rounded"
-        padding="lg"
-        radius="lg"
-        className="max-w-4xl w-full relative overflow-hidden flex flex-col min-h-[700px]"
-      >
-        {/* Header Control */}
-        <div className="flex justify-between items-center mb-8 relative z-10">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black italic text-sm bg-slate-900 text-white dark:bg-white dark:text-black">
-              A
-            </div>
-            <Overline className="opacity-40 text-black dark:text-white">
-              System Asset Deployment
-            </Overline>
-          </div>
-          <div className="flex items-center gap-2">
-            {isSaving && (
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                Saving...
-              </span>
-            )}
-            <button
-              onClick={handleClose}
-              className="p-3 rounded-xl transition-all opacity-40 hover:opacity-100 text-slate-900 hover:bg-red-50 hover:text-red-600 dark:text-white dark:hover:bg-red-500/10 dark:hover:text-red-500"
-            >
-              <X size={24} strokeWidth={3} />
-            </button>
-          </div>
-        </div>
+    <>
+      <AsyncLoader isVisible={isFetchingData} duration={3000} />
 
-        <ProgressHeader step={step} totalSteps={totalSteps} />
-
-        <div className="flex-grow flex flex-col items-center">
-          {renderStep()}
-        </div>
-
-        <div className="mt-6 pt-6 flex items-center justify-between border-t transition-colors sticky bottom-0 z-20 bg-white border-slate-200 dark:bg-[#1A1A1A] dark:border-white/5">
-          <div className="flex gap-4">
-            {step > 1 && (
-              <button
-                onClick={prevStep}
-                className="px-8 py-4 rounded-2xl font-medium font-black text-black dark:text-white text-xs uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
-              >
-                Back
-              </button>
-            )}
+      <div className="flex min-h-screen font-sans overflow-hidden bg-slate-50 dark:bg-[#0A0A0A] text-slate-900 dark:text-white transition-colors duration-500">
+        {/* Left Sidebar - Logo & Nav */}
+        <aside className="w-20 md:w-24 flex flex-col items-center py-10 border-r bg-white dark:bg-black border-slate-200 dark:border-white/5 shadow-xl dark:shadow-none transition-all duration-500 z-50">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-16 shadow-lg bg-slate-900 dark:bg-white text-white dark:text-black transition-colors">
+            <span className="font-black italic text-xl">A</span>
           </div>
-
-          <div className="flex gap-6 items-center">
-            <span className="hidden sm:inline text-xs font-black text-black dark:text-white uppercase tracking-[0.3em] opacity-30">
-              Step {step} / {totalSteps}
-            </span>
-            <button
-              onClick={nextStep}
-              disabled={step === 1 && !isAddressSelected}
-              className={cn(
-                'px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all text-white',
-                step === 1 && !isAddressSelected
-                  ? 'opacity-20 cursor-not-allowed grayscale text-slate-900 dark:text-white'
-                  : 'bg-violet-600 shadow-xl shadow-violet-200 hover:scale-105 dark:bg-[#E8FF4D] dark:text-black dark:shadow-lg dark:shadow-[#E8FF4D]/20',
-              )}
-            >
-              {step === totalSteps ? 'Add Property' : 'Continue'}
-            </button>
+          <div className="flex flex-col gap-6 opacity-10">
+            <div className="w-6 h-6 border-2 rounded-lg border-current"></div>
+            <div className="w-6 h-6 border-2 rounded-lg border-current"></div>
+            <div className="w-6 h-6 border-2 rounded-lg border-current"></div>
           </div>
-        </div>
-      </Card>
-    </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <main className="flex-grow flex flex-col h-screen relative">
+          {/* Header */}
+          <PropertyHeader
+            step={step}
+            totalSteps={totalSteps}
+            onCancel={handleClose}
+          />
+
+          {/* Content + Sidebar */}
+          <div className="flex flex-grow overflow-hidden">
+            {/* Main Form Section */}
+            <section className="flex-grow overflow-y-auto no-scrollbar">
+              <div className="p-12">
+                <div className="max-w-3xl mx-auto py-12">
+                  {renderStep()}
+
+                  {/* Footer Buttons */}
+                  <WizardFooter
+                    step={step}
+                    totalSteps={totalSteps}
+                    isDisabled={step === 1 && !isAddressSelected}
+                    isSaving={isSaving}
+                    onBack={prevStep}
+                    onNext={nextStep}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Intelligence Sidebar */}
+            <IntelligenceSidebar step={step} />
+          </div>
+        </main>
+      </div>
+    </>
   )
 }

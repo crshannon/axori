@@ -1,9 +1,9 @@
-import type { StepProps } from '../types'
 import { FormLabel, StepperTitle, inputClass } from '../components'
+import type { StepProps } from '../types'
 
 export const Step3Ownership = ({ formData, setFormData, formatCurrency }: StepProps) => {
   return (
-    <div className="w-full max-w-3xl animate-in slide-in-from-right-8 duration-500">
+    <div className="w-full animate-in slide-in-from-right-8 duration-500">
       <StepperTitle
         title="Ownership Details"
         subtitle="Define the purchase structure"

@@ -45,7 +45,7 @@ export interface OnboardingFormData {
   llcName?: string // Required when ownership is 'LLC'
   freedomNumber: number
   strategy?: OnboardingStrategy
-  markets?: string[] // Array of market IDs
+  markets?: Array<string> // Array of market IDs
 }
 
 export interface OnboardingData {
@@ -59,7 +59,7 @@ export interface OnboardingData {
     llcName?: string
     freedomNumber?: number
     strategy?: OnboardingStrategy
-    markets?: string[] // Array of market IDs
+    markets?: Array<string> // Array of market IDs
   } | null
   firstName: string | null
   lastName: string | null
@@ -68,7 +68,7 @@ export interface OnboardingData {
 export interface OnboardingUpdate {
   step: string | null
   data?: Partial<OnboardingFormData>
-  markets?: string[] // Array of market IDs for step 7
+  markets?: Array<string> // Array of market IDs for step 7
   firstName?: string | null
   lastName?: string | null
 }

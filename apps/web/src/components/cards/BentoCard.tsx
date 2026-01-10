@@ -1,5 +1,5 @@
-import { HTMLAttributes, ReactNode } from "react";
 import { Card, cn } from "@axori/ui";
+import type { HTMLAttributes, ReactNode } from "react";
 
 export interface BentoCardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;

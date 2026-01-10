@@ -1,7 +1,7 @@
 import { Heading } from '@axori/ui'
-import { cn } from '@/utils/helpers'
-import type { StepProps } from '../types'
 import { FormLabel, StepperTitle, ToggleButton, inputClass } from '../components'
+import type { StepProps } from '../types'
+import { cn } from '@/utils/helpers'
 
 export const Step5Management = ({
   formData,
@@ -9,13 +9,13 @@ export const Step5Management = ({
   formatCurrency,
 }: StepProps) => {
   return (
-    <div className="w-full max-w-3xl animate-in slide-in-from-right-8 duration-500">
+    <div className="w-full animate-in slide-in-from-right-8 duration-500">
       <StepperTitle
         title="How is this property managed?"
         subtitle="Define operational structure"
       />
 
-      <div className="flex gap-6 mb-12">
+      <div className="flex gap-6 mb-12 flex-wrap">
         {[
           {
             id: 'Self-Managed',

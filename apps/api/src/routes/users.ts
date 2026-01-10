@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { db } from "@axori/db";
 import { users, userMarkets, markets, portfolios, userPortfolios } from "@axori/db/src/schema";
-import { eq } from "drizzle-orm";
+import { eq } from "@axori/db";
 
 const usersRouter = new Hono();
 

@@ -6,6 +6,66 @@
  */
 
 /**
+ * Mapbox Client for server-side API calls
+ */
+export class MapboxClient {
+  private apiKey: string;
+  private baseUrl = "https://api.mapbox.com/geocoding/v5/mapbox.places";
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+  }
+
+  /**
+   * Search for addresses using Mapbox Geocoding API
+   */
+  async searchAddresses(
+    query: string,
+    options?: {
+      limit?: number;
+      types?: string[];
+      country?: string;
+    }
+  ): Promise<MapboxGeocodingResponse> {
+    const params = new URLSearchParams({
+      access_token: this.apiKey,
+      limit: String(options?.limit || 5),
+    });
+
+    if (options?.types) {
+      params.append("types", options.types.join(","));
+    }
+
+    if (options?.country) {
+      params.append("country", options.country);
+    }
+
+    const url = `${this.baseUrl}/${encodeURIComponent(query)}.json?${params.toString()}`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      // Try to get more details from the response
+      let errorMessage = `Mapbox API error: ${response.statusText} (${response.status})`;
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = `Mapbox API error: ${errorData.message} (${response.status})`;
+        }
+        console.error('Mapbox API error response:', JSON.stringify(errorData, null, 2));
+      } catch {
+        // If we can't parse the error, use the status text
+      }
+      console.error(`Mapbox API request failed: ${url.substring(0, 100)}...`);
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+}
+
+
+/**
  * Mapbox Geocoding API feature context item
  * Context provides additional information about the feature's location hierarchy
  */
@@ -95,8 +155,10 @@ export interface MapboxAddressSuggestion {
   city: string
   /** 2-letter state code (e.g., "TX") */
   state: string
-  /** ZIP code (5 or 9 digits) */
+  /** ZIP code (5 or 9 digits) - also available as zipCode */
   zip: string
+  /** ZIP code (alias for zip) - matches database schema field name */
+  zipCode: string
   /** Full place name from Mapbox */
   placeName: string
   /** Latitude coordinate */
@@ -187,6 +249,7 @@ export function parseMapboxFeature(
     city: city,
     state: state,
     zip: zip,
+    zipCode: zip, // Alias for database schema compatibility
     placeName: fullPlaceName,
     latitude: latitude,
     longitude: longitude,

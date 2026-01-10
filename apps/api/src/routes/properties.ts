@@ -1,48 +1,332 @@
 import { Hono } from "hono";
-import { db } from "@axori/db";
-import { properties } from "@axori/db/src/schema";
-import { eq, and, desc } from "drizzle-orm";
-import { propertyInsertSchema, propertyUpdateSchema } from "@axori/shared/src/validation";
+import { 
+  db, 
+  properties,
+  propertyCharacteristics,
+  propertyValuation,
+  propertyAcquisition,
+  propertyRentalIncome,
+  propertyOperatingExpenses,
+  loans,
+  eq, 
+  and, 
+  desc 
+} from "@axori/db";
+import { 
+  propertyInsertSchema, 
+  propertyUpdateSchema,
+  propertyCharacteristicsInsertSchema,
+  propertyValuationInsertSchema,
+  propertyAcquisitionInsertSchema,
+  propertyRentalIncomeInsertSchema,
+  propertyOperatingExpensesInsertSchema,
+  loanInsertSchema,
+} from "@axori/shared/src/validation";
+import { RentcastClient, type PropertyDetails } from "@axori/shared/src/integrations/rentcast";
+import { transformRentcastToAxori } from "@axori/shared/src/integrations/data-transformers";
 import { z } from "zod";
 
 const propertiesRouter = new Hono();
 
 // Get all properties (filter by portfolio and/or status if provided)
+// Excludes archived properties by default (soft delete)
 propertiesRouter.get("/", async (c) => {
   const portfolioId = c.req.query("portfolioId");
   const status = c.req.query("status");
+  const includeArchived = c.req.query("includeArchived") === "true";
 
-  let query = db.select().from(properties);
+  // Get all properties for the portfolio (only filter if portfolioId is provided and valid)
+  // Check if portfolioId is a valid UUID format (basic check: not empty and looks like UUID)
+  const isValidPortfolioId = portfolioId && portfolioId.trim() !== "" && portfolioId.length > 10;
 
-  const conditions = [];
-  if (portfolioId) {
-    conditions.push(eq(properties.portfolioId, portfolioId));
+  let allProperties;
+  if (isValidPortfolioId) {
+    // Filter by specific portfolio
+    allProperties = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.portfolioId, portfolioId));
+  } else {
+    // Get all properties (no portfolio filter)
+    allProperties = await db.select().from(properties);
   }
+
+  // Filter by status and exclude archived (unless explicitly requested)
+  let filtered = allProperties;
+
   if (status) {
-    conditions.push(eq(properties.status, status as any));
+    filtered = filtered.filter((p) => p.status === status);
+  } else if (!includeArchived) {
+    // Exclude archived by default
+    filtered = filtered.filter((p) => p.status !== "archived");
   }
 
-  if (conditions.length > 0) {
-    query = query.where(and(...conditions) as any) as any;
-  }
+  // Sort by most recent first
+  filtered.sort((a, b) => {
+    const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+    const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+    return dateB - dateA;
+  });
 
-  // Order by most recent first
-  query = query.orderBy(desc(properties.updatedAt)) as any;
-
-  const allProperties = await query;
-  return c.json({ properties: allProperties });
+  return c.json({ properties: filtered });
 });
 
-// Get single property by ID
-propertiesRouter.get("/:id", async (c) => {
+// Fetch or update Rentcast data for a property
+// GET /api/properties/:id/rentcast-data
+// Checks cache (1 week old) and fetches from Rentcast if needed
+// In local environment (NODE_ENV=local), returns mock data instead of making API calls
+// NOTE: This must come before /:id route to avoid route matching conflicts
+propertiesRouter.get("/:id/rentcast-data", async (c) => {
   const id = c.req.param("id");
-  const property = await db.select().from(properties).where(eq(properties.id, id)).limit(1);
+  const isLocal = process.env.NODE_ENV === "local";
+  const apiKey = process.env.RENTCAST_API_KEY;
 
-  if (!property || property.length === 0) {
+  if (!apiKey) {
+    return c.json({ error: "Rentcast API key not configured" }, 500);
+  }
+
+  // Get property
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(eq(properties.id, id))
+    .limit(1);
+
+  if (!property) {
     return c.json({ error: "Property not found" }, 404);
   }
 
-  return c.json({ property: property[0] });
+  // Check if we have cached data that's less than 1 week old
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+  if (
+    property.rentcastData &&
+    property.rentcastFetchedAt &&
+    new Date(property.rentcastFetchedAt) > oneWeekAgo
+  ) {
+    // Return cached data
+    return c.json({
+      data: JSON.parse(property.rentcastData),
+      cached: true,
+      fetchedAt: property.rentcastFetchedAt,
+    });
+  }
+
+  // In local mode, return mock data instead of making API calls
+  if (isLocal) {
+    try {
+      // Import mock data directly as TypeScript module for type safety
+      const { mockRentcastPropertyRecord: mockData } = await import(
+        "@axori/shared/src/mocks/rentcast-property-record"
+      );
+
+      // Transform Rentcast data into Axori schema
+      const { propertyData, metadata } = transformRentcastToAxori(mockData);
+
+      // Store mock data in database for consistency
+      await db
+        .update(properties)
+        .set({
+          rentcastData: JSON.stringify(mockData),
+          rentcastFetchedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(properties.id, id));
+
+      // Save Rentcast data to property_characteristics (upsert)
+      const [existingCharacteristics] = await db
+        .select()
+        .from(propertyCharacteristics)
+        .where(eq(propertyCharacteristics.propertyId, id))
+        .limit(1);
+
+      const characteristicsData = {
+        propertyId: id,
+        propertyType: propertyData.propertyType || null,
+        bedrooms: propertyData.bedrooms || null,
+        bathrooms: propertyData.bathrooms || null,
+        squareFeet: propertyData.squareFootage || null,
+        lotSize: propertyData.lotSize || null,
+        yearBuilt: propertyData.yearBuilt || null,
+        rentcastPropertyId: mockData.id || null,
+      };
+
+      if (existingCharacteristics) {
+        await db
+          .update(propertyCharacteristics)
+          .set({ ...characteristicsData, updatedAt: new Date() })
+          .where(eq(propertyCharacteristics.propertyId, id));
+      } else {
+        await db
+          .insert(propertyCharacteristics)
+          .values(characteristicsData);
+      }
+
+      console.log(
+        `[MOCK MODE] Returning mock Rentcast data for property ${id}`
+      );
+
+      return c.json({
+        data: mockData,
+        transformed: propertyData,
+        metadata,
+        cached: false,
+        fetchedAt: new Date().toISOString(),
+        mock: true, // Indicate this is mock data
+      });
+    } catch (error: any) {
+      console.error("Error loading mock Rentcast data:", error);
+      return c.json(
+        { error: "Failed to load mock Rentcast data", details: error.message },
+        500
+      );
+    }
+  }
+
+  // Production mode: fetch from real Rentcast API
+  if (!apiKey) {
+    return c.json({ error: "Rentcast API key not configured" }, 500);
+  }
+
+  try {
+    const rentcastClient = new RentcastClient(apiKey);
+    const rentcastData = await rentcastClient.getPropertyDetails(
+      property.address,
+      property.city,
+      property.state,
+      property.zipCode
+    );
+
+    // Transform Rentcast data into Axori schema
+    const { propertyData, metadata } = transformRentcastToAxori(rentcastData);
+
+    // Update property with transformed data + store raw response for caching
+    await db
+      .update(properties)
+      .set({
+        rentcastData: JSON.stringify(rentcastData), // Store raw response
+        rentcastFetchedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(properties.id, id));
+
+    // Save Rentcast data to property_characteristics (upsert)
+    const [existingCharacteristics] = await db
+      .select()
+      .from(propertyCharacteristics)
+      .where(eq(propertyCharacteristics.propertyId, id))
+      .limit(1);
+
+    const characteristicsData = {
+      propertyId: id,
+      propertyType: propertyData.propertyType || null,
+      bedrooms: propertyData.bedrooms || null,
+      bathrooms: propertyData.bathrooms || null,
+      squareFeet: propertyData.squareFootage || null,
+      lotSize: propertyData.lotSize || null,
+      yearBuilt: propertyData.yearBuilt || null,
+      rentcastPropertyId: rentcastData.id || null,
+    };
+
+    if (existingCharacteristics) {
+      await db
+        .update(propertyCharacteristics)
+        .set({ ...characteristicsData, updatedAt: new Date() })
+        .where(eq(propertyCharacteristics.propertyId, id));
+    } else {
+      await db
+        .insert(propertyCharacteristics)
+        .values(characteristicsData);
+    }
+
+    return c.json({
+      data: rentcastData, // Return raw response
+      transformed: propertyData, // Also return transformed data
+      metadata, // Include metadata
+      cached: false,
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error("Error fetching Rentcast data:", error);
+    return c.json(
+      { error: "Failed to fetch property data from Rentcast", details: error.message },
+      500
+    );
+  }
+});
+
+// Get single property by ID (with all normalized data joined)
+propertiesRouter.get("/:id", async (c) => {
+  const id = c.req.param("id");
+  
+  // Get property
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(eq(properties.id, id))
+    .limit(1);
+
+  if (!property) {
+    return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Join all normalized tables
+  const [characteristics] = await db
+    .select()
+    .from(propertyCharacteristics)
+    .where(eq(propertyCharacteristics.propertyId, id))
+    .limit(1);
+
+  const [valuation] = await db
+    .select()
+    .from(propertyValuation)
+    .where(eq(propertyValuation.propertyId, id))
+    .limit(1);
+
+  const [acquisition] = await db
+    .select()
+    .from(propertyAcquisition)
+    .where(eq(propertyAcquisition.propertyId, id))
+    .limit(1);
+
+  const [rentalIncome] = await db
+    .select()
+    .from(propertyRentalIncome)
+    .where(eq(propertyRentalIncome.propertyId, id))
+    .limit(1);
+
+  const [operatingExpenses] = await db
+    .select()
+    .from(propertyOperatingExpenses)
+    .where(eq(propertyOperatingExpenses.propertyId, id))
+    .limit(1);
+
+  // Get active loan (if any) - primary active loan for the property
+  const activeLoans = await db
+    .select()
+    .from(loans)
+    .where(and(
+      eq(loans.propertyId, id),
+      eq(loans.status, "active"),
+      eq(loans.isPrimary, true)
+    ))
+    .limit(1);
+
+  const activeLoan = activeLoans.length > 0 ? activeLoans[0] : null;
+
+  // Return property with all normalized data
+  return c.json({
+    property: {
+      ...property,
+      characteristics: characteristics || null,
+      valuation: valuation || null,
+      acquisition: acquisition || null,
+      rentalIncome: rentalIncome || null,
+      operatingExpenses: operatingExpenses || null,
+      activeLoan: activeLoan,
+    },
+  });
 });
 
 // Create new property (draft or active)
@@ -73,11 +357,25 @@ propertiesRouter.post("/", async (c) => {
 });
 
 // Update existing property (used for draft updates and finalizing)
+// Accepts property core data + optional normalized table data
 propertiesRouter.put("/:id", async (c) => {
   try {
     const id = c.req.param("id");
     const body = await c.req.json();
-    const validated = propertyUpdateSchema.parse({ ...body, id });
+    
+    // Separate core property data from normalized data
+    const {
+      characteristics,
+      valuation,
+      acquisition,
+      rentalIncome,
+      operatingExpenses,
+      loan,
+      ...propertyData
+    } = body;
+
+    // Validate and update core property data
+    const validated = propertyUpdateSchema.parse({ ...propertyData, id });
 
     const [updated] = await db
       .update(properties)
@@ -90,6 +388,158 @@ propertiesRouter.put("/:id", async (c) => {
 
     if (!updated) {
       return c.json({ error: "Property not found" }, 404);
+    }
+
+    // Update or insert characteristics
+    if (characteristics) {
+      const characteristicsData = propertyCharacteristicsInsertSchema.parse({
+        propertyId: id,
+        ...characteristics,
+      });
+
+      // Check if record exists
+      const [existing] = await db
+        .select()
+        .from(propertyCharacteristics)
+        .where(eq(propertyCharacteristics.propertyId, id))
+        .limit(1);
+
+      if (existing) {
+        await db
+          .update(propertyCharacteristics)
+          .set({ ...characteristicsData, updatedAt: new Date() })
+          .where(eq(propertyCharacteristics.propertyId, id));
+      } else {
+        await db.insert(propertyCharacteristics).values(characteristicsData);
+      }
+    }
+
+    // Update or insert valuation
+    if (valuation) {
+      const valuationData = propertyValuationInsertSchema.parse({
+        propertyId: id,
+        ...valuation,
+      });
+
+      const [existing] = await db
+        .select()
+        .from(propertyValuation)
+        .where(eq(propertyValuation.propertyId, id))
+        .limit(1);
+
+      if (existing) {
+        await db
+          .update(propertyValuation)
+          .set({ ...valuationData, updatedAt: new Date() })
+          .where(eq(propertyValuation.propertyId, id));
+      } else {
+        await db.insert(propertyValuation).values(valuationData);
+      }
+    }
+
+    // Update or insert acquisition
+    if (acquisition) {
+      const acquisitionData = propertyAcquisitionInsertSchema.parse({
+        propertyId: id,
+        ...acquisition,
+      });
+
+      const [existing] = await db
+        .select()
+        .from(propertyAcquisition)
+        .where(eq(propertyAcquisition.propertyId, id))
+        .limit(1);
+
+      if (existing) {
+        await db
+          .update(propertyAcquisition)
+          .set({ ...acquisitionData, updatedAt: new Date() })
+          .where(eq(propertyAcquisition.propertyId, id));
+      } else {
+        await db.insert(propertyAcquisition).values(acquisitionData);
+      }
+    }
+
+    // Update or insert rental income
+    if (rentalIncome) {
+      const rentalIncomeData = propertyRentalIncomeInsertSchema.parse({
+        propertyId: id,
+        ...rentalIncome,
+      });
+
+      const [existing] = await db
+        .select()
+        .from(propertyRentalIncome)
+        .where(eq(propertyRentalIncome.propertyId, id))
+        .limit(1);
+
+      if (existing) {
+        await db
+          .update(propertyRentalIncome)
+          .set({ ...rentalIncomeData, updatedAt: new Date() })
+          .where(eq(propertyRentalIncome.propertyId, id));
+      } else {
+        await db.insert(propertyRentalIncome).values(rentalIncomeData);
+      }
+    }
+
+    // Update or insert operating expenses
+    if (operatingExpenses) {
+      const operatingExpensesData = propertyOperatingExpensesInsertSchema.parse({
+        propertyId: id,
+        ...operatingExpenses,
+      });
+
+      const [existing] = await db
+        .select()
+        .from(propertyOperatingExpenses)
+        .where(eq(propertyOperatingExpenses.propertyId, id))
+        .limit(1);
+
+      if (existing) {
+        await db
+          .update(propertyOperatingExpenses)
+          .set({ ...operatingExpensesData, updatedAt: new Date() })
+          .where(eq(propertyOperatingExpenses.propertyId, id));
+      } else {
+        await db.insert(propertyOperatingExpenses).values(operatingExpensesData);
+      }
+    }
+
+    // Handle loan data (mark old loans inactive, insert new one)
+    if (loan) {
+      // Get userId from request header for user isolation
+      const authHeader = c.req.header("Authorization");
+      const clerkId = authHeader?.replace("Bearer ", "");
+      
+      if (clerkId) {
+        const { users } = await import("@axori/db/src/schema");
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.clerkId, clerkId))
+          .limit(1);
+
+        if (user) {
+          const loanData = loanInsertSchema.parse({
+            propertyId: id,
+            userId: user.id,
+            ...loan,
+          });
+
+          // Mark existing active loans as paid off (when adding new loan)
+          await db
+            .update(loans)
+            .set({ status: "paid_off", updatedAt: new Date() })
+            .where(and(
+              eq(loans.propertyId, id),
+              eq(loans.status, "active")
+            ));
+
+          // Insert new active loan
+          await db.insert(loans).values(loanData);
+        }
+      }
     }
 
     return c.json({ property: updated });
@@ -138,6 +588,39 @@ propertiesRouter.post("/:id/complete", async (c) => {
   }
 });
 
+// Soft delete a property (mark as archived)
+propertiesRouter.delete("/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+
+    // Verify property exists
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.id, id))
+      .limit(1);
+
+    if (!property) {
+      return c.json({ error: "Property not found" }, 404);
+    }
+
+    // Soft delete by marking as archived (doesn't actually delete from DB)
+    const [updated] = await db
+      .update(properties)
+      .set({
+        status: "archived",
+        updatedAt: new Date(),
+      })
+      .where(eq(properties.id, id))
+      .returning();
+
+    return c.json({ property: updated });
+  } catch (error) {
+    console.error("Error deleting property:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
 // GET /api/properties/drafts/me - Get current user's most recent draft property
 propertiesRouter.get("/drafts/me", async (c) => {
   const authHeader = c.req.header("Authorization");
@@ -177,7 +660,7 @@ propertiesRouter.get("/drafts/me", async (c) => {
   const allDrafts = await db
     .select()
     .from(properties)
-    .where(eq(properties.portfolioId, portfolioId) as any);
+    .where(eq(properties.portfolioId, portfolioId));
 
   // Filter in memory for status and addedBy (to avoid type conflicts)
   const userDrafts = allDrafts
@@ -200,4 +683,3 @@ propertiesRouter.get("/drafts/me", async (c) => {
 });
 
 export default propertiesRouter;
-

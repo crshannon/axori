@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+// ============================================================================
+// PHASE 1: NORMALIZED PROPERTY SCHEMA EXPORTS
+// ============================================================================
+// Export all new normalized property schemas from the dedicated file
+export * from "./normalized-property";
+
 // Common validation schemas
 
 // Portfolio Insert Schema - excludes auto-generated fields (id, createdAt, updatedAt)
@@ -45,9 +51,10 @@ export const userPortfolioUpdateSchema = z.object({
 });
 
 // Property Insert Schema - excludes auto-generated fields (id, createdAt, updatedAt)
-// portfolioId and addedBy come from context, not user input
+// portfolioId, userId, and addedBy come from context, not user input
 export const propertyInsertSchema = z.object({
   portfolioId: z.string().uuid("Portfolio ID must be a valid UUID"), // From portfolio context
+  userId: z.string().uuid("User ID must be a valid UUID"), // Required for user isolation
   addedBy: z.string().uuid("Added by user ID must be a valid UUID"), // From auth context
   address: z
     .string()
@@ -120,8 +127,8 @@ export const propertyUpdateSchema = z.object({
 });
 
 // Legacy schema for backward compatibility (deprecated - use propertyInsertSchema)
-// Note: This schema is kept for backwards compatibility but should be updated to use portfolioId
-export const propertySchema = propertyInsertSchema.omit({ portfolioId: true, addedBy: true });
+// Note: This schema is kept for backwards compatibility but should be updated to use portfolioId, userId
+export const propertySchema = propertyInsertSchema.omit({ portfolioId: true, userId: true, addedBy: true });
 
 // Name validation pattern: letters, spaces, hyphens, apostrophes
 const namePattern = /^[a-zA-Z\s'-]+$/;
@@ -268,4 +275,116 @@ export const userSelectSchemaWithOnboarding = userSelectSchema.extend({
   onboardingData: z.string().nullable(), // JSON string, parse with onboardingDataSchema
 });
 
+// Property Details Insert Schema - excludes auto-generated fields (id, createdAt, updatedAt)
+export const propertyDetailsInsertSchema = z.object({
+  propertyId: z.string().uuid("Property ID must be a valid UUID"),
+  bedrooms: z.number().int().min(0).max(50).optional().nullable(),
+  bathrooms: z.number().min(0).max(50).optional().nullable(), // Allow 2.5 baths
+  squareFeet: z.number().int().min(0).max(100000).optional().nullable(),
+  lotSize: z.number().int().min(0).optional().nullable(), // Square feet
+  yearBuilt: z.number().int().min(1700).max(new Date().getFullYear() + 1).optional().nullable(),
+});
+
+// Property Details Select Schema - includes all fields from database
+export const propertyDetailsSelectSchema = propertyDetailsInsertSchema.extend({
+  id: z.string().uuid(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+// Property Details Update Schema - all fields optional except ID
+export const propertyDetailsUpdateSchema = z.object({
+  id: z.string().uuid(),
+  bedrooms: z.number().int().min(0).max(50).optional().nullable(),
+  bathrooms: z.number().min(0).max(50).optional().nullable(),
+  squareFeet: z.number().int().min(0).max(100000).optional().nullable(),
+  lotSize: z.number().int().min(0).optional().nullable(),
+  yearBuilt: z.number().int().min(1700).max(new Date().getFullYear() + 1).optional().nullable(),
+});
+
+// Property Finances Insert Schema - excludes auto-generated fields (id, createdAt, updatedAt)
+export const propertyFinancesInsertSchema = z.object({
+  propertyId: z.string().uuid("Property ID must be a valid UUID"),
+  // Purchase information
+  purchaseDate: z.union([z.string(), z.date()]).optional().nullable().transform((val) => {
+    if (!val) return null;
+    if (typeof val === 'string') return val;
+    return val.toISOString().split('T')[0]; // Convert Date to YYYY-MM-DD
+  }),
+  purchasePrice: z.number().min(0).optional().nullable(),
+  closingCosts: z.number().min(0).optional().nullable(),
+  currentValue: z.number().min(0).optional().nullable(),
+  // Ownership
+  entityType: z.enum(["Personal", "LLC", "Trust", "Corporation"]).optional().nullable(),
+  entityName: z.string().max(255).optional().nullable(),
+  // Financing
+  financeType: z.enum(["Cash", "Mortgage", "Owner Financing"]).optional().nullable(),
+  loanType: z.enum(["Conventional", "FHA", "VA", "USDA", "Portfolio", "Hard Money", "Other"]).optional().nullable(),
+  loanAmount: z.number().min(0).optional().nullable(),
+  interestRate: z.number().min(0).max(100).optional().nullable(), // Percentage
+  loanTerm: z.number().int().min(1).max(50).optional().nullable(), // Years
+  lender: z.string().max(255).optional().nullable(),
+});
+
+// Property Finances Select Schema - includes all fields from database
+export const propertyFinancesSelectSchema = propertyFinancesInsertSchema.extend({
+  id: z.string().uuid(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+// Property Finances Update Schema - all fields optional except ID
+export const propertyFinancesUpdateSchema = z.object({
+  id: z.string().uuid(),
+  purchaseDate: z.union([z.string(), z.date()]).optional().nullable(),
+  purchasePrice: z.number().min(0).optional().nullable(),
+  closingCosts: z.number().min(0).optional().nullable(),
+  currentValue: z.number().min(0).optional().nullable(),
+  entityType: z.enum(["Personal", "LLC", "Trust", "Corporation"]).optional().nullable(),
+  entityName: z.string().max(255).optional().nullable(),
+  financeType: z.enum(["Cash", "Mortgage", "Owner Financing"]).optional().nullable(),
+  loanType: z.enum(["Conventional", "FHA", "VA", "USDA", "Portfolio", "Hard Money", "Other"]).optional().nullable(),
+  loanAmount: z.number().min(0).optional().nullable(),
+  interestRate: z.number().min(0).max(100).optional().nullable(),
+  loanTerm: z.number().int().min(1).max(50).optional().nullable(),
+  lender: z.string().max(255).optional().nullable(),
+});
+
+// Property Management Insert Schema - excludes auto-generated fields (id, createdAt, updatedAt)
+export const propertyManagementInsertSchema = z.object({
+  propertyId: z.string().uuid("Property ID must be a valid UUID"),
+  // Rental status
+  isRented: z.boolean().default(false),
+  monthlyRent: z.number().min(0).optional().nullable(),
+  leaseEndDate: z.union([z.string(), z.date()]).optional().nullable().transform((val) => {
+    if (!val) return null;
+    if (typeof val === 'string') return val;
+    return val.toISOString().split('T')[0]; // Convert Date to YYYY-MM-DD
+  }),
+  tenantName: z.string().max(255).optional().nullable(),
+  // Management
+  managementType: z.enum(["Self-Managed", "Property Manager", "Turnkey"]).optional().nullable(),
+  managementCompany: z.string().max(255).optional().nullable(),
+  // Investment strategy
+  investmentStrategy: z.enum(["Buy & Hold", "BRRRR", "House Hack", "Fix & Flip", "Wholesale", "Other"]).optional().nullable(),
+});
+
+// Property Management Select Schema - includes all fields from database
+export const propertyManagementSelectSchema = propertyManagementInsertSchema.extend({
+  id: z.string().uuid(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+// Property Management Update Schema - all fields optional except ID
+export const propertyManagementUpdateSchema = z.object({
+  id: z.string().uuid(),
+  isRented: z.boolean().optional(),
+  monthlyRent: z.number().min(0).optional().nullable(),
+  leaseEndDate: z.union([z.string(), z.date()]).optional().nullable(),
+  tenantName: z.string().max(255).optional().nullable(),
+  managementType: z.enum(["Self-Managed", "Property Manager", "Turnkey"]).optional().nullable(),
+  managementCompany: z.string().max(255).optional().nullable(),
+  investmentStrategy: z.enum(["Buy & Hold", "BRRRR", "House Hack", "Fix & Flip", "Wholesale", "Other"]).optional().nullable(),
+});
 

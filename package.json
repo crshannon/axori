@@ -41,7 +41,8 @@
   },
   "pnpm": {
     "overrides": {
-      "drizzle-orm": "^0.45.0"
+      "drizzle-orm": "0.45.1",
+      "@types/pg": "8.16.0"
     }
   },
   "packageManager": "pnpm@8.15.0",

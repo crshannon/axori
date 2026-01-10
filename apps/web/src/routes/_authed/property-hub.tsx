@@ -1,4 +1,5 @@
 import {
+  Link,
   Outlet,
   createFileRoute,
   useLocation,
@@ -6,7 +7,7 @@ import {
 } from '@tanstack/react-router'
 import { useUser } from '@clerk/clerk-react'
 import { useEffect, useState } from 'react'
-import { ChevronRight, Plus } from 'lucide-react'
+import { ChevronRight, Plus, Trash2 } from 'lucide-react'
 import {
   Body,
   Caption,
@@ -16,8 +17,13 @@ import {
   PropertyCard,
   Typography,
 } from '@axori/ui'
+import {
+  useDefaultPortfolio,
+  useDeleteProperty,
+  useProperties,
+} from '@/hooks/api'
 import { PageHeader } from '@/components/layouts/PageHeader'
-import { AddPropertyWizard } from '@/components/property-hub/add-property-wizard'
+import { DeletePropertyModal } from '@/components/property-hub/DeletePropertyModal'
 import { cn } from '@/utils/helpers'
 import { useOnboardingStatus } from '@/utils/onboarding'
 import { useTheme } from '@/utils/providers/theme-provider'
@@ -26,7 +32,7 @@ export const Route = createFileRoute('/_authed/property-hub')({
   component: RouteComponent,
 })
 
-interface Property {
+const mockProperties: Array<{
   id: string
   addr: string
   nickname: string
@@ -37,9 +43,7 @@ interface Property {
   value: string
   img: string
   mgmt: string
-}
-
-const mockProperties: Array<Property> = [
+}> = [
   {
     id: 'prop_01',
     addr: '2291 Lakeview Dr, Austin, TX',
@@ -120,16 +124,24 @@ const alerts = [
 function RouteComponent() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { isSignedIn, isLoaded, user } = useUser()
+  const { isSignedIn, isLoaded } = useUser()
   const { completed: onboardingCompleted, isLoading: onboardingLoading } =
     useOnboardingStatus()
   const { appTheme } = useTheme()
   const isDark = appTheme === 'dark'
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchQuery, setSearchQuery] = useState('')
-  const [strategyFilter, setStrategyFilter] = useState('All')
-  const [statusFilter, setStatusFilter] = useState('All')
-  const [isWizardOpen, setIsWizardOpen] = useState(false)
+  const [deletePropertyId, setDeletePropertyId] = useState<string | null>(null)
+  const [deletePropertyAddress, setDeletePropertyAddress] = useState<string>('')
+
+  // Fetch real properties from API
+  const { data: portfolio } = useDefaultPortfolio()
+  const { data: properties = [] } = useProperties(portfolio?.id || null)
+  const deleteProperty = useDeleteProperty()
+
+  // Separate active and draft properties
+  const activeProperties = properties.filter((p) => p.status === 'active')
+  const draftProperties = properties.filter((p) => p.status === 'draft')
 
   // Check if we're on a property detail route by checking if pathname matches pattern
   const isPropertyDetailRoute =
@@ -160,14 +172,22 @@ function RouteComponent() {
     })
   }
 
-  const filteredProps = mockProperties.filter((p) => {
+  // Combine real properties with mock data for now (transitional)
+  // Filter properties
+  const filteredActiveProps = activeProperties.filter((p) => {
+    const fullAddress = `${p.address}, ${p.city}, ${p.state} ${p.zipCode}`
     const matchesSearch =
-      p.addr.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.nickname.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStrategy =
-      strategyFilter === 'All' || p.strategy === strategyFilter
-    const matchesStatus = statusFilter === 'All' || p.status === statusFilter
-    return matchesSearch && matchesStrategy && matchesStatus
+      fullAddress.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.address.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesSearch
+  })
+
+  const filteredDraftProps = draftProperties.filter((p) => {
+    const fullAddress = `${p.address}, ${p.city}, ${p.state} ${p.zipCode}`
+    const matchesSearch =
+      fullAddress.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.address.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesSearch
   })
 
   const totalValue = mockProperties.reduce(
@@ -239,8 +259,9 @@ function RouteComponent() {
               </svg>
               Export Data
             </button>
-            <button
-              onClick={() => setIsWizardOpen(true)}
+            <Link
+              to="/property-hub/add"
+              search={{ draftId: undefined }}
               className={cn(
                 'px-8 py-3 rounded-2xl flex items-center gap-3 transition-all font-black text-[10px] uppercase tracking-widest hover:scale-105',
                 isDark
@@ -250,7 +271,7 @@ function RouteComponent() {
             >
               <Plus size={16} strokeWidth={3} />
               Add Property
-            </button>
+            </Link>
           </div>
         }
       />
@@ -425,7 +446,10 @@ function RouteComponent() {
             </div>
             <div className="flex gap-2">
               <select
-                onChange={(e) => setStrategyFilter(e.target.value)}
+                defaultValue="All"
+                onChange={() => {
+                  // TODO: Implement strategy filter for real properties
+                }}
                 className={cn(
                   'px-6 py-4 rounded-3xl text-[9px] font-black uppercase border outline-none appearance-none transition-all',
                   isDark
@@ -438,7 +462,10 @@ function RouteComponent() {
                 <option value="Appreciation">Appreciation</option>
               </select>
               <select
-                onChange={(e) => setStatusFilter(e.target.value)}
+                defaultValue="All"
+                onChange={() => {
+                  // TODO: Implement status filter for real properties
+                }}
                 className={cn(
                   'px-6 py-4 rounded-3xl text-[9px] font-black uppercase border outline-none appearance-none transition-all',
                   isDark
@@ -479,10 +506,150 @@ function RouteComponent() {
           </div>
         </div>
 
-        {/* Grid View */}
+        {/* Draft Properties Section */}
+        {filteredDraftProps.length > 0 && (
+          <div className="mb-10">
+            <Heading
+              level={3}
+              className={cn(
+                'text-xl font-black uppercase tracking-tighter mb-6',
+                isDark ? 'text-white' : 'text-slate-900',
+              )}
+            >
+              Incomplete Properties
+            </Heading>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {filteredDraftProps.map((p) => {
+                const fullAddress = `${p.address}, ${p.city}, ${p.state} ${p.zipCode}`
+                return (
+                  <Card
+                    key={p.id}
+                    variant="rounded"
+                    padding="lg"
+                    radius="xl"
+                    className={cn(
+                      'border-2 border-dashed relative group',
+                      isDark
+                        ? 'bg-white/5 border-amber-500/30 dark:border-amber-500/50'
+                        : 'bg-amber-50/50 border-amber-300',
+                    )}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span
+                            className={cn(
+                              'px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest',
+                              isDark
+                                ? 'bg-amber-500/20 text-amber-400'
+                                : 'bg-amber-500/10 text-amber-600',
+                            )}
+                          >
+                            Draft
+                          </span>
+                        </div>
+                        <Heading
+                          level={5}
+                          className={cn(
+                            'text-sm font-black mb-1 truncate',
+                            isDark ? 'text-white' : 'text-slate-900',
+                          )}
+                        >
+                          {p.address}
+                        </Heading>
+                        <Caption
+                          className={cn(
+                            'text-xs opacity-60',
+                            isDark ? 'text-white/60' : 'text-slate-500',
+                          )}
+                        >
+                          {p.city}, {p.state}
+                        </Caption>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setDeletePropertyId(p.id)
+                          setDeletePropertyAddress(fullAddress)
+                        }}
+                        className={cn(
+                          'p-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity',
+                          'text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10',
+                        )}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <Link
+                        to="/property-hub/add"
+                        search={{ draftId: p.id }}
+                        className={cn(
+                          'flex-1 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-center',
+                          isDark
+                            ? 'bg-white/10 hover:bg-white/20 text-white'
+                            : 'bg-slate-900 hover:bg-slate-800 text-white',
+                        )}
+                      >
+                        Continue Setup
+                      </Link>
+                    </div>
+                  </Card>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Active Properties Grid View */}
         {viewMode === 'grid' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {filteredProps.map((p) => (
+            {filteredActiveProps.map((p) => {
+              // For now, use mock data styling until we have full property data
+              // TODO: Replace with real property data from API
+              return (
+                <div key={p.id}>
+                  {/* Placeholder - will need to update PropertyCard or create new component */}
+                  <Card
+                    variant="rounded"
+                    padding="lg"
+                    radius="xl"
+                    className={cn(
+                      'border cursor-pointer hover:shadow-2xl transition-shadow',
+                      isDark
+                        ? 'bg-[#1A1A1A] border-white/5'
+                        : 'bg-white border-slate-200 shadow-sm',
+                    )}
+                    onClick={() =>
+                      navigate({
+                        to: '/property-hub/$propertyId',
+                        params: { propertyId: p.id },
+                      })
+                    }
+                  >
+                    <Heading
+                      level={5}
+                      className={cn(
+                        'text-sm font-black mb-1',
+                        isDark ? 'text-white' : 'text-slate-900',
+                      )}
+                    >
+                      {p.address}
+                    </Heading>
+                    <Caption
+                      className={cn(
+                        'text-xs opacity-60',
+                        isDark ? 'text-white/60' : 'text-slate-500',
+                      )}
+                    >
+                      {p.city}, {p.state}
+                    </Caption>
+                  </Card>
+                </div>
+              )
+            })}
+            {/* Keep mock properties for now during transition */}
+            {mockProperties.map((p) => (
               <PropertyCard
                 key={p.id}
                 id={p.id}
@@ -566,7 +733,7 @@ function RouteComponent() {
                 </tr>
               </thead>
               <tbody className="text-xs font-black uppercase">
-                {filteredProps.map((p) => (
+                {mockProperties.map((p) => (
                   <tr
                     key={p.id}
                     onClick={() => onNavigatePropertyAnalysis(p.id)}
@@ -867,14 +1034,27 @@ function RouteComponent() {
         </section>
       </div>
 
-      {/* Add Property Wizard */}
-      {isWizardOpen && (
-        <AddPropertyWizard
-          onClose={() => setIsWizardOpen(false)}
-          onComplete={() => {
-            setIsWizardOpen(false)
-            // TODO: Refresh properties list or navigate to new property
+      {/* Delete Property Confirmation Modal */}
+      {deletePropertyId && (
+        <DeletePropertyModal
+          propertyAddress={deletePropertyAddress}
+          onConfirm={async () => {
+            if (deletePropertyId) {
+              try {
+                await deleteProperty.mutateAsync(deletePropertyId)
+                setDeletePropertyId(null)
+                setDeletePropertyAddress('')
+              } catch (error) {
+                console.error('Failed to delete property:', error)
+                // Keep modal open on error so user can try again
+              }
+            }
           }}
+          onCancel={() => {
+            setDeletePropertyId(null)
+            setDeletePropertyAddress('')
+          }}
+          isDeleting={deleteProperty.isPending}
         />
       )}
     </main>

@@ -1,6 +1,6 @@
 import { Typography } from '@axori/ui'
-import type { StepProps } from '../types'
 import { FormLabel, StepperTitle, ToggleButton, inputClass } from '../components'
+import type { StepProps } from '../types'
 
 export const Step4Financing = ({
   formData,
@@ -9,13 +9,13 @@ export const Step4Financing = ({
   calculatePI,
 }: StepProps & { calculatePI: () => string }) => {
   return (
-    <div className="w-full max-w-3xl animate-in slide-in-from-right-8 duration-500">
+    <div className="w-full animate-in slide-in-from-right-8 duration-500">
       <StepperTitle
         title="How did you finance this?"
         subtitle="Select acquisition funding method"
       />
 
-      <div className="flex gap-6 mb-12">
+      <div className="flex gap-6 mb-12 flex-wrap">
         {[
           {
             id: 'Cash',

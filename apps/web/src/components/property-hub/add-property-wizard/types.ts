@@ -24,6 +24,7 @@ export interface PropertyFormData {
   longitude?: number | null
   mapboxPlaceId?: string | null
   fullAddress?: string | null
+  mapboxRawData?: string | null // JSON string of the full Mapbox feature response (stored when Continue is clicked)
 
   // Property type (aligned with schema)
   propertyType: string // Changed from 'propType' to match schema

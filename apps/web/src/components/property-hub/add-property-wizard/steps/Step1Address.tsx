@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
-import { parseMapboxFeature } from '@axori/shared'
 import { Heading, Overline } from '@axori/ui'
 import { StepperTitle } from '../components'
-import type {
-  MapboxAddressSuggestion,
-  MapboxGeocodingResponse,
-} from '@axori/shared'
 import type { PropertyFormData } from '../types'
+import type { MapboxAddressSuggestion } from '@axori/shared/src/integrations/mapbox'
+import { useMapboxSearch } from '@/hooks/api/useMapbox'
 
 interface Step1AddressProps {
   formData: PropertyFormData
@@ -16,6 +13,17 @@ interface Step1AddressProps {
   setAddressSuggestions: React.Dispatch<React.SetStateAction<Array<string>>>
   isAddressSelected: boolean
   setIsAddressSelected: React.Dispatch<React.SetStateAction<boolean>>
+  onAddressSelected?: (addressData: {
+    address: string
+    city: string
+    state: string
+    zipCode: string
+    latitude: number | null
+    longitude: number | null
+    mapboxPlaceId: string
+    fullAddress: string
+    rawMapboxFeature: any
+  }) => void | Promise<void> // Callback when address is selected - triggers Rentcast fetch
 }
 
 export const Step1Address = ({
@@ -24,54 +32,54 @@ export const Step1Address = ({
   setAddressSuggestions,
   isAddressSelected,
   setIsAddressSelected,
+  onAddressSelected,
 }: Step1AddressProps) => {
+  const [searchQuery, setSearchQuery] = useState<string>('')
   const [suggestions, setSuggestions] = useState<
     Array<MapboxAddressSuggestion>
   >([])
-  const [isLoading, setIsLoading] = useState(false)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  const MAPBOX_TOKEN =
-    import.meta.env.VITE_MAPBOX_ACCESS_TOKEN ||
-    'pk.eyJ1IjoidGVzdCIsImEiOiJjbGV4YW1wbGUifQ.example'
+  // Store raw Mapbox features for each suggestion (for saving when Continue is clicked)
+  const [rawFeaturesMap, setRawFeaturesMap] = useState<Map<string, any>>(
+    new Map(),
+  )
 
-  // Fetch address suggestions from Mapbox Geocoding API
-  const fetchAddressSuggestions = async (query: string) => {
-    if (!query || query.length < 3) {
-      setSuggestions([])
-      setAddressSuggestions([])
-      return
-    }
+  // Use server-side Mapbox search hook (API key never exposed to client)
+  // Only search when query is at least 3 characters and user is actively typing
+  const shouldSearch = searchQuery.length >= 6
+  const { data: searchResults, isLoading } = useMapboxSearch(
+    shouldSearch ? searchQuery : null,
+  )
 
-    setIsLoading(true)
-    try {
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&limit=5&types=address&country=us`
+  // Update suggestions when search results change
+  useEffect(() => {
+    if (searchResults?.suggestions) {
+      setSuggestions(searchResults.suggestions)
+      setAddressSuggestions(searchResults.suggestions.map((s) => s.placeName))
 
-      const response = await fetch(url)
-      if (!response.ok) {
-        throw new Error('Failed to fetch address suggestions')
+      // Map raw features by place ID for easy lookup (if available)
+      if (searchResults.rawFeatures) {
+        const featuresMap = new Map<string, any>()
+        searchResults.suggestions.forEach((suggestion, index) => {
+          if (searchResults.rawFeatures && searchResults.rawFeatures[index]) {
+            featuresMap.set(
+              suggestion.mapboxPlaceId,
+              searchResults.rawFeatures[index],
+            )
+          }
+        })
+        setRawFeaturesMap(featuresMap)
+      } else {
+        // Clear raw features map if not available
+        setRawFeaturesMap(new Map())
       }
-
-      const data: MapboxGeocodingResponse = await response.json()
-
-      console.log('data', data)
-
-      // Use shared utility to parse Mapbox features
-      const parsedSuggestions = data.features.map(parseMapboxFeature)
-
-      setSuggestions(parsedSuggestions)
-      // Update parent component's suggestions array with formatted strings
-      setAddressSuggestions(
-        parsedSuggestions.map((s: MapboxAddressSuggestion) => s.placeName),
-      )
-    } catch (error) {
-      console.error('Error fetching address suggestions:', error)
+    } else {
       setSuggestions([])
       setAddressSuggestions([])
-    } finally {
-      setIsLoading(false)
+      setRawFeaturesMap(new Map())
     }
-  }
+  }, [searchResults, setAddressSuggestions])
 
   // Debounced address change handler
   const handleAddressChange = (val: string) => {
@@ -82,9 +90,9 @@ export const Step1Address = ({
       clearTimeout(debounceTimerRef.current)
     }
 
-    // Set new timer for debounced API call
+    // Set new timer for debounced search (triggers server-side Mapbox API call)
     debounceTimerRef.current = setTimeout(() => {
-      fetchAddressSuggestions(val)
+      setSearchQuery(val)
     }, 300) // 300ms debounce
   }
 
@@ -98,26 +106,49 @@ export const Step1Address = ({
   }, [])
 
   const selectAddress = (suggestion: MapboxAddressSuggestion) => {
-    console.log('suggestion', suggestion)
-    setFormData({
-      ...formData,
+    // Get the raw Mapbox feature for this suggestion
+    const rawFeature = rawFeaturesMap.get(suggestion.mapboxPlaceId)
+
+    const addressData = {
       address: suggestion.address,
       city: suggestion.city,
       state: suggestion.state,
-      zipCode: suggestion.zip, // Updated to match schema field name
+      zipCode: suggestion.zipCode || suggestion.zip,
+    }
+
+    // Store parsed data in form (raw data will be stored when Continue is clicked)
+    setFormData({
+      ...formData,
+      ...addressData,
       // Store Mapbox geocoding data for database persistence
       latitude: suggestion.latitude,
       longitude: suggestion.longitude,
       mapboxPlaceId: suggestion.mapboxPlaceId,
       fullAddress: suggestion.fullAddress,
+      // Store raw Mapbox feature as JSON string (will be saved to DB on Continue)
+      mapboxRawData: rawFeature ? JSON.stringify(rawFeature) : null,
     })
+
+    // Call callback to trigger Rentcast API fetch with the selected address
+    if (onAddressSelected && rawFeature) {
+      onAddressSelected({
+        ...addressData,
+        latitude: suggestion.latitude,
+        longitude: suggestion.longitude,
+        mapboxPlaceId: suggestion.mapboxPlaceId,
+        fullAddress: suggestion.fullAddress,
+        rawMapboxFeature: rawFeature,
+      })
+    }
+
     setSuggestions([])
     setAddressSuggestions([])
     setIsAddressSelected(true)
+    setSearchQuery('') // Clear search query to stop showing "Searching..."
   }
 
   return (
-    <div className="w-full max-w-2xl text-center animate-in slide-in-from-right-8 duration-500">
+    <div className="w-full animate-in slide-in-from-right-8 duration-500">
       <StepperTitle
         title="Let's add your property"
         subtitle="Start by entering the asset location"
@@ -149,7 +180,7 @@ export const Step1Address = ({
           </>
         )}
 
-        {isLoading && (
+        {isLoading && shouldSearch && (
           <div className="absolute top-full left-0 right-0 mt-4 p-4 rounded-3xl border shadow-2xl z-50 bg-white border-slate-200 dark:bg-[#1A1A1A] dark:border-white/10">
             <div className="p-6 text-center text-sm font-black text-slate-500 dark:text-white/40 uppercase">
               Searching...
@@ -219,6 +250,7 @@ export const Step1Address = ({
                 longitude: null,
                 mapboxPlaceId: null,
                 fullAddress: null,
+                mapboxRawData: null,
               })
             }}
             className="p-2 rounded-xl transition-all opacity-40 hover:opacity-100 text-slate-900 hover:bg-slate-100 dark:text-white dark:hover:bg-white/10 shrink-0 cursor-pointer"

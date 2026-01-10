@@ -3,7 +3,7 @@ import type { StepProps } from '../types'
 
 export const Step2PropertyDetails = ({ formData, setFormData }: StepProps) => {
   return (
-    <div className="w-full max-w-3xl animate-in slide-in-from-right-8 duration-500">
+    <div className="w-full animate-in slide-in-from-right-8 duration-500">
       <StepperTitle
         title="Property Details"
         subtitle="Data auto-populated from public records"
