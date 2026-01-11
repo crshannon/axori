@@ -7,6 +7,7 @@ import {
   propertyAcquisition,
   propertyRentalIncome,
   propertyOperatingExpenses,
+  propertyManagement,
   loans,
   eq, 
   and, 
@@ -20,6 +21,7 @@ import {
   propertyAcquisitionInsertSchema,
   propertyRentalIncomeInsertSchema,
   propertyOperatingExpensesInsertSchema,
+  propertyManagementInsertSchema,
   loanInsertSchema,
 } from "@axori/shared/src/validation";
 import { RentcastClient, type PropertyDetails } from "@axori/shared/src/integrations/rentcast";
@@ -302,6 +304,12 @@ propertiesRouter.get("/:id", async (c) => {
     .where(eq(propertyOperatingExpenses.propertyId, id))
     .limit(1);
 
+  const [management] = await db
+    .select()
+    .from(propertyManagement)
+    .where(eq(propertyManagement.propertyId, id))
+    .limit(1);
+
   // Get active loan (if any) - primary active loan for the property
   const activeLoans = await db
     .select()
@@ -324,7 +332,8 @@ propertiesRouter.get("/:id", async (c) => {
       acquisition: acquisition || null,
       rentalIncome: rentalIncome || null,
       operatingExpenses: operatingExpenses || null,
-      activeLoan: activeLoan,
+      management: management || null,
+      loans: activeLoan ? [activeLoan] : [], // Return as array for consistency
     },
   });
 });
@@ -370,6 +379,7 @@ propertiesRouter.put("/:id", async (c) => {
       acquisition,
       rentalIncome,
       operatingExpenses,
+      management,
       loan,
       ...propertyData
     } = body;
@@ -503,6 +513,29 @@ propertiesRouter.put("/:id", async (c) => {
           .where(eq(propertyOperatingExpenses.propertyId, id));
       } else {
         await db.insert(propertyOperatingExpenses).values(operatingExpensesData);
+      }
+    }
+
+    // Update or insert property management
+    if (management) {
+      const managementData = propertyManagementInsertSchema.parse({
+        propertyId: id,
+        ...management,
+      });
+
+      const [existing] = await db
+        .select()
+        .from(propertyManagement)
+        .where(eq(propertyManagement.propertyId, id))
+        .limit(1);
+
+      if (existing) {
+        await db
+          .update(propertyManagement)
+          .set({ ...managementData, updatedAt: new Date() })
+          .where(eq(propertyManagement.propertyId, id));
+      } else {
+        await db.insert(propertyManagement).values(managementData);
       }
     }
 

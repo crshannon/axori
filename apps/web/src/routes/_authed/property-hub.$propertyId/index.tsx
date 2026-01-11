@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Body, Caption, Heading, Overline, Typography } from '@axori/ui'
-import { PropertyScoreGauge } from '@/components/property-hub/PropertyScoreGauge'
+import { PropertyHero, PropertyScoreGauge } from '@/components/property-hub'
 import { cn } from '@/utils/helpers'
+import { useProperty } from '@/hooks/api/useProperties'
 
 export const Route = createFileRoute('/_authed/property-hub/$propertyId/')({
   component: PropertyOverviewPage,
@@ -10,65 +11,74 @@ export const Route = createFileRoute('/_authed/property-hub/$propertyId/')({
 function PropertyOverviewPage() {
   const { propertyId } = Route.useParams()
 
-  // Mock property data - in production, fetch based on propertyId
-  const mockPropertyData: Record<string, any> = {
-    prop_01: {
-      addr: '2291 Lakeview Dr, Austin, TX',
-      match: 92,
-      iq: 92,
-      price: '$840,000',
-      type: 'Single Family',
-      yearBuilt: '2015',
-      mgmtType: 'Property Management Company',
-      image:
-        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=1200',
-    },
-    prop_02: {
-      addr: '124 Maple Avenue, Greensboro, NC',
-      match: 84,
-      iq: 84,
-      price: '$450,000',
-      type: 'Multi-Family Duplex',
-      yearBuilt: '1998',
-      mgmtType: 'Property Management Company',
-      image:
-        'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&q=80&w=1200',
-    },
-    prop_03: {
-      addr: '4402 Westview Dr, Austin, TX',
-      match: 76,
-      iq: 76,
-      price: '$1,200,000',
-      type: 'Multi-Family Quad',
-      yearBuilt: '1980',
-      mgmtType: 'Property Management Company',
-      image:
-        'https://images.unsplash.com/photo-1448630360428-65456885c650?auto=format&fit=crop&q=80&w=1200',
-    },
-    prop_04: {
-      addr: '8801 Rainey St, Austin, TX',
-      match: 88,
-      iq: 88,
-      price: '$910,000',
-      type: 'Condo',
-      yearBuilt: '2018',
-      mgmtType: 'Property Management Company',
-      image:
-        'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=1200',
-    },
+  // Fetch property data using the hook (includes normalized data)
+  const { data: property, isLoading, error } = useProperty(propertyId)
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="p-8 w-full flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 dark:border-[#E8FF4D] mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">
+            Loading property...
+          </p>
+        </div>
+      </div>
+    )
   }
 
-  const baseProp = mockPropertyData[propertyId] || mockPropertyData.prop_04
+  // Show error state
+  if (error || !property) {
+    return (
+      <div className="p-8 w-full flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-red-600 dark:text-red-400 mb-2">
+            Error loading property
+          </p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm">
+            {error instanceof Error ? error.message : 'Property not found'}
+          </p>
+        </div>
+      </div>
+    )
+  }
 
+  // Construct full address - use fullAddress if available, otherwise construct from parts
+  const fullAddress =
+    property.fullAddress ||
+    (property.address && property.city && property.state && property.zipCode
+      ? `${property.address}, ${property.city}, ${property.state} ${property.zipCode}`
+      : property.address || 'Address not available')
+
+  // Extract normalized data
+  const propertyType =
+    property.characteristics?.propertyType || property.propertyType || 'Unknown'
+  const yearBuilt = property.characteristics?.yearBuilt || null
+  const managementType = property.management?.isSelfManaged
+    ? 'Self-Managed'
+    : property.management?.companyName || 'Unknown'
+  const currentValue =
+    property.acquisition?.currentValue ||
+    property.valuation?.currentValue ||
+    null
+
+  // Format current value as currency
+  const formattedPrice = currentValue
+    ? `$${currentValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+    : 'Price not available'
+
+  // Mock data for UI elements that haven't been wired up yet
   const prop = {
-    addr: baseProp.addr,
-    match: baseProp.match,
-    iq: baseProp.iq,
-    price: baseProp.price,
-    type: baseProp.type,
-    mgmtType: baseProp.mgmtType,
-    yearBuilt: baseProp.yearBuilt,
-    image: baseProp.image,
+    addr: fullAddress,
+    match: 92, // TODO: Calculate from property data
+    iq: 92, // TODO: Calculate from property data
+    price: formattedPrice,
+    type: propertyType,
+    mgmtType: managementType,
+    yearBuilt: yearBuilt?.toString() || 'Unknown',
+    image:
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=1200', // TODO: Add property images
     metrics: [
       { l: 'Gross Yield', v: '7.8%' },
       { l: 'Cap Rate', v: '6.2%' },
@@ -122,43 +132,7 @@ function PropertyOverviewPage() {
   return (
     <div className="p-8 w-full">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
-        <div className="lg:col-span-8 rounded-[4rem] overflow-hidden relative min-h-[500px] shadow-2xl">
-          <img
-            src={prop.image}
-            className="absolute inset-0 w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000"
-            alt={prop.addr}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-          <div className="absolute bottom-12 left-12 right-12 flex justify-between items-end">
-            <div>
-              <Heading
-                level={3}
-                className="text-5xl font-black text-white uppercase tracking-tighter leading-none mb-4"
-              >
-                {prop.addr}
-              </Heading>
-              <div className="flex gap-3">
-                <span className="px-4 py-2 rounded-xl bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest">
-                  {prop.type}
-                </span>
-                <span className="px-4 py-2 rounded-xl bg-indigo-500/40 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest">
-                  {prop.mgmtType}
-                </span>
-              </div>
-            </div>
-            <div className="text-right">
-              <Overline className="text-[10px] font-black text-white/60 uppercase tracking-widest mb-1">
-                Portfolio Equity
-              </Overline>
-              <Typography
-                variant="h3"
-                className="text-4xl font-black text-[#E8FF4D] tracking-tighter"
-              >
-                $210,000
-              </Typography>
-            </div>
-          </div>
-        </div>
+        <PropertyHero propertyId={propertyId} />
 
         <div
           className={cn(

@@ -183,8 +183,6 @@ export const propertyOperatingExpensesInsertSchema = z.object({
   maintenanceMonthly: z.number().min(0).default(0),
   managementFeePercentage: z.number().min(0).max(100).optional().nullable(), // Percentage
   managementFeeFlat: z.number().min(0).default(0),
-  managementType: z.enum(["self_managed", "property_manager", "turnkey"]).optional().nullable(),
-  managementCompany: z.string().max(255).optional().nullable(),
   landscapingMonthly: z.number().min(0).default(0),
   pestControlMonthly: z.number().min(0).default(0),
   capitalExReserveMonthly: z.number().min(0).default(0),
@@ -208,14 +206,61 @@ export const propertyOperatingExpensesUpdateSchema = z.object({
   maintenanceMonthly: z.number().min(0).optional(),
   managementFeePercentage: z.number().min(0).max(100).optional().nullable(),
   managementFeeFlat: z.number().min(0).optional(),
-  managementType: z.enum(["self_managed", "property_manager", "turnkey"]).optional().nullable(),
-  managementCompany: z.string().max(255).optional().nullable(),
   landscapingMonthly: z.number().min(0).optional(),
   pestControlMonthly: z.number().min(0).optional(),
   capitalExReserveMonthly: z.number().min(0).optional(),
   vacancyRatePercentage: z.number().min(0).max(100).optional(),
   otherExpensesMonthly: z.number().min(0).optional(),
   otherExpensesDescription: z.string().max(500).optional().nullable(),
+});
+
+// ============================================================================
+// Property Management (Step 5: Management Company Details)
+// ============================================================================
+
+export const propertyManagementInsertSchema = z.object({
+  propertyId: z.string().uuid("Property ID must be a valid UUID"),
+  isSelfManaged: z.boolean().default(true),
+  companyName: z.string().max(255).optional().nullable(),
+  companyWebsite: z.string().url().optional().nullable().or(z.literal("")),
+  contactName: z.string().max(255).optional().nullable(),
+  contactEmail: z.string().email().optional().nullable().or(z.literal("")),
+  contactPhone: z.string().max(50).optional().nullable(),
+  contractStartDate: z.union([z.string(), z.date()]).optional().nullable(),
+  contractEndDate: z.union([z.string(), z.date()]).optional().nullable(),
+  contractAutoRenews: z.boolean().optional().nullable(),
+  cancellationNoticeDays: z.number().int().min(0).optional().nullable(),
+  feeType: z.enum(["percentage", "flat", "hybrid"]).default("percentage"),
+  feePercentage: z.number().min(0).max(1).optional().nullable(), // 0.10 = 10%
+  feeFlatAmount: z.number().min(0).optional().nullable(),
+  feeMinimum: z.number().min(0).optional().nullable(),
+  leasingFeeType: z.enum(["percentage", "flat", "none"]).optional().nullable(),
+  leasingFeePercentage: z.number().min(0).max(1).optional().nullable(),
+  leasingFeeFlat: z.number().min(0).optional().nullable(),
+  leaseRenewalFee: z.number().min(0).optional().nullable(),
+  maintenanceMarkupPercentage: z.number().min(0).max(1).optional().nullable(),
+  maintenanceCoordinationFee: z.number().min(0).optional().nullable(),
+  evictionFee: z.number().min(0).optional().nullable(),
+  earlyTerminationFee: z.number().min(0).optional().nullable(),
+  servicesIncluded: z.array(z.string()).optional().nullable(),
+  paymentMethod: z.enum(["ach", "check", "portal"]).optional().nullable(),
+  paymentDay: z.number().int().min(1).max(31).optional().nullable(),
+  holdsSecurityDeposit: z.boolean().optional().nullable(),
+  reserveAmount: z.number().min(0).optional().nullable(),
+  portalUrl: z.string().url().optional().nullable().or(z.literal("")),
+  portalUsername: z.string().max(255).optional().nullable(),
+  appfolioPropertyId: z.string().max(255).optional().nullable(),
+  buildiumPropertyId: z.string().max(255).optional().nullable(),
+  propertywarePropertyId: z.string().max(255).optional().nullable(),
+  notes: z.string().max(5000).optional().nullable(),
+});
+
+export const propertyManagementSelectSchema = propertyManagementInsertSchema.extend({
+  updatedAt: z.date(),
+});
+
+export const propertyManagementUpdateSchema = propertyManagementInsertSchema.partial().extend({
+  propertyId: z.string().uuid("Property ID must be a valid UUID"),
 });
 
 // ============================================================================

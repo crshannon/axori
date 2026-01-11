@@ -22,7 +22,7 @@ export interface Property {
   rentcastFetchedAt?: Date | null
   createdAt: Date
   updatedAt: Date
-  
+
   // Nested normalized data (from API joins)
   characteristics?: {
     propertyType?: string | null
@@ -32,13 +32,13 @@ export interface Property {
     lotSize?: number | null
     yearBuilt?: number | null
   } | null
-  
+
   valuation?: {
     currentValue?: number | null
     lastAppraisalDate?: string | null
     lastAppraisalValue?: number | null
   } | null
-  
+
   acquisition?: {
     purchaseDate?: string | null
     purchasePrice?: number | null
@@ -48,23 +48,35 @@ export interface Property {
     entityType?: string | null
     entityName?: string | null
   } | null
-  
+
   rentalIncome?: {
     isRented?: boolean | null
     monthlyBaseRent?: number | null
     leaseEndDate?: string | null
     tenantName?: string | null
   } | null
-  
+
   operatingExpenses?: {
-    managementType?: string | null
-    managementCompany?: string | null
+    // Operating expenses data (no management fields here)
   } | null
-  
+
+  management?: {
+    isSelfManaged?: boolean | null
+    companyName?: string | null
+    companyWebsite?: string | null
+    contactName?: string | null
+    contactEmail?: string | null
+    contactPhone?: string | null
+    feeType?: string | null
+    feePercentage?: number | null
+    feeFlatAmount?: number | null
+    // ... other management fields
+  } | null
+
   strategy?: {
     investmentStrategy?: string | null
   } | null
-  
+
   loans?: Array<{
     id: string
     loanType?: string | null

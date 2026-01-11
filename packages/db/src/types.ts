@@ -9,6 +9,7 @@ import {
   propertyAcquisition,
   propertyRentalIncome,
   propertyOperatingExpenses,
+  propertyManagement,
   loans,
   loanHistory,
   propertyHistory,
@@ -126,6 +127,20 @@ export type PropertyOperatingExpenses = InferSelectModel<typeof propertyOperatin
 export type PropertyOperatingExpensesInsert = InferInsertModel<typeof propertyOperatingExpenses>
 
 // ============================================================================
+// Property Management (Step 5: Management Company Details)
+// ============================================================================
+
+/**
+ * Property Management type inferred from Drizzle schema (for read operations)
+ */
+export type PropertyManagement = InferSelectModel<typeof propertyManagement>
+
+/**
+ * Property Management insert type inferred from Drizzle schema (for insert operations)
+ */
+export type PropertyManagementInsert = InferInsertModel<typeof propertyManagement>
+
+// ============================================================================
 // Loans (Step 4: Financing)
 // ============================================================================
 
@@ -209,15 +224,5 @@ export type PropertyFinances = any
  */
 export type PropertyFinancesInsert = any
 
-/**
- * @deprecated Use PropertyRentalIncome + PropertyOperatingExpenses instead
- * Property Management type inferred from Drizzle schema (for read operations)
- */
-export type PropertyManagement = any
-
-/**
- * @deprecated Use PropertyRentalIncome + PropertyOperatingExpenses instead
- * Property Management insert type inferred from Drizzle schema (for insert operations)
- */
-export type PropertyManagementInsert = any
+// Note: PropertyManagement types are now defined above using the new property_management table
 

@@ -8,6 +8,13 @@
       "when": 1768068609123,
       "tag": "0000_heavy_gladiator",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1768111433779,
+      "tag": "0001_conscious_joshua_kane",
+      "breakpoints": true
     }
   ]
 }

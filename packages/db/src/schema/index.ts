@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, numeric, pgEnum, unique, serial, integer, date } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, boolean, numeric, pgEnum, unique, serial, integer, date, pgArray } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
 // Portfolio role enum for user-portfolio relationships
@@ -229,6 +229,71 @@ export const propertyOperatingExpenses = pgTable("property_operating_expenses", 
   // Other
   otherExpensesMonthly: numeric("other_expenses_monthly", { precision: 10, scale: 2 }).default("0"),
   otherExpensesDescription: text("other_expenses_description"),
+
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Property Management - Management company details and self-management info (1:1)
+export const propertyManagement = pgTable("property_management", {
+  propertyId: uuid("property_id")
+    .references(() => properties.id, { onDelete: "cascade" })
+    .primaryKey(),
+
+  // Management Type
+  isSelfManaged: boolean("is_self_managed").default(true).notNull(),
+
+  // Company Details
+  companyName: text("company_name"),
+  companyWebsite: text("company_website"),
+
+  // Primary Contact
+  contactName: text("contact_name"),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+
+  // Contract Details
+  contractStartDate: date("contract_start_date"),
+  contractEndDate: date("contract_end_date"),
+  contractAutoRenews: boolean("contract_auto_renews"),
+  cancellationNoticeDays: integer("cancellation_notice_days"),
+
+  // Fee Structure
+  feeType: text("fee_type").default("percentage"), // percentage, flat, hybrid
+  feePercentage: numeric("fee_percentage", { precision: 5, scale: 4 }), // e.g., 0.10 = 10%
+  feeFlatAmount: numeric("fee_flat_amount", { precision: 10, scale: 2 }),
+  feeMinimum: numeric("fee_minimum", { precision: 10, scale: 2 }),
+
+  // Additional Fees
+  leasingFeeType: text("leasing_fee_type"), // percentage, flat, none
+  leasingFeePercentage: numeric("leasing_fee_percentage", { precision: 5, scale: 4 }),
+  leasingFeeFlat: numeric("leasing_fee_flat", { precision: 10, scale: 2 }),
+  leaseRenewalFee: numeric("lease_renewal_fee", { precision: 10, scale: 2 }),
+
+  maintenanceMarkupPercentage: numeric("maintenance_markup_percentage", { precision: 5, scale: 4 }),
+  maintenanceCoordinationFee: numeric("maintenance_coordination_fee", { precision: 10, scale: 2 }),
+
+  evictionFee: numeric("eviction_fee", { precision: 10, scale: 2 }),
+  earlyTerminationFee: numeric("early_termination_fee", { precision: 10, scale: 2 }),
+
+  // Services Included
+  servicesIncluded: text("services_included").array(), // ['rent_collection', 'maintenance_coordination', etc.]
+
+  // Payment Details
+  paymentMethod: text("payment_method"), // ach, check, portal
+  paymentDay: integer("payment_day"), // Day of month owner gets paid
+  holdsSecurityDeposit: boolean("holds_security_deposit"),
+  reserveAmount: numeric("reserve_amount", { precision: 10, scale: 2 }),
+
+  // Portal Access
+  portalUrl: text("portal_url"),
+  portalUsername: text("portal_username"),
+
+  // Integration
+  appfolioPropertyId: text("appfolio_property_id"), // For AppFolio sync
+  buildiumPropertyId: text("buildium_property_id"), // For Buildium sync
+  propertywarePropertyId: text("propertyware_property_id"), // For Propertyware sync
+
+  notes: text("notes"),
 
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -538,6 +603,10 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
     fields: [properties.id],
     references: [propertyOperatingExpenses.propertyId],
   }),
+  management: one(propertyManagement, {
+    fields: [properties.id],
+    references: [propertyManagement.propertyId],
+  }),
   loans: many(loans),
   history: many(propertyHistory),
 }));
@@ -573,6 +642,13 @@ export const propertyRentalIncomeRelations = relations(propertyRentalIncome, ({ 
 export const propertyOperatingExpensesRelations = relations(propertyOperatingExpenses, ({ one }) => ({
   property: one(properties, {
     fields: [propertyOperatingExpenses.propertyId],
+    references: [properties.id],
+  }),
+}));
+
+export const propertyManagementRelations = relations(propertyManagement, ({ one }) => ({
+  property: one(properties, {
+    fields: [propertyManagement.propertyId],
     references: [properties.id],
   }),
 }));

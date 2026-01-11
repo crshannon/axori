@@ -98,10 +98,13 @@ export const usePropertyPersistence = ({
           leaseEndDate: formData.leaseEnd || null,
         },
 
-        // Operating expenses & management (Step 5: Operations)
-        operatingExpenses: {
-          managementType: formData.mgmtType,
-          managementCompany: formData.pmCompany,
+        // Operating expenses (Step 5: Operations) - no management data here
+        operatingExpenses: {},
+
+        // Property management (Step 5: Management)
+        management: {
+          isSelfManaged: formData.mgmtType === 'Self-Managed',
+          companyName: formData.mgmtType === 'Property Manager' ? formData.pmCompany || null : null,
         },
       }
 

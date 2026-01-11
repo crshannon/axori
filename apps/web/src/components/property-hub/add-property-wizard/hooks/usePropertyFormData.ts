@@ -76,7 +76,8 @@ export const usePropertyFormData = ({
       const acquisition = existingProperty.acquisition
       const rentalIncome = existingProperty.rentalIncome
       const operatingExpenses = existingProperty.operatingExpenses
-      const activeLoan = existingProperty.activeLoan
+      const management = existingProperty.management
+      const activeLoan = existingProperty.loans?.[0] || null // Get first active loan from array
 
       setFormData((prev) => ({
         ...prev,
@@ -125,9 +126,9 @@ export const usePropertyFormData = ({
         rentAmount: rentalIncome?.monthlyBaseRent?.toString() ?? prev.rentAmount,
         leaseEnd: rentalIncome?.leaseEndDate ?? prev.leaseEnd,
         
-        // Step 5: Management
-        mgmtType: operatingExpenses?.managementType ?? prev.mgmtType,
-        pmCompany: operatingExpenses?.managementCompany ?? prev.pmCompany,
+        // Step 5: Management (from property_management table)
+        mgmtType: management?.isSelfManaged ? 'Self-Managed' : management?.companyName ? 'Property Manager' : prev.mgmtType,
+        pmCompany: management?.companyName ?? prev.pmCompany,
       }))
       setIsAddressSelected(!!existingProperty.address)
     }

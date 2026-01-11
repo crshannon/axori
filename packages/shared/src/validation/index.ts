@@ -350,41 +350,6 @@ export const propertyFinancesUpdateSchema = z.object({
   lender: z.string().max(255).optional().nullable(),
 });
 
-// Property Management Insert Schema - excludes auto-generated fields (id, createdAt, updatedAt)
-export const propertyManagementInsertSchema = z.object({
-  propertyId: z.string().uuid("Property ID must be a valid UUID"),
-  // Rental status
-  isRented: z.boolean().default(false),
-  monthlyRent: z.number().min(0).optional().nullable(),
-  leaseEndDate: z.union([z.string(), z.date()]).optional().nullable().transform((val) => {
-    if (!val) return null;
-    if (typeof val === 'string') return val;
-    return val.toISOString().split('T')[0]; // Convert Date to YYYY-MM-DD
-  }),
-  tenantName: z.string().max(255).optional().nullable(),
-  // Management
-  managementType: z.enum(["Self-Managed", "Property Manager", "Turnkey"]).optional().nullable(),
-  managementCompany: z.string().max(255).optional().nullable(),
-  // Investment strategy
-  investmentStrategy: z.enum(["Buy & Hold", "BRRRR", "House Hack", "Fix & Flip", "Wholesale", "Other"]).optional().nullable(),
-});
-
-// Property Management Select Schema - includes all fields from database
-export const propertyManagementSelectSchema = propertyManagementInsertSchema.extend({
-  id: z.string().uuid(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
-
-// Property Management Update Schema - all fields optional except ID
-export const propertyManagementUpdateSchema = z.object({
-  id: z.string().uuid(),
-  isRented: z.boolean().optional(),
-  monthlyRent: z.number().min(0).optional().nullable(),
-  leaseEndDate: z.union([z.string(), z.date()]).optional().nullable(),
-  tenantName: z.string().max(255).optional().nullable(),
-  managementType: z.enum(["Self-Managed", "Property Manager", "Turnkey"]).optional().nullable(),
-  managementCompany: z.string().max(255).optional().nullable(),
-  investmentStrategy: z.enum(["Buy & Hold", "BRRRR", "House Hack", "Fix & Flip", "Wholesale", "Other"]).optional().nullable(),
-});
+// Property Management schemas are now exported from normalized-property.ts
+// These old schemas are deprecated - use the new ones from normalized-property.ts
 
