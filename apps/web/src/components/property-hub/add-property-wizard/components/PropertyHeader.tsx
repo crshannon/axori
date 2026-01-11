@@ -8,14 +8,21 @@ interface PropertyHeaderProps {
 }
 
 const getStepTitle = (step: number) => {
-  switch(step) {
-    case 1: return "Coordinate Acquisition"
-    case 2: return "Structural DNA"
-    case 3: return "Sovereignty Status"
-    case 4: return "Debt Architecture"
-    case 5: return "Operating Integrity"
-    case 6: return "Strategy Alignment"
-    default: return "Deployment Pipeline"
+  switch (step) {
+    case 1:
+      return 'Coordinate Acquisition'
+    case 2:
+      return 'Structural DNA'
+    case 3:
+      return 'Sovereignty Status'
+    case 4:
+      return 'Debt Architecture'
+    case 5:
+      return 'Operating Integrity'
+    case 6:
+      return 'Strategy Alignment'
+    default:
+      return 'Deployment Pipeline'
   }
 }
 
@@ -33,7 +40,7 @@ export const PropertyHeader = ({
     <div className="flex items-center gap-6">
       <button
         onClick={onCancel}
-        className="p-4 rounded-2xl transition-all bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-900 dark:hover:text-white"
+        className="p-4 rounded-2xl transition-all bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-900 dark:text-white cursor-pointer"
         aria-label="Cancel and return to property hub"
       >
         <X size={20} strokeWidth={3} />

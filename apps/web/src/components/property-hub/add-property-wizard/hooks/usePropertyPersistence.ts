@@ -57,7 +57,7 @@ export const usePropertyPersistence = ({
 
         // Normalized table data (Step 2: Physical characteristics)
         characteristics: {
-          propertyType: formData.propertyType || null,
+        propertyType: formData.propertyType || null,
           bedrooms: formData.beds || null,
           bathrooms: formData.baths || null,
           squareFeet: formData.sqft || null,

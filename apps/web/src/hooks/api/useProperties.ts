@@ -22,6 +22,60 @@ export interface Property {
   rentcastFetchedAt?: Date | null
   createdAt: Date
   updatedAt: Date
+  
+  // Nested normalized data (from API joins)
+  characteristics?: {
+    propertyType?: string | null
+    bedrooms?: number | null
+    bathrooms?: number | null
+    squareFeet?: number | null
+    lotSize?: number | null
+    yearBuilt?: number | null
+  } | null
+  
+  valuation?: {
+    currentValue?: number | null
+    lastAppraisalDate?: string | null
+    lastAppraisalValue?: number | null
+  } | null
+  
+  acquisition?: {
+    purchaseDate?: string | null
+    purchasePrice?: number | null
+    closingCosts?: number | null
+    currentValue?: number | null
+    ownershipStatus?: string | null
+    entityType?: string | null
+    entityName?: string | null
+  } | null
+  
+  rentalIncome?: {
+    isRented?: boolean | null
+    monthlyBaseRent?: number | null
+    leaseEndDate?: string | null
+    tenantName?: string | null
+  } | null
+  
+  operatingExpenses?: {
+    managementType?: string | null
+    managementCompany?: string | null
+  } | null
+  
+  strategy?: {
+    investmentStrategy?: string | null
+  } | null
+  
+  loans?: Array<{
+    id: string
+    loanType?: string | null
+    originalLoanAmount?: number | null
+    interestRate?: number | null
+    termMonths?: number | null
+    lenderName?: string | null
+    monthlyPrincipalInterest?: number | null
+    status: string
+    isPrimary: boolean
+  }>
 }
 
 /**

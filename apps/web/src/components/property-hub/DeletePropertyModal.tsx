@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import { Button, Card, Heading, Input } from '@axori/ui'
-import { cn } from '@/utils/helpers'
 
 interface DeletePropertyModalProps {
   propertyAddress: string

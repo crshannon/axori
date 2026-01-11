@@ -22,6 +22,7 @@ interface AddPropertyWizardProps {
   existingPropertyId?: string // Optional - resume an existing property (from URL)
   initialStep?: number // Optional - for URL-based step tracking
   onStepChange?: (step: number, propertyId?: string) => void // Optional - callback when step changes, with optional propertyId to update URL
+  calculateResumeStep?: (property: any) => number // Optional - function to calculate which step to resume
 }
 
 export const AddPropertyWizard = ({
@@ -29,8 +30,9 @@ export const AddPropertyWizard = ({
   onComplete,
   portfolioId: propPortfolioId,
   existingPropertyId,
-  initialStep = 1,
+  initialStep,
   onStepChange,
+  calculateResumeStep,
 }: AddPropertyWizardProps) => {
   const totalSteps = 6
 
@@ -54,6 +56,12 @@ export const AddPropertyWizard = ({
     portfolioId,
   })
 
+  // Calculate resume step if we have existing property data but no explicit step
+  const calculatedStep =
+    existingProperty && !initialStep && calculateResumeStep
+      ? calculateResumeStep(existingProperty)
+      : initialStep || 1
+
   // Property form data management (uses existingProperty from above)
   const {
     formData,
@@ -69,7 +77,7 @@ export const AddPropertyWizard = ({
   } = usePropertyFormData({
     propertyId,
     userId,
-    step: initialStep,
+    step: calculatedStep, // Use calculated step
     existingProperty,
     existingPropertyId,
   })
@@ -77,7 +85,7 @@ export const AddPropertyWizard = ({
   // Wizard navigation
   const { step, isFetchingData, isSuccess, setIsSuccess, nextStep, prevStep } =
     useWizardNavigation({
-      initialStep,
+      initialStep: calculatedStep, // Use calculated step
       totalSteps,
       onStepChange,
       isAddressSelected,
@@ -212,18 +220,6 @@ export const AddPropertyWizard = ({
       <AsyncLoader isVisible={isFetchingData} duration={3000} />
 
       <div className="flex min-h-screen font-sans overflow-hidden bg-slate-50 dark:bg-[#0A0A0A] text-slate-900 dark:text-white transition-colors duration-500">
-        {/* Left Sidebar - Logo & Nav */}
-        <aside className="w-20 md:w-24 flex flex-col items-center py-10 border-r bg-white dark:bg-black border-slate-200 dark:border-white/5 shadow-xl dark:shadow-none transition-all duration-500 z-50">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-16 shadow-lg bg-slate-900 dark:bg-white text-white dark:text-black transition-colors">
-            <span className="font-black italic text-xl">A</span>
-          </div>
-          <div className="flex flex-col gap-6 opacity-10">
-            <div className="w-6 h-6 border-2 rounded-lg border-current"></div>
-            <div className="w-6 h-6 border-2 rounded-lg border-current"></div>
-            <div className="w-6 h-6 border-2 rounded-lg border-current"></div>
-          </div>
-        </aside>
-
         {/* Main Content Area */}
         <main className="flex-grow flex flex-col h-screen relative">
           {/* Header */}

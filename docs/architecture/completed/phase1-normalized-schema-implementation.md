@@ -655,3 +655,121 @@ Database (joined query) → API (nested response) → usePropertyFormData → Fo
 **Status**: ✅ Fixed - Ready to test property retrieval
 
 ---
+
+### 2026-01-10 16:40 - Feature: Smart Step Resume on Wizard Re-entry
+
+#### Issue
+
+When user closes wizard and clicks "Continue Setup" button, they were always taken back to Step 1, even if they had completed steps 1-3 already.
+
+#### Solution
+
+Implemented **smart step calculation** based on existing property data:
+
+**Logic**:
+```typescript
+calculateResumeStep(property) {
+  if (!address) return 1          // Step 1: Address
+  if (!characteristics) return 2   // Step 2: Property Details
+  if (!acquisition) return 3       // Step 3: Ownership
+  if (!activeLoan) return 4        // Step 4: Financing
+  if (!rentalIncome) return 5      // Step 5: Management
+  return 6                         // Step 6: Strategy
+}
+```
+
+**Implementation**:
+- ✅ Added `calculateResumeStep` function in route file
+- ✅ Pass function to `AddPropertyWizard` component
+- ✅ Calculate step based on existing data when no explicit step in URL
+- ✅ Falls back to URL step if provided (allows manual navigation)
+
+**Files Changed**: 
+- `apps/web/src/routes/_authed/property-hub.add.tsx`
+- `apps/web/src/components/property-hub/add-property-wizard/AddPropertyWizard.tsx`
+
+**UX Improvement**: Users can now close wizard mid-flow and resume exactly where they left off! 🎯
+
+**Status**: 🐛 Found bug - needs fixing
+
+---
+
+### 2026-01-10 16:55 - Bug Fix: Property Type Missing Nested Structure
+
+#### Issue
+
+Smart step resume was still always showing Step 1 because `existingProperty` object did not contain the nested normalized data (`characteristics`, `acquisition`, `loans`, etc.). The `Property` TypeScript type only had core fields, so nested data from API was being stripped.
+
+#### Root Cause
+
+- API returns: `{ property: { ...coreFields, characteristics: {...}, acquisition: {...}, loans: [...] } }`
+- TypeScript type `Property` only defined core fields
+- Nested data was being discarded by type system
+
+#### Solution
+
+**Updated TypeScript Type** (`apps/web/src/hooks/api/useProperties.ts`):
+```typescript
+export interface Property {
+  // ... core fields ...
+  
+  // Nested normalized data (from API joins)
+  characteristics?: { propertyType, bedrooms, bathrooms, ... } | null
+  acquisition?: { purchaseDate, purchasePrice, ownershipStatus, ... } | null
+  loans?: Array<{ loanType, originalLoanAmount, status, ... }>
+  rentalIncome?: { isRented, monthlyBaseRent, ... } | null
+  operatingExpenses?: { managementType, managementCompany, ... } | null
+  strategy?: { investmentStrategy, ... } | null
+  valuation?: { currentValue, ... } | null
+}
+```
+
+**Updated Step Calculation Logic** (`property-hub.add.tsx`):
+- Fixed: Check `property.loans` array (not `property.activeLoan`)
+- Fixed: Check `property.characteristics?.propertyType` (not just `bedrooms`)
+- Fixed: Check `property.acquisition?.ownershipStatus` (more reliable indicator)
+- Added: Comprehensive debug logging to track step calculation
+
+**Files Changed**:
+- `apps/web/src/hooks/api/useProperties.ts` - Added nested fields to `Property` interface
+- `apps/web/src/routes/_authed/property-hub.add.tsx` - Fixed `calculateResumeStep` logic and added debug logs
+
+**Status**: 🐛 Found another bug - property hub using wrong param name
+
+---
+
+### 2026-01-10 17:00 - Bug Fix: Property Hub "Continue Setup" Using Wrong URL Param
+
+#### Issue
+
+Clicking "Continue Setup" button on incomplete properties was not resuming the wizard properly because the URL search param name didn't match.
+
+#### Root Cause
+
+Property Hub page was using `draftId` in the Link search params:
+```tsx
+<Link to="/property-hub/add" search={{ draftId: p.id }} />
+```
+
+But the wizard route expects `propertyId`:
+```tsx
+validateSearch: (search) => ({
+  propertyId: (search.propertyId as string) || undefined,
+  step: Number(search.step) || undefined,
+})
+```
+
+This is leftover from when we renamed `draftId` → `propertyId` but didn't update all references.
+
+#### Solution
+
+**Updated Property Hub** (`apps/web/src/routes/_authed/property-hub.tsx`):
+- Line 586: Changed `search={{ draftId: p.id }}` → `search={{ propertyId: p.id }}`
+- Line 264: Removed unnecessary `search={{ draftId: undefined }}` from "Add Property" button
+
+**Files Changed**:
+- `apps/web/src/routes/_authed/property-hub.tsx`
+
+**Status**: ✅ Fixed - Testing now
+
+---

@@ -261,7 +261,6 @@ function RouteComponent() {
             </button>
             <Link
               to="/property-hub/add"
-              search={{ draftId: undefined }}
               className={cn(
                 'px-8 py-3 rounded-2xl flex items-center gap-3 transition-all font-black text-[10px] uppercase tracking-widest hover:scale-105',
                 isDark
@@ -583,7 +582,7 @@ function RouteComponent() {
                     <div className="flex gap-2 mt-4">
                       <Link
                         to="/property-hub/add"
-                        search={{ draftId: p.id }}
+                        search={{ propertyId: p.id }}
                         className={cn(
                           'flex-1 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-center',
                           isDark

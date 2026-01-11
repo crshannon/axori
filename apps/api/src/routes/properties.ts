@@ -132,7 +132,7 @@ propertiesRouter.get("/:id/rentcast-data", async (c) => {
           rentcastFetchedAt: new Date(),
           updatedAt: new Date(),
         })
-        .where(eq(properties.id, id));
+      .where(eq(properties.id, id));
 
       // Save Rentcast data to property_characteristics (upsert)
       const [existingCharacteristics] = await db
