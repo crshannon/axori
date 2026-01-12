@@ -1,6 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Body, Caption, Heading, Overline, Typography } from '@axori/ui'
-import { PropertyHero, PropertyScoreGauge } from '@/components/property-hub'
+import {
+  PropertyHero,
+  PropertyMetrics,
+  PropertyScoreGauge,
+} from '@/components/property-hub'
 import { cn } from '@/utils/helpers'
 import { useProperty } from '@/hooks/api/useProperties'
 
@@ -133,8 +137,9 @@ function PropertyOverviewPage() {
     <div className="p-8 w-full">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
         <PropertyHero propertyId={propertyId} />
+        <PropertyMetrics propertyId={propertyId} />
 
-        <div
+        {/* <div
           className={cn(
             cardClass,
             'lg:col-span-4 flex flex-col justify-center items-center text-center',
@@ -174,7 +179,7 @@ function PropertyOverviewPage() {
               ))}
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">

@@ -35,7 +35,7 @@ export const PropertyHero = ({
     'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=1200' // TODO: Add property images
 
   return (
-    <div className="lg:col-span-8 rounded-[4rem] overflow-hidden relative min-h-[500px] shadow-2xl">
+    <div className="lg:col-span-7 rounded-[4rem] overflow-hidden relative min-h-[400px] shadow-2xl">
       <img
         src={imageUrl}
         className="absolute inset-0 w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000"
