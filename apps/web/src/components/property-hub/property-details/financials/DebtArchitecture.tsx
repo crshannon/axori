@@ -1,4 +1,4 @@
-import { Button, Card, Typography } from '@axori/ui'
+import { Button, Card, CardContent, CardHeader, Typography } from '@axori/ui'
 import { CirclePlusIcon } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useProperty } from '@/hooks/api/useProperties'
@@ -162,116 +162,133 @@ export const DebtArchitecture = ({ propertyId }: DebtArchitectureProps) => {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Loan Balance */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Typography
-                  variant="body-sm"
-                  weight="bold"
-                  className="text-slate-400 uppercase tracking-widest"
-                >
-                  {activeLoan.lenderName} • {loanTerm || 'Term not set'}
-                </Typography>
-                {activeLoan.loanType && (
-                  <div className="px-2 py-0.5 rounded-full bg-slate-200/50 dark:bg-white/5">
-                    <Typography
-                      variant="caption"
-                      className="text-slate-600 dark:text-slate-400 opacity-100"
-                    >
-                      {activeLoan.loanType}
-                    </Typography>
-                  </div>
-                )}
-              </div>
-              <Typography
-                variant="h3"
-                className="tabular-nums mt-1 text-slate-900 dark:text-white"
-              >
-                {loanBalance !== null
-                  ? `$${loanBalance.toLocaleString()}`
-                  : 'Not set'}
-              </Typography>
-              {originalLoanAmount && loanBalance && (
-                <Typography
-                  variant="body-sm"
-                  className="text-slate-500 dark:text-slate-400 mt-1"
-                >
-                  Original: ${originalLoanAmount.toLocaleString()} • Paid:{' '}
-                  {principalPaid !== null
-                    ? `$${principalPaid.toLocaleString()}`
-                    : '$0'}
-                </Typography>
-              )}
-            </div>
-
-            {/* Loan Details Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Monthly Payment */}
-              {totalMonthlyPayment !== null && (
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5">
+            <Card
+              variant="rounded"
+              padding="sm"
+              radius="lg"
+              className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5"
+            >
+              <CardHeader className="p-3 pb-2">
+                <div className="flex items-center justify-between">
                   <Typography
-                    variant="caption"
-                    className="text-slate-500 dark:text-slate-400 mb-1 opacity-100"
+                    variant="body-sm"
+                    weight="bold"
+                    className="text-slate-400 uppercase tracking-widest"
                   >
-                    Monthly Payment
+                    {activeLoan.lenderName} • {loanTerm || 'Term not set'}
                   </Typography>
+                  {activeLoan.loanType && (
+                    <div className="px-2 py-0.5 rounded-full bg-slate-200/50 dark:bg-white/5">
+                      <Typography
+                        variant="caption"
+                        className="text-slate-600 dark:text-slate-400 opacity-100"
+                      >
+                        {activeLoan.loanType}
+                      </Typography>
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="p-3 pt-0">
+                {/* Main Balance */}
+                <div className="mb-4">
                   <Typography
-                    variant="h4"
+                    variant="h3"
                     className="tabular-nums text-slate-900 dark:text-white"
                   >
-                    $
-                    {totalMonthlyPayment.toLocaleString(undefined, {
-                      maximumFractionDigits: 0,
-                    })}
+                    {loanBalance !== null
+                      ? `$${loanBalance.toLocaleString()}`
+                      : 'Not set'}
                   </Typography>
-                  {monthlyPAndI && monthlyEscrow && (
+                  {originalLoanAmount && loanBalance && (
                     <Typography
-                      variant="overline"
-                      className="text-slate-400 mt-1 opacity-100"
+                      variant="body-sm"
+                      className="text-slate-500 dark:text-slate-400 mt-1"
                     >
-                      P&I: $
-                      {monthlyPAndI.toLocaleString(undefined, {
-                        maximumFractionDigits: 0,
-                      })}{' '}
-                      + Escrow: $
-                      {monthlyEscrow.toLocaleString(undefined, {
-                        maximumFractionDigits: 0,
-                      })}
+                      Original: ${originalLoanAmount.toLocaleString()} • Paid:{' '}
+                      {principalPaid !== null
+                        ? `$${principalPaid.toLocaleString()}`
+                        : '$0'}
                     </Typography>
                   )}
                 </div>
-              )}
 
-              {/* Loan Dates */}
-              {(startDate || maturityDate) && (
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5">
-                  <Typography
-                    variant="caption"
-                    className="text-slate-500 dark:text-slate-400 mb-1 opacity-100"
-                  >
-                    Loan Timeline
-                  </Typography>
-                  {startDate && (
-                    <Typography
-                      variant="body-sm"
-                      weight="bold"
-                      className="text-slate-900 dark:text-white"
-                    >
-                      Started: {startDate}
-                    </Typography>
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-3 border-t border-slate-200 dark:border-white/5 pt-3">
+                  {/* Monthly Payment */}
+                  {totalMonthlyPayment !== null && (
+                    <div>
+                      <Typography
+                        variant="caption"
+                        className="text-slate-500 dark:text-slate-400 mb-0.5 opacity-100"
+                      >
+                        Monthly Payment
+                      </Typography>
+                      <Typography
+                        variant="h5"
+                        className="tabular-nums text-slate-900 dark:text-white"
+                      >
+                        $
+                        {totalMonthlyPayment.toLocaleString(undefined, {
+                          maximumFractionDigits: 0,
+                        })}
+                      </Typography>
+                      {monthlyPAndI && monthlyEscrow && (
+                        <Typography
+                          variant="overline"
+                          className="text-slate-400 mt-0.5 opacity-100"
+                        >
+                          P&I: $
+                          {monthlyPAndI.toLocaleString(undefined, {
+                            maximumFractionDigits: 0,
+                          })}{' '}
+                          + Escrow: $
+                          {monthlyEscrow.toLocaleString(undefined, {
+                            maximumFractionDigits: 0,
+                          })}
+                        </Typography>
+                      )}
+                    </div>
                   )}
+
+                  {/* Start Date */}
+                  {startDate && (
+                    <div>
+                      <Typography
+                        variant="caption"
+                        className="text-slate-500 dark:text-slate-400 mb-0.5 opacity-100"
+                      >
+                        Start Date
+                      </Typography>
+                      <Typography
+                        variant="h5"
+                        className="tabular-nums text-slate-900 dark:text-white"
+                      >
+                        {startDate}
+                      </Typography>
+                    </div>
+                  )}
+
+                  {/* Maturity Date */}
                   {maturityDate && (
-                    <Typography
-                      variant="body-sm"
-                      weight="bold"
-                      className="text-slate-900 dark:text-white mt-1"
-                    >
-                      Matures: {maturityDate}
-                    </Typography>
+                    <div>
+                      <Typography
+                        variant="caption"
+                        className="text-slate-500 dark:text-slate-400 mb-0.5 opacity-100"
+                      >
+                        Maturity
+                      </Typography>
+                      <Typography
+                        variant="h5"
+                        className="tabular-nums text-slate-900 dark:text-white"
+                      >
+                        {maturityDate}
+                      </Typography>
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Refi Benchmark Section */}
             {interestRate !== null && (
