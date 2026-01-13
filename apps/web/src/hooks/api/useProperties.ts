@@ -4,6 +4,22 @@ import type { PropertyInsert } from '@axori/shared'
 import type { PropertyDetails } from '@axori/shared/src/integrations/rentcast'
 import { apiFetch } from '@/lib/api/client'
 
+export interface Loan {
+  id: string
+  propertyId: string
+  loanType: string
+  lenderName: string
+  servicerName?: string | null
+  loanNumber?: string | null
+  originalLoanAmount?: number | null
+  interestRate?: number | null
+  termMonths?: number | null
+  currentBalance?: number | null
+  startDate?: string | null
+  status: string
+  isPrimary: boolean
+}
+
 export interface Property {
   id: string
   portfolioId: string
@@ -81,6 +97,7 @@ export interface Property {
     id: string
     loanType?: string | null
     originalLoanAmount?: number | null
+    currentBalance?: number | null
     interestRate?: number | null
     termMonths?: number | null
     lenderName?: string | null
@@ -311,5 +328,49 @@ export function useProperties(portfolioId?: string | null) {
     },
     enabled: !!user?.id,
     staleTime: 30 * 1000, // 30 seconds
+  })
+}
+
+/**
+ * Create a loan for a property
+ */
+export function useCreateLoan() {
+  const queryClient = useQueryClient()
+  const { user } = useUser()
+
+  return useMutation({
+    mutationFn: async ({
+      propertyId,
+      ...loanData
+    }: {
+      propertyId: string
+      loanType: string
+      lenderName: string
+      servicerName?: string
+      loanNumber?: string
+      originalLoanAmount: number
+      interestRate: number
+      termMonths: number
+      currentBalance: number
+      startDate?: string
+    }) => {
+      if (!user?.id) {
+        throw new Error('User not authenticated')
+      }
+
+      return await apiFetch<{ loan: Loan }>(
+        `/api/properties/${propertyId}/loans`,
+        {
+          method: 'POST',
+          clerkId: user.id,
+          body: JSON.stringify(loanData),
+        },
+      )
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate the property query to refetch with new loan data
+      queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId] })
+      queryClient.invalidateQueries({ queryKey: ['properties'] })
+    },
   })
 }

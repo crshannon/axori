@@ -1,7 +1,12 @@
-import { FormLabel, StepperTitle, inputClass } from '../components'
+import { Input, Select } from '@axori/ui'
+import { FormLabel, StepperTitle } from '../components'
 import type { StepProps } from '../types'
 
-export const Step3Ownership = ({ formData, setFormData, formatCurrency }: StepProps) => {
+export const Step3Ownership = ({
+  formData,
+  setFormData,
+  formatCurrency,
+}: StepProps) => {
   return (
     <div className="w-full animate-in slide-in-from-right-8 duration-500">
       <StepperTitle
@@ -13,8 +18,9 @@ export const Step3Ownership = ({ formData, setFormData, formatCurrency }: StepPr
         <div className="space-y-6">
           <div className="space-y-1">
             <FormLabel>Purchase Date</FormLabel>
-            <input
+            <Input
               type="date"
+              variant="rounded"
               value={formData.purchaseDate}
               onChange={(e) =>
                 setFormData({
@@ -22,13 +28,13 @@ export const Step3Ownership = ({ formData, setFormData, formatCurrency }: StepPr
                   purchaseDate: e.target.value,
                 })
               }
-              className={inputClass}
             />
           </div>
           <div className="space-y-1">
             <FormLabel>Purchase Price ($)</FormLabel>
-            <input
+            <Input
               type="text"
+              variant="rounded"
               value={formData.purchasePrice}
               onChange={(e) =>
                 setFormData({
@@ -37,13 +43,13 @@ export const Step3Ownership = ({ formData, setFormData, formatCurrency }: StepPr
                 })
               }
               placeholder="0"
-              className={inputClass}
             />
           </div>
           <div className="space-y-1">
             <FormLabel>Closing Costs ($)</FormLabel>
-            <input
+            <Input
               type="text"
+              variant="rounded"
               value={formData.closingCosts}
               onChange={(e) =>
                 setFormData({
@@ -52,15 +58,15 @@ export const Step3Ownership = ({ formData, setFormData, formatCurrency }: StepPr
                 })
               }
               placeholder="0"
-              className={inputClass}
             />
           </div>
         </div>
         <div className="space-y-6">
           <div className="space-y-1">
             <FormLabel>Current Estimated Value ($)</FormLabel>
-            <input
+            <Input
               type="text"
+              variant="rounded"
               value={formData.currentValue}
               onChange={(e) =>
                 setFormData({
@@ -68,29 +74,29 @@ export const Step3Ownership = ({ formData, setFormData, formatCurrency }: StepPr
                   currentValue: formatCurrency(e.target.value),
                 })
               }
-              className={inputClass}
             />
           </div>
           <div className="space-y-1">
             <FormLabel>Ownership Entity</FormLabel>
-            <select
+            <Select
+              variant="rounded"
               value={formData.entityType}
               onChange={(e) =>
                 setFormData({ ...formData, entityType: e.target.value })
               }
-              className={inputClass}
             >
               <option>Personal</option>
               <option>LLC</option>
               <option>Trust</option>
-            </select>
+            </Select>
           </div>
           {(formData.entityType === 'LLC' ||
             formData.entityType === 'Trust') && (
             <div className="space-y-1 animate-in slide-in-from-top-4 duration-300">
               <FormLabel>{formData.entityType} Name</FormLabel>
-              <input
+              <Input
                 type="text"
+                variant="rounded"
                 value={formData.entityName}
                 onChange={(e) =>
                   setFormData({
@@ -99,7 +105,6 @@ export const Step3Ownership = ({ formData, setFormData, formatCurrency }: StepPr
                   })
                 }
                 placeholder={`Enter ${formData.entityType} name...`}
-                className={inputClass}
               />
             </div>
           )}
@@ -108,4 +113,3 @@ export const Step3Ownership = ({ formData, setFormData, formatCurrency }: StepPr
     </div>
   )
 }
-

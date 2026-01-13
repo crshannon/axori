@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { 
-  db, 
+import {
+  db,
   properties,
   propertyCharacteristics,
   propertyValuation,
@@ -9,12 +9,12 @@ import {
   propertyOperatingExpenses,
   propertyManagement,
   loans,
-  eq, 
-  and, 
-  desc 
+  eq,
+  and,
+  desc
 } from "@axori/db";
-import { 
-  propertyInsertSchema, 
+import {
+  propertyInsertSchema,
   propertyUpdateSchema,
   propertyCharacteristicsInsertSchema,
   propertyValuationInsertSchema,
@@ -143,15 +143,16 @@ propertiesRouter.get("/:id/rentcast-data", async (c) => {
         .where(eq(propertyCharacteristics.propertyId, id))
         .limit(1);
 
+      // propertyType is required, bathrooms is numeric (string), others are integer (number)
       const characteristicsData = {
         propertyId: id,
-        propertyType: propertyData.propertyType || null,
-        bedrooms: propertyData.bedrooms || null,
-        bathrooms: propertyData.bathrooms || null,
-        squareFeet: propertyData.squareFootage || null,
-        lotSize: propertyData.lotSize || null,
-        yearBuilt: propertyData.yearBuilt || null,
-        rentcastPropertyId: mockData.id || null,
+        propertyType: propertyData.propertyType || "Single Family",
+        bedrooms: propertyData.bedrooms ?? undefined,
+        bathrooms: propertyData.bathrooms != null ? String(propertyData.bathrooms) : undefined,
+        squareFeet: propertyData.squareFootage ?? undefined,
+        lotSizeSqft: propertyData.lotSize ?? undefined,
+        yearBuilt: propertyData.yearBuilt ?? undefined,
+        rentcastPropertyId: mockData.id ?? undefined,
       };
 
       if (existingCharacteristics) {
@@ -220,15 +221,17 @@ propertiesRouter.get("/:id/rentcast-data", async (c) => {
       .where(eq(propertyCharacteristics.propertyId, id))
       .limit(1);
 
+    // propertyType is required, so we need a default if missing
+    // propertyType is required, bathrooms is numeric (string), others are integer (number)
     const characteristicsData = {
       propertyId: id,
-      propertyType: propertyData.propertyType || null,
-      bedrooms: propertyData.bedrooms || null,
-      bathrooms: propertyData.bathrooms || null,
-      squareFeet: propertyData.squareFootage || null,
-      lotSize: propertyData.lotSize || null,
-      yearBuilt: propertyData.yearBuilt || null,
-      rentcastPropertyId: rentcastData.id || null,
+      propertyType: propertyData.propertyType || "Single Family",
+      bedrooms: propertyData.bedrooms ?? undefined,
+      bathrooms: propertyData.bathrooms != null ? String(propertyData.bathrooms) : undefined,
+      squareFeet: propertyData.squareFootage ?? undefined,
+      lotSizeSqft: propertyData.lotSize ?? undefined,
+      yearBuilt: propertyData.yearBuilt ?? undefined,
+      rentcastPropertyId: rentcastData.id ?? undefined,
     };
 
     if (existingCharacteristics) {
@@ -261,7 +264,7 @@ propertiesRouter.get("/:id/rentcast-data", async (c) => {
 // Get single property by ID (with all normalized data joined)
 propertiesRouter.get("/:id", async (c) => {
   const id = c.req.param("id");
-  
+
   // Get property
   const [property] = await db
     .select()
@@ -371,7 +374,7 @@ propertiesRouter.put("/:id", async (c) => {
   try {
     const id = c.req.param("id");
     const body = await c.req.json();
-    
+
     // Separate core property data from normalized data
     const {
       characteristics,
@@ -414,13 +417,39 @@ propertiesRouter.put("/:id", async (c) => {
         .where(eq(propertyCharacteristics.propertyId, id))
         .limit(1);
 
+      // Convert null to undefined and ensure propertyType is present (required field)
+      // bathrooms is numeric (string), others are integer (number)
+      // Note: Zod schema may have different field names (lotSize vs lotSizeSqft)
+      const characteristicsDataForDb: {
+        propertyId: string;
+        propertyType: string;
+        bedrooms?: number;
+        bathrooms?: string;
+        squareFeet?: number;
+        lotSizeSqft?: number;
+        yearBuilt?: number;
+        rentcastPropertyId?: string;
+        [key: string]: unknown;
+      } = {
+        propertyId: id,
+        propertyType: characteristicsData.propertyType || "Single Family",
+      };
+      if (characteristicsData.bedrooms != null) characteristicsDataForDb.bedrooms = characteristicsData.bedrooms;
+      if (characteristicsData.bathrooms != null) characteristicsDataForDb.bathrooms = String(characteristicsData.bathrooms);
+      if (characteristicsData.squareFeet != null) characteristicsDataForDb.squareFeet = characteristicsData.squareFeet;
+      // Handle both lotSize (from Zod) and lotSizeSqft (database field)
+      const lotSize = (characteristicsData as { lotSize?: number; lotSizeSqft?: number }).lotSize ?? (characteristicsData as { lotSize?: number; lotSizeSqft?: number }).lotSizeSqft;
+      if (lotSize != null) characteristicsDataForDb.lotSizeSqft = lotSize;
+      if (characteristicsData.yearBuilt != null) characteristicsDataForDb.yearBuilt = characteristicsData.yearBuilt;
+      if (characteristicsData.rentcastPropertyId != null) characteristicsDataForDb.rentcastPropertyId = characteristicsData.rentcastPropertyId;
+
       if (existing) {
         await db
           .update(propertyCharacteristics)
-          .set({ ...characteristicsData, updatedAt: new Date() })
+          .set({ ...characteristicsDataForDb, updatedAt: new Date() })
           .where(eq(propertyCharacteristics.propertyId, id));
       } else {
-        await db.insert(propertyCharacteristics).values(characteristicsData);
+        await db.insert(propertyCharacteristics).values(characteristicsDataForDb);
       }
     }
 
@@ -460,13 +489,24 @@ propertiesRouter.put("/:id", async (c) => {
         .where(eq(propertyAcquisition.propertyId, id))
         .limit(1);
 
+      // Convert Date objects to strings for database
+      const acquisitionDataForDb = {
+        ...acquisitionData,
+        purchaseDate: acquisitionData.purchaseDate instanceof Date
+          ? acquisitionData.purchaseDate.toISOString().split('T')[0]
+          : acquisitionData.purchaseDate,
+        closingDate: acquisitionData.closingDate instanceof Date
+          ? acquisitionData.closingDate.toISOString().split('T')[0]
+          : acquisitionData.closingDate,
+      };
+
       if (existing) {
         await db
           .update(propertyAcquisition)
-          .set({ ...acquisitionData, updatedAt: new Date() })
+          .set({ ...acquisitionDataForDb, updatedAt: new Date() })
           .where(eq(propertyAcquisition.propertyId, id));
       } else {
-        await db.insert(propertyAcquisition).values(acquisitionData);
+        await db.insert(propertyAcquisition).values(acquisitionDataForDb);
       }
     }
 
@@ -506,13 +546,29 @@ propertiesRouter.put("/:id", async (c) => {
         .where(eq(propertyOperatingExpenses.propertyId, id))
         .limit(1);
 
+      // Convert numbers to strings for numeric database columns
+      const operatingExpensesDataForDb = {
+        ...operatingExpensesData,
+        propertyTaxesAnnual: String(operatingExpensesData.propertyTaxesAnnual || 0),
+        insuranceAnnual: String(operatingExpensesData.insuranceAnnual || 0),
+        hoaMonthly: String(operatingExpensesData.hoaMonthly || 0),
+        utilitiesMonthly: String(operatingExpensesData.utilitiesMonthly || 0),
+        maintenanceMonthly: String(operatingExpensesData.maintenanceMonthly || 0),
+        managementFeeFlat: String(operatingExpensesData.managementFeeFlat || 0),
+        landscapingMonthly: String(operatingExpensesData.landscapingMonthly || 0),
+        pestControlMonthly: String(operatingExpensesData.pestControlMonthly || 0),
+        capitalExReserveMonthly: String(operatingExpensesData.capitalExReserveMonthly || 0),
+        otherExpensesMonthly: String(operatingExpensesData.otherExpensesMonthly || 0),
+        vacancyRatePercentage: String(operatingExpensesData.vacancyRatePercentage || 5),
+      };
+
       if (existing) {
         await db
           .update(propertyOperatingExpenses)
-          .set({ ...operatingExpensesData, updatedAt: new Date() })
+          .set({ ...operatingExpensesDataForDb, updatedAt: new Date() })
           .where(eq(propertyOperatingExpenses.propertyId, id));
       } else {
-        await db.insert(propertyOperatingExpenses).values(operatingExpensesData);
+        await db.insert(propertyOperatingExpenses).values(operatingExpensesDataForDb);
       }
     }
 
@@ -529,13 +585,57 @@ propertiesRouter.put("/:id", async (c) => {
         .where(eq(propertyManagement.propertyId, id))
         .limit(1);
 
+      // Convert Date objects to strings and numbers to strings for numeric database columns
+      const managementDataForDb = {
+        ...managementData,
+        contractStartDate: managementData.contractStartDate instanceof Date
+          ? managementData.contractStartDate.toISOString().split('T')[0]
+          : managementData.contractStartDate,
+        contractEndDate: managementData.contractEndDate instanceof Date
+          ? managementData.contractEndDate.toISOString().split('T')[0]
+          : managementData.contractEndDate,
+        feePercentage: managementData.feePercentage != null
+          ? String(managementData.feePercentage)
+          : managementData.feePercentage,
+        feeFlatAmount: managementData.feeFlatAmount != null
+          ? String(managementData.feeFlatAmount)
+          : managementData.feeFlatAmount,
+        feeMinimum: managementData.feeMinimum != null
+          ? String(managementData.feeMinimum)
+          : managementData.feeMinimum,
+        leasingFeePercentage: managementData.leasingFeePercentage != null
+          ? String(managementData.leasingFeePercentage)
+          : managementData.leasingFeePercentage,
+        leasingFeeFlat: managementData.leasingFeeFlat != null
+          ? String(managementData.leasingFeeFlat)
+          : managementData.leasingFeeFlat,
+        leaseRenewalFee: managementData.leaseRenewalFee != null
+          ? String(managementData.leaseRenewalFee)
+          : managementData.leaseRenewalFee,
+        maintenanceMarkupPercentage: managementData.maintenanceMarkupPercentage != null
+          ? String(managementData.maintenanceMarkupPercentage)
+          : managementData.maintenanceMarkupPercentage,
+        maintenanceCoordinationFee: managementData.maintenanceCoordinationFee != null
+          ? String(managementData.maintenanceCoordinationFee)
+          : managementData.maintenanceCoordinationFee,
+        evictionFee: managementData.evictionFee != null
+          ? String(managementData.evictionFee)
+          : managementData.evictionFee,
+        earlyTerminationFee: managementData.earlyTerminationFee != null
+          ? String(managementData.earlyTerminationFee)
+          : managementData.earlyTerminationFee,
+        reserveAmount: managementData.reserveAmount != null
+          ? String(managementData.reserveAmount)
+          : managementData.reserveAmount,
+      };
+
       if (existing) {
         await db
           .update(propertyManagement)
-          .set({ ...managementData, updatedAt: new Date() })
+          .set({ ...managementDataForDb, updatedAt: new Date() })
           .where(eq(propertyManagement.propertyId, id));
       } else {
-        await db.insert(propertyManagement).values(managementData);
+        await db.insert(propertyManagement).values(managementDataForDb);
       }
     }
 
@@ -544,7 +644,7 @@ propertiesRouter.put("/:id", async (c) => {
       // Get userId from request header for user isolation
       const authHeader = c.req.header("Authorization");
       const clerkId = authHeader?.replace("Bearer ", "");
-      
+
       if (clerkId) {
         const { users } = await import("@axori/db/src/schema");
         const [user] = await db
@@ -585,6 +685,154 @@ propertiesRouter.put("/:id", async (c) => {
     }
     console.error("Error updating property:", error);
     return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Create a loan for a property
+propertiesRouter.post("/:id/loans", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const body = await c.req.json();
+
+    // Verify property exists
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.id, id))
+      .limit(1);
+
+    if (!property) {
+      return c.json({ error: "Property not found" }, 404);
+    }
+
+    // Get userId from request header for user isolation
+    const authHeader = c.req.header("Authorization");
+    const clerkId = authHeader?.replace("Bearer ", "");
+
+    if (!clerkId) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const { users } = await import("@axori/db/src/schema");
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, clerkId))
+      .limit(1);
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    // Calculate maturity date if startDate and termMonths are provided
+    let maturityDate = null;
+    if (body.startDate && body.termMonths) {
+      const start = new Date(body.startDate);
+      start.setMonth(start.getMonth() + Number(body.termMonths));
+      maturityDate = start.toISOString().split('T')[0];
+    }
+
+    // Validate required fields before processing
+    if (!body.lenderName || !body.originalLoanAmount || !body.interestRate || !body.termMonths || !body.currentBalance) {
+      return c.json(
+        { error: "Missing required fields: lenderName, originalLoanAmount, interestRate, termMonths, and currentBalance are required" },
+        400
+      );
+    }
+
+    // Prepare loan data for Zod validation
+    // Note: Zod schema expects interestRate as percentage (0-100), userId for authorization
+    // Note: Zod schema has loanTerm (years) but we use termMonths (months) in the database
+    // We'll validate the required fields manually and use Zod for type checking only
+    const loanDataForValidation = {
+      propertyId: id,
+      userId: user.id, // For validation/authorization, but not stored in loans table
+      loanType: body.loanType || "conventional",
+      lenderName: body.lenderName,
+      servicerName: body.servicerName || null,
+      loanNumber: body.loanNumber || null,
+      originalLoanAmount: Number(body.originalLoanAmount),
+      interestRate: Number(body.interestRate), // Zod expects percentage (0-100)
+      loanTerm: null, // Not used, we have termMonths - Zod allows nullable
+      startDate: body.startDate || null,
+      maturityDate: maturityDate,
+      currentBalance: Number(body.currentBalance),
+      status: "active" as const,
+      isPrimary: true,
+    };
+
+    // Validate with Zod schema (validates userId for authorization and types)
+    // Note: We bypass Zod's termMonths validation since it uses loanTerm instead
+    const validated = loanInsertSchema.parse(loanDataForValidation);
+
+    // Convert interest rate from percentage to decimal (e.g., 6.5% -> 0.06500)
+    const interestRateDecimal = validated.interestRate! / 100;
+
+    // Get termMonths from body (not from validated since Zod doesn't have it)
+    // Validate it's a positive integer
+    const termMonths = Number(body.termMonths);
+    if (!termMonths || termMonths <= 0 || !Number.isInteger(termMonths)) {
+      return c.json(
+        { error: "termMonths must be a positive integer" },
+        400
+      );
+    }
+
+    // Prepare data for database insert (convert to database format, remove userId)
+    // All required fields are guaranteed to be present after validation
+    const loanDataForInsert = {
+      propertyId: id,
+      loanType: validated.loanType,
+      lenderName: validated.lenderName!,
+      servicerName: validated.servicerName,
+      loanNumber: validated.loanNumber,
+      originalLoanAmount: String(validated.originalLoanAmount!),
+      interestRate: String(interestRateDecimal),
+      termMonths: termMonths, // Use termMonths from body directly
+      startDate: body.startDate || null, // Use from body, not validated (Zod uses originationDate)
+      maturityDate: maturityDate,
+      currentBalance: String(body.currentBalance), // Use from body, not validated (not in Zod schema)
+      balanceAsOfDate: new Date().toISOString().split('T')[0],
+      status: "active" as const,
+      isPrimary: true,
+      loanPosition: 1,
+    };
+
+    // If this is the first loan or we're setting it as primary, mark other active loans as not primary
+    if (loanDataForInsert.isPrimary) {
+      await db
+        .update(loans)
+        .set({ isPrimary: false, updatedAt: new Date() })
+        .where(and(
+          eq(loans.propertyId, id),
+          eq(loans.status, "active")
+        ));
+    }
+
+    // Insert new loan
+    const [newLoan] = await db
+      .insert(loans)
+      .values(loanDataForInsert)
+      .returning();
+
+    return c.json({ loan: newLoan }, 201);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return c.json(
+        { error: "Validation failed", details: error.errors },
+        400
+      );
+    }
+    console.error("Error creating loan:", error);
+    // Log the full error for debugging
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
+    return c.json({
+      error: "Internal server error",
+      message: error instanceof Error ? error.message : "Unknown error"
+    }, 500);
   }
 });
 

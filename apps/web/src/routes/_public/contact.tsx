@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { FormLabel, Input, Select } from '@axori/ui'
 
 export const Route = createFileRoute('/_public/contact')({
   component: Contact,
@@ -6,9 +7,6 @@ export const Route = createFileRoute('/_public/contact')({
 
 function Contact() {
   const accentColorClass = 'text-violet-600 dark:text-[#E8FF4D]'
-  const inputBase =
-    'w-full px-6 py-4 rounded-2xl text-sm font-bold border transition-all outline-none'
-  const inputClasses = `${inputBase} bg-slate-100 border-slate-200 text-slate-900 focus:border-violet-300 focus:bg-white shadow-inner dark:bg-white/5 dark:border-white/10 dark:text-white dark:focus:border-[#E8FF4D]/50 dark:focus:bg-white/10`
 
   return (
     <main className="flex-grow pt-12 pb-32">
@@ -35,46 +33,43 @@ function Contact() {
             <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">
-                    Full Name
-                  </label>
-                  <input
+                  <FormLabel>Full Name</FormLabel>
+                  <Input
                     type="text"
+                    variant="rounded"
                     placeholder="John Doe"
-                    className={inputClasses}
+                    className="bg-slate-100 shadow-inner focus:bg-white dark:focus:bg-white/10"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">
-                    Email Address
-                  </label>
-                  <input
+                  <FormLabel>Email Address</FormLabel>
+                  <Input
                     type="email"
+                    variant="rounded"
                     placeholder="john@example.com"
-                    className={inputClasses}
+                    className="bg-slate-100 shadow-inner focus:bg-white dark:focus:bg-white/10"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">
-                  Portfolio Size
-                </label>
-                <select className={inputClasses}>
+                <FormLabel>Portfolio Size</FormLabel>
+                <Select
+                  variant="rounded"
+                  className="bg-slate-100 shadow-inner focus:bg-white dark:focus:bg-white/10"
+                >
                   <option>Select size...</option>
                   <option>1-5 units</option>
                   <option>5-20 units</option>
                   <option>20-50 units</option>
                   <option>50+ units</option>
-                </select>
+                </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">
-                  Your Message
-                </label>
+                <FormLabel>Your Message</FormLabel>
                 <textarea
                   rows={5}
                   placeholder="Tell us about your portfolio goals..."
-                  className={inputClasses}
+                  className="w-full px-6 py-4 rounded-2xl text-sm font-bold border outline-none transition-all bg-slate-100 border-slate-200 focus:border-violet-300 shadow-inner focus:bg-white dark:bg-white/5 dark:border-white/5 dark:focus:border-[#E8FF4D]/30 dark:text-white dark:placeholder:text-white/30 dark:focus:bg-white/10"
                 ></textarea>
               </div>
               <button className="w-full py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-violet-200 transform transition-all active:scale-95 bg-violet-600 text-white hover:bg-violet-700 dark:bg-[#E8FF4D] dark:text-black dark:hover:bg-[#d9f03e] dark:shadow-black/30">

@@ -1,10 +1,7 @@
 import { Card, Overline, Typography } from '@axori/ui'
 import { useNavigate } from '@tanstack/react-router'
 import { MetricCard } from './components/MetricCard'
-import {
-  getMetricsDisplayConfig,
-  usePropertyMetrics,
-} from './hooks/usePropertyMetrics'
+import { usePropertyMetrics } from './hooks/usePropertyMetrics'
 import { useProperty } from '@/hooks/api/useProperties'
 
 interface PropertyMetricsProps {
@@ -14,8 +11,7 @@ interface PropertyMetricsProps {
 export const PropertyMetrics = ({ propertyId }: PropertyMetricsProps) => {
   const navigate = useNavigate()
   const { data: property, isLoading } = useProperty(propertyId)
-  const metrics = usePropertyMetrics(property)
-  const metricsConfig = getMetricsDisplayConfig(metrics, propertyId)
+  const { displayConfig } = usePropertyMetrics(property, propertyId)
 
   if (isLoading || !property) {
     return (
@@ -38,7 +34,7 @@ export const PropertyMetrics = ({ propertyId }: PropertyMetricsProps) => {
     <Card variant="rounded" className="lg:col-span-5">
       <div className="p-8">
         <div className="grid grid-cols-2 gap-4">
-          {metricsConfig.map((m) => (
+          {displayConfig.map((m) => (
             <MetricCard
               key={m.id}
               label={m.label}

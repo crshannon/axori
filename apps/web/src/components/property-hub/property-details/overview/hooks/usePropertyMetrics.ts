@@ -25,16 +25,32 @@ export interface MetricDisplayConfig {
   route: string
 }
 
+export interface UsePropertyMetricsReturn {
+  metrics: PropertyMetrics
+  displayConfig: Array<MetricDisplayConfig>
+}
+
 /**
  * Calculate property metrics from property data with status information
+ * Returns both the raw metrics and display configuration ready for rendering
  * @param property - Property object with nested data
- * @returns Computed metrics with status for each metric
+ * @param propertyId - Optional property ID for generating routes
+ * @returns Object containing metrics and display configuration array
  */
 export function usePropertyMetrics(
   property: Property | undefined | null,
-): PropertyMetrics {
+  propertyId?: string,
+): UsePropertyMetricsReturn {
+  // Helper to build full route path
+  const getRoutePath = (pathSegment: string) => {
+    if (!propertyId) return pathSegment
+    return pathSegment
+      ? `/property-hub/${propertyId}/${pathSegment}`
+      : `/property-hub/${propertyId}`
+  }
+
   if (!property) {
-    return {
+    const emptyMetrics: PropertyMetrics = {
       equity: {
         value: null,
         status: 'error',
@@ -55,6 +71,44 @@ export function usePropertyMetrics(
         status: 'error',
         message: 'Property data not available',
       },
+    }
+
+    return {
+      metrics: emptyMetrics,
+      displayConfig: [
+        {
+          id: 'equity',
+          label: 'Equity',
+          metric: emptyMetrics.equity,
+          format: (val: number) => `$${val.toLocaleString()}`,
+          sub: 'Unrealized Gain',
+          route: getRoutePath('financials'),
+        },
+        {
+          id: 'monthlyCashFlow',
+          label: 'Cash Flow',
+          metric: emptyMetrics.monthlyCashFlow,
+          format: (val: number) => `${val >= 0 ? '+' : ''}$${val.toLocaleString()}`,
+          sub: 'Net Monthly',
+          route: getRoutePath('financials'),
+        },
+        {
+          id: 'capRate',
+          label: 'Cap Rate',
+          metric: emptyMetrics.capRate,
+          format: (val: number) => `${val.toFixed(1)}%`,
+          sub: 'Current Yield',
+          route: getRoutePath('financials'),
+        },
+        {
+          id: 'ltv',
+          label: 'LTV',
+          metric: emptyMetrics.ltv,
+          format: (val: number) => `${val.toFixed(1)}%`,
+          sub: 'Debt/Value',
+          route: getRoutePath('financials'),
+        },
+      ],
     }
   }
 
@@ -178,32 +232,14 @@ export function usePropertyMetrics(
     }
   }
 
-  return {
+  const metrics: PropertyMetrics = {
     equity,
     monthlyCashFlow,
     capRate,
     ltv,
   }
-}
 
-/**
- * Get metrics with display configuration ready for rendering
- * @param metrics - Property metrics from usePropertyMetrics
- * @returns Array of metric configurations with display metadata
- */
-export function getMetricsDisplayConfig(
-  metrics: PropertyMetrics,
-  propertyId?: string,
-): Array<MetricDisplayConfig> {
-  // Helper to build full route path
-  const getRoutePath = (pathSegment: string) => {
-    if (!propertyId) return pathSegment
-    return pathSegment
-      ? `/property-hub/${propertyId}/${pathSegment}`
-      : `/property-hub/${propertyId}`
-  }
-
-  return [
+  const displayConfig: Array<MetricDisplayConfig> = [
     {
       id: 'equity',
       label: 'Equity',
@@ -237,4 +273,9 @@ export function getMetricsDisplayConfig(
       route: getRoutePath('financials'), // Current value, loan data in Financials tab
     },
   ]
+
+  return {
+    metrics,
+    displayConfig,
+  }
 }

@@ -1,5 +1,5 @@
-import { Typography } from '@axori/ui'
-import { FormLabel, StepperTitle, ToggleButton, inputClass } from '../components'
+import { Input, Select, Typography } from '@axori/ui'
+import { FormLabel, StepperTitle, ToggleButton } from '../components'
 import type { StepProps } from '../types'
 
 export const Step4Financing = ({
@@ -65,36 +65,37 @@ export const Step4Financing = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-4 duration-500">
           <div className="space-y-1">
             <FormLabel>Loan Type</FormLabel>
-            <select
+            <Select
+              variant="rounded"
               value={formData.loanType}
               onChange={(e) =>
                 setFormData({ ...formData, loanType: e.target.value })
               }
-              className={inputClass}
             >
               <option>Conventional</option>
               <option>FHA</option>
               <option>VA</option>
               <option>DSCR</option>
               <option>Hard Money</option>
-            </select>
+            </Select>
           </div>
           <div className="space-y-1">
             <FormLabel>Provider</FormLabel>
-            <input
+            <Input
               type="text"
+              variant="rounded"
               value={formData.provider}
               onChange={(e) =>
                 setFormData({ ...formData, provider: e.target.value })
               }
               placeholder="Enter lender name..."
-              className={inputClass}
             />
           </div>
           <div className="space-y-1">
             <FormLabel>Loan Amount ($)</FormLabel>
-            <input
+            <Input
               type="text"
+              variant="rounded"
               value={formData.loanAmount}
               onChange={(e) =>
                 setFormData({
@@ -103,13 +104,13 @@ export const Step4Financing = ({
                 })
               }
               placeholder="0"
-              className={inputClass}
             />
           </div>
           <div className="space-y-1">
             <FormLabel>Interest Rate (%)</FormLabel>
-            <input
+            <Input
               type="text"
+              variant="rounded"
               value={formData.interestRate}
               onChange={(e) =>
                 setFormData({
@@ -117,22 +118,21 @@ export const Step4Financing = ({
                   interestRate: e.target.value,
                 })
               }
-              className={inputClass}
             />
           </div>
           <div className="space-y-1">
             <FormLabel>Loan Term (Years)</FormLabel>
-            <select
+            <Select
+              variant="rounded"
               value={formData.loanTerm}
               onChange={(e) =>
                 setFormData({ ...formData, loanTerm: e.target.value })
               }
-              className={inputClass}
             >
               <option>15</option>
               <option>20</option>
               <option>30</option>
-            </select>
+            </Select>
           </div>
           <div className="space-y-1">
             <FormLabel>Estimated P&I Payment</FormLabel>
@@ -150,4 +150,3 @@ export const Step4Financing = ({
     </div>
   )
 }
-

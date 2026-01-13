@@ -1,4 +1,5 @@
-import { FormLabel, StepperTitle, inputClass } from '../components'
+import { Input, Select } from '@axori/ui'
+import { FormLabel, StepperTitle } from '../components'
 import type { StepProps } from '../types'
 
 export const Step2PropertyDetails = ({ formData, setFormData }: StepProps) => {
@@ -12,24 +13,25 @@ export const Step2PropertyDetails = ({ formData, setFormData }: StepProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-1">
           <FormLabel>Property Type</FormLabel>
-          <select
+          <Select
+            variant="rounded"
             value={formData.propertyType}
             onChange={(e) =>
               setFormData({ ...formData, propertyType: e.target.value })
             }
-            className={inputClass}
           >
             <option>Single Family</option>
             <option>Multi-Family</option>
             <option>Condo</option>
             <option>Townhouse</option>
-          </select>
+          </Select>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <FormLabel>Beds</FormLabel>
-            <input
+            <Input
               type="number"
+              variant="rounded"
               value={formData.beds}
               onChange={(e) =>
                 setFormData({
@@ -37,13 +39,13 @@ export const Step2PropertyDetails = ({ formData, setFormData }: StepProps) => {
                   beds: parseInt(e.target.value),
                 })
               }
-              className={inputClass}
             />
           </div>
           <div className="space-y-1">
             <FormLabel>Baths</FormLabel>
-            <input
+            <Input
               type="number"
+              variant="rounded"
               value={formData.baths}
               onChange={(e) =>
                 setFormData({
@@ -52,14 +54,14 @@ export const Step2PropertyDetails = ({ formData, setFormData }: StepProps) => {
                 })
               }
               step="0.5"
-              className={inputClass}
             />
           </div>
         </div>
         <div className="space-y-1">
           <FormLabel>Square Footage</FormLabel>
-          <input
+          <Input
             type="text"
+            variant="rounded"
             value={formData.sqft}
             onChange={(e) =>
               setFormData({
@@ -67,13 +69,13 @@ export const Step2PropertyDetails = ({ formData, setFormData }: StepProps) => {
                 sqft: parseInt(e.target.value.replace(/,/g, '')),
               })
             }
-            className={inputClass}
           />
         </div>
         <div className="space-y-1">
           <FormLabel>Year Built</FormLabel>
-          <input
+          <Input
             type="number"
+            variant="rounded"
             value={formData.yearBuilt}
             onChange={(e) =>
               setFormData({
@@ -81,13 +83,13 @@ export const Step2PropertyDetails = ({ formData, setFormData }: StepProps) => {
                 yearBuilt: parseInt(e.target.value),
               })
             }
-            className={inputClass}
           />
         </div>
         <div className="space-y-1 md:col-span-2">
           <FormLabel>Lot Size (Sq Ft)</FormLabel>
-          <input
+          <Input
             type="text"
+            variant="rounded"
             value={formData.lotSize}
             onChange={(e) =>
               setFormData({
@@ -95,7 +97,6 @@ export const Step2PropertyDetails = ({ formData, setFormData }: StepProps) => {
                 lotSize: parseInt(e.target.value.replace(/,/g, '')),
               })
             }
-            className={inputClass}
           />
         </div>
       </div>

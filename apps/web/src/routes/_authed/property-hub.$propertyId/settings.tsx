@@ -1,4 +1,4 @@
-import { cn } from '@axori/ui'
+import { FormLabel, Input, Select, cn } from '@axori/ui'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 
@@ -14,9 +14,6 @@ function RouteComponent() {
     'bg-white border-slate-200 shadow-sm',
     'dark:bg-[#1A1A1A] dark:border-white/5',
   )
-
-  const labelClass = `text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block ml-2`
-  const inputClass = `w-full px-6 py-4 rounded-2xl text-sm font-bold border outline-none transition-all bg-slate-50 border-slate-200 focus:border-violet-300 dark:bg-white/5 dark:border-white/5 dark:focus:border-[#E8FF4D]/30 dark:text-white`
 
   const prop = {
     nickname: 'The Golden Goose',
@@ -106,16 +103,16 @@ function RouteComponent() {
             <div className="space-y-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-1.5">
-                  <label className={labelClass}>Property Nickname</label>
-                  <input
+                  <FormLabel>Property Nickname</FormLabel>
+                  <Input
                     type="text"
+                    variant="rounded"
                     defaultValue={prop.nickname}
-                    className={inputClass}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className={labelClass}>Property Type</label>
-                  <select defaultValue={prop.type} className={inputClass}>
+                  <FormLabel>Property Type</FormLabel>
+                  <Select variant="rounded" defaultValue={prop.type}>
                     <option value="multi-family">Multi-Family Duplex</option>
                     <option value="single-family">
                       Single Family Residential
@@ -124,42 +121,42 @@ function RouteComponent() {
                       Commercial - Retail
                     </option>
                     <option value="industrial-flex">Industrial Flex</option>
-                  </select>
+                  </Select>
                 </div>
               </div>
 
               <div className="space-y-6">
                 <div className="space-y-1.5">
-                  <label className={labelClass}>Street Address</label>
-                  <input
+                  <FormLabel>Street Address</FormLabel>
+                  <Input
                     type="text"
+                    variant="rounded"
                     defaultValue={prop.addr}
-                    className={inputClass}
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-1.5">
-                    <label className={labelClass}>City</label>
-                    <input
+                    <FormLabel>City</FormLabel>
+                    <Input
                       type="text"
+                      variant="rounded"
                       defaultValue={prop.city}
-                      className={inputClass}
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className={labelClass}>State / Region</label>
-                    <input
+                    <FormLabel>State / Region</FormLabel>
+                    <Input
                       type="text"
+                      variant="rounded"
                       defaultValue={prop.state}
-                      className={inputClass}
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className={labelClass}>Zip Code</label>
-                    <input
+                    <FormLabel>Zip Code</FormLabel>
+                    <Input
                       type="text"
+                      variant="rounded"
                       defaultValue={prop.zip}
-                      className={inputClass}
                     />
                   </div>
                 </div>
@@ -167,20 +164,20 @@ function RouteComponent() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-500/10 dark:border-white/5">
                 <div className="space-y-1.5">
-                  <label className={labelClass}>Tax Jurisdiction</label>
-                  <input
+                  <FormLabel>Tax Jurisdiction</FormLabel>
+                  <Input
                     type="text"
+                    variant="rounded"
                     defaultValue="Travis County CAD"
-                    className={inputClass}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className={labelClass}>Currency Override</label>
-                  <select className={inputClass}>
+                  <FormLabel>Currency Override</FormLabel>
+                  <Select variant="rounded">
                     <option>Portfolio Default (USD)</option>
                     <option>Local (CAD)</option>
                     <option>Local (EUR)</option>
-                  </select>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -193,27 +190,23 @@ function RouteComponent() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-1.5">
-                <label className={labelClass}>Purchase Price ($)</label>
-                <input
-                  type="text"
-                  defaultValue="$425,000"
-                  className={inputClass}
-                />
+                <FormLabel>Purchase Price ($)</FormLabel>
+                <Input type="text" variant="rounded" defaultValue="$425,000" />
               </div>
               <div className="space-y-1.5">
-                <label className={labelClass}>Closing Date</label>
-                <input
+                <FormLabel>Closing Date</FormLabel>
+                <Input
                   type="date"
+                  variant="rounded"
                   defaultValue="2021-04-12"
-                  className={inputClass}
                 />
               </div>
               <div className="space-y-1.5">
-                <label className={labelClass}>Year Built</label>
-                <input
+                <FormLabel>Year Built</FormLabel>
+                <Input
                   type="text"
+                  variant="rounded"
                   defaultValue={prop.yearBuilt}
-                  className={inputClass}
                 />
               </div>
             </div>

@@ -1,12 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Body, Caption, Heading, Overline, Typography } from '@axori/ui'
-import {
-  PropertyHero,
-  PropertyMetrics,
-  PropertyScoreGauge,
-} from '@/components/property-hub'
+import { PropertyHero, PropertyMetrics } from '@/components/property-hub'
 import { cn } from '@/utils/helpers'
 import { useProperty } from '@/hooks/api/useProperties'
+import { DataCompleteness } from '@/components/property-hub/property-details/overview/DataCompleteness'
 
 export const Route = createFileRoute('/_authed/property-hub/$propertyId/')({
   component: PropertyOverviewPage,
@@ -180,6 +177,10 @@ function PropertyOverviewPage() {
             </div>
           </div>
         </div> */}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <DataCompleteness propertyId={propertyId} />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
