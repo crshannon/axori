@@ -4,7 +4,7 @@ import { z } from "zod";
 // PHASE 1: NORMALIZED PROPERTY SCHEMA (2026-01-10)
 // ============================================================================
 // These schemas represent the new normalized property data model per ADR-002.
-// They replace the old property_details, property_finances, and 
+// They replace the old property_details, property_finances, and
 // property_management tables with a more granular, normalized structure.
 // ============================================================================
 
@@ -94,12 +94,25 @@ export const propertyValuationUpdateSchema = z.object({
 
 export const propertyAcquisitionInsertSchema = z.object({
   propertyId: z.string().uuid("Property ID must be a valid UUID"),
+  // Purchase
+  purchasePrice: z.number().min(0).optional().nullable(),
   purchaseDate: z.union([z.string(), z.date()]).optional().nullable(),
+  acquisitionMethod: z.string().max(100).optional().nullable(), // "traditional", "brrrr", "wholesale", "auction", "seller_finance", "subject_to", "inherited", "gift", "1031_exchange"
+  // Closing
+  closingCostsTotal: z.number().min(0).optional().nullable(),
+  closingCosts: z.number().min(0).optional().nullable(), // Legacy field
   closingDate: z.union([z.string(), z.date()]).optional().nullable(),
-  closingCosts: z.number().min(0).optional().nullable(),
-  downPayment: z.number().min(0).optional().nullable(),
   closingAgent: z.string().max(255).optional().nullable(),
   titleCompany: z.string().max(255).optional().nullable(),
+  // Down Payment
+  downPaymentAmount: z.number().min(0).optional().nullable(),
+  downPayment: z.number().min(0).optional().nullable(), // Legacy field
+  downPaymentSource: z.string().max(100).optional().nullable(), // "savings", "heloc", "gift", "401k", "seller_second"
+  // Other
+  earnestMoney: z.number().min(0).optional().nullable(),
+  sellerCredits: z.number().min(0).optional().nullable(),
+  buyerAgentCommission: z.number().min(0).optional().nullable(),
+  // Entity
   entityType: z.enum(["personal", "llc", "trust", "corporation", "partnership"]).optional().nullable(),
   entityName: z.string().max(255).optional().nullable(),
   seller: z.string().max(255).optional().nullable(),

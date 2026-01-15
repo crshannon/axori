@@ -1,5 +1,6 @@
 export * from "./types";
 export * from "./utils";
+export * from "./utils/form-data";
 export * from "./validation";
 export * from "./integrations";
 

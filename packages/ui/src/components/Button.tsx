@@ -6,6 +6,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
   isLoading?: boolean;
+  fullWidth?: boolean;
 }
 
 const buttonVariants: Record<Variant, string> = {
@@ -35,6 +36,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "primary",
       size = "md",
       isLoading = false,
+      fullWidth = false,
       disabled,
       children,
       ...props
@@ -49,6 +51,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           "inline-flex items-center justify-center rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 dark:focus:ring-[#E8FF4D] cursor-pointer disabled:opacity-50 disabled:pointer-events-none",
           buttonVariants[variant],
           buttonSizes[size],
+          fullWidth && "w-full",
           className
         )}
         disabled={disabled || isLoading}

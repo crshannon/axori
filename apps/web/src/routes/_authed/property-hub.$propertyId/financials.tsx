@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Card, Loading } from '@axori/ui'
+import { Card } from '@axori/ui'
 import { DebtArchitecture } from '@/components/property-hub/property-details/financials/DebtArchitecture'
+import { AcquisitionIntel } from '@/components/property-hub/property-details/financials/AcquisitionIntel'
 import { AddLoanDrawer } from '@/components/drawers'
+import { PropertyAcquisitionDrawer } from '@/components/drawers/PropertyAcqusitionDrawer'
 import { useProperty } from '@/hooks/api/useProperties'
 
 export const Route = createFileRoute(
@@ -11,6 +13,7 @@ export const Route = createFileRoute(
   validateSearch: (search: Record<string, unknown>) => {
     return {
       drawer: (search.drawer as string) || undefined,
+      loanId: (search.loanId as string) || undefined,
     }
   },
 })
@@ -22,10 +25,11 @@ function FinancialsPage() {
   const { data: property, isLoading, error } = useProperty(propertyId)
 
   const isAddLoanDrawerOpen = search.drawer === 'add-loan'
+  const isAcquisitionDrawerOpen = search.drawer === 'acquisition'
 
   const handleCloseDrawer = () => {
     navigate({
-      search: (prev) => ({ ...prev, drawer: undefined }),
+      search: (prev) => ({ ...prev, drawer: undefined, loanId: undefined }),
       replace: true,
     })
   }
@@ -196,6 +200,7 @@ function FinancialsPage() {
           </Card>
 
           <div className="space-y-8">
+            <AcquisitionIntel propertyId={propertyId} />
             <DebtArchitecture propertyId={propertyId} />
 
             <Card
@@ -238,6 +243,14 @@ function FinancialsPage() {
 
       <AddLoanDrawer
         isOpen={isAddLoanDrawerOpen}
+        onClose={handleCloseDrawer}
+        propertyId={propertyId}
+        loanId={search.loanId}
+        onSuccess={handleLoanSuccess}
+      />
+
+      <PropertyAcquisitionDrawer
+        isOpen={isAcquisitionDrawerOpen}
         onClose={handleCloseDrawer}
         propertyId={propertyId}
         onSuccess={handleLoanSuccess}

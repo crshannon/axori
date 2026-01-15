@@ -16,6 +16,10 @@ export interface Loan {
   termMonths?: number | null
   currentBalance?: number | null
   startDate?: string | null
+  maturityDate?: string | null
+  monthlyPrincipalInterest?: number | null
+  monthlyEscrow?: number | null
+  totalMonthlyPayment?: number | null
   status: string
   isPrimary: boolean
 }
@@ -93,18 +97,7 @@ export interface Property {
     investmentStrategy?: string | null
   } | null
 
-  loans?: Array<{
-    id: string
-    loanType?: string | null
-    originalLoanAmount?: number | null
-    currentBalance?: number | null
-    interestRate?: number | null
-    termMonths?: number | null
-    lenderName?: string | null
-    monthlyPrincipalInterest?: number | null
-    status: string
-    isPrimary: boolean
-  }>
+  loans?: Array<Loan>
 }
 
 /**
@@ -369,6 +362,52 @@ export function useCreateLoan() {
     },
     onSuccess: (data, variables) => {
       // Invalidate the property query to refetch with new loan data
+      queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId] })
+      queryClient.invalidateQueries({ queryKey: ['properties'] })
+    },
+  })
+}
+
+/**
+ * Update an existing loan
+ */
+export function useUpdateLoan() {
+  const queryClient = useQueryClient()
+  const { user } = useUser()
+
+  return useMutation({
+    mutationFn: async ({
+      propertyId,
+      loanId,
+      ...loanData
+    }: {
+      propertyId: string
+      loanId: string
+      loanType: string
+      lenderName: string
+      servicerName?: string
+      loanNumber?: string
+      originalLoanAmount: number
+      interestRate: number
+      termMonths: number
+      currentBalance: number
+      startDate?: string
+    }) => {
+      if (!user?.id) {
+        throw new Error('User not authenticated')
+      }
+
+      return await apiFetch<{ loan: Loan }>(
+        `/api/properties/${propertyId}/loans/${loanId}`,
+        {
+          method: 'PUT',
+          clerkId: user.id,
+          body: JSON.stringify(loanData),
+        },
+      )
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate the property query to refetch with updated loan data
       queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId] })
       queryClient.invalidateQueries({ queryKey: ['properties'] })
     },

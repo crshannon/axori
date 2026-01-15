@@ -836,6 +836,152 @@ propertiesRouter.post("/:id/loans", async (c) => {
   }
 });
 
+// Update an existing loan
+propertiesRouter.put("/:id/loans/:loanId", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const loanId = c.req.param("loanId");
+    const body = await c.req.json();
+
+    // Verify property exists
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.id, id))
+      .limit(1);
+
+    if (!property) {
+      return c.json({ error: "Property not found" }, 404);
+    }
+
+    // Verify loan exists and belongs to this property
+    const [existingLoan] = await db
+      .select()
+      .from(loans)
+      .where(and(
+        eq(loans.id, loanId),
+        eq(loans.propertyId, id)
+      ))
+      .limit(1);
+
+    if (!existingLoan) {
+      return c.json({ error: "Loan not found" }, 404);
+    }
+
+    // Get userId from request header for user isolation
+    const authHeader = c.req.header("Authorization");
+    const clerkId = authHeader?.replace("Bearer ", "");
+
+    if (!clerkId) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const { users } = await import("@axori/db/src/schema");
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, clerkId))
+      .limit(1);
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    // Calculate maturity date if startDate and termMonths are provided
+    let maturityDate = null;
+    if (body.startDate && body.termMonths) {
+      const start = new Date(body.startDate);
+      start.setMonth(start.getMonth() + Number(body.termMonths));
+      maturityDate = start.toISOString().split('T')[0];
+    }
+
+    // Validate required fields before processing
+    if (!body.lenderName || !body.originalLoanAmount || !body.interestRate || !body.termMonths || !body.currentBalance) {
+      return c.json(
+        { error: "Missing required fields: lenderName, originalLoanAmount, interestRate, termMonths, and currentBalance are required" },
+        400
+      );
+    }
+
+    // Prepare loan data for Zod validation
+    const loanDataForValidation = {
+      propertyId: id,
+      userId: user.id,
+      loanType: body.loanType || existingLoan.loanType || "conventional",
+      lenderName: body.lenderName,
+      servicerName: body.servicerName || null,
+      loanNumber: body.loanNumber || null,
+      originalLoanAmount: Number(body.originalLoanAmount),
+      interestRate: Number(body.interestRate), // Zod expects percentage (0-100)
+      loanTerm: null,
+      startDate: body.startDate || null,
+      maturityDate: maturityDate,
+      currentBalance: Number(body.currentBalance),
+      status: existingLoan.status || "active",
+      isPrimary: existingLoan.isPrimary !== undefined ? existingLoan.isPrimary : true,
+    };
+
+    // Validate with Zod schema
+    const validated = loanInsertSchema.parse(loanDataForValidation);
+
+    // Convert interest rate from percentage to decimal (e.g., 6.5% -> 0.06500)
+    const interestRateDecimal = validated.interestRate! / 100;
+
+    // Get termMonths from body
+    const termMonths = Number(body.termMonths);
+    if (!termMonths || termMonths <= 0 || !Number.isInteger(termMonths)) {
+      return c.json(
+        { error: "termMonths must be a positive integer" },
+        400
+      );
+    }
+
+    // Prepare data for database update
+    const loanDataForUpdate = {
+      loanType: validated.loanType,
+      lenderName: validated.lenderName!,
+      servicerName: validated.servicerName,
+      loanNumber: validated.loanNumber,
+      originalLoanAmount: String(validated.originalLoanAmount!),
+      interestRate: String(interestRateDecimal),
+      termMonths: termMonths,
+      startDate: body.startDate || null,
+      maturityDate: maturityDate,
+      currentBalance: String(body.currentBalance),
+      balanceAsOfDate: new Date().toISOString().split('T')[0],
+      updatedAt: new Date(),
+    };
+
+    // Update the loan
+    const [updatedLoan] = await db
+      .update(loans)
+      .set(loanDataForUpdate)
+      .where(and(
+        eq(loans.id, loanId),
+        eq(loans.propertyId, id)
+      ))
+      .returning();
+
+    return c.json({ loan: updatedLoan }, 200);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return c.json(
+        { error: "Validation failed", details: error.errors },
+        400
+      );
+    }
+    console.error("Error updating loan:", error);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
+    return c.json({
+      error: "Internal server error",
+      message: error instanceof Error ? error.message : "Unknown error"
+    }, 500);
+  }
+});
+
 // Complete/finalize a draft property (mark as active)
 propertiesRouter.post("/:id/complete", async (c) => {
   try {

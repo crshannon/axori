@@ -1,5 +1,11 @@
-import { Button, Card, CardContent, CardHeader, Typography } from '@axori/ui'
-import { CirclePlusIcon } from 'lucide-react'
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  EmptyStateCard,
+  Typography,
+} from '@axori/ui'
 import { useNavigate } from '@tanstack/react-router'
 import { useProperty } from '@/hooks/api/useProperties'
 
@@ -15,7 +21,15 @@ export const DebtArchitecture = ({ propertyId }: DebtArchitectureProps) => {
     navigate({
       to: '/property-hub/$propertyId/financials',
       params: { propertyId },
-      search: { drawer: 'add-loan' },
+      search: (prev) => ({ ...prev, drawer: 'add-loan', loanId: undefined }),
+    })
+  }
+
+  const handleEditLoan = (loanId: string) => {
+    navigate({
+      to: '/property-hub/$propertyId/financials',
+      params: { propertyId },
+      search: (prev) => ({ ...prev, drawer: 'add-loan', loanId }),
     })
   }
 
@@ -115,6 +129,22 @@ export const DebtArchitecture = ({ propertyId }: DebtArchitectureProps) => {
 
   const hasLoan = !!activeLoan
 
+  // Empty state - no loan data
+  if (!hasLoan) {
+    return (
+      <EmptyStateCard
+        title="Debt Logic"
+        statusMessage="No Active Loans"
+        description="Add your first loan to track debt architecture and refinancing opportunities."
+        buttonText="Add Loan"
+        onButtonClick={handleAddLoan}
+        variant="slate"
+        // showPlaceholders={false}
+        className="lg:col-span-4"
+      />
+    )
+  }
+
   return (
     <Card
       variant="rounded"
@@ -126,7 +156,7 @@ export const DebtArchitecture = ({ propertyId }: DebtArchitectureProps) => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <Typography variant="h5">Debt Logic</Typography>
-          {hasLoan && isLowRate && (
+          {isLowRate && (
             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500">
               <Typography
                 variant="caption"
@@ -138,229 +168,204 @@ export const DebtArchitecture = ({ propertyId }: DebtArchitectureProps) => {
           )}
         </div>
 
-        {!hasLoan ? (
-          <div
-            onClick={handleAddLoan}
-            className="py-8 text-center cursor-pointer border-2 border-dashed border-slate-200 dark:border-white/10 rounded-3xl p-8 hover:border-slate-50 dark:hover:border-white/20 hover:shadow-md transition-all duration-300"
+        <div className="space-y-8">
+          <Card
+            variant="rounded"
+            padding="sm"
+            radius="lg"
+            className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 cursor-pointer hover:border-slate-300 dark:hover:border-white/10 transition-all"
+            onClick={() => handleEditLoan(activeLoan.id)}
           >
-            <Typography
-              variant="body-sm"
-              weight="bold"
-              className="opacity-60 mb-4 font-black"
-            >
-              No active loans found
-            </Typography>
-
-            <CirclePlusIcon className="w-8 h-8 mx-auto text-slate-500 dark:text-slate-400" />
-            <Typography
-              variant="body-lg"
-              weight="bold"
-              className="opacity-60 mt-2"
-            >
-              Add Loan
-            </Typography>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            <Card
-              variant="rounded"
-              padding="sm"
-              radius="lg"
-              className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5"
-            >
-              <CardHeader className="p-3 pb-2">
-                <div className="flex items-center justify-between">
+            <CardHeader className="p-3 pb-2">
+              <div className="flex items-center justify-between">
+                <Typography
+                  variant="body-sm"
+                  weight="bold"
+                  className="text-slate-400 uppercase tracking-widest"
+                >
+                  {activeLoan.lenderName} • {loanTerm || 'Term not set'}
+                </Typography>
+                {activeLoan.loanType && (
+                  <div className="px-2 py-0.5 rounded-full bg-slate-200/50 dark:bg-white/5">
+                    <Typography
+                      variant="caption"
+                      className="text-slate-600 dark:text-slate-400 opacity-100"
+                    >
+                      {activeLoan.loanType}
+                    </Typography>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              {/* Main Balance */}
+              <div className="mb-4">
+                <Typography
+                  variant="h3"
+                  className="tabular-nums text-slate-900 dark:text-white"
+                >
+                  {loanBalance !== null
+                    ? `$${loanBalance.toLocaleString()}`
+                    : 'Not set'}
+                </Typography>
+                {originalLoanAmount && loanBalance && (
                   <Typography
                     variant="body-sm"
-                    weight="bold"
-                    className="text-slate-400 uppercase tracking-widest"
+                    className="text-slate-500 dark:text-slate-400 mt-1"
                   >
-                    {activeLoan.lenderName} • {loanTerm || 'Term not set'}
+                    Original: ${originalLoanAmount.toLocaleString()} • Paid:{' '}
+                    {principalPaid !== null
+                      ? `$${principalPaid.toLocaleString()}`
+                      : '$0'}
                   </Typography>
-                  {activeLoan.loanType && (
-                    <div className="px-2 py-0.5 rounded-full bg-slate-200/50 dark:bg-white/5">
-                      <Typography
-                        variant="caption"
-                        className="text-slate-600 dark:text-slate-400 opacity-100"
-                      >
-                        {activeLoan.loanType}
-                      </Typography>
-                    </div>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="p-3 pt-0">
-                {/* Main Balance */}
-                <div className="mb-4">
-                  <Typography
-                    variant="h3"
-                    className="tabular-nums text-slate-900 dark:text-white"
-                  >
-                    {loanBalance !== null
-                      ? `$${loanBalance.toLocaleString()}`
-                      : 'Not set'}
-                  </Typography>
-                  {originalLoanAmount && loanBalance && (
-                    <Typography
-                      variant="body-sm"
-                      className="text-slate-500 dark:text-slate-400 mt-1"
-                    >
-                      Original: ${originalLoanAmount.toLocaleString()} • Paid:{' '}
-                      {principalPaid !== null
-                        ? `$${principalPaid.toLocaleString()}`
-                        : '$0'}
-                    </Typography>
-                  )}
-                </div>
+                )}
+              </div>
 
-                {/* Details Grid */}
-                <div className="grid grid-cols-2 gap-3 border-t border-slate-200 dark:border-white/5 pt-3">
-                  {/* Monthly Payment */}
-                  {totalMonthlyPayment !== null && (
-                    <div>
+              {/* Details Grid */}
+              <div className="grid grid-cols-2 gap-3 border-t border-slate-200 dark:border-white/5 pt-3">
+                {/* Monthly Payment */}
+                {totalMonthlyPayment !== null && (
+                  <div>
+                    <Typography
+                      variant="caption"
+                      className="text-slate-500 dark:text-slate-400 mb-0.5 opacity-100"
+                    >
+                      Monthly Payment
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      className="tabular-nums text-slate-900 dark:text-white"
+                    >
+                      $
+                      {totalMonthlyPayment.toLocaleString(undefined, {
+                        maximumFractionDigits: 0,
+                      })}
+                    </Typography>
+                    {monthlyPAndI && monthlyEscrow && (
                       <Typography
-                        variant="caption"
-                        className="text-slate-500 dark:text-slate-400 mb-0.5 opacity-100"
+                        variant="overline"
+                        className="text-slate-400 mt-0.5 opacity-100"
                       >
-                        Monthly Payment
-                      </Typography>
-                      <Typography
-                        variant="h5"
-                        className="tabular-nums text-slate-900 dark:text-white"
-                      >
-                        $
-                        {totalMonthlyPayment.toLocaleString(undefined, {
+                        P&I: $
+                        {monthlyPAndI.toLocaleString(undefined, {
+                          maximumFractionDigits: 0,
+                        })}{' '}
+                        + Escrow: $
+                        {monthlyEscrow.toLocaleString(undefined, {
                           maximumFractionDigits: 0,
                         })}
                       </Typography>
-                      {monthlyPAndI && monthlyEscrow && (
-                        <Typography
-                          variant="overline"
-                          className="text-slate-400 mt-0.5 opacity-100"
-                        >
-                          P&I: $
-                          {monthlyPAndI.toLocaleString(undefined, {
-                            maximumFractionDigits: 0,
-                          })}{' '}
-                          + Escrow: $
-                          {monthlyEscrow.toLocaleString(undefined, {
-                            maximumFractionDigits: 0,
-                          })}
-                        </Typography>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
 
-                  {/* Start Date */}
-                  {startDate && (
-                    <div>
-                      <Typography
-                        variant="caption"
-                        className="text-slate-500 dark:text-slate-400 mb-0.5 opacity-100"
-                      >
-                        Start Date
-                      </Typography>
-                      <Typography
-                        variant="h5"
-                        className="tabular-nums text-slate-900 dark:text-white"
-                      >
-                        {startDate}
-                      </Typography>
-                    </div>
-                  )}
-
-                  {/* Maturity Date */}
-                  {maturityDate && (
-                    <div>
-                      <Typography
-                        variant="caption"
-                        className="text-slate-500 dark:text-slate-400 mb-0.5 opacity-100"
-                      >
-                        Maturity
-                      </Typography>
-                      <Typography
-                        variant="h5"
-                        className="tabular-nums text-slate-900 dark:text-white"
-                      >
-                        {maturityDate}
-                      </Typography>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Refi Benchmark Section */}
-            {interestRate !== null && (
-              <section className="p-6 rounded-[2rem] border-2 border-dashed border-indigo-500/20 bg-indigo-500/5">
-                <Typography
-                  variant="caption"
-                  weight="black"
-                  className="text-indigo-400 mb-4 opacity-100"
-                >
-                  Refi Benchmark
-                </Typography>
-                <div className="flex justify-between items-center">
+                {/* Start Date */}
+                {startDate && (
                   <div>
                     <Typography
-                      variant="h4"
-                      className="tabular-nums text-slate-500 line-through"
+                      variant="caption"
+                      className="text-slate-500 dark:text-slate-400 mb-0.5 opacity-100"
                     >
-                      {marketAverageRate}% Avg
+                      Start Date
                     </Typography>
                     <Typography
-                      variant="caption"
-                      weight="bold"
-                      className="opacity-40"
+                      variant="h5"
+                      className="tabular-nums text-slate-900 dark:text-white"
                     >
-                      Market Today
+                      {startDate}
                     </Typography>
                   </div>
-                  <div className="text-right">
-                    <Typography
-                      variant="body-sm"
-                      weight="black"
-                      className="text-emerald-500"
-                    >
-                      {isLowRate ? 'OPTIMAL DEBT' : 'ABOVE MARKET'}
-                    </Typography>
+                )}
+
+                {/* Maturity Date */}
+                {maturityDate && (
+                  <div>
                     <Typography
                       variant="caption"
-                      weight="bold"
-                      className="opacity-40 mt-1"
+                      className="text-slate-500 dark:text-slate-400 mb-0.5 opacity-100"
                     >
-                      Current Rate: {interestRate.toFixed(2)}%
+                      Maturity
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      className="tabular-nums text-slate-900 dark:text-white"
+                    >
+                      {maturityDate}
                     </Typography>
                   </div>
-                </div>
-                <div className="mt-6 pt-4 border-t border-indigo-500/10">
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Refi Benchmark Section */}
+          {interestRate !== null && (
+            <section className="p-6 rounded-[2rem] border-2 border-dashed border-indigo-500/20 bg-indigo-500/5">
+              <Typography
+                variant="caption"
+                weight="black"
+                className="text-indigo-400 mb-4 opacity-100"
+              >
+                Refi Benchmark
+              </Typography>
+              <div className="flex justify-between items-center">
+                <div>
                   <Typography
-                    variant="overline"
-                    weight="bold"
-                    className="text-slate-400 italic opacity-100"
+                    variant="h4"
+                    className="tabular-nums text-slate-500 line-through"
                   >
-                    {isLowRate
-                      ? `"Strategy: Your ${interestRate.toFixed(2)}% rate is high-value leverage. Do not refinance unless pull-out equity is required for next acquisition."`
-                      : `"Strategy: Your ${interestRate.toFixed(2)}% rate is above market average. Consider refinancing when rates drop or if you need to pull equity for your next acquisition."`}
+                    {marketAverageRate}% Avg
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    weight="bold"
+                    className="opacity-40"
+                  >
+                    Market Today
                   </Typography>
                 </div>
-              </section>
-            )}
-          </div>
-        )}
+                <div className="text-right">
+                  <Typography
+                    variant="body-sm"
+                    weight="black"
+                    className="text-emerald-500"
+                  >
+                    {isLowRate ? 'OPTIMAL DEBT' : 'ABOVE MARKET'}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    weight="bold"
+                    className="opacity-40 mt-1"
+                  >
+                    Current Rate: {interestRate.toFixed(2)}%
+                  </Typography>
+                </div>
+              </div>
+              <div className="mt-6 pt-4 border-t border-indigo-500/10">
+                <Typography
+                  variant="overline"
+                  weight="bold"
+                  className="text-slate-400 italic opacity-100"
+                >
+                  {isLowRate
+                    ? `"Strategy: Your ${interestRate.toFixed(2)}% rate is high-value leverage. Do not refinance unless pull-out equity is required for next acquisition."`
+                    : `"Strategy: Your ${interestRate.toFixed(2)}% rate is above market average. Consider refinancing when rates drop or if you need to pull equity for your next acquisition."`}
+                </Typography>
+              </div>
+            </section>
+          )}
+        </div>
       </div>
 
       {/* Manage Loan Button */}
-      {hasLoan && (
-        <Button
-          variant="outline"
-          size="lg"
-          className="w-full py-4 mt-10 rounded-2xl bg-slate-900 text-white dark:bg-white/5 dark:border dark:border-white/10 dark:text-white dark:hover:bg-white/10 font-black text-[10px] uppercase tracking-widest transition-all"
-          onClick={handleAddLoan}
-        >
-          Manage Loan Data
-        </Button>
-      )}
+      <Button
+        variant="outline"
+        size="lg"
+        className="w-full py-4 mt-10 rounded-2xl bg-slate-900 text-white dark:bg-white/5 dark:border dark:border-white/10 dark:text-white dark:hover:bg-white/10 font-black text-[10px] uppercase tracking-widest transition-all"
+        onClick={handleAddLoan}
+      >
+        Manage Loan Data
+      </Button>
     </Card>
   )
 }

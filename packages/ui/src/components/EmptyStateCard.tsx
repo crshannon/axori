@@ -1,0 +1,227 @@
+import { ReactNode } from "react";
+import { Button } from "./Button";
+import { Card } from "./Card";
+import { IconButton } from "./IconButton";
+import { Typography } from "./Typography";
+import { Plus, LucideIcon } from "lucide-react";
+import { cn } from "../utils/cn";
+
+export interface EmptyStateCardProps {
+  /** Title displayed at the top */
+  title: string;
+  /** Optional subtitle or status message */
+  statusMessage?: string;
+  /** Description text with optional highlighted terms */
+  description?: string | ReactNode;
+  /** Highlighted terms in description (will be wrapped in spans) */
+  highlightedTerms?: string[];
+  /** Button text */
+  buttonText: string;
+  /** Button click handler */
+  onButtonClick: () => void;
+  /** Color theme variant */
+  variant?: "violet" | "slate" | "indigo" | "emerald";
+  /** Show placeholder skeleton bars */
+  showPlaceholders?: boolean;
+  /** Custom icon (defaults to Plus) */
+  icon?: LucideIcon;
+  /** Additional className for the card */
+  className?: string;
+}
+
+const variantStyles = {
+  violet: {
+    card: "bg-violet-600/5 border-dashed border-violet-500/30 hover:border-violet-500/60",
+    title: "text-violet-500/60",
+    iconBg: "bg-violet-500/10",
+    iconColor: "text-violet-500",
+    placeholder: "bg-violet-500/10",
+    placeholderLarge: "bg-violet-500/20",
+    status: "text-violet-400",
+    highlight: "text-violet-500",
+    button: "dark:bg-violet-600 dark:hover:bg-violet-700 dark:text-white",
+    focusRing: "focus:ring-violet-500 dark:focus:ring-violet-500",
+  },
+  slate: {
+    card: "bg-slate-50 dark:bg-white/5 border-dashed border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20",
+    title: "text-slate-500 dark:text-slate-400",
+    iconBg: "bg-slate-200/50 dark:bg-white/10",
+    iconColor: "text-slate-500 dark:text-slate-400",
+    placeholder: "bg-slate-200 dark:bg-white/5",
+    placeholderLarge: "bg-slate-300 dark:bg-white/10",
+    status: "text-slate-400 dark:text-slate-500",
+    highlight: "text-slate-600 dark:text-slate-300",
+    button: "",
+    focusRing: "focus:ring-slate-500 dark:focus:ring-slate-400",
+  },
+  indigo: {
+    card: "bg-indigo-600/5 border-dashed border-indigo-500/30 hover:border-indigo-500/60",
+    title: "text-indigo-500/60",
+    iconBg: "bg-indigo-500/10",
+    iconColor: "text-indigo-500",
+    placeholder: "bg-indigo-500/10",
+    placeholderLarge: "bg-indigo-500/20",
+    status: "text-indigo-400",
+    highlight: "text-indigo-500",
+    button: "dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:text-white",
+    focusRing: "focus:ring-indigo-500 dark:focus:ring-indigo-500",
+  },
+  emerald: {
+    card: "bg-emerald-600/5 border-dashed border-emerald-500/30 hover:border-emerald-500/60",
+    title: "text-emerald-500/60",
+    iconBg: "bg-emerald-500/10",
+    iconColor: "text-emerald-500",
+    placeholder: "bg-emerald-500/10",
+    placeholderLarge: "bg-emerald-500/20",
+    status: "text-emerald-400",
+    highlight: "text-emerald-500",
+    button: "dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:text-white",
+    focusRing: "focus:ring-emerald-500 dark:focus:ring-emerald-500",
+  },
+};
+
+export const EmptyStateCard = ({
+  title,
+  statusMessage,
+  description,
+  highlightedTerms = [],
+  buttonText,
+  onButtonClick,
+  variant = "violet",
+  showPlaceholders = true,
+  icon: Icon = Plus,
+  className,
+}: EmptyStateCardProps) => {
+  const styles = variantStyles[variant];
+
+  // Process description to highlight terms
+  const renderDescription = () => {
+    if (!description) return null;
+
+    if (typeof description === "string") {
+      if (highlightedTerms.length === 0) {
+        return (
+          <Typography
+            variant="body-sm"
+            className="text-slate-500 italic leading-relaxed mb-6"
+          >
+            {description}
+          </Typography>
+        );
+      }
+
+      // Split description and wrap highlighted terms
+      let parts: ReactNode[] = [description];
+      highlightedTerms.forEach((term) => {
+        const newParts: ReactNode[] = [];
+        parts.forEach((part) => {
+          if (typeof part === "string") {
+            const regex = new RegExp(`(${term})`, "gi");
+            const split = part.split(regex);
+            split.forEach((segment, i) => {
+              if (regex.test(segment)) {
+                newParts.push(
+                  <span key={`${term}-${i}`} className={styles.highlight}>
+                    {segment}
+                  </span>
+                );
+              } else if (segment) {
+                newParts.push(segment);
+              }
+            });
+          } else {
+            newParts.push(part);
+          }
+        });
+        parts = newParts;
+      });
+
+      return (
+        <Typography
+          variant="body-sm"
+          className="text-slate-500 italic leading-relaxed mb-6"
+        >
+          {parts}
+        </Typography>
+      );
+    }
+
+    // If description is already a ReactNode, render it directly
+    return <div className="mb-6">{description}</div>;
+  };
+
+  return (
+    <Card
+      variant="rounded"
+      padding="sm"
+      radius="xl"
+      className={cn(
+        "flex flex-col justify-between group relative overflow-hidden",
+        styles.card,
+        className
+      )}
+    >
+      <div className="h-full p-8 flex flex-col justify-between">
+        {/* Blueprint Hatching Overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(45deg, currentColor 0, currentColor 1px, transparent 0, transparent 20px)",
+            backgroundSize: "20px 20px",
+          }}
+        ></div>
+
+        <div>
+          <div className="flex justify-between items-center mb-6 relative z-10">
+            <Typography variant="h5" className={styles.title}>
+              {title}
+            </Typography>
+            <IconButton
+              icon={Icon}
+              size="sm"
+              variant="ghost"
+              shape="circle"
+              animation="pulse"
+              iconSize={14}
+              iconStrokeWidth={4}
+              className={cn("w-8 h-8", styles.iconBg, styles.iconColor)}
+              aria-label="Add icon"
+              disabled
+            />
+          </div>
+          {showPlaceholders && (
+            <div className="grid grid-cols-[40%_60%] gap-4 relative z-10">
+              <div className="space-y-4 font-mono">
+                <div
+                  className={cn("w-24 h-4 rounded-full", styles.placeholder)}
+                ></div>
+                <div
+                  className={cn("w-32 h-8 rounded-xl", styles.placeholderLarge)}
+                ></div>
+              </div>
+              {statusMessage && (
+                <div className="flex items-end">{renderDescription()}</div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-12 relative z-10">
+          <Button
+            onClick={onButtonClick}
+            variant="primary"
+            fullWidth
+            className={cn(
+              "py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl group-hover:scale-[1.02]",
+              styles.button,
+              styles.focusRing
+            )}
+          >
+            {buttonText}
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+};

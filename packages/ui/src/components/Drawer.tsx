@@ -2,8 +2,8 @@ import { HTMLAttributes, ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "../utils/cn";
-import { Button } from "./Button";
-import { Heading, Typography } from "./Typography";
+import { IconButton } from "./IconButton";
+import { Heading } from "./Typography";
 
 export interface DrawerProps extends HTMLAttributes<HTMLDivElement> {
   /** Whether the drawer is open */
@@ -159,15 +159,14 @@ export const Drawer = ({
                   )}
                 </div>
                 {showCloseButton && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
+                  <IconButton
+                    icon={X}
                     onClick={onClose}
-                    className="ml-auto h-10 w-10 p-0"
+                    size="md"
+                    variant="default"
+                    shape="rounded"
                     aria-label="Close drawer"
-                  >
-                    <X className="h-6 w-6" />
-                  </Button>
+                  />
                 )}
               </div>
             )}

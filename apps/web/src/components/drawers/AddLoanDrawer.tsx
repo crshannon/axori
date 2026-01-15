@@ -1,11 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Drawer, Input, Select, Typography } from '@axori/ui'
-import { useCreateLoan } from '@/hooks/api/useProperties'
+import {
+  useCreateLoan,
+  useProperty,
+  useUpdateLoan,
+} from '@/hooks/api/useProperties'
 
 interface AddLoanDrawerProps {
   isOpen: boolean
   onClose: () => void
   propertyId: string
+  loanId?: string // Optional: if provided, we're editing an existing loan
   onSuccess?: () => void
 }
 
@@ -13,10 +18,20 @@ export const AddLoanDrawer = ({
   isOpen,
   onClose,
   propertyId,
+  loanId,
   onSuccess,
 }: AddLoanDrawerProps) => {
   const createLoan = useCreateLoan()
+  const updateLoan = useUpdateLoan()
+  const { data: property } = useProperty(propertyId)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const isEditMode = !!loanId
+  const mutation = isEditMode ? updateLoan : createLoan
+
+  // Find the loan to edit if loanId is provided
+  const existingLoan = loanId
+    ? property?.loans?.find((loan) => loan.id === loanId)
+    : null
 
   // Form state - essential fields for now
   const [formData, setFormData] = useState({
@@ -30,6 +45,38 @@ export const AddLoanDrawer = ({
     loanNumber: '',
     servicerName: '',
   })
+
+  // Populate form with existing loan data when editing
+  useEffect(() => {
+    if (existingLoan && isOpen) {
+      setFormData({
+        loanType: existingLoan.loanType || 'conventional',
+        lenderName: existingLoan.lenderName || '',
+        originalLoanAmount: existingLoan.originalLoanAmount?.toString() || '',
+        interestRate: existingLoan.interestRate
+          ? (existingLoan.interestRate * 100).toString()
+          : '',
+        termMonths: existingLoan.termMonths?.toString() || '',
+        currentBalance: existingLoan.currentBalance?.toString() || '',
+        startDate: existingLoan.startDate || '',
+        loanNumber: existingLoan.loanNumber || '',
+        servicerName: existingLoan.servicerName || '',
+      })
+    } else if (!isEditMode && isOpen) {
+      // Reset form when opening in create mode
+      setFormData({
+        loanType: 'conventional',
+        lenderName: '',
+        originalLoanAmount: '',
+        interestRate: '',
+        termMonths: '',
+        currentBalance: '',
+        startDate: '',
+        loanNumber: '',
+        servicerName: '',
+      })
+    }
+  }, [existingLoan, isOpen, isEditMode])
 
   const handleChange = (field: string, value: string | number | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -74,41 +121,52 @@ export const AddLoanDrawer = ({
     }
 
     try {
-      await createLoan.mutateAsync({
+      const loanData = {
         propertyId,
         loanType: formData.loanType,
         lenderName: formData.lenderName.trim(),
         servicerName: formData.servicerName.trim() || undefined,
         loanNumber: formData.loanNumber.trim() || undefined,
         originalLoanAmount: Number(formData.originalLoanAmount),
-        interestRate: Number(formData.interestRate),
+        interestRate: Number(formData.interestRate), // API expects percentage (0-100)
         termMonths: Number(formData.termMonths),
         currentBalance: Number(formData.currentBalance),
         startDate: formData.startDate || undefined,
-      })
+      }
 
-      // Reset form
-      setFormData({
-        loanType: 'conventional',
-        lenderName: '',
-        originalLoanAmount: '',
-        interestRate: '',
-        termMonths: '',
-        currentBalance: '',
-        startDate: '',
-        loanNumber: '',
-        servicerName: '',
-      })
+      if (isEditMode && loanId) {
+        await updateLoan.mutateAsync({
+          ...loanData,
+          loanId,
+        })
+      } else {
+        await createLoan.mutateAsync(loanData)
+        // Reset form only on create
+        setFormData({
+          loanType: 'conventional',
+          lenderName: '',
+          originalLoanAmount: '',
+          interestRate: '',
+          termMonths: '',
+          currentBalance: '',
+          startDate: '',
+          loanNumber: '',
+          servicerName: '',
+        })
+      }
 
       onSuccess?.()
       onClose()
     } catch (error) {
-      console.error('Error creating loan:', error)
+      console.error(
+        `Error ${isEditMode ? 'updating' : 'creating'} loan:`,
+        error,
+      )
       setErrors({
         submit:
           error instanceof Error
             ? error.message
-            : 'Failed to create loan. Please try again.',
+            : `Failed to ${isEditMode ? 'update' : 'create'} loan. Please try again.`,
       })
     }
   }
@@ -131,7 +189,7 @@ export const AddLoanDrawer = ({
     <Drawer
       isOpen={isOpen}
       onClose={onClose}
-      title="Add Loan"
+      title={isEditMode ? 'Edit Loan' : 'Add Loan'}
       subtitle="LOAN MANAGEMENT"
       width="lg"
       footer={
@@ -139,18 +197,22 @@ export const AddLoanDrawer = ({
           <button
             type="button"
             onClick={onClose}
-            disabled={createLoan.isPending}
+            disabled={mutation.isPending}
             className="flex-1 py-4 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.2em] border transition-all hover:bg-slate-500/5 disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:text-white border-slate-200 text-slate-900"
           >
-            Discard
+            Cancel
           </button>
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={createLoan.isPending}
+            disabled={mutation.isPending}
             className="flex-[2] py-4 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 dark:bg-[#E8FF4D] dark:text-black dark:shadow-xl dark:shadow-[#E8FF4D]/20 bg-violet-600 text-white shadow-xl shadow-violet-200"
           >
-            {createLoan.isPending ? 'Saving...' : 'Save Loan'}
+            {mutation.isPending
+              ? 'Saving...'
+              : isEditMode
+                ? 'Update Loan'
+                : 'Save Loan'}
           </button>
         </div>
       }

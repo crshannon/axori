@@ -31,7 +31,7 @@ function AuthedLayout() {
   return (
     <div className="flex flex-grow min-h-screen">
       <SideNav />
-      <main className="flex-1">
+      <main className="flex-1 pl-[60px]">
         <Outlet />
       </main>
     </div>
