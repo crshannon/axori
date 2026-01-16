@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Drawer, Input, Select, Typography } from '@axori/ui'
+import { Drawer, Input, Select } from '@axori/ui'
+import { DrawerSectionTitle } from './DrawerSectionTitle'
 import { useProperty } from '@/hooks/api/useProperties'
 import { useCreateLoan, useUpdateLoan } from '@/hooks/api/useLoans'
 
@@ -217,6 +218,7 @@ export const AddLoanDrawer = ({
       <form onSubmit={handleSubmit} className="space-y-10">
         {/* Core Loan Logic Section */}
         <section className="space-y-6">
+          <DrawerSectionTitle title="Loan Details" color="violet" />
           <div className="space-y-4">
             {/* Loan Type */}
             <div className="group">
@@ -333,13 +335,7 @@ export const AddLoanDrawer = ({
 
         {/* Maturity & Terms Section */}
         <section className="space-y-6">
-          <Typography
-            variant="label-sm"
-            tracking="custom"
-            className="text-sm opacity-30 dark:opacity-40 text-slate-900 dark:text-slate-300"
-          >
-            Maturity & Terms
-          </Typography>
+          <DrawerSectionTitle title="Maturity & Terms" color="emerald" />
           <div className="grid grid-cols-2 gap-4">
             {/* Start Date */}
             <div>

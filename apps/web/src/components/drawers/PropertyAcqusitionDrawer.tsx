@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Drawer, Input, Select, Typography } from '@axori/ui'
+import { Drawer, Input, Select } from '@axori/ui'
 import { transformFormData } from '@axori/shared'
+import { DrawerSectionTitle } from './DrawerSectionTitle'
 import { useProperty, useUpdateProperty } from '@/hooks/api/useProperties'
 
 interface PropertyAcquisitionDrawerProps {
@@ -182,12 +183,7 @@ export const PropertyAcquisitionDrawer = ({
       <form onSubmit={handleSubmit} className="space-y-10">
         {/* Purchase Logistics Section */}
         <section className="space-y-6">
-          <div className="flex items-center gap-4">
-            <div className="w-8 h-1 bg-violet-600"></div>
-            <Typography variant="h5" className="dark:text-white">
-              Purchase Logistics
-            </Typography>
-          </div>
+          <DrawerSectionTitle title="Purchase Logistics" color="violet" />
           <div className="grid grid-cols-2 gap-4">
             <Input
               type="number"
@@ -231,12 +227,7 @@ export const PropertyAcquisitionDrawer = ({
 
         {/* Closing Ledger Section */}
         <section className="space-y-6">
-          <div className="flex items-center gap-4">
-            <div className="w-8 h-1 bg-emerald-500"></div>
-            <Typography variant="h5" className="dark:text-white">
-              Closing Ledger
-            </Typography>
-          </div>
+          <DrawerSectionTitle title="Closing Ledger" color="emerald" />
           <div className="grid grid-cols-2 gap-4">
             <Input
               type="number"
