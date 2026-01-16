@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUser } from '@clerk/clerk-react'
-import type { PropertyExpense, PropertyExpenseInsert } from '@axori/shared'
+import type { 
+  PropertyExpense, 
+  PropertyExpenseInsert,
+  PropertyExpenseInsertApi,
+  PropertyExpenseUpdateApi 
+} from '@axori/shared'
 import { apiFetch } from '@/lib/api/client'
 
 /**
@@ -78,6 +83,7 @@ export function usePropertyExpense(
 
 /**
  * Create an expense for a property
+ * Uses PropertyExpenseInsertApi type from enhanced Zod schema for type safety
  */
 export function useCreateExpense() {
   const queryClient = useQueryClient()
@@ -87,7 +93,7 @@ export function useCreateExpense() {
     mutationFn: async ({
       propertyId,
       ...expenseData
-    }: Omit<PropertyExpenseInsert, 'propertyId' | 'createdBy'> & {
+    }: Omit<PropertyExpenseInsertApi, 'propertyId'> & {
       propertyId: string
     }) => {
       if (!user?.id) {
@@ -114,6 +120,7 @@ export function useCreateExpense() {
 
 /**
  * Update an existing expense
+ * Uses PropertyExpenseUpdateApi type from enhanced Zod schema for type safety
  */
 export function useUpdateExpense() {
   const queryClient = useQueryClient()
@@ -124,7 +131,7 @@ export function useUpdateExpense() {
       propertyId,
       expenseId,
       ...expenseData
-    }: Partial<PropertyExpenseInsert> & {
+    }: PropertyExpenseUpdateApi & {
       propertyId: string
       expenseId: string
     }) => {

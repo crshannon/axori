@@ -24,6 +24,69 @@ export const ownershipStatusEnum = pgEnum("ownership_status", [
   "exploring", // Researching/analyzing potential purchase
 ]);
 
+// Loan type enum
+export const loanTypeEnum = pgEnum("loan_type", [
+  "conventional",
+  "fha",
+  "va",
+  "usda",
+  "dscr",
+  "portfolio",
+  "hard_money",
+  "bridge",
+  "heloc",
+  "construction",
+  "owner_financed",
+  "seller_finance",
+  "commercial",
+  "other",
+]);
+
+// Loan status enum
+export const loanStatusEnum = pgEnum("loan_status", [
+  "active",
+  "paid_off",
+  "refinanced",
+  "defaulted",
+  "sold",
+]);
+
+// Expense category enum
+export const expenseCategoryEnum = pgEnum("expense_category", [
+  "acquisition",
+  "property_tax",
+  "insurance",
+  "hoa",
+  "management",
+  "repairs",
+  "maintenance",
+  "capex",
+  "utilities",
+  "legal",
+  "accounting",
+  "marketing",
+  "travel",
+  "office",
+  "bank_fees",
+  "licenses",
+  "other",
+]);
+
+// Recurrence frequency enum
+export const recurrenceFrequencyEnum = pgEnum("recurrence_frequency", [
+  "monthly",
+  "quarterly",
+  "annual",
+]);
+
+// Expense source enum
+export const expenseSourceEnum = pgEnum("expense_source", [
+  "manual",
+  "appfolio",
+  "plaid",
+  "document_ai",
+]);
+
 export const properties = pgTable("properties", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id")
@@ -310,7 +373,7 @@ export const loans = pgTable("loans", {
     .notNull(),
 
   // Status
-  status: text("status").notNull().default("active"), // "active", "paid_off", "refinanced", "sold"
+  status: loanStatusEnum("status").notNull().default("active"),
   isPrimary: boolean("is_primary").default(true), // Only one primary active loan per property
   loanPosition: integer("loan_position").default(1), // 1st lien, 2nd lien, etc.
 
@@ -320,7 +383,7 @@ export const loans = pgTable("loans", {
   loanNumber: text("loan_number"),
 
   // Type
-  loanType: text("loan_type").notNull(), // "conventional", "fha", "va", "usda", "dscr", "hard_money", "heloc", "seller_finance", "portfolio", "commercial"
+  loanType: loanTypeEnum("loan_type").notNull().default("conventional"),
   loanPurpose: text("loan_purpose"), // "purchase", "refinance", "cash_out_refi"
 
   // Terms
@@ -443,14 +506,14 @@ export const propertyExpenses = pgTable(
     // Transaction Details
     expenseDate: date("expense_date").notNull(),
     amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
-    category: text("category").notNull(),
+    category: expenseCategoryEnum("category").notNull(),
     subcategory: text("subcategory"),
     vendor: text("vendor"),
     description: text("description"),
 
     // Recurring
     isRecurring: boolean("is_recurring").default(false),
-    recurrenceFrequency: text("recurrence_frequency"), // 'monthly' | 'quarterly' | 'annual'
+    recurrenceFrequency: recurrenceFrequencyEnum("recurrence_frequency"),
     recurrenceEndDate: date("recurrence_end_date"),
 
     // Tax
@@ -461,7 +524,7 @@ export const propertyExpenses = pgTable(
     documentId: uuid("document_id"), // .references(() => propertyDocuments.id) - if table exists
 
     // Source Tracking
-    source: text("source").default("manual"), // 'manual' | 'appfolio' | 'plaid' | 'document_ai'
+    source: expenseSourceEnum("source").default("manual"),
     externalId: text("external_id"),
 
     // Metadata

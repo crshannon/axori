@@ -25,9 +25,11 @@ import {
   propertyRentalIncomeInsertSchema,
   propertyOperatingExpensesInsertSchema,
   propertyManagementInsertSchema,
-  loanInsertSchema,
-  propertyExpenseInsertSchema,
-  propertyExpenseUpdateSchema,
+  // Use enhanced schemas for API validation
+  loanInsertApiSchema,
+  loanUpdateApiSchema,
+  propertyExpenseInsertApiSchema,
+  propertyExpenseUpdateApiSchema,
 } from "@axori/shared/src/validation";
 import { RentcastClient, type PropertyDetails } from "@axori/shared/src/integrations/rentcast";
 import { transformRentcastToAxori } from "@axori/shared/src/integrations/data-transformers";
@@ -453,7 +455,8 @@ propertiesRouter.put("/:id", async (c) => {
       const lotSize = (characteristicsData as { lotSize?: number; lotSizeSqft?: number }).lotSize ?? (characteristicsData as { lotSize?: number; lotSizeSqft?: number }).lotSizeSqft;
       if (lotSize != null) characteristicsDataForDb.lotSizeSqft = lotSize;
       if (characteristicsData.yearBuilt != null) characteristicsDataForDb.yearBuilt = characteristicsData.yearBuilt;
-      if (characteristicsData.rentcastPropertyId != null) characteristicsDataForDb.rentcastPropertyId = characteristicsData.rentcastPropertyId;
+      // Note: rentcastPropertyId is not in the base schema - skip if present
+      // TODO: Add rentcastPropertyId to propertyCharacteristics schema if needed
 
       if (existing) {
         await db
@@ -504,20 +507,16 @@ propertiesRouter.put("/:id", async (c) => {
       // Convert Date objects to strings and numbers to strings for numeric database columns
       const acquisitionDataForDb: Record<string, unknown> = {
         propertyId: acquisitionData.propertyId,
-        isOwnerOccupied: acquisitionData.isOwnerOccupied,
       };
 
-      // Convert dates
+      // Convert dates (base schema validates as strings)
       if (acquisitionData.purchaseDate != null) {
-        acquisitionDataForDb.purchaseDate = acquisitionData.purchaseDate instanceof Date
-          ? acquisitionData.purchaseDate.toISOString().split('T')[0]
-          : acquisitionData.purchaseDate;
+        acquisitionDataForDb.purchaseDate = typeof acquisitionData.purchaseDate === 'string'
+          ? acquisitionData.purchaseDate
+          : String(acquisitionData.purchaseDate);
       }
-      if (acquisitionData.closingDate != null) {
-        acquisitionDataForDb.closingDate = acquisitionData.closingDate instanceof Date
-          ? acquisitionData.closingDate.toISOString().split('T')[0]
-          : acquisitionData.closingDate;
-      }
+      // Note: closingDate is not in the base schema - skip if present
+      // TODO: Add closingDate to propertyAcquisition schema if needed
 
       // Convert numeric fields to strings for database (numeric columns in DB)
       if (acquisitionData.purchasePrice != null) {
@@ -546,9 +545,8 @@ propertiesRouter.put("/:id", async (c) => {
       if (acquisitionData.downPaymentSource != null) {
         acquisitionDataForDb.downPaymentSource = acquisitionData.downPaymentSource;
       }
-      if (acquisitionData.taxParcelId != null) {
-        acquisitionDataForDb.taxParcelId = acquisitionData.taxParcelId;
-      }
+      // Note: taxParcelId is not in the base schema - skip if present
+      // TODO: Add taxParcelId to propertyAcquisition schema if needed
 
       if (existing) {
         await db
@@ -597,20 +595,66 @@ propertiesRouter.put("/:id", async (c) => {
         .limit(1);
 
       // Convert numbers to strings for numeric database columns
-      const operatingExpensesDataForDb = {
-        ...operatingExpensesData,
-        propertyTaxesAnnual: String(operatingExpensesData.propertyTaxesAnnual || 0),
-        insuranceAnnual: String(operatingExpensesData.insuranceAnnual || 0),
-        hoaMonthly: String(operatingExpensesData.hoaMonthly || 0),
-        utilitiesMonthly: String(operatingExpensesData.utilitiesMonthly || 0),
-        maintenanceMonthly: String(operatingExpensesData.maintenanceMonthly || 0),
-        managementFeeFlat: String(operatingExpensesData.managementFeeFlat || 0),
-        landscapingMonthly: String(operatingExpensesData.landscapingMonthly || 0),
-        pestControlMonthly: String(operatingExpensesData.pestControlMonthly || 0),
-        capitalExReserveMonthly: String(operatingExpensesData.capitalExReserveMonthly || 0),
-        otherExpensesMonthly: String(operatingExpensesData.otherExpensesMonthly || 0),
-        vacancyRatePercentage: String(operatingExpensesData.vacancyRatePercentage || 5),
+      // Note: Base schema uses different field names than legacy code
+      const operatingExpensesDataForDb: Record<string, unknown> = {
+        propertyId: id, // Use id from route param, not from validated data
       };
+
+      // Convert all numeric fields to strings (matching base schema field names)
+      if (operatingExpensesData.vacancyRate != null) {
+        operatingExpensesDataForDb.vacancyRate = String(operatingExpensesData.vacancyRate);
+      }
+      if (operatingExpensesData.managementRate != null) {
+        operatingExpensesDataForDb.managementRate = String(operatingExpensesData.managementRate);
+      }
+      if (operatingExpensesData.maintenanceRate != null) {
+        operatingExpensesDataForDb.maintenanceRate = String(operatingExpensesData.maintenanceRate);
+      }
+      if (operatingExpensesData.capexRate != null) {
+        operatingExpensesDataForDb.capexRate = String(operatingExpensesData.capexRate);
+      }
+      if (operatingExpensesData.propertyTaxAnnual != null) {
+        operatingExpensesDataForDb.propertyTaxAnnual = String(operatingExpensesData.propertyTaxAnnual);
+      }
+      if (operatingExpensesData.insuranceAnnual != null) {
+        operatingExpensesDataForDb.insuranceAnnual = String(operatingExpensesData.insuranceAnnual);
+      }
+      if (operatingExpensesData.hoaMonthly != null) {
+        operatingExpensesDataForDb.hoaMonthly = String(operatingExpensesData.hoaMonthly);
+      }
+      if (operatingExpensesData.waterSewerMonthly != null) {
+        operatingExpensesDataForDb.waterSewerMonthly = String(operatingExpensesData.waterSewerMonthly);
+      }
+      if (operatingExpensesData.trashMonthly != null) {
+        operatingExpensesDataForDb.trashMonthly = String(operatingExpensesData.trashMonthly);
+      }
+      if (operatingExpensesData.electricMonthly != null) {
+        operatingExpensesDataForDb.electricMonthly = String(operatingExpensesData.electricMonthly);
+      }
+      if (operatingExpensesData.gasMonthly != null) {
+        operatingExpensesDataForDb.gasMonthly = String(operatingExpensesData.gasMonthly);
+      }
+      if (operatingExpensesData.internetMonthly != null) {
+        operatingExpensesDataForDb.internetMonthly = String(operatingExpensesData.internetMonthly);
+      }
+      if (operatingExpensesData.managementFlatFee != null) {
+        operatingExpensesDataForDb.managementFlatFee = String(operatingExpensesData.managementFlatFee);
+      }
+      if (operatingExpensesData.lawnCareMonthly != null) {
+        operatingExpensesDataForDb.lawnCareMonthly = String(operatingExpensesData.lawnCareMonthly);
+      }
+      if (operatingExpensesData.snowRemovalMonthly != null) {
+        operatingExpensesDataForDb.snowRemovalMonthly = String(operatingExpensesData.snowRemovalMonthly);
+      }
+      if (operatingExpensesData.pestControlMonthly != null) {
+        operatingExpensesDataForDb.pestControlMonthly = String(operatingExpensesData.pestControlMonthly);
+      }
+      if (operatingExpensesData.otherExpensesMonthly != null) {
+        operatingExpensesDataForDb.otherExpensesMonthly = String(operatingExpensesData.otherExpensesMonthly);
+      }
+      if (operatingExpensesData.otherExpensesDescription != null) {
+        operatingExpensesDataForDb.otherExpensesDescription = operatingExpensesData.otherExpensesDescription;
+      }
 
       if (existing) {
         await db
@@ -618,7 +662,7 @@ propertiesRouter.put("/:id", async (c) => {
           .set({ ...operatingExpensesDataForDb, updatedAt: new Date() })
           .where(eq(propertyOperatingExpenses.propertyId, id));
       } else {
-        await db.insert(propertyOperatingExpenses).values(operatingExpensesDataForDb);
+        await db.insert(propertyOperatingExpenses).values(operatingExpensesDataForDb as typeof propertyOperatingExpenses.$inferInsert);
       }
     }
 
@@ -636,48 +680,119 @@ propertiesRouter.put("/:id", async (c) => {
         .limit(1);
 
       // Convert Date objects to strings and numbers to strings for numeric database columns
-      const managementDataForDb = {
-        ...managementData,
-        contractStartDate: managementData.contractStartDate instanceof Date
-          ? managementData.contractStartDate.toISOString().split('T')[0]
-          : managementData.contractStartDate,
-        contractEndDate: managementData.contractEndDate instanceof Date
-          ? managementData.contractEndDate.toISOString().split('T')[0]
-          : managementData.contractEndDate,
-        feePercentage: managementData.feePercentage != null
-          ? String(managementData.feePercentage)
-          : managementData.feePercentage,
-        feeFlatAmount: managementData.feeFlatAmount != null
-          ? String(managementData.feeFlatAmount)
-          : managementData.feeFlatAmount,
-        feeMinimum: managementData.feeMinimum != null
-          ? String(managementData.feeMinimum)
-          : managementData.feeMinimum,
-        leasingFeePercentage: managementData.leasingFeePercentage != null
-          ? String(managementData.leasingFeePercentage)
-          : managementData.leasingFeePercentage,
-        leasingFeeFlat: managementData.leasingFeeFlat != null
-          ? String(managementData.leasingFeeFlat)
-          : managementData.leasingFeeFlat,
-        leaseRenewalFee: managementData.leaseRenewalFee != null
-          ? String(managementData.leaseRenewalFee)
-          : managementData.leaseRenewalFee,
-        maintenanceMarkupPercentage: managementData.maintenanceMarkupPercentage != null
-          ? String(managementData.maintenanceMarkupPercentage)
-          : managementData.maintenanceMarkupPercentage,
-        maintenanceCoordinationFee: managementData.maintenanceCoordinationFee != null
-          ? String(managementData.maintenanceCoordinationFee)
-          : managementData.maintenanceCoordinationFee,
-        evictionFee: managementData.evictionFee != null
-          ? String(managementData.evictionFee)
-          : managementData.evictionFee,
-        earlyTerminationFee: managementData.earlyTerminationFee != null
-          ? String(managementData.earlyTerminationFee)
-          : managementData.earlyTerminationFee,
-        reserveAmount: managementData.reserveAmount != null
-          ? String(managementData.reserveAmount)
-          : managementData.reserveAmount,
+      // Base schema validates dates as strings
+      const managementDataForDb: Record<string, unknown> = {
+        propertyId: id,
       };
+
+      // Handle dates (base schema validates as strings)
+      if (managementData.contractStartDate != null) {
+        managementDataForDb.contractStartDate = typeof managementData.contractStartDate === 'string'
+          ? managementData.contractStartDate
+          : String(managementData.contractStartDate);
+      }
+      if (managementData.contractEndDate != null) {
+        managementDataForDb.contractEndDate = typeof managementData.contractEndDate === 'string'
+          ? managementData.contractEndDate
+          : String(managementData.contractEndDate);
+      }
+
+      // Handle numeric fields (convert to strings for database)
+      if (managementData.feePercentage != null) {
+        managementDataForDb.feePercentage = String(managementData.feePercentage);
+      }
+      if (managementData.feeFlatAmount != null) {
+        managementDataForDb.feeFlatAmount = String(managementData.feeFlatAmount);
+      }
+      if (managementData.feeMinimum != null) {
+        managementDataForDb.feeMinimum = String(managementData.feeMinimum);
+      }
+      if (managementData.leasingFeePercentage != null) {
+        managementDataForDb.leasingFeePercentage = String(managementData.leasingFeePercentage);
+      }
+      if (managementData.leasingFeeFlat != null) {
+        managementDataForDb.leasingFeeFlat = String(managementData.leasingFeeFlat);
+      }
+      if (managementData.leaseRenewalFee != null) {
+        managementDataForDb.leaseRenewalFee = String(managementData.leaseRenewalFee);
+      }
+      if (managementData.maintenanceMarkupPercentage != null) {
+        managementDataForDb.maintenanceMarkupPercentage = String(managementData.maintenanceMarkupPercentage);
+      }
+      if (managementData.maintenanceCoordinationFee != null) {
+        managementDataForDb.maintenanceCoordinationFee = String(managementData.maintenanceCoordinationFee);
+      }
+      if (managementData.evictionFee != null) {
+        managementDataForDb.evictionFee = String(managementData.evictionFee);
+      }
+      if (managementData.earlyTerminationFee != null) {
+        managementDataForDb.earlyTerminationFee = String(managementData.earlyTerminationFee);
+      }
+      if (managementData.reserveAmount != null) {
+        managementDataForDb.reserveAmount = String(managementData.reserveAmount);
+      }
+
+      // Handle boolean and text fields
+      if (managementData.isSelfManaged !== undefined) {
+        managementDataForDb.isSelfManaged = managementData.isSelfManaged;
+      }
+      if (managementData.companyName != null) {
+        managementDataForDb.companyName = managementData.companyName;
+      }
+      if (managementData.companyWebsite != null) {
+        managementDataForDb.companyWebsite = managementData.companyWebsite;
+      }
+      if (managementData.contactName != null) {
+        managementDataForDb.contactName = managementData.contactName;
+      }
+      if (managementData.contactEmail != null) {
+        managementDataForDb.contactEmail = managementData.contactEmail;
+      }
+      if (managementData.contactPhone != null) {
+        managementDataForDb.contactPhone = managementData.contactPhone;
+      }
+      if (managementData.contractAutoRenews !== undefined) {
+        managementDataForDb.contractAutoRenews = managementData.contractAutoRenews;
+      }
+      if (managementData.cancellationNoticeDays != null) {
+        managementDataForDb.cancellationNoticeDays = managementData.cancellationNoticeDays;
+      }
+      if (managementData.feeType != null) {
+        managementDataForDb.feeType = managementData.feeType;
+      }
+      if (managementData.leasingFeeType != null) {
+        managementDataForDb.leasingFeeType = managementData.leasingFeeType;
+      }
+      if (managementData.servicesIncluded != null) {
+        managementDataForDb.servicesIncluded = managementData.servicesIncluded;
+      }
+      if (managementData.paymentMethod != null) {
+        managementDataForDb.paymentMethod = managementData.paymentMethod;
+      }
+      if (managementData.paymentDay != null) {
+        managementDataForDb.paymentDay = managementData.paymentDay;
+      }
+      if (managementData.holdsSecurityDeposit !== undefined) {
+        managementDataForDb.holdsSecurityDeposit = managementData.holdsSecurityDeposit;
+      }
+      if (managementData.portalUrl != null) {
+        managementDataForDb.portalUrl = managementData.portalUrl;
+      }
+      if (managementData.portalUsername != null) {
+        managementDataForDb.portalUsername = managementData.portalUsername;
+      }
+      if (managementData.appfolioPropertyId != null) {
+        managementDataForDb.appfolioPropertyId = managementData.appfolioPropertyId;
+      }
+      if (managementData.buildiumPropertyId != null) {
+        managementDataForDb.buildiumPropertyId = managementData.buildiumPropertyId;
+      }
+      if (managementData.propertywarePropertyId != null) {
+        managementDataForDb.propertywarePropertyId = managementData.propertywarePropertyId;
+      }
+      if (managementData.notes != null) {
+        managementDataForDb.notes = managementData.notes;
+      }
 
       if (existing) {
         await db
@@ -685,7 +800,7 @@ propertiesRouter.put("/:id", async (c) => {
           .set({ ...managementDataForDb, updatedAt: new Date() })
           .where(eq(propertyManagement.propertyId, id));
       } else {
-        await db.insert(propertyManagement).values(managementDataForDb);
+        await db.insert(propertyManagement).values(managementDataForDb as typeof propertyManagement.$inferInsert);
       }
     }
 
@@ -704,7 +819,7 @@ propertiesRouter.put("/:id", async (c) => {
           .limit(1);
 
         if (user) {
-          const validated = loanInsertSchema.parse({
+          const validated = loanInsertApiSchema.parse({
             propertyId: id,
             userId: user.id,
             ...loan,
@@ -719,17 +834,17 @@ propertiesRouter.put("/:id", async (c) => {
             loanNumber: validated.loanNumber || null,
             originalLoanAmount: validated.originalLoanAmount ? String(validated.originalLoanAmount) : '0',
             interestRate: validated.interestRate ? String(validated.interestRate / 100) : '0', // Convert percentage to decimal
-            termMonths: validated.loanTerm ? validated.loanTerm * 12 : null, // Convert years to months if provided
-            currentBalance: validated.originalLoanAmount ? String(validated.originalLoanAmount) : '0', // Default to original amount
+            termMonths: validated.termMonths || null,
+            currentBalance: validated.currentBalance ? String(validated.currentBalance) : '0',
             status: validated.status || 'active',
             isPrimary: validated.isPrimary ?? true,
           };
 
           // Add optional fields
-          if (validated.originationDate) {
-            loanDataForInsert.startDate = validated.originationDate instanceof Date
-              ? validated.originationDate.toISOString().split('T')[0]
-              : validated.originationDate;
+          if (validated.startDate) {
+            loanDataForInsert.startDate = validated.startDate instanceof Date
+              ? validated.startDate.toISOString().split('T')[0]
+              : validated.startDate;
           }
           if (validated.maturityDate) {
             loanDataForInsert.maturityDate = validated.maturityDate instanceof Date
@@ -818,9 +933,8 @@ propertiesRouter.post("/:id/loans", async (c) => {
     }
 
     // Prepare loan data for Zod validation
-    // Note: Zod schema expects interestRate as percentage (0-100), userId for authorization
-    // Note: Zod schema has loanTerm (years) but we use termMonths (months) in the database
-    // We'll validate the required fields manually and use Zod for type checking only
+    // Note: Enhanced schema expects interestRate as percentage (0-100), userId for authorization
+    // Note: Enhanced schema expects termMonths directly (not loanTerm)
     const loanDataForValidation = {
       propertyId: id,
       userId: user.id, // For validation/authorization, but not stored in loans table
@@ -829,8 +943,8 @@ propertiesRouter.post("/:id/loans", async (c) => {
       servicerName: body.servicerName || null,
       loanNumber: body.loanNumber || null,
       originalLoanAmount: Number(body.originalLoanAmount),
-      interestRate: Number(body.interestRate), // Zod expects percentage (0-100)
-      loanTerm: null, // Not used, we have termMonths - Zod allows nullable
+      interestRate: Number(body.interestRate), // Enhanced schema expects percentage (0-100)
+      termMonths: Number(body.termMonths), // Enhanced schema expects termMonths directly
       startDate: body.startDate || null,
       maturityDate: maturityDate,
       currentBalance: Number(body.currentBalance),
@@ -838,22 +952,11 @@ propertiesRouter.post("/:id/loans", async (c) => {
       isPrimary: true,
     };
 
-    // Validate with Zod schema (validates userId for authorization and types)
-    // Note: We bypass Zod's termMonths validation since it uses loanTerm instead
-    const validated = loanInsertSchema.parse(loanDataForValidation);
+    // Validate with enhanced Zod schema (validates userId for authorization and types)
+    const validated = loanInsertApiSchema.parse(loanDataForValidation);
 
     // Convert interest rate from percentage to decimal (e.g., 6.5% -> 0.06500)
     const interestRateDecimal = validated.interestRate! / 100;
-
-    // Get termMonths from body (not from validated since Zod doesn't have it)
-    // Validate it's a positive integer
-    const termMonths = Number(body.termMonths);
-    if (!termMonths || termMonths <= 0 || !Number.isInteger(termMonths)) {
-      return c.json(
-        { error: "termMonths must be a positive integer" },
-        400
-      );
-    }
 
     // Prepare data for database insert (convert to database format, remove userId)
     // All required fields are guaranteed to be present after validation
@@ -865,13 +968,13 @@ propertiesRouter.post("/:id/loans", async (c) => {
       loanNumber: validated.loanNumber,
       originalLoanAmount: String(validated.originalLoanAmount!),
       interestRate: String(interestRateDecimal),
-      termMonths: termMonths, // Use termMonths from body directly
-      startDate: body.startDate || null, // Use from body, not validated (Zod uses originationDate)
-      maturityDate: maturityDate,
-      currentBalance: String(body.currentBalance), // Use from body, not validated (not in Zod schema)
+      termMonths: validated.termMonths!,
+      startDate: validated.startDate || null,
+      maturityDate: validated.maturityDate || null,
+      currentBalance: String(validated.currentBalance!),
       balanceAsOfDate: new Date().toISOString().split('T')[0],
-      status: "active" as const,
-      isPrimary: true,
+      status: validated.status || ("active" as const),
+      isPrimary: validated.isPrimary ?? true,
       loanPosition: 1,
     };
 
@@ -981,53 +1084,49 @@ propertiesRouter.put("/:id/loans/:loanId", async (c) => {
     }
 
     // Prepare loan data for Zod validation
-    const loanDataForValidation = {
+    // Note: Update schema expects propertyId, all other fields are optional
+    const loanDataForValidation: Record<string, unknown> = {
       propertyId: id,
-      userId: user.id,
-      loanType: body.loanType || existingLoan.loanType || "conventional",
-      lenderName: body.lenderName,
-      servicerName: body.servicerName || null,
-      loanNumber: body.loanNumber || null,
-      originalLoanAmount: Number(body.originalLoanAmount),
-      interestRate: Number(body.interestRate), // Zod expects percentage (0-100)
-      loanTerm: null,
-      startDate: body.startDate || null,
-      maturityDate: maturityDate,
-      currentBalance: Number(body.currentBalance),
-      status: existingLoan.status || "active",
-      isPrimary: existingLoan.isPrimary !== undefined ? existingLoan.isPrimary : true,
     };
 
-    // Validate with Zod schema
-    const validated = loanInsertSchema.parse(loanDataForValidation);
+    // Only include fields that are provided in the request body
+    if (body.loanType !== undefined) loanDataForValidation.loanType = body.loanType;
+    if (body.lenderName !== undefined) loanDataForValidation.lenderName = body.lenderName;
+    if (body.servicerName !== undefined) loanDataForValidation.servicerName = body.servicerName || null;
+    if (body.loanNumber !== undefined) loanDataForValidation.loanNumber = body.loanNumber || null;
+    if (body.originalLoanAmount !== undefined) loanDataForValidation.originalLoanAmount = Number(body.originalLoanAmount);
+    if (body.interestRate !== undefined) loanDataForValidation.interestRate = Number(body.interestRate); // Enhanced schema expects percentage (0-100)
+    if (body.termMonths !== undefined) loanDataForValidation.termMonths = Number(body.termMonths);
+    if (body.startDate !== undefined) loanDataForValidation.startDate = body.startDate || null;
+    if (body.currentBalance !== undefined) loanDataForValidation.currentBalance = Number(body.currentBalance);
+    if (maturityDate !== null) loanDataForValidation.maturityDate = maturityDate;
 
-    // Convert interest rate from percentage to decimal (e.g., 6.5% -> 0.06500)
-    const interestRateDecimal = validated.interestRate! / 100;
-
-    // Get termMonths from body
-    const termMonths = Number(body.termMonths);
-    if (!termMonths || termMonths <= 0 || !Number.isInteger(termMonths)) {
-      return c.json(
-        { error: "termMonths must be a positive integer" },
-        400
-      );
-    }
+    // Validate with enhanced update schema (all fields optional except propertyId)
+    const validated = loanUpdateApiSchema.parse(loanDataForValidation);
 
     // Prepare data for database update
-    const loanDataForUpdate = {
-      loanType: validated.loanType,
-      lenderName: validated.lenderName!,
-      servicerName: validated.servicerName,
-      loanNumber: validated.loanNumber,
-      originalLoanAmount: String(validated.originalLoanAmount!),
-      interestRate: String(interestRateDecimal),
-      termMonths: termMonths,
-      startDate: body.startDate || null,
-      maturityDate: maturityDate,
-      currentBalance: String(body.currentBalance),
-      balanceAsOfDate: new Date().toISOString().split('T')[0],
+    const loanDataForUpdate: Record<string, unknown> = {
       updatedAt: new Date(),
     };
+
+    // Only update fields that were provided
+    if (validated.loanType !== undefined) loanDataForUpdate.loanType = validated.loanType;
+    if (validated.lenderName !== undefined) loanDataForUpdate.lenderName = validated.lenderName;
+    if (validated.servicerName !== undefined) loanDataForUpdate.servicerName = validated.servicerName;
+    if (validated.loanNumber !== undefined) loanDataForUpdate.loanNumber = validated.loanNumber;
+    if (validated.originalLoanAmount !== undefined) loanDataForUpdate.originalLoanAmount = String(validated.originalLoanAmount);
+    if (validated.interestRate !== undefined) {
+      // Convert interest rate from percentage to decimal (e.g., 6.5% -> 0.06500)
+      const interestRateDecimal = validated.interestRate / 100;
+      loanDataForUpdate.interestRate = String(interestRateDecimal);
+    }
+    if (validated.termMonths !== undefined) loanDataForUpdate.termMonths = validated.termMonths;
+    if (validated.startDate !== undefined) loanDataForUpdate.startDate = validated.startDate;
+    if (validated.maturityDate !== undefined) loanDataForUpdate.maturityDate = validated.maturityDate;
+    if (validated.currentBalance !== undefined) loanDataForUpdate.currentBalance = String(validated.currentBalance);
+    if (validated.currentBalance !== undefined) {
+      loanDataForUpdate.balanceAsOfDate = new Date().toISOString().split('T')[0];
+    }
 
     // Update the loan
     const [updatedLoan] = await db
@@ -1240,7 +1339,13 @@ propertiesRouter.get("/:id/expenses", async (c) => {
     conditions.push(lte(propertyExpenses.expenseDate, endDate));
   }
   if (category) {
-    conditions.push(eq(propertyExpenses.category, category));
+    // Cast category string to enum type for type safety
+    // The enum type comes from the pgEnum definition in the schema
+    // Valid enum values: "acquisition" | "property_tax" | "insurance" | "hoa" | "management" |
+    // "repairs" | "maintenance" | "capex" | "utilities" | "legal" | "accounting" | "marketing" |
+    // "travel" | "office" | "bank_fees" | "licenses" | "other"
+    type ExpenseCategory = "acquisition" | "property_tax" | "insurance" | "hoa" | "management" | "repairs" | "maintenance" | "capex" | "utilities" | "legal" | "accounting" | "marketing" | "travel" | "office" | "bank_fees" | "licenses" | "other";
+    conditions.push(eq(propertyExpenses.category, category as ExpenseCategory));
   }
   if (isTaxDeductible !== undefined) {
     conditions.push(
@@ -1346,15 +1451,13 @@ propertiesRouter.post("/:id/expenses", async (c) => {
   }
 
   // Parse and validate request body
-  const data = propertyExpenseInsertSchema.parse(await c.req.json());
+  const data = propertyExpenseInsertApiSchema.parse(await c.req.json());
 
-  // Convert data types for database (numeric fields need to be strings, dates need to be strings)
+  // Convert data types for database (numeric fields need to be strings, dates are already strings from enhanced schema)
   const expenseDataForDb: Record<string, unknown> = {
     propertyId: id,
     createdBy: user.id, // Use user.id (UUID), not clerkId
-    expenseDate: data.expenseDate instanceof Date
-      ? data.expenseDate.toISOString().split('T')[0]
-      : data.expenseDate,
+    expenseDate: data.expenseDate, // Enhanced schema validates as ISO date string
     amount: String(data.amount), // numeric column expects string
     category: data.category,
     isRecurring: data.isRecurring ?? false,
@@ -1436,26 +1539,22 @@ propertiesRouter.put("/:id/expenses/:expenseId", async (c) => {
   }
 
   // Parse and validate request body
-  const data = propertyExpenseUpdateSchema.parse(await c.req.json());
+  const data = propertyExpenseUpdateApiSchema.parse(await c.req.json());
 
   // Convert data types for database (numeric fields need to be strings, dates need to be strings)
   const expenseDataForDb: Record<string, unknown> = {
     updatedAt: new Date(),
   };
 
-  // Convert date and numeric fields
+  // Convert date and numeric fields (enhanced schema validates dates as strings)
   if (data.expenseDate !== undefined) {
-    expenseDataForDb.expenseDate = data.expenseDate instanceof Date
-      ? data.expenseDate.toISOString().split('T')[0]
-      : data.expenseDate;
+    expenseDataForDb.expenseDate = data.expenseDate; // Already validated as ISO date string
   }
   if (data.amount !== undefined) {
     expenseDataForDb.amount = String(data.amount); // numeric column expects string
   }
-  if (data.recurrenceEndDate !== undefined) {
-    expenseDataForDb.recurrenceEndDate = data.recurrenceEndDate instanceof Date
-      ? data.recurrenceEndDate.toISOString().split('T')[0]
-      : data.recurrenceEndDate;
+  if (data.recurrenceEndDate !== undefined && data.recurrenceEndDate !== null) {
+    expenseDataForDb.recurrenceEndDate = data.recurrenceEndDate; // Already validated as ISO date string or null
   }
 
   // Add other optional fields

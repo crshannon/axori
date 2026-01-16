@@ -1,10 +1,77 @@
 import { z } from "zod";
 
 // ============================================================================
-// PHASE 1: NORMALIZED PROPERTY SCHEMA EXPORTS
+// DRIZZLE-ZOD BASE SCHEMAS (Phase 3)
 // ============================================================================
-// Export all new normalized property schemas from the dedicated file
-export * from "./normalized-property";
+// Export base schemas generated from Drizzle schema
+// These take precedence over manual schemas in normalized-property.ts
+export {
+  propertyInsertSchema,
+  propertySelectSchema,
+  propertyCharacteristicsInsertSchema,
+  propertyCharacteristicsSelectSchema,
+  propertyValuationInsertSchema,
+  propertyValuationSelectSchema,
+  propertyAcquisitionInsertSchema,
+  propertyAcquisitionSelectSchema,
+  propertyRentalIncomeInsertSchema,
+  propertyRentalIncomeSelectSchema,
+  propertyOperatingExpensesInsertSchema,
+  propertyOperatingExpensesSelectSchema,
+  propertyManagementInsertSchema,
+  propertyManagementSelectSchema,
+} from "./base/properties";
+
+export {
+  loanInsertSchema,
+  loanSelectSchema,
+} from "./base/loans";
+
+export {
+  propertyExpenseInsertSchema,
+  propertyExpenseSelectSchema,
+} from "./base/expenses";
+
+// ============================================================================
+// ENHANCED SCHEMAS (Phase 4)
+// ============================================================================
+// Export enhanced schemas with API-specific validation
+export * from "./enhanced/loans";
+export * from "./enhanced/expenses";
+
+// ============================================================================
+// DEPRECATED SCHEMAS (Phase 8 Cleanup)
+// ============================================================================
+// These schemas from normalized-property.ts are kept for backward compatibility
+// but are deprecated. Update schemas can be generated from base schemas using .partial()
+// when needed. History and cache schemas are kept until those features are implemented.
+// 
+// TODO: Generate update schemas from base schemas using .partial() when needed
+// TODO: Remove history and cache schemas when those features are implemented
+export {
+  // Update schemas (can be generated from base schemas using .partial() when needed)
+  propertyCharacteristicsUpdateSchema,
+  propertyValuationUpdateSchema,
+  propertyAcquisitionUpdateSchema,
+  propertyRentalIncomeUpdateSchema,
+  propertyOperatingExpensesUpdateSchema,
+  propertyManagementUpdateSchema,
+  loanUpdateSchema,
+  propertyExpenseUpdateSchema,
+  // History schemas (kept until history feature is implemented)
+  loanHistoryInsertSchema,
+  loanHistorySelectSchema,
+  propertyHistoryInsertSchema,
+  propertyHistorySelectSchema,
+  // Cache schemas (kept until cache feature is implemented)
+  apiCacheInsertSchema,
+  apiCacheSelectSchema,
+  // Enum types (deprecated - use Drizzle enum types from @axori/db instead)
+  // These are kept for backward compatibility but should use Drizzle enums
+  type ExpenseCategory,
+  type RecurrenceFrequency,
+  type ExpenseSource,
+} from "./normalized-property";
 
 // Common validation schemas
 
@@ -50,60 +117,9 @@ export const userPortfolioUpdateSchema = z.object({
   role: z.enum(["owner", "admin", "member", "viewer"]).optional(),
 });
 
-// Property Insert Schema - excludes auto-generated fields (id, createdAt, updatedAt)
-// portfolioId, userId, and addedBy come from context, not user input
-export const propertyInsertSchema = z.object({
-  portfolioId: z.string().uuid("Portfolio ID must be a valid UUID"), // From portfolio context
-  userId: z.string().uuid("User ID must be a valid UUID"), // Required for user isolation
-  addedBy: z.string().uuid("Added by user ID must be a valid UUID"), // From auth context
-  address: z
-    .string()
-    .min(1, "Address is required")
-    .refine(
-      (val) => {
-        // Address should include a street number (starts with a digit)
-        // Pattern matches addresses like "123 Main St", "456 Oak Ave", etc.
-        // Also allows addresses without numbers for edge cases (e.g., PO Box, "Main Street")
-        const hasStreetNumber = /^\d+\s/.test(val.trim())
-        const isPOBoxOrSpecial = /^(P\.?O\.?\s*Box|PO\s*Box)/i.test(val.trim())
-        // Allow addresses without numbers for edge cases, but prefer addresses with numbers
-        return val.trim().length > 0 && (hasStreetNumber || isPOBoxOrSpecial || val.trim().length >= 5)
-      },
-      {
-        message: "Address should include a street number (e.g., '123 Main Street')",
-      },
-    ),
-  city: z.string().min(1, "City is required"),
-  state: z.string().length(2, "State must be 2 characters (e.g., TX)"),
-  zipCode: z.string().regex(/^\d{5}(-\d{4})?$/, "Invalid ZIP code (must be 5 or 9 digits)"),
-  // Mapbox geocoding fields - optional but recommended
-  latitude: z
-    .union([z.string(), z.number()])
-    .optional()
-    .transform((val) => (val === undefined ? null : String(val))),
-  longitude: z
-    .union([z.string(), z.number()])
-    .optional()
-    .transform((val) => (val === undefined ? null : String(val))),
-  mapboxPlaceId: z.string().optional().nullable(),
-  fullAddress: z.string().optional().nullable(), // Full formatted address from Mapbox
-  propertyType: z.string().min(1, "Property type is required").optional().nullable(), // Optional for drafts
-  status: z.enum(["draft", "active", "archived"]).default("draft"), // Draft until wizard completed
-});
-
-// Property Select Schema - includes all fields from database
-export const propertySelectSchema = propertyInsertSchema.extend({
-  id: z.string().uuid(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  // Numeric fields from DB are strings, convert to numbers for select
-  latitude: z
-    .union([z.string(), z.number(), z.null()])
-    .transform((val) => (val === null || val === undefined ? null : Number(val))),
-  longitude: z
-    .union([z.string(), z.number(), z.null()])
-    .transform((val) => (val === null || val === undefined ? null : Number(val))),
-});
+// NOTE: propertyInsertSchema and propertySelectSchema are now exported from base/properties above
+// The manual propertyUpdateSchema below is kept for API use (not generated from base yet)
+// Custom validation (e.g., address refinement) can be added to enhanced schemas when needed
 
 // Property Update Schema - all fields optional except ID
 export const propertyUpdateSchema = z.object({
@@ -126,8 +142,10 @@ export const propertyUpdateSchema = z.object({
   status: z.enum(["draft", "active", "archived"]).optional(),
 });
 
-// Legacy schema for backward compatibility (deprecated - use propertyInsertSchema)
+// Legacy schema for backward compatibility (kept for specific use cases - use propertyInsertSchema from base/ for new code)
 // Note: This schema is kept for backwards compatibility but should be updated to use portfolioId, userId
+// Import propertyInsertSchema from base for the omit operation
+import { propertyInsertSchema } from "./base/properties";
 export const propertySchema = propertyInsertSchema.omit({ portfolioId: true, userId: true, addedBy: true });
 
 // Name validation pattern: letters, spaces, hyphens, apostrophes

@@ -23,7 +23,9 @@ Use this checklist when adding a new feature to ensure consistency across all la
 // ✅ Complete schema example
 export const properties = pgTable("properties", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id).notNull(), // User-scoped
+  userId: uuid("user_id")
+    .references(() => users.id)
+    .notNull(), // User-scoped
   address: text("address").notNull(),
   city: text("city").notNull(),
   state: text("state").notNull(),
@@ -49,57 +51,101 @@ export const properties = pgTable("properties", {
 
 ```typescript
 // ✅ Correct type export
-import { InferInsertModel, InferSelectModel } from 'drizzle-orm'
-import { properties } from './schema'
+import { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { properties } from "./schema";
 
-export type Property = InferSelectModel<typeof properties>
-export type PropertyInsert = InferInsertModel<typeof properties>
+export type Property = InferSelectModel<typeof properties>;
+export type PropertyInsert = InferInsertModel<typeof properties>;
 ```
 
 ## Phase 3: Zod Validation Schemas
 
-### Validation Schema Creation
+### Step 3.1: Generate Base Schemas (Auto-Generated)
 
-- [ ] Create Zod schema in `packages/shared/src/validation/index.ts`
-- [ ] Use camelCase field names (matching Drizzle code layer)
-- [ ] Create separate schemas for insert/select/update operations
-- [ ] **Insert schema**: Exclude auto-generated fields (id, createdAt, updatedAt)
-- [ ] **Insert schema**: Exclude `userId` (set from auth context)
-- [ ] **Select schema**: Include all fields including auto-generated ones
-- [ ] **Update schema**: Make all fields optional except ID
-- [ ] Match required fields to Drizzle `.notNull()` constraints
-- [ ] Add validation rules (min length, regex, etc.)
-- [ ] Add helpful error messages
+- [ ] Create base schema file in `packages/shared/src/validation/base/`
+- [ ] Use `createInsertSchema()` from `drizzle-zod` to generate insert schema
+- [ ] Use `createSelectSchema()` from `drizzle-zod` to generate select schema
+- [ ] **Never manually edit base schemas** - they are auto-generated
+- [ ] Base schemas automatically exclude auto-generated fields (id, createdAt, updatedAt)
+- [ ] Base schemas automatically match Drizzle `.notNull()` constraints
+- [ ] Numeric fields from Drizzle generate as `z.string()` (PostgreSQL stores as string)
+- [ ] Enum fields from `pgEnum()` generate as `z.enum()` with correct values
 
-### Example Checklist Item
+### Example Base Schema
 
 ```typescript
-// ✅ Complete validation schemas
-export const propertyInsertSchema = z.object({
+// packages/shared/src/validation/base/properties.ts
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { properties } from "@axori/db";
+
+// Auto-generated base schemas
+export const propertyInsertSchema = createInsertSchema(properties);
+export const propertySelectSchema = createSelectSchema(properties);
+```
+
+### Step 3.2: Create Enhanced Schemas (API-Specific)
+
+- [ ] Create enhanced schema file in `packages/shared/src/validation/enhanced/`
+- [ ] Extend base schemas with API-specific validation
+- [ ] Override numeric fields (string → number) for API usage
+- [ ] Add authorization fields (e.g., `userId`) if needed (not stored in DB)
+- [ ] Add custom validation rules (min/max, regex, etc.)
+- [ ] Create update schema using `.partial()` on enhanced insert schema
+- [ ] Add helpful error messages
+
+### Example Enhanced Schema
+
+```typescript
+// packages/shared/src/validation/enhanced/properties.ts
+import { propertyInsertSchema } from "../base/properties";
+import { z } from "zod";
+
+// Enhanced insert schema for API
+export const propertyInsertApiSchema = propertyInsertSchema.extend({
+  // Override numeric fields if needed (base schema has them as strings)
+  // Add custom validation
   address: z.string().min(1, "Address is required"),
-  city: z.string().min(1, "City is required"),
   state: z.string().length(2, "State must be 2 characters"),
   zipCode: z.string().regex(/^\d{5}(-\d{4})?$/, "Invalid ZIP code"),
-  propertyType: z.string().min(1, "Property type is required"),
-  // Excludes: id, userId, createdAt, updatedAt
-});
+  // Add userId for authorization (not in DB)
+  userId: z.string().uuid("User ID must be a valid UUID"),
+}) as unknown as z.ZodType<any>;
 
-export const propertySelectSchema = propertyInsertSchema.extend({
-  id: z.string().uuid(),
-  userId: z.string().uuid(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
-
-export const propertyUpdateSchema = z.object({
-  id: z.string().uuid(),
-  address: z.string().min(1).optional(),
-  city: z.string().min(1).optional(),
-  state: z.string().length(2).optional(),
-  zipCode: z.string().regex(/^\d{5}(-\d{4})?$/, "Invalid ZIP code").optional(),
-  propertyType: z.string().min(1).optional(),
-});
+// Enhanced update schema
+export const propertyUpdateApiSchema = propertyInsertApiSchema
+  .omit({ userId: true }) // Remove fields not needed for updates
+  .partial()
+  .extend({
+    id: z.string().uuid("Property ID must be a valid UUID"),
+  }) as unknown as z.ZodType<any>;
 ```
+
+### Step 3.3: Export Types
+
+- [ ] Export Zod-inferred types in `packages/shared/src/types/index.ts`
+- [ ] Use `z.infer<typeof schema>` to infer types from enhanced schemas
+- [ ] Export types with descriptive names (e.g., `PropertyInsertApi`, `PropertyUpdateApi`)
+
+### Example Type Exports
+
+```typescript
+// packages/shared/src/types/index.ts
+import type { z as zod } from "zod";
+import {
+  propertyInsertApiSchema,
+  propertyUpdateApiSchema,
+} from "../validation";
+
+// Property API types (for frontend use)
+export type PropertyInsertApi = zod.infer<typeof propertyInsertApiSchema>;
+export type PropertyUpdateApi = zod.infer<typeof propertyUpdateApiSchema>;
+```
+
+### Step 3.4: Export from Validation Index
+
+- [ ] Export base schemas from `packages/shared/src/validation/base/`
+- [ ] Export enhanced schemas from `packages/shared/src/validation/enhanced/`
+- [ ] Update `packages/shared/src/validation/index.ts` to export all schemas
 
 ## Phase 4: API Routes
 
@@ -107,13 +153,15 @@ export const propertyUpdateSchema = z.object({
 
 - [ ] Create route file in `apps/api/src/routes/`
 - [ ] Import Drizzle schema and types
-- [ ] Import Zod validation schemas
+- [ ] Import **enhanced** Zod validation schemas (not base schemas)
 - [ ] **If user-scoped**: Use Clerk authentication middleware
 - [ ] **If user-scoped**: Extract authenticated user from request
 - [ ] **If user-scoped**: Filter all queries by user ID
 - [ ] **If user-scoped**: Set userId from auth context (never from request)
 - [ ] **If user-scoped**: Verify ownership before mutations
-- [ ] Validate request bodies with Zod schemas
+- [ ] Validate request bodies with enhanced Zod schemas
+- [ ] Convert API format to DB format (e.g., percentage → decimal for numeric fields)
+- [ ] Convert numeric fields from number (API) to string (DB) for `numeric()` columns
 - [ ] Use proper HTTP status codes (200, 201, 400, 401, 404, 500)
 - [ ] Return consistent JSON response format
 - [ ] Handle errors gracefully with appropriate messages
@@ -127,19 +175,24 @@ import { Hono } from "hono";
 import { db } from "@axori/db";
 import { properties, users } from "@axori/db/src/schema";
 import { eq, and } from "drizzle-orm";
-import { propertyInsertSchema, propertyUpdateSchema } from "@axori/shared/src/validation";
+import {
+  propertyInsertApiSchema,
+  propertyUpdateApiSchema,
+} from "@axori/shared/src/validation";
 
 const propertiesRouter = new Hono();
 
 // GET /api/properties - List user's properties
 propertiesRouter.get("/", async (c) => {
-  const { userId: clerkId } = c.req.var.auth;
-  
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
   if (!clerkId) {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  const [user] = await db.select()
+  const [user] = await db
+    .select()
     .from(users)
     .where(eq(users.clerkId, clerkId))
     .limit(1);
@@ -148,7 +201,8 @@ propertiesRouter.get("/", async (c) => {
     return c.json({ error: "User not found" }, 404);
   }
 
-  const userProperties = await db.select()
+  const userProperties = await db
+    .select()
     .from(properties)
     .where(eq(properties.userId, user.id));
 
@@ -157,13 +211,15 @@ propertiesRouter.get("/", async (c) => {
 
 // POST /api/properties - Create property
 propertiesRouter.post("/", async (c) => {
-  const { userId: clerkId } = c.req.var.auth;
-  
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
   if (!clerkId) {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  const [user] = await db.select()
+  const [user] = await db
+    .select()
     .from(users)
     .where(eq(users.clerkId, clerkId))
     .limit(1);
@@ -172,14 +228,27 @@ propertiesRouter.post("/", async (c) => {
     return c.json({ error: "User not found" }, 404);
   }
 
+  // Validate with enhanced schema
   const body = await c.req.json();
-  const validated = propertyInsertSchema.parse(body);
+  const validated = propertyInsertApiSchema.parse({
+    ...body,
+    userId: user.id, // Add userId for validation
+  });
 
-  const [property] = await db.insert(properties)
-    .values({
-      ...validated,
-      userId: user.id, // From auth, not request
-    })
+  // Convert API format to DB format
+  const propertyDataForDb = {
+    userId: user.id, // From auth, not request
+    address: validated.address,
+    city: validated.city,
+    state: validated.state,
+    zipCode: validated.zipCode,
+    // Convert numeric fields if needed (string → string for DB)
+    // ... other fields
+  };
+
+  const [property] = await db
+    .insert(properties)
+    .values(propertyDataForDb)
     .returning();
 
   return c.json({ property }, 201);
@@ -238,7 +307,7 @@ propertiesRouter.post("/", async (c) => {
 
 ## Phase 9: Documentation
 
-### Documentation Updates
+### Code Documentation
 
 - [ ] Update API documentation with new endpoints
 - [ ] Document any new types or schemas
@@ -246,31 +315,103 @@ propertiesRouter.post("/", async (c) => {
 - [ ] Update README if needed
 - [ ] Document any breaking changes
 
+### Architectural Plan Documentation
+
+**For major changes (new tables, migrations, refactors):**
+
+- [ ] Create versioned plan folder in `docs/architecture/plans/` (e.g., `003-feature-name/`)
+- [ ] Create `SUMMARY.md` - Quick read (1-2 pages) describing:
+  - What we aim to accomplish
+  - Why this is needed
+  - Key goals
+  - Expected outcome
+  - Main phases (high-level)
+- [ ] Create `EXECUTION.md` - Detailed step-by-step guide with:
+  - Current state analysis
+  - Detailed phases with checkboxes
+  - File changes summary
+  - Code examples
+  - Testing strategy
+  - Rollback plan
+- [ ] Update plan documents as you work through phases
+- [ ] After completion:
+  - [ ] Create `COMPLETION.md` - Summary of accomplishments
+  - [ ] Mark plan as "Complete" in `SUMMARY.md` and `EXECUTION.md`
+  - [ ] Move plan folder to `docs/architecture/completed/`
+
+**For minor changes (bug fixes, small features):**
+
+- [ ] Add comments to code explaining changes
+- [ ] Update relevant documentation files
+- [ ] Note changes in commit messages
+
+See [planning-workflow.md](../.skills/architect/planning-workflow.md) for templates and detailed workflow.
+
+## Phase 10: Frontend Hooks
+
+### Frontend Hook Implementation
+
+- [ ] Create hook file in `apps/web/src/hooks/api/`
+- [ ] Import Zod-inferred types from `@axori/shared` (not Drizzle types directly)
+- [ ] Use `useMutation` or `useQuery` from TanStack Query
+- [ ] Type mutation function parameters with Zod-inferred types
+- [ ] Ensure types match API expectations (e.g., percentage for interestRate)
+- [ ] Handle loading, error, and success states
+- [ ] Export hook from `apps/web/src/hooks/api/index.ts`
+
+### Example Frontend Hook
+
+```typescript
+// apps/web/src/hooks/api/useProperties.ts
+import { useMutation, useQuery } from "@tanstack/react-query";
+import type { PropertyInsertApi, PropertyUpdateApi } from "@axori/shared";
+
+export function useCreateProperty() {
+  return useMutation({
+    mutationFn: async (data: Omit<PropertyInsertApi, "userId">) => {
+      // data is fully typed from Zod schema
+      return await apiFetch("/api/properties", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+  });
+}
+```
+
 ## Quick Reference: File Locations
 
 - **Drizzle Schema**: `packages/db/src/schema/index.ts`
-- **Type Exports**: `packages/db/src/types.ts`
-- **Zod Schemas**: `packages/shared/src/validation/index.ts`
+- **Type Exports**: `packages/db/src/types.ts` (Drizzle-inferred types)
+- **Base Zod Schemas**: `packages/shared/src/validation/base/` (auto-generated)
+- **Enhanced Zod Schemas**: `packages/shared/src/validation/enhanced/` (API-specific)
+- **Zod Schema Exports**: `packages/shared/src/validation/index.ts`
+- **Zod-Inferred Types**: `packages/shared/src/types/index.ts`
 - **API Routes**: `apps/api/src/routes/`
 - **API Index**: `apps/api/src/index.ts`
+- **Frontend Hooks**: `apps/web/src/hooks/api/`
 
 ## Common Mistakes to Avoid
 
 - ❌ Forgetting to add `userId` foreign key for user-scoped resources
 - ❌ Not filtering queries by user ID
 - ❌ Trusting client-supplied `userId` in requests
-- ❌ Including auto-generated fields in insert Zod schemas
-- ❌ Manually defining types instead of using Drizzle inference
+- ❌ Manually editing base Zod schemas (they are auto-generated)
+- ❌ Using `text()` instead of `pgEnum()` for enum fields
+- ❌ Not converting API format to DB format (e.g., percentage → decimal)
+- ❌ Not converting numeric fields from number (API) to string (DB)
+- ❌ Manually defining types instead of using Drizzle/Zod inference
 - ❌ Using snake_case in Zod schemas (should be camelCase)
 - ❌ Missing authentication middleware on protected routes
 - ❌ Not verifying ownership before mutations
+- ❌ Using base schemas in API routes (should use enhanced schemas)
 
 ## Summary
 
 Follow this checklist systematically for each new feature to ensure:
+
 - ✅ Schema alignment across all layers
 - ✅ Type safety throughout the stack
 - ✅ Proper security and user data isolation
 - ✅ Consistent patterns and best practices
 - ✅ Maintainable and scalable code
-

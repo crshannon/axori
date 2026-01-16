@@ -1,10 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useUser } from '@clerk/clerk-react'
-import type { Loan } from '@axori/shared'
+import type { Loan, LoanInsertApi } from '@axori/shared'
 import { apiFetch } from '@/lib/api/client'
 
 /**
  * Create a loan for a property
+ * Uses LoanInsertApi type from enhanced Zod schema for type safety
  */
 export function useCreateLoan() {
   const queryClient = useQueryClient()
@@ -14,17 +15,8 @@ export function useCreateLoan() {
     mutationFn: async ({
       propertyId,
       ...loanData
-    }: {
+    }: Omit<LoanInsertApi, 'userId'> & {
       propertyId: string
-      loanType: string
-      lenderName: string
-      servicerName?: string
-      loanNumber?: string
-      originalLoanAmount: number
-      interestRate: number
-      termMonths: number
-      currentBalance: number
-      startDate?: string
     }) => {
       if (!user?.id) {
         throw new Error('User not authenticated')
@@ -49,6 +41,7 @@ export function useCreateLoan() {
 
 /**
  * Update an existing loan
+ * Uses LoanUpdateApi type from enhanced Zod schema for type safety
  */
 export function useUpdateLoan() {
   const queryClient = useQueryClient()
@@ -59,18 +52,8 @@ export function useUpdateLoan() {
       propertyId,
       loanId,
       ...loanData
-    }: {
-      propertyId: string
+    }: LoanUpdateApi & {
       loanId: string
-      loanType: string
-      lenderName: string
-      servicerName?: string
-      loanNumber?: string
-      originalLoanAmount: number
-      interestRate: number
-      termMonths: number
-      currentBalance: number
-      startDate?: string
     }) => {
       if (!user?.id) {
         throw new Error('User not authenticated')

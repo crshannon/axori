@@ -12,33 +12,44 @@ import {
   propertyManagement,
   loans,
   userMarkets,
+  markets,
 } from "../schema";
 import { eq, and } from "drizzle-orm";
 
 /**
- * Seeds mock data for a specific user by their Clerk ID
- * 
+ * Seeds mock data for a specific user by their Clerk ID or user ID (UUID)
+ *
  * Creates:
  * 1. Completed onboarding data
  * 2. One property with only address (empty state)
  * 3. One fully implemented property with all data
- * 
- * @param clerkId - The Clerk user ID to seed data for
+ *
+ * @param identifier - The Clerk user ID or database user ID (UUID) to seed data for
  */
-export async function seedMockUserData(clerkId: string) {
-  console.log(`🌱 Seeding mock data for user: ${clerkId}`);
+export async function seedMockUserData(identifier: string) {
+  console.log(`🌱 Seeding mock data for user: ${identifier}`);
 
   try {
-    // Find or create user
-    let [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.clerkId, clerkId))
-      .limit(1);
+    // Check if identifier is a UUID (user ID) or Clerk ID
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
+
+    // Find user by either Clerk ID or user ID
+    let [user] = isUUID
+      ? await db
+          .select()
+          .from(users)
+          .where(eq(users.id, identifier))
+          .limit(1)
+      : await db
+          .select()
+          .from(users)
+          .where(eq(users.clerkId, identifier))
+          .limit(1);
 
     if (!user) {
-      console.log(`❌ User with Clerk ID ${clerkId} not found. Please create the user first.`);
-      throw new Error(`User not found: ${clerkId}`);
+      const idType = isUUID ? "user ID" : "Clerk ID";
+      console.log(`❌ User with ${idType} ${identifier} not found. Please create the user first.`);
+      throw new Error(`User not found: ${identifier}`);
     }
 
     console.log(`✅ Found user: ${user.id} (${user.email})`);
@@ -76,7 +87,7 @@ export async function seedMockUserData(clerkId: string) {
     let [portfolio] = await db
       .select()
       .from(portfolios)
-      .where(eq(portfolios.userId, user.id))
+      .where(eq(portfolios.createdBy, user.id))
       .limit(1);
 
     if (!portfolio) {
@@ -85,7 +96,6 @@ export async function seedMockUserData(clerkId: string) {
         .values({
           name: "Demo Portfolio",
           description: "Demo portfolio for testing",
-          userId: user.id,
           createdBy: user.id,
         })
         .returning();
@@ -101,8 +111,22 @@ export async function seedMockUserData(clerkId: string) {
     }
 
     // Seed user markets (onboarding markets)
-    const marketIds = ["indianapolis", "memphis", "cleveland"];
-    for (const marketName of marketIds) {
+    // Look up market IDs by name
+    const marketNames = ["Indianapolis", "Memphis", "Cleveland"];
+
+    for (const marketName of marketNames) {
+      // Find market by name
+      const [market] = await db
+        .select()
+        .from(markets)
+        .where(eq(markets.name, marketName))
+        .limit(1);
+
+      if (!market) {
+        console.log(`⚠️  Market "${marketName}" not found, skipping...`);
+        continue;
+      }
+
       // Check if relationship already exists
       const existing = await db
         .select()
@@ -110,7 +134,7 @@ export async function seedMockUserData(clerkId: string) {
         .where(
           and(
             eq(userMarkets.userId, user.id),
-            eq(userMarkets.marketId, marketName)
+            eq(userMarkets.marketId, market.id)
           )
         )
         .limit(1);
@@ -118,7 +142,7 @@ export async function seedMockUserData(clerkId: string) {
       if (existing.length === 0) {
         await db.insert(userMarkets).values({
           userId: user.id,
-          marketId: marketName,
+          marketId: market.id,
           relationshipType: "target_market" as const,
         });
       }
@@ -175,8 +199,8 @@ export async function seedMockUserData(clerkId: string) {
     await db.insert(propertyValuation).values({
       propertyId: fullProperty.id,
       currentValue: "285000",
-      purchaseValue: "265000",
-      arv: "310000",
+      taxAssessedValue: "265000",
+      lastAppraisalValue: "310000",
     });
 
     // Add acquisition data
@@ -184,39 +208,35 @@ export async function seedMockUserData(clerkId: string) {
       propertyId: fullProperty.id,
       purchasePrice: "265000",
       purchaseDate: "2023-06-15",
-      acquisitionMethod: "traditional_sale",
+      acquisitionMethod: "traditional",
       closingCostsTotal: "8500",
       downPaymentAmount: "53000",
-      downPaymentSource: "cash",
+      downPaymentSource: "savings",
       earnestMoney: "5000",
       sellerCredits: "2000",
       buyerAgentCommission: "7950",
-      isOwnerOccupied: false,
     });
 
     // Add rental income
     await db.insert(propertyRentalIncome).values({
       propertyId: fullProperty.id,
       monthlyRent: "1850",
-      annualRent: "22200",
-      marketRent: "1900",
-      rentGrowthRate: "3.5",
+      marketRentEstimate: "1900",
     });
 
     // Add operating expenses
     await db.insert(propertyOperatingExpenses).values({
       propertyId: fullProperty.id,
-      propertyTaxesAnnual: "4200",
+      propertyTaxAnnual: "4200",
       insuranceAnnual: "1800",
       hoaMonthly: "0",
-      utilitiesMonthly: "0",
-      maintenanceMonthly: "150",
-      managementFeeFlat: "0",
-      landscapingMonthly: "75",
+      waterSewerMonthly: "0",
+      electricMonthly: "0",
+      gasMonthly: "0",
+      lawnCareMonthly: "75",
       pestControlMonthly: "25",
-      capitalExReserveMonthly: "200",
-      otherExpensesMonthly: "50",
-      vacancyRatePercentage: "5",
+      otherExpensesMonthly: "250", // Combined maintenance + capex reserve + other
+      vacancyRate: "0.05", // 5% as decimal
     });
 
     // Add management
@@ -254,9 +274,9 @@ export async function seedMockUserData(clerkId: string) {
 
     console.log(`✅ Added loan: ${loan.id}`);
 
-    console.log(`\n✅ Successfully seeded mock data for user ${clerkId}`);
+    console.log(`\n✅ Successfully seeded mock data for user ${identifier}`);
     console.log(`\n📊 Summary:`);
-    console.log(`   - User: ${user.email}`);
+    console.log(`   - User: ${user.email} (ID: ${user.id})`);
     console.log(`   - Portfolio: ${portfolio.name} (${portfolio.id})`);
     console.log(`   - Empty Property: ${emptyProperty.id} - ${emptyProperty.address}`);
     console.log(`   - Full Property: ${fullProperty.id} - ${fullProperty.address}`);
@@ -277,14 +297,16 @@ export async function seedMockUserData(clerkId: string) {
 
 // Run if called directly
 if (require.main === module) {
-  const clerkId = process.argv[2];
-  if (!clerkId) {
-    console.error("❌ Please provide a Clerk user ID as an argument");
-    console.error("Usage: tsx src/seed/mock-user-data.ts <clerk-id>");
+  const identifier = process.argv[2];
+  if (!identifier) {
+    console.error("❌ Please provide a Clerk user ID or user ID (UUID) as an argument");
+    console.error("Usage: tsx src/seed/mock-user-data.ts <clerk-id-or-user-id>");
+    console.error("Example: tsx src/seed/mock-user-data.ts user_abc123");
+    console.error("Example: tsx src/seed/mock-user-data.ts 3b1b1672-2dad-4108-ae41-40e285e7cc17");
     process.exit(1);
   }
 
-  seedMockUserData(clerkId)
+  seedMockUserData(identifier)
     .then(() => {
       console.log("\n✅ Seed completed");
       process.exit(0);

@@ -6,6 +6,7 @@ import viteReact from '@vitejs/plugin-react'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 export default defineConfig(({ mode }) => {
   // Load env vars from root directory first, then app directory (app takes precedence)
@@ -28,8 +29,72 @@ export default defineConfig(({ mode }) => {
     envDir: resolve(__dirname, '../..'),
     optimizeDeps: {
       include: ['use-sync-external-store/shim/index.js'],
+      // Exclude @axori/db from client-side bundling (it uses Node.js modules)
+      exclude: ['@axori/db'],
+    },
+    ssr: {
+      // Externalize @axori/db for SSR (it uses Node.js modules like path, fs)
+      noExternal: [],
+      external: ['@axori/db'],
+    },
+    define: {
+      'process.env': {},
+    },
+    build: {
+      // Rollup options to externalize @axori/db in client builds
+      rollupOptions: {
+        external: (id) => {
+          // Externalize @axori/db main export (uses Node.js modules)
+          // But allow @axori/db/types (types-only, safe for client)
+          if (id === '@axori/db') {
+            return true;
+          }
+          // Allow types-only import (no runtime code)
+          if (id === '@axori/db/types') {
+            return false;
+          }
+          return false;
+        },
+      },
     },
     plugins: [
+      // Node.js polyfills (minimal - only what we need)
+      nodePolyfills({
+        // Only enable Buffer polyfill (what we actually need)
+        globals: {
+          Buffer: true,
+          global: true,
+          process: true,
+        },
+        // Don't polyfill modules we don't need (avoids CommonJS issues)
+        exclude: [
+          'fs',
+          'path',
+          'url',
+          'stream',
+          'util',
+          'crypto',
+          'http',
+          'https',
+          'os',
+          'zlib',
+          'events',
+          'net',
+          'tls',
+          'child_process',
+          'dgram',
+          'dns',
+          'readline',
+          'repl',
+          'querystring',
+          'string_decoder',
+          'timers',
+          'tty',
+          'vm',
+        ],
+        // Don't use protocol imports (causes issues)
+        protocolImports: false,
+      }),
       devtools(),
       nitro(),
       // this is the plugin that enables path aliases

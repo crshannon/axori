@@ -2,6 +2,28 @@
 
 This guide outlines best practices for maintaining consistency and quality across the Axori application.
 
+## Documentation and Planning
+
+### Plan Before You Build
+
+For any major architectural change (new tables, migrations, refactors):
+
+1. **Create a Plan** - Document your approach before starting
+   - Create versioned folder: `docs/architecture/plans/003-feature-name/`
+   - Write `SUMMARY.md` - Quick read (1-2 pages) for stakeholders
+   - Write `EXECUTION.md` - Detailed guide for implementation
+
+2. **Document as You Go** - Don't wait until the end
+   - Update execution plan as you work
+   - Note decisions and trade-offs
+   - Track file changes
+
+3. **Archive When Complete** - Move to completed folder
+   - Create `COMPLETION.md` summary
+   - Move folder to `docs/architecture/completed/`
+
+See [planning-workflow.md](./planning-workflow.md) for detailed templates and workflow.
+
 ## Naming Conventions
 
 ### Database Schema

@@ -22,8 +22,8 @@
   },
   "dependencies": {
     "@axori/db": "workspace:*",
-    "@axori/ui": "workspace:*",
     "@axori/shared": "workspace:*",
+    "@axori/ui": "workspace:*",
     "@clerk/clerk-react": "^5.49.0",
     "@clerk/tanstack-react-start": "^0.27.12",
     "@tailwindcss/vite": "^4.0.6",
@@ -70,6 +70,7 @@
     "tsx": "^4.0.0",
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
+    "vite-plugin-node-polyfills": "^0.25.0",
     "vitest": "^3.0.5",
     "web-vitals": "^5.1.0"
   }
