@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Drawer, Input, Select, Typography } from '@axori/ui'
-import {
-  useCreateLoan,
-  useProperty,
-  useUpdateLoan,
-} from '@/hooks/api/useProperties'
+import { useProperty } from '@/hooks/api/useProperties'
+import { useCreateLoan, useUpdateLoan } from '@/hooks/api/useLoans'
 
 interface AddLoanDrawerProps {
   isOpen: boolean
@@ -54,7 +51,7 @@ export const AddLoanDrawer = ({
         lenderName: existingLoan.lenderName || '',
         originalLoanAmount: existingLoan.originalLoanAmount?.toString() || '',
         interestRate: existingLoan.interestRate
-          ? (existingLoan.interestRate * 100).toString()
+          ? (Number(existingLoan.interestRate) * 100).toString()
           : '',
         termMonths: existingLoan.termMonths?.toString() || '',
         currentBalance: existingLoan.currentBalance?.toString() || '',

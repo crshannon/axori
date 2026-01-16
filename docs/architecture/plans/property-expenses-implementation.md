@@ -27,9 +27,9 @@ Following the Architect Skill guidelines for full-stack schema alignment:
 - [ ] **1.3** Add relations
 - Add `expenses: many(propertyExpenses)` to `propertiesRelations`
 - Create `propertyExpensesRelations` with:
-    - `property: one(properties)`
-    - `createdByUser: one(users)` (if users table exists)
-    - `document: one(propertyDocuments)` (if table exists, otherwise nullable)
+  - `property: one(properties)`
+  - `createdByUser: one(users)` (if users table exists)
+  - `document: one(propertyDocuments)` (if table exists, otherwise nullable)
 - [ ] **1.4** Export from schema index
 - Ensure `propertyExpenses` is exported
 
@@ -48,11 +48,11 @@ Following the Architect Skill guidelines for full-stack schema alignment:
 - [ ] **3.1** Create `propertyExpenseInsertSchema` in `packages/shared/src/validation/normalized-property.ts`
 - Match all Drizzle fields (camelCase)
 - Use appropriate Zod validators:
-    - `z.string().uuid()` for UUIDs
-    - `z.number().min(0)` for amounts
-    - `z.date()` or `z.string()` for dates
-    - `z.enum()` for category (if using enum)
-    - `z.boolean().default()` for booleans
+  - `z.string().uuid()` for UUIDs
+  - `z.number().min(0)` for amounts
+  - `z.date()` or `z.string()` for dates
+  - `z.enum()` for category (if using enum)
+  - `z.boolean().default()` for booleans
 - Make `propertyId` required
 - Make `expenseDate` and `amount` required
 - Make `category` required
@@ -153,49 +153,66 @@ Following the Architect Skill guidelines for full-stack schema alignment:
 ```typescript
 // In packages/db/src/schema/index.ts
 
-import { pgTable, uuid, date, numeric, text, boolean, timestamptz, index } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import {
+  pgTable,
+  uuid,
+  date,
+  numeric,
+  text,
+  boolean,
+  timestamptz,
+  index,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
-export const propertyExpenses = pgTable('property_expenses', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  propertyId: uuid('property_id').notNull().references(() => properties.id, { onDelete: 'cascade' }),
-  
-  // Transaction Details
-  expenseDate: date('expense_date').notNull(),
-  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
-  category: text('category').notNull(),
-  subcategory: text('subcategory'),
-  vendor: text('vendor'),
-  description: text('description'),
-  
-  // Recurring
-  isRecurring: boolean('is_recurring').default(false),
-  recurrenceFrequency: text('recurrence_frequency'), // 'monthly' | 'quarterly' | 'annual'
-  recurrenceEndDate: date('recurrence_end_date'),
-  
-  // Tax
-  isTaxDeductible: boolean('is_tax_deductible').default(true),
-  taxCategory: text('tax_category'),
-  
-  // Document Link (optional - may not exist yet)
-  documentId: uuid('document_id'), // .references(() => propertyDocuments.id) - if table exists
-  
-  // Source Tracking
-  source: text('source').default('manual'), // 'manual' | 'appfolio' | 'plaid' | 'document_ai'
-  externalId: text('external_id'),
-  
-  // Metadata
-  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
-  createdAt: timestamptz('created_at').notNull().defaultNow(),
-  updatedAt: timestamptz('updated_at').notNull().defaultNow(),
-}, (table) => ({
-  propertyIdIdx: index('idx_property_expenses_property_id').on(table.propertyId),
-  dateIdx: index('idx_property_expenses_date').on(table.expenseDate),
-  categoryIdx: index('idx_property_expenses_category').on(table.category),
-}));
+export const propertyExpenses = pgTable(
+  "property_expenses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    propertyId: uuid("property_id")
+      .notNull()
+      .references(() => properties.id, { onDelete: "cascade" }),
+
+    // Transaction Details
+    expenseDate: date("expense_date").notNull(),
+    amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+    category: text("category").notNull(),
+    subcategory: text("subcategory"),
+    vendor: text("vendor"),
+    description: text("description"),
+
+    // Recurring
+    isRecurring: boolean("is_recurring").default(false),
+    recurrenceFrequency: text("recurrence_frequency"), // 'monthly' | 'quarterly' | 'annual'
+    recurrenceEndDate: date("recurrence_end_date"),
+
+    // Tax
+    isTaxDeductible: boolean("is_tax_deductible").default(true),
+    taxCategory: text("tax_category"),
+
+    // Document Link (optional - may not exist yet)
+    documentId: uuid("document_id"), // .references(() => propertyDocuments.id) - if table exists
+
+    // Source Tracking
+    source: text("source").default("manual"), // 'manual' | 'appfolio' | 'plaid' | 'document_ai'
+    externalId: text("external_id"),
+
+    // Metadata
+    createdBy: uuid("created_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamptz("created_at").notNull().defaultNow(),
+    updatedAt: timestamptz("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    propertyIdIdx: index("idx_property_expenses_property_id").on(
+      table.propertyId
+    ),
+    dateIdx: index("idx_property_expenses_date").on(table.expenseDate),
+    categoryIdx: index("idx_property_expenses_category").on(table.category),
+  })
+);
 ```
-
-
 
 ### Relations
 
@@ -207,24 +224,25 @@ export const propertiesRelations = relations(properties, ({ many, one }) => ({
 }));
 
 // New relation
-export const propertyExpensesRelations = relations(propertyExpenses, ({ one }) => ({
-  property: one(properties, {
-    fields: [propertyExpenses.propertyId],
-    references: [properties.id],
-  }),
-  createdByUser: one(users, {
-    fields: [propertyExpenses.createdBy],
-    references: [users.id],
-  }),
-  // Only add if propertyDocuments table exists:
-  // document: one(propertyDocuments, {
-  //   fields: [propertyExpenses.documentId],
-  //   references: [propertyDocuments.id],
-  // }),
-}));
+export const propertyExpensesRelations = relations(
+  propertyExpenses,
+  ({ one }) => ({
+    property: one(properties, {
+      fields: [propertyExpenses.propertyId],
+      references: [properties.id],
+    }),
+    createdByUser: one(users, {
+      fields: [propertyExpenses.createdBy],
+      references: [users.id],
+    }),
+    // Only add if propertyDocuments table exists:
+    // document: one(propertyDocuments, {
+    //   fields: [propertyExpenses.documentId],
+    //   references: [propertyDocuments.id],
+    // }),
+  })
+);
 ```
-
-
 
 ### Zod Validation Schema
 
@@ -232,56 +250,65 @@ export const propertyExpensesRelations = relations(propertyExpenses, ({ one }) =
 // In packages/shared/src/validation/normalized-property.ts
 
 export const expenseCategoryEnum = z.enum([
-  'acquisition',
-  'property_tax',
-  'insurance',
-  'hoa',
-  'management',
-  'repairs',
-  'maintenance',
-  'capex',
-  'utilities',
-  'legal',
-  'accounting',
-  'marketing',
-  'travel',
-  'office',
-  'bank_fees',
-  'licenses',
-  'other',
+  "acquisition",
+  "property_tax",
+  "insurance",
+  "hoa",
+  "management",
+  "repairs",
+  "maintenance",
+  "capex",
+  "utilities",
+  "legal",
+  "accounting",
+  "marketing",
+  "travel",
+  "office",
+  "bank_fees",
+  "licenses",
+  "other",
 ]);
 
-export const recurrenceFrequencyEnum = z.enum(['monthly', 'quarterly', 'annual']);
+export const recurrenceFrequencyEnum = z.enum([
+  "monthly",
+  "quarterly",
+  "annual",
+]);
 
-export const expenseSourceEnum = z.enum(['manual', 'appfolio', 'plaid', 'document_ai']);
+export const expenseSourceEnum = z.enum([
+  "manual",
+  "appfolio",
+  "plaid",
+  "document_ai",
+]);
 
 export const propertyExpenseInsertSchema = z.object({
-  propertyId: z.string().uuid('Property ID must be a valid UUID'),
-  
+  propertyId: z.string().uuid("Property ID must be a valid UUID"),
+
   // Transaction Details
   expenseDate: z.union([z.string(), z.date()]),
-  amount: z.number().min(0, 'Amount must be positive'),
+  amount: z.number().min(0, "Amount must be positive"),
   category: expenseCategoryEnum,
   subcategory: z.string().max(100).optional().nullable(),
   vendor: z.string().max(255).optional().nullable(),
   description: z.string().max(1000).optional().nullable(),
-  
+
   // Recurring
   isRecurring: z.boolean().default(false),
   recurrenceFrequency: recurrenceFrequencyEnum.optional().nullable(),
   recurrenceEndDate: z.union([z.string(), z.date()]).optional().nullable(),
-  
+
   // Tax
   isTaxDeductible: z.boolean().default(true),
   taxCategory: z.string().max(100).optional().nullable(),
-  
+
   // Document Link
   documentId: z.string().uuid().optional().nullable(),
-  
+
   // Source Tracking
-  source: expenseSourceEnum.default('manual'),
+  source: expenseSourceEnum.default("manual"),
   externalId: z.string().max(255).optional().nullable(),
-  
+
   // Metadata (set by API, not user input)
   createdBy: z.string().uuid().optional().nullable(),
 });
@@ -297,90 +324,100 @@ export const propertyExpenseUpdateSchema = propertyExpenseInsertSchema
   .partial();
 ```
 
-
-
 ### API Route Structure
 
 ```typescript
 // In apps/api/src/routes/properties.ts or new expenses.ts file
 
 // GET /api/properties/:id/expenses
-propertiesRouter.get('/:id/expenses', async (c) => {
+propertiesRouter.get("/:id/expenses", async (c) => {
   const { id } = c.req.param();
-  
+
   // Security: Get user from auth header
-  const authHeader = c.req.header('Authorization');
-  const clerkId = authHeader?.replace('Bearer ', '');
-  
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
   if (!clerkId) {
-    return c.json({ error: 'Unauthorized' }, 401);
+    return c.json({ error: "Unauthorized" }, 401);
   }
-  
+
   // Lookup user by clerkId
-  const [user] = await db.select().from(users)
+  const [user] = await db
+    .select()
+    .from(users)
     .where(eq(users.clerkId, clerkId))
     .limit(1);
-  
+
   if (!user) {
-    return c.json({ error: 'Unauthorized' }, 401);
+    return c.json({ error: "Unauthorized" }, 401);
   }
-  
+
   // Security: Verify user owns property
-  const [property] = await db.select().from(properties)
+  const [property] = await db
+    .select()
+    .from(properties)
     .where(and(eq(properties.id, id), eq(properties.userId, user.id)))
     .limit(1);
-  
+
   if (!property) {
-    return c.json({ error: 'Property not found' }, 404);
+    return c.json({ error: "Property not found" }, 404);
   }
-  
+
   // Query expenses with filters
-  const expenses = await db.select()
+  const expenses = await db
+    .select()
     .from(propertyExpenses)
     .where(eq(propertyExpenses.propertyId, id))
     .orderBy(desc(propertyExpenses.expenseDate));
-  
+
   return c.json({ expenses });
 });
 
 // POST /api/properties/:id/expenses
-propertiesRouter.post('/:id/expenses', async (c) => {
+propertiesRouter.post("/:id/expenses", async (c) => {
   const { id } = c.req.param();
-  
+
   // Security: Get user from auth header
-  const authHeader = c.req.header('Authorization');
-  const clerkId = authHeader?.replace('Bearer ', '');
-  
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
   if (!clerkId) {
-    return c.json({ error: 'Unauthorized' }, 401);
+    return c.json({ error: "Unauthorized" }, 401);
   }
-  
+
   // Lookup user by clerkId
-  const [user] = await db.select().from(users)
+  const [user] = await db
+    .select()
+    .from(users)
     .where(eq(users.clerkId, clerkId))
     .limit(1);
-  
+
   if (!user) {
-    return c.json({ error: 'Unauthorized' }, 401);
+    return c.json({ error: "Unauthorized" }, 401);
   }
-  
+
   // Security: Verify user owns property
-  const [property] = await db.select().from(properties)
+  const [property] = await db
+    .select()
+    .from(properties)
     .where(and(eq(properties.id, id), eq(properties.userId, user.id)))
     .limit(1);
-  
+
   if (!property) {
-    return c.json({ error: 'Property not found' }, 404);
+    return c.json({ error: "Property not found" }, 404);
   }
-  
+
   const data = propertyExpenseInsertSchema.parse(await c.req.json());
-  
-  const expense = await db.insert(propertyExpenses).values({
-    ...data,
-    propertyId: id,
-    createdBy: user.id, // Use user.id (UUID), not clerkId
-  }).returning();
-  
+
+  const expense = await db
+    .insert(propertyExpenses)
+    .values({
+      ...data,
+      propertyId: id,
+      createdBy: user.id, // Use user.id (UUID), not clerkId
+    })
+    .returning();
+
   return c.json({ expense: expense[0] });
 });
 ```
@@ -416,7 +453,7 @@ Following architect skill naming conventions:
 
 ## Migration Considerations
 
-1. **Foreign Key to propertyDocuments**: 
+1. **Foreign Key to propertyDocuments**:
 
 - Check if `property_documents` table exists
 - If not, make `documentId` nullable without FK constraint initially
@@ -456,4 +493,3 @@ Following architect skill naming conventions:
 - Recurring expenses can be used to generate future expense projections
 - `source` field enables tracking data provenance for integrations
 - `externalId` allows linking to external systems (AppFolio, Plaid, etc.)
-

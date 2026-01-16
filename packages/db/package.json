@@ -9,6 +9,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/seed/markets.ts",
+    "db:seed:user": "tsx src/seed/mock-user-data.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

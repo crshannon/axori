@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, numeric, pgEnum, unique, serial, integer, date, pgArray } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, boolean, numeric, pgEnum, unique, serial, integer, date, index } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
 // Portfolio role enum for user-portfolio relationships
@@ -377,7 +377,7 @@ export const loans = pgTable("loans", {
   recastMinimum: numeric("recast_minimum", { precision: 10, scale: 2 }),
 
   // Refinance Tracking
-  refinancedFromId: uuid("refinanced_from_id").references(() => loans.id), // Links to old loan
+  refinancedFromId: uuid("refinanced_from_id"), // Links to old loan (self-reference handled in relations)
   refinanceDate: date("refinance_date"),
   refinanceClosingCosts: numeric("refinance_closing_costs", { precision: 10, scale: 2 }),
   refinanceCashOut: numeric("refinance_cash_out", { precision: 12, scale: 2 }),
@@ -430,6 +430,51 @@ export const propertyHistory = pgTable("property_history", {
   changedBy: uuid("changed_by").references(() => users.id),
   changedAt: timestamp("changed_at").defaultNow().notNull(),
 });
+
+// Property Expenses - Track actual expense transactions for properties
+export const propertyExpenses = pgTable(
+  "property_expenses",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    propertyId: uuid("property_id")
+      .notNull()
+      .references(() => properties.id, { onDelete: "cascade" }),
+
+    // Transaction Details
+    expenseDate: date("expense_date").notNull(),
+    amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+    category: text("category").notNull(),
+    subcategory: text("subcategory"),
+    vendor: text("vendor"),
+    description: text("description"),
+
+    // Recurring
+    isRecurring: boolean("is_recurring").default(false),
+    recurrenceFrequency: text("recurrence_frequency"), // 'monthly' | 'quarterly' | 'annual'
+    recurrenceEndDate: date("recurrence_end_date"),
+
+    // Tax
+    isTaxDeductible: boolean("is_tax_deductible").default(true),
+    taxCategory: text("tax_category"),
+
+    // Document Link (optional - property_documents table may not exist yet)
+    documentId: uuid("document_id"), // .references(() => propertyDocuments.id) - if table exists
+
+    // Source Tracking
+    source: text("source").default("manual"), // 'manual' | 'appfolio' | 'plaid' | 'document_ai'
+    externalId: text("external_id"),
+
+    // Metadata
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    propertyIdIdx: index("idx_property_expenses_property_id").on(table.propertyId),
+    dateIdx: index("idx_property_expenses_date").on(table.expenseDate),
+    categoryIdx: index("idx_property_expenses_category").on(table.category),
+  })
+);
 
 // API Cache - Centralized caching for external API responses
 export const apiCache = pgTable("api_cache", {
@@ -609,6 +654,7 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
   }),
   loans: many(loans),
   history: many(propertyHistory),
+  expenses: many(propertyExpenses),
 }));
 
 export const propertyCharacteristicsRelations = relations(propertyCharacteristics, ({ one }) => ({
@@ -685,6 +731,22 @@ export const propertyHistoryRelations = relations(propertyHistory, ({ one }) => 
     fields: [propertyHistory.changedBy],
     references: [users.id],
   }),
+}));
+
+export const propertyExpensesRelations = relations(propertyExpenses, ({ one }) => ({
+  property: one(properties, {
+    fields: [propertyExpenses.propertyId],
+    references: [properties.id],
+  }),
+  createdByUser: one(users, {
+    fields: [propertyExpenses.createdBy],
+    references: [users.id],
+  }),
+  // Note: document relation can be added when propertyDocuments table exists
+  // document: one(propertyDocuments, {
+  //   fields: [propertyExpenses.documentId],
+  //   references: [propertyDocuments.id],
+  // }),
 }));
 
 export const userMarketsRelations = relations(userMarkets, ({ one }) => ({

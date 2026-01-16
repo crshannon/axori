@@ -434,6 +434,81 @@ export const propertyHistorySelectSchema = propertyHistoryInsertSchema.extend({
 });
 
 // ============================================================================
+// Property Expenses (Actual Expense Transactions)
+// ============================================================================
+
+export const expenseCategoryEnum = z.enum([
+  "acquisition",
+  "property_tax",
+  "insurance",
+  "hoa",
+  "management",
+  "repairs",
+  "maintenance",
+  "capex",
+  "utilities",
+  "legal",
+  "accounting",
+  "marketing",
+  "travel",
+  "office",
+  "bank_fees",
+  "licenses",
+  "other",
+]);
+
+export type ExpenseCategory = z.infer<typeof expenseCategoryEnum>;
+
+export const recurrenceFrequencyEnum = z.enum(["monthly", "quarterly", "annual"]);
+
+export type RecurrenceFrequency = z.infer<typeof recurrenceFrequencyEnum>;
+
+export const expenseSourceEnum = z.enum(["manual", "appfolio", "plaid", "document_ai"]);
+
+export type ExpenseSource = z.infer<typeof expenseSourceEnum>;
+
+export const propertyExpenseInsertSchema = z.object({
+  propertyId: z.string().uuid("Property ID must be a valid UUID"),
+
+  // Transaction Details
+  expenseDate: z.union([z.string(), z.date()]),
+  amount: z.number().min(0, "Amount must be positive"),
+  category: expenseCategoryEnum,
+  subcategory: z.string().max(100).optional().nullable(),
+  vendor: z.string().max(255).optional().nullable(),
+  description: z.string().max(1000).optional().nullable(),
+
+  // Recurring
+  isRecurring: z.boolean().default(false),
+  recurrenceFrequency: recurrenceFrequencyEnum.optional().nullable(),
+  recurrenceEndDate: z.union([z.string(), z.date()]).optional().nullable(),
+
+  // Tax
+  isTaxDeductible: z.boolean().default(true),
+  taxCategory: z.string().max(100).optional().nullable(),
+
+  // Document Link
+  documentId: z.string().uuid().optional().nullable(),
+
+  // Source Tracking
+  source: expenseSourceEnum.default("manual"),
+  externalId: z.string().max(255).optional().nullable(),
+
+  // Metadata (set by API, not user input)
+  createdBy: z.string().uuid().optional().nullable(),
+});
+
+export const propertyExpenseSelectSchema = propertyExpenseInsertSchema.extend({
+  id: z.string().uuid(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export const propertyExpenseUpdateSchema = propertyExpenseSelectSchema
+  .omit({ propertyId: true, id: true, createdAt: true })
+  .partial();
+
+// ============================================================================
 // API Cache - Caching for external API responses (Rentcast, etc.)
 // ============================================================================
 

@@ -1,28 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUser } from '@clerk/clerk-react'
-import type { PropertyInsert } from '@axori/shared'
+import type { Loan, PropertyExpense, PropertyInsert } from '@axori/shared'
 import type { PropertyDetails } from '@axori/shared/src/integrations/rentcast'
 import { apiFetch } from '@/lib/api/client'
-
-export interface Loan {
-  id: string
-  propertyId: string
-  loanType: string
-  lenderName: string
-  servicerName?: string | null
-  loanNumber?: string | null
-  originalLoanAmount?: number | null
-  interestRate?: number | null
-  termMonths?: number | null
-  currentBalance?: number | null
-  startDate?: string | null
-  maturityDate?: string | null
-  monthlyPrincipalInterest?: number | null
-  monthlyEscrow?: number | null
-  totalMonthlyPayment?: number | null
-  status: string
-  isPrimary: boolean
-}
 
 export interface Property {
   id: string
@@ -98,6 +78,7 @@ export interface Property {
   } | null
 
   loans?: Array<Loan>
+  expenses?: Array<PropertyExpense>
 }
 
 /**
@@ -324,92 +305,3 @@ export function useProperties(portfolioId?: string | null) {
   })
 }
 
-/**
- * Create a loan for a property
- */
-export function useCreateLoan() {
-  const queryClient = useQueryClient()
-  const { user } = useUser()
-
-  return useMutation({
-    mutationFn: async ({
-      propertyId,
-      ...loanData
-    }: {
-      propertyId: string
-      loanType: string
-      lenderName: string
-      servicerName?: string
-      loanNumber?: string
-      originalLoanAmount: number
-      interestRate: number
-      termMonths: number
-      currentBalance: number
-      startDate?: string
-    }) => {
-      if (!user?.id) {
-        throw new Error('User not authenticated')
-      }
-
-      return await apiFetch<{ loan: Loan }>(
-        `/api/properties/${propertyId}/loans`,
-        {
-          method: 'POST',
-          clerkId: user.id,
-          body: JSON.stringify(loanData),
-        },
-      )
-    },
-    onSuccess: (data, variables) => {
-      // Invalidate the property query to refetch with new loan data
-      queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId] })
-      queryClient.invalidateQueries({ queryKey: ['properties'] })
-    },
-  })
-}
-
-/**
- * Update an existing loan
- */
-export function useUpdateLoan() {
-  const queryClient = useQueryClient()
-  const { user } = useUser()
-
-  return useMutation({
-    mutationFn: async ({
-      propertyId,
-      loanId,
-      ...loanData
-    }: {
-      propertyId: string
-      loanId: string
-      loanType: string
-      lenderName: string
-      servicerName?: string
-      loanNumber?: string
-      originalLoanAmount: number
-      interestRate: number
-      termMonths: number
-      currentBalance: number
-      startDate?: string
-    }) => {
-      if (!user?.id) {
-        throw new Error('User not authenticated')
-      }
-
-      return await apiFetch<{ loan: Loan }>(
-        `/api/properties/${propertyId}/loans/${loanId}`,
-        {
-          method: 'PUT',
-          clerkId: user.id,
-          body: JSON.stringify(loanData),
-        },
-      )
-    },
-    onSuccess: (data, variables) => {
-      // Invalidate the property query to refetch with updated loan data
-      queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId] })
-      queryClient.invalidateQueries({ queryKey: ['properties'] })
-    },
-  })
-}

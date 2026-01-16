@@ -9,10 +9,13 @@ import {
   propertyOperatingExpenses,
   propertyManagement,
   loans,
+  propertyExpenses,
+  users,
   eq,
   and,
-  desc
+  desc,
 } from "@axori/db";
+import { gte, lte } from "drizzle-orm";
 import {
   propertyInsertSchema,
   propertyUpdateSchema,
@@ -23,6 +26,8 @@ import {
   propertyOperatingExpensesInsertSchema,
   propertyManagementInsertSchema,
   loanInsertSchema,
+  propertyExpenseInsertSchema,
+  propertyExpenseUpdateSchema,
 } from "@axori/shared/src/validation";
 import { RentcastClient, type PropertyDetails } from "@axori/shared/src/integrations/rentcast";
 import { transformRentcastToAxori } from "@axori/shared/src/integrations/data-transformers";
@@ -104,15 +109,22 @@ propertiesRouter.get("/:id/rentcast-data", async (c) => {
 
   if (
     property.rentcastData &&
+    typeof property.rentcastData === 'string' &&
+    property.rentcastData !== 'undefined' &&
     property.rentcastFetchedAt &&
     new Date(property.rentcastFetchedAt) > oneWeekAgo
   ) {
     // Return cached data
-    return c.json({
-      data: JSON.parse(property.rentcastData),
-      cached: true,
-      fetchedAt: property.rentcastFetchedAt,
-    });
+    try {
+      return c.json({
+        data: JSON.parse(property.rentcastData),
+        cached: true,
+        fetchedAt: property.rentcastFetchedAt,
+      });
+    } catch (error) {
+      // If parsing fails, fall through to fetch fresh data
+      console.error('Error parsing cached rentcast data:', error);
+    }
   }
 
   // In local mode, return mock data instead of making API calls
@@ -489,24 +501,62 @@ propertiesRouter.put("/:id", async (c) => {
         .where(eq(propertyAcquisition.propertyId, id))
         .limit(1);
 
-      // Convert Date objects to strings for database
-      const acquisitionDataForDb = {
-        ...acquisitionData,
-        purchaseDate: acquisitionData.purchaseDate instanceof Date
-          ? acquisitionData.purchaseDate.toISOString().split('T')[0]
-          : acquisitionData.purchaseDate,
-        closingDate: acquisitionData.closingDate instanceof Date
-          ? acquisitionData.closingDate.toISOString().split('T')[0]
-          : acquisitionData.closingDate,
+      // Convert Date objects to strings and numbers to strings for numeric database columns
+      const acquisitionDataForDb: Record<string, unknown> = {
+        propertyId: acquisitionData.propertyId,
+        isOwnerOccupied: acquisitionData.isOwnerOccupied,
       };
+
+      // Convert dates
+      if (acquisitionData.purchaseDate != null) {
+        acquisitionDataForDb.purchaseDate = acquisitionData.purchaseDate instanceof Date
+          ? acquisitionData.purchaseDate.toISOString().split('T')[0]
+          : acquisitionData.purchaseDate;
+      }
+      if (acquisitionData.closingDate != null) {
+        acquisitionDataForDb.closingDate = acquisitionData.closingDate instanceof Date
+          ? acquisitionData.closingDate.toISOString().split('T')[0]
+          : acquisitionData.closingDate;
+      }
+
+      // Convert numeric fields to strings for database (numeric columns in DB)
+      if (acquisitionData.purchasePrice != null) {
+        acquisitionDataForDb.purchasePrice = String(acquisitionData.purchasePrice);
+      }
+      if (acquisitionData.closingCostsTotal != null) {
+        acquisitionDataForDb.closingCostsTotal = String(acquisitionData.closingCostsTotal);
+      }
+      if (acquisitionData.downPaymentAmount != null) {
+        acquisitionDataForDb.downPaymentAmount = String(acquisitionData.downPaymentAmount);
+      }
+      if (acquisitionData.earnestMoney != null) {
+        acquisitionDataForDb.earnestMoney = String(acquisitionData.earnestMoney);
+      }
+      if (acquisitionData.sellerCredits != null) {
+        acquisitionDataForDb.sellerCredits = String(acquisitionData.sellerCredits);
+      }
+      if (acquisitionData.buyerAgentCommission != null) {
+        acquisitionDataForDb.buyerAgentCommission = String(acquisitionData.buyerAgentCommission);
+      }
+
+      // Copy other string/text fields as-is
+      if (acquisitionData.acquisitionMethod != null) {
+        acquisitionDataForDb.acquisitionMethod = acquisitionData.acquisitionMethod;
+      }
+      if (acquisitionData.downPaymentSource != null) {
+        acquisitionDataForDb.downPaymentSource = acquisitionData.downPaymentSource;
+      }
+      if (acquisitionData.taxParcelId != null) {
+        acquisitionDataForDb.taxParcelId = acquisitionData.taxParcelId;
+      }
 
       if (existing) {
         await db
           .update(propertyAcquisition)
-          .set({ ...acquisitionDataForDb, updatedAt: new Date() })
+          .set({ ...acquisitionDataForDb, updatedAt: new Date() } as typeof propertyAcquisition.$inferInsert)
           .where(eq(propertyAcquisition.propertyId, id));
       } else {
-        await db.insert(propertyAcquisition).values(acquisitionDataForDb);
+        await db.insert(propertyAcquisition).values(acquisitionDataForDb as typeof propertyAcquisition.$inferInsert);
       }
     }
 
@@ -654,11 +704,38 @@ propertiesRouter.put("/:id", async (c) => {
           .limit(1);
 
         if (user) {
-          const loanData = loanInsertSchema.parse({
+          const validated = loanInsertSchema.parse({
             propertyId: id,
             userId: user.id,
             ...loan,
           });
+
+          // Convert to database format (remove userId, convert numbers to strings)
+          const loanDataForInsert: Record<string, unknown> = {
+            propertyId: id,
+            loanType: validated.loanType,
+            lenderName: validated.lenderName || '',
+            servicerName: validated.servicerName || null,
+            loanNumber: validated.loanNumber || null,
+            originalLoanAmount: validated.originalLoanAmount ? String(validated.originalLoanAmount) : '0',
+            interestRate: validated.interestRate ? String(validated.interestRate / 100) : '0', // Convert percentage to decimal
+            termMonths: validated.loanTerm ? validated.loanTerm * 12 : null, // Convert years to months if provided
+            currentBalance: validated.originalLoanAmount ? String(validated.originalLoanAmount) : '0', // Default to original amount
+            status: validated.status || 'active',
+            isPrimary: validated.isPrimary ?? true,
+          };
+
+          // Add optional fields
+          if (validated.originationDate) {
+            loanDataForInsert.startDate = validated.originationDate instanceof Date
+              ? validated.originationDate.toISOString().split('T')[0]
+              : validated.originationDate;
+          }
+          if (validated.maturityDate) {
+            loanDataForInsert.maturityDate = validated.maturityDate instanceof Date
+              ? validated.maturityDate.toISOString().split('T')[0]
+              : validated.maturityDate;
+          }
 
           // Mark existing active loans as paid off (when adding new loan)
           await db
@@ -670,7 +747,7 @@ propertiesRouter.put("/:id", async (c) => {
             ));
 
           // Insert new active loan
-          await db.insert(loans).values(loanData);
+          await db.insert(loans).values(loanDataForInsert as typeof loans.$inferInsert);
         }
       }
     }
@@ -1107,6 +1184,357 @@ propertiesRouter.get("/drafts/me", async (c) => {
   }
 
   return c.json({ property: userDrafts[0] });
+});
+
+// ============================================================================
+// Property Expenses Routes
+// ============================================================================
+
+// GET /api/properties/:id/expenses - List expenses for property
+propertiesRouter.get("/:id/expenses", async (c) => {
+  const { id } = c.req.param();
+
+  // Security: Get user from auth header
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Lookup user by clerkId
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Security: Verify user owns property
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(and(eq(properties.id, id), eq(properties.userId, user.id)))
+    .limit(1);
+
+  if (!property) {
+    return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Get query parameters for filtering
+  const startDate = c.req.query("startDate");
+  const endDate = c.req.query("endDate");
+  const category = c.req.query("category");
+  const isTaxDeductible = c.req.query("isTaxDeductible");
+
+  // Build where conditions
+  const conditions = [eq(propertyExpenses.propertyId, id)];
+
+  if (startDate) {
+    conditions.push(gte(propertyExpenses.expenseDate, startDate));
+  }
+  if (endDate) {
+    conditions.push(lte(propertyExpenses.expenseDate, endDate));
+  }
+  if (category) {
+    conditions.push(eq(propertyExpenses.category, category));
+  }
+  if (isTaxDeductible !== undefined) {
+    conditions.push(
+      eq(propertyExpenses.isTaxDeductible, isTaxDeductible === "true")
+    );
+  }
+
+  // Query expenses with filters
+  const expenses = await db
+    .select()
+    .from(propertyExpenses)
+    .where(and(...conditions))
+    .orderBy(desc(propertyExpenses.expenseDate));
+
+  return c.json({ expenses });
+});
+
+// GET /api/properties/:id/expenses/:expenseId - Get single expense
+propertiesRouter.get("/:id/expenses/:expenseId", async (c) => {
+  const { id, expenseId } = c.req.param();
+
+  // Security: Get user from auth header
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Lookup user by clerkId
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Security: Verify user owns property
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(and(eq(properties.id, id), eq(properties.userId, user.id)))
+    .limit(1);
+
+  if (!property) {
+    return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Get expense and verify it belongs to the property
+  const [expense] = await db
+    .select()
+    .from(propertyExpenses)
+    .where(
+      and(
+        eq(propertyExpenses.id, expenseId),
+        eq(propertyExpenses.propertyId, id)
+      )
+    )
+    .limit(1);
+
+  if (!expense) {
+    return c.json({ error: "Expense not found" }, 404);
+  }
+
+  return c.json({ expense });
+});
+
+// POST /api/properties/:id/expenses - Create expense
+propertiesRouter.post("/:id/expenses", async (c) => {
+  const { id } = c.req.param();
+
+  // Security: Get user from auth header
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Lookup user by clerkId
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Security: Verify user owns property
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(and(eq(properties.id, id), eq(properties.userId, user.id)))
+    .limit(1);
+
+  if (!property) {
+    return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Parse and validate request body
+  const data = propertyExpenseInsertSchema.parse(await c.req.json());
+
+  // Convert data types for database (numeric fields need to be strings, dates need to be strings)
+  const expenseDataForDb: Record<string, unknown> = {
+    propertyId: id,
+    createdBy: user.id, // Use user.id (UUID), not clerkId
+    expenseDate: data.expenseDate instanceof Date
+      ? data.expenseDate.toISOString().split('T')[0]
+      : data.expenseDate,
+    amount: String(data.amount), // numeric column expects string
+    category: data.category,
+    isRecurring: data.isRecurring ?? false,
+    isTaxDeductible: data.isTaxDeductible ?? true,
+    source: data.source ?? 'manual',
+  };
+
+  // Add optional fields
+  if (data.subcategory != null) expenseDataForDb.subcategory = data.subcategory;
+  if (data.vendor != null) expenseDataForDb.vendor = data.vendor;
+  if (data.description != null) expenseDataForDb.description = data.description;
+  if (data.recurrenceFrequency != null) expenseDataForDb.recurrenceFrequency = data.recurrenceFrequency;
+  if (data.recurrenceEndDate != null) {
+    expenseDataForDb.recurrenceEndDate = data.recurrenceEndDate instanceof Date
+      ? data.recurrenceEndDate.toISOString().split('T')[0]
+      : data.recurrenceEndDate;
+  }
+  if (data.taxCategory != null) expenseDataForDb.taxCategory = data.taxCategory;
+  if (data.documentId != null) expenseDataForDb.documentId = data.documentId;
+  if (data.externalId != null) expenseDataForDb.externalId = data.externalId;
+
+  // Create expense with propertyId and createdBy
+  const expense = await db
+    .insert(propertyExpenses)
+    .values(expenseDataForDb as typeof propertyExpenses.$inferInsert)
+    .returning();
+
+  return c.json({ expense: expense[0] });
+});
+
+// PUT /api/properties/:id/expenses/:expenseId - Update expense
+propertiesRouter.put("/:id/expenses/:expenseId", async (c) => {
+  const { id, expenseId } = c.req.param();
+
+  // Security: Get user from auth header
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Lookup user by clerkId
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Security: Verify user owns property
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(and(eq(properties.id, id), eq(properties.userId, user.id)))
+    .limit(1);
+
+  if (!property) {
+    return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Verify expense belongs to property
+  const [existingExpense] = await db
+    .select()
+    .from(propertyExpenses)
+    .where(
+      and(
+        eq(propertyExpenses.id, expenseId),
+        eq(propertyExpenses.propertyId, id)
+      )
+    )
+    .limit(1);
+
+  if (!existingExpense) {
+    return c.json({ error: "Expense not found" }, 404);
+  }
+
+  // Parse and validate request body
+  const data = propertyExpenseUpdateSchema.parse(await c.req.json());
+
+  // Convert data types for database (numeric fields need to be strings, dates need to be strings)
+  const expenseDataForDb: Record<string, unknown> = {
+    updatedAt: new Date(),
+  };
+
+  // Convert date and numeric fields
+  if (data.expenseDate !== undefined) {
+    expenseDataForDb.expenseDate = data.expenseDate instanceof Date
+      ? data.expenseDate.toISOString().split('T')[0]
+      : data.expenseDate;
+  }
+  if (data.amount !== undefined) {
+    expenseDataForDb.amount = String(data.amount); // numeric column expects string
+  }
+  if (data.recurrenceEndDate !== undefined) {
+    expenseDataForDb.recurrenceEndDate = data.recurrenceEndDate instanceof Date
+      ? data.recurrenceEndDate.toISOString().split('T')[0]
+      : data.recurrenceEndDate;
+  }
+
+  // Add other optional fields
+  if (data.category !== undefined) expenseDataForDb.category = data.category;
+  if (data.subcategory !== undefined) expenseDataForDb.subcategory = data.subcategory;
+  if (data.vendor !== undefined) expenseDataForDb.vendor = data.vendor;
+  if (data.description !== undefined) expenseDataForDb.description = data.description;
+  if (data.isRecurring !== undefined) expenseDataForDb.isRecurring = data.isRecurring;
+  if (data.recurrenceFrequency !== undefined) expenseDataForDb.recurrenceFrequency = data.recurrenceFrequency;
+  if (data.isTaxDeductible !== undefined) expenseDataForDb.isTaxDeductible = data.isTaxDeductible;
+  if (data.taxCategory !== undefined) expenseDataForDb.taxCategory = data.taxCategory;
+  if (data.documentId !== undefined) expenseDataForDb.documentId = data.documentId;
+  if (data.source !== undefined) expenseDataForDb.source = data.source;
+  if (data.externalId !== undefined) expenseDataForDb.externalId = data.externalId;
+
+  // Update expense
+  const expense = await db
+    .update(propertyExpenses)
+    .set(expenseDataForDb as Partial<typeof propertyExpenses.$inferInsert>)
+    .where(eq(propertyExpenses.id, expenseId))
+    .returning();
+
+  return c.json({ expense: expense[0] });
+});
+
+// DELETE /api/properties/:id/expenses/:expenseId - Delete expense
+propertiesRouter.delete("/:id/expenses/:expenseId", async (c) => {
+  const { id, expenseId } = c.req.param();
+
+  // Security: Get user from auth header
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Lookup user by clerkId
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Security: Verify user owns property
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(and(eq(properties.id, id), eq(properties.userId, user.id)))
+    .limit(1);
+
+  if (!property) {
+    return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Verify expense belongs to property
+  const [existingExpense] = await db
+    .select()
+    .from(propertyExpenses)
+    .where(
+      and(
+        eq(propertyExpenses.id, expenseId),
+        eq(propertyExpenses.propertyId, id)
+      )
+    )
+    .limit(1);
+
+  if (!existingExpense) {
+    return c.json({ error: "Expense not found" }, 404);
+  }
+
+  // Delete expense
+  await db.delete(propertyExpenses).where(eq(propertyExpenses.id, expenseId));
+
+  return c.json({ message: "Expense deleted successfully" });
 });
 
 export default propertiesRouter;
