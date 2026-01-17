@@ -467,6 +467,7 @@ export const expenseSourceEnum = z.enum(["manual", "appfolio", "plaid", "documen
 
 export type ExpenseSource = z.infer<typeof expenseSourceEnum>;
 
+// @deprecated Use propertyTransactionInsertSchema from "./base/transactions" instead
 export const propertyExpenseInsertSchema = z.object({
   propertyId: z.string().uuid("Property ID must be a valid UUID"),
 

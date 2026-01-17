@@ -151,8 +151,8 @@ export function usePropertyMetrics(
   }
 
   // Get monthly rent
-  const monthlyRent = property.rentalIncome?.monthlyBaseRent
-    ? Number(property.rentalIncome.monthlyBaseRent)
+  const monthlyRent = property.rentalIncome?.monthlyRent
+    ? Number(property.rentalIncome.monthlyRent)
     : 0
 
   // Calculate monthly operating expenses

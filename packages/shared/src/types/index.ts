@@ -11,8 +11,8 @@ export type {
   UserPortfolioInsert,
   Property,
   PropertyInsert,
-  PropertyExpense,
-  PropertyExpenseInsert,
+  PropertyTransaction,
+  PropertyTransactionInsert,
   Loan,
   LoanInsert,
 } from "@axori/db/types";
@@ -27,17 +27,17 @@ import type { z as zod } from "zod";
 import {
   loanInsertApiSchema,
   loanUpdateApiSchema,
-  propertyExpenseInsertApiSchema,
-  propertyExpenseUpdateApiSchema
+  propertyTransactionInsertApiSchema,
+  propertyTransactionUpdateApiSchema,
 } from "../validation";
 
 // Loan API types (for frontend use)
 export type LoanInsertApi = zod.infer<typeof loanInsertApiSchema>;
 export type LoanUpdateApi = zod.infer<typeof loanUpdateApiSchema>;
 
-// Property Expense API types (for frontend use)
-export type PropertyExpenseInsertApi = zod.infer<typeof propertyExpenseInsertApiSchema>;
-export type PropertyExpenseUpdateApi = zod.infer<typeof propertyExpenseUpdateApiSchema>;
+// Property Transaction API types (for frontend use)
+export type PropertyTransactionInsertApi = zod.infer<typeof propertyTransactionInsertApiSchema>;
+export type PropertyTransactionUpdateApi = zod.infer<typeof propertyTransactionUpdateApiSchema>;
 
 // NOTE: loanInsertSchema and loanSelectSchema are now exported from validation/index.ts
 // (from base/loans.ts via drizzle-zod). The legacy schemas from normalized-property

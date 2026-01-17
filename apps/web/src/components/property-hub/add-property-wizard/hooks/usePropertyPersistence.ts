@@ -93,9 +93,10 @@ export const usePropertyPersistence = ({
 
         // Rental income data (Step 5: Revenue)
         rentalIncome: {
-          isRented: formData.isRented === 'Yes',
-          monthlyBaseRent: formData.rentAmount || null,
-          leaseEndDate: formData.leaseEnd || null,
+          monthlyRent: formData.rentAmount || null,
+          rentSource: formData.isRented === 'Yes' ? 'lease' : 'estimate',
+          // Note: leaseEndDate doesn't exist in schema, but keeping for backward compatibility
+          // Will be ignored by API if not in schema
         },
 
         // Operating expenses (Step 5: Operations) - no management data here

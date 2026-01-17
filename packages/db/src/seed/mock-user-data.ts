@@ -11,10 +11,21 @@ import {
   propertyOperatingExpenses,
   propertyManagement,
   loans,
+  propertyTransactions,
   userMarkets,
   markets,
 } from "../schema";
 import { eq, and } from "drizzle-orm";
+import { generateSampleTransactions } from "./data/transactions";
+import {
+  sampleCharacteristics,
+  sampleValuation,
+  sampleAcquisition,
+  sampleRentalIncome,
+  sampleOperatingExpenses,
+  sampleManagement,
+  sampleLoan,
+} from "./data/properties";
 
 /**
  * Seeds mock data for a specific user by their Clerk ID or user ID (UUID)
@@ -187,92 +198,90 @@ export async function seedMockUserData(identifier: string) {
     // Add characteristics
     await db.insert(propertyCharacteristics).values({
       propertyId: fullProperty.id,
-      propertyType: "Single Family",
-      bedrooms: 3,
-      bathrooms: "2.5",
-      squareFeet: 1850,
-      lotSizeSqft: 7200,
-      yearBuilt: 2015,
+      ...sampleCharacteristics,
     });
 
     // Add valuation
     await db.insert(propertyValuation).values({
       propertyId: fullProperty.id,
-      currentValue: "285000",
-      taxAssessedValue: "265000",
-      lastAppraisalValue: "310000",
+      ...sampleValuation,
     });
 
     // Add acquisition data
     await db.insert(propertyAcquisition).values({
       propertyId: fullProperty.id,
-      purchasePrice: "265000",
-      purchaseDate: "2023-06-15",
-      acquisitionMethod: "traditional",
-      closingCostsTotal: "8500",
-      downPaymentAmount: "53000",
-      downPaymentSource: "savings",
-      earnestMoney: "5000",
-      sellerCredits: "2000",
-      buyerAgentCommission: "7950",
+      ...sampleAcquisition,
     });
 
     // Add rental income
     await db.insert(propertyRentalIncome).values({
       propertyId: fullProperty.id,
-      monthlyRent: "1850",
-      marketRentEstimate: "1900",
+      ...sampleRentalIncome,
     });
 
     // Add operating expenses
     await db.insert(propertyOperatingExpenses).values({
       propertyId: fullProperty.id,
-      propertyTaxAnnual: "4200",
-      insuranceAnnual: "1800",
-      hoaMonthly: "0",
-      waterSewerMonthly: "0",
-      electricMonthly: "0",
-      gasMonthly: "0",
-      lawnCareMonthly: "75",
-      pestControlMonthly: "25",
-      otherExpensesMonthly: "250", // Combined maintenance + capex reserve + other
-      vacancyRate: "0.05", // 5% as decimal
+      ...sampleOperatingExpenses,
     });
 
     // Add management
     await db.insert(propertyManagement).values({
       propertyId: fullProperty.id,
-      isSelfManaged: false,
-      companyName: "ABC Property Management",
-      contactName: "John Smith",
-      contactEmail: "john@abcpm.com",
-      contactPhone: "555-123-4567",
-      contractStartDate: "2023-07-01",
-      feePercentage: "0.10", // 10% as decimal
+      ...sampleManagement,
     });
 
-    // Add loan
+    // Add primary loan (conventional)
     const [loan] = await db
       .insert(loans)
       .values({
         propertyId: fullProperty.id,
-        loanType: "conventional",
-        lenderName: "First National Bank",
-        servicerName: "First National Bank",
-        loanNumber: "LN-2023-001",
-        originalLoanAmount: "212000",
-        interestRate: "0.065", // 6.5%
-        termMonths: 360,
-        currentBalance: "208500",
-        startDate: "2023-06-15",
-        maturityDate: "2053-06-15",
-        status: "active",
-        isPrimary: true,
-        loanPosition: 1,
+        ...sampleLoan,
       })
       .returning();
 
-    console.log(`✅ Added loan: ${loan.id}`);
+    console.log(`✅ Added primary loan: ${loan.id}`);
+
+    // Add HELOC (second lien) to "456 Oak Avenue"
+    const [helocLoan] = await db
+      .insert(loans)
+      .values({
+        propertyId: fullProperty.id,
+        loanType: "heloc" as const,
+        lenderName: "Community Credit Union",
+        servicerName: "Community Credit Union",
+        loanNumber: "HELOC-2024-456",
+        originalLoanAmount: "50000", // $50k HELOC
+        interestRate: "0.085", // 8.5% (typically higher than primary mortgage)
+        termMonths: 120, // 10 years draw period
+        currentBalance: "32000", // Current balance drawn
+        startDate: "2024-01-15",
+        maturityDate: "2034-01-15",
+        status: "active" as const,
+        isPrimary: false, // Second lien
+        loanPosition: 2, // Second position lien
+      })
+      .returning();
+
+    console.log(`✅ Added HELOC: ${helocLoan.id}`);
+
+    // Add sample transactions (income and expenses) for the full property
+    const transactions = generateSampleTransactions(
+      fullProperty.id,
+      user.id
+    );
+
+    const insertedTransactions = await db
+      .insert(propertyTransactions)
+      .values(transactions)
+      .returning();
+
+    const incomeCount = transactions.filter((t) => t.type === "income").length;
+    const expenseCount = transactions.filter((t) => t.type === "expense").length;
+
+    console.log(
+      `✅ Added ${insertedTransactions.length} transactions (${incomeCount} income, ${expenseCount} expenses)`
+    );
 
     console.log(`\n✅ Successfully seeded mock data for user ${identifier}`);
     console.log(`\n📊 Summary:`);
@@ -280,7 +289,9 @@ export async function seedMockUserData(identifier: string) {
     console.log(`   - Portfolio: ${portfolio.name} (${portfolio.id})`);
     console.log(`   - Empty Property: ${emptyProperty.id} - ${emptyProperty.address}`);
     console.log(`   - Full Property: ${fullProperty.id} - ${fullProperty.address}`);
-    console.log(`   - Loan: ${loan.id} - $${loan.originalLoanAmount} @ ${(parseFloat(loan.interestRate) * 100).toFixed(2)}%`);
+    console.log(`   - Primary Loan: ${loan.id} - $${loan.originalLoanAmount} @ ${(parseFloat(loan.interestRate) * 100).toFixed(2)}% (${loan.loanType})`);
+    console.log(`   - HELOC: ${helocLoan.id} - $${helocLoan.originalLoanAmount} @ ${(parseFloat(helocLoan.interestRate) * 100).toFixed(2)}% (Current Balance: $${helocLoan.currentBalance})`);
+    console.log(`   - Transactions: ${insertedTransactions.length} (Income: ${incomeCount}, Expenses: ${expenseCount})`);
 
     return {
       user,
@@ -288,6 +299,7 @@ export async function seedMockUserData(identifier: string) {
       emptyProperty,
       fullProperty,
       loan,
+      helocLoan,
     };
   } catch (error) {
     console.error("❌ Error seeding mock user data:", error);

@@ -13,7 +13,7 @@ import {
   loans,
   loanHistory,
   propertyHistory,
-  propertyExpenses,
+  propertyTransactions,
   apiCache,
 } from './schema'
 
@@ -184,18 +184,18 @@ export type PropertyHistory = InferSelectModel<typeof propertyHistory>
 export type PropertyHistoryInsert = InferInsertModel<typeof propertyHistory>
 
 // ============================================================================
-// Property Expenses (Actual Expense Transactions)
+// Property Transactions (Unified: Income, Expenses, Capital)
 // ============================================================================
 
 /**
- * Property Expense type inferred from Drizzle schema (for read operations)
+ * Property Transaction type inferred from Drizzle schema (for read operations)
  */
-export type PropertyExpense = InferSelectModel<typeof propertyExpenses>
+export type PropertyTransaction = InferSelectModel<typeof propertyTransactions>
 
 /**
- * Property Expense insert type inferred from Drizzle schema (for insert operations)
+ * Property Transaction insert type inferred from Drizzle schema (for insert operations)
  */
-export type PropertyExpenseInsert = InferInsertModel<typeof propertyExpenses>
+export type PropertyTransactionInsert = InferInsertModel<typeof propertyTransactions>
 
 // ============================================================================
 // API Cache

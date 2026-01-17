@@ -91,7 +91,7 @@ export function usePropertyCompleteness(
   }
 
   // Rental income
-  if (!property.rentalIncome?.monthlyBaseRent) {
+  if (!property.rentalIncome?.monthlyRent) {
     missingFields.push({
       label: 'Monthly Rent',
       route: getRoute('financials'),

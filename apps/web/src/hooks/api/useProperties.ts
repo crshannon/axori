@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUser } from '@clerk/clerk-react'
-import type { Loan, PropertyExpense, PropertyInsert } from '@axori/shared'
+import type { Loan, PropertyInsert, PropertyTransaction } from '@axori/shared'
 import type { PropertyDetails } from '@axori/shared/src/integrations/rentcast'
 import { apiFetch } from '@/lib/api/client'
 
@@ -50,27 +50,109 @@ export interface Property {
   } | null
 
   rentalIncome?: {
-    isRented?: boolean | null
-    monthlyBaseRent?: number | null
-    leaseEndDate?: string | null
-    tenantName?: string | null
+    // Base Rent
+    monthlyRent?: string | null // numeric in DB, returned as string
+    rentSource?: string | null // "lease", "estimate", "manual"
+    marketRentEstimate?: string | null // numeric in DB, returned as string
+
+    // Rent History
+    rentLastIncreasedDate?: string | null
+    rentLastIncreasedAmount?: string | null // numeric in DB, returned as string
+
+    // Other Income Sources (monthly)
+    otherIncomeMonthly?: string | null // numeric in DB, returned as string
+    parkingIncomeMonthly?: string | null // numeric in DB, returned as string
+    laundryIncomeMonthly?: string | null // numeric in DB, returned as string
+    petRentMonthly?: string | null // numeric in DB, returned as string
+    storageIncomeMonthly?: string | null // numeric in DB, returned as string
+    utilityReimbursementMonthly?: string | null // numeric in DB, returned as string
+
+    updatedAt?: Date | null
   } | null
 
   operatingExpenses?: {
-    // Operating expenses data (no management fields here)
+    // Operating Rates (for projections)
+    vacancyRate?: string | null // numeric in DB, returned as string
+    managementRate?: string | null // numeric in DB, returned as string
+    maintenanceRate?: string | null // numeric in DB, returned as string
+    capexRate?: string | null // numeric in DB, returned as string
+
+    // Fixed Expenses
+    propertyTaxAnnual?: string | null // numeric in DB, returned as string
+    insuranceAnnual?: string | null // numeric in DB, returned as string
+
+    // HOA
+    hoaMonthly?: string | null // numeric in DB, returned as string
+    hoaSpecialAssessment?: string | null // numeric in DB, returned as string
+    hoaSpecialAssessmentDate?: string | null
+
+    // Utilities (if landlord-paid)
+    waterSewerMonthly?: string | null // numeric in DB, returned as string
+    trashMonthly?: string | null // numeric in DB, returned as string
+    electricMonthly?: string | null // numeric in DB, returned as string
+    gasMonthly?: string | null // numeric in DB, returned as string
+    internetMonthly?: string | null // numeric in DB, returned as string
+
+    // Services
+    managementFlatFee?: string | null // numeric in DB, returned as string
+    lawnCareMonthly?: string | null // numeric in DB, returned as string
+    snowRemovalMonthly?: string | null // numeric in DB, returned as string
+    pestControlMonthly?: string | null // numeric in DB, returned as string
+    poolMaintenanceMonthly?: string | null // numeric in DB, returned as string
+    alarmMonitoringMonthly?: string | null // numeric in DB, returned as string
+
+    // Other
+    otherExpensesMonthly?: string | null // numeric in DB, returned as string
+    otherExpensesDescription?: string | null
+
+    updatedAt?: Date | null
   } | null
 
   management?: {
+    // Management Type
     isSelfManaged?: boolean | null
+
+    // Company Details
     companyName?: string | null
     companyWebsite?: string | null
+
+    // Primary Contact
     contactName?: string | null
     contactEmail?: string | null
     contactPhone?: string | null
-    feeType?: string | null
-    feePercentage?: number | null
-    feeFlatAmount?: number | null
-    // ... other management fields
+
+    // Contract Details
+    contractStartDate?: string | null
+    contractEndDate?: string | null
+    contractAutoRenews?: boolean | null
+    cancellationNoticeDays?: number | null
+
+    // Fee Structure
+    feeType?: string | null // "percentage", "flat", "hybrid"
+    feePercentage?: string | null // numeric in DB, returned as string
+    feeFlatAmount?: string | null // numeric in DB, returned as string
+    feeMinimum?: string | null // numeric in DB, returned as string
+
+    // Additional Fees
+    leasingFeeType?: string | null // "percentage", "flat", "none"
+    leasingFeePercentage?: string | null // numeric in DB, returned as string
+    leasingFeeFlat?: string | null // numeric in DB, returned as string
+    leaseRenewalFee?: string | null // numeric in DB, returned as string
+    maintenanceMarkupPercentage?: string | null // numeric in DB, returned as string
+    maintenanceCoordinationFee?: string | null // numeric in DB, returned as string
+    evictionFee?: string | null // numeric in DB, returned as string
+    earlyTerminationFee?: string | null // numeric in DB, returned as string
+
+    // Services Included
+    servicesIncluded?: Array<string> | null
+
+    // Payment Details
+    paymentMethod?: string | null // "ach", "check", "portal"
+    paymentDay?: number | null
+    holdsSecurityDeposit?: boolean | null
+    reserveAmount?: string | null // numeric in DB, returned as string
+
+    updatedAt?: Date | null
   } | null
 
   strategy?: {
@@ -78,7 +160,7 @@ export interface Property {
   } | null
 
   loans?: Array<Loan>
-  expenses?: Array<PropertyExpense>
+  transactions?: Array<PropertyTransaction>
 }
 
 /**

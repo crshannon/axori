@@ -6,5 +6,5 @@ export * from './usePortfolios'
 export * from './useProperties'
 export * from './useMapbox'
 export * from './useLoans'
-export * from './useExpenses'
+export * from './useTransactions'
 

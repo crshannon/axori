@@ -64,7 +64,8 @@ export const PropertyAcquisitionDrawer = ({
         purchasePrice: acquisition.purchasePrice?.toString() || '',
         purchaseDate: acquisition.purchaseDate || '',
         acquisitionMethod: (acquisition as any)?.acquisitionMethod || '',
-        closingCostsTotal: acquisition.closingCosts?.toString() || '',
+        closingCostsTotal:
+          (acquisition as any)?.closingCostsTotal?.toString() || '',
         downPaymentAmount:
           (acquisition as any)?.downPaymentAmount?.toString() || '',
         downPaymentSource: (acquisition as any)?.downPaymentSource || '',

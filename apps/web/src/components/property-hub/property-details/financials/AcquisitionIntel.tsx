@@ -1,5 +1,8 @@
-import { Button, Card, CardHeader, EmptyStateCard, Typography } from '@axori/ui'
+import { Button, Card, EmptyStateCard, Typography } from '@axori/ui'
 import { useNavigate } from '@tanstack/react-router'
+import { LearningHubButton } from './LearningHubButton'
+import { generateAcquisitionLearning } from '@/data/learning-hub/acquisition-snippets'
+import { useAcquisitionIntel } from '@/hooks/computed/useAcquisitionIntel'
 import { useProperty } from '@/hooks/api/useProperties'
 
 interface AcquisitionIntelProps {
@@ -9,12 +12,26 @@ interface AcquisitionIntelProps {
 export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
   const navigate = useNavigate()
   const { data: property, isLoading } = useProperty(propertyId)
+  const metrics = useAcquisitionIntel(propertyId)
+
+  // Generate learning snippets based on acquisition data
+  const learningSnippets = metrics.hasAcquisitionData
+    ? generateAcquisitionLearning(
+        metrics.currentBasis,
+        metrics.currentValue,
+        metrics.unrealizedGain,
+      )
+    : []
 
   const handleManageAcquisition = () => {
     navigate({
       to: '/property-hub/$propertyId/financials',
       params: { propertyId },
-      search: (prev) => ({ ...prev, drawer: 'acquisition', loanId: undefined }),
+      search: {
+        drawer: 'acquisition',
+        loanId: undefined,
+        bankAccountId: undefined,
+      },
     })
   }
 
@@ -30,93 +47,8 @@ export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
     )
   }
 
-  const acquisition = property.acquisition
-  const valuation = property.valuation
-
-  // Calculate values
-  const purchasePrice = acquisition?.purchasePrice
-    ? Number(acquisition.purchasePrice)
-    : null
-  const closingCosts = acquisition?.closingCosts
-    ? Number(acquisition.closingCosts)
-    : null
-  const currentValue = valuation?.currentValue
-    ? Number(valuation.currentValue)
-    : acquisition?.currentValue
-      ? Number(acquisition.currentValue)
-      : null
-
-  // Calculate current basis (purchase price + closing costs)
-  const currentBasis =
-    purchasePrice && closingCosts ? purchasePrice + closingCosts : null
-
-  // Calculate total acquisition cost (purchase price + closing costs + earnest money - seller credits)
-  const earnestMoney = (acquisition as any)?.earnestMoney
-    ? Number((acquisition as any).earnestMoney)
-    : null
-  const sellerCredits = (acquisition as any)?.sellerCredits
-    ? Number((acquisition as any).sellerCredits)
-    : null
-  const closingCostsTotal = (acquisition as any)?.closingCostsTotal
-    ? Number((acquisition as any).closingCostsTotal)
-    : closingCosts
-
-  const totalAcquisitionCost =
-    purchasePrice && closingCostsTotal
-      ? purchasePrice +
-        closingCostsTotal +
-        (earnestMoney || 0) -
-        (sellerCredits || 0)
-      : null
-
-  // Calculate equity velocity ((current value - purchase price) / purchase price) * 100
-  const equityVelocity =
-    purchasePrice && currentValue && purchasePrice > 0
-      ? ((currentValue - purchasePrice) / purchasePrice) * 100
-      : null
-
-  // Calculate cash in deal (down payment + closing costs)
-  // Note: downPaymentAmount might not be in the Property interface yet
-  const downPaymentAmount = (acquisition as any)?.downPaymentAmount
-    ? Number((acquisition as any).downPaymentAmount)
-    : null
-  const cashInDeal =
-    downPaymentAmount && closingCosts
-      ? downPaymentAmount + closingCosts
-      : downPaymentAmount || closingCosts
-
-  // Format acquisition method
-  const formatAcquisitionMethod = (method: string | null | undefined) => {
-    if (!method) return null
-    return method
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
-  }
-
-  const acquisitionMethod = formatAcquisitionMethod(
-    (acquisition as any)?.acquisitionMethod,
-  )
-
-  // Format purchase date
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return null
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    } catch {
-      return null
-    }
-  }
-
-  const purchaseDate = formatDate(acquisition?.purchaseDate ?? null)
-
   // Empty state - no acquisition data
-  if (!acquisition || (!purchasePrice && !purchaseDate)) {
+  if (!metrics.hasAcquisitionData) {
     return (
       <EmptyStateCard
         title="Acquisition Intel"
@@ -135,42 +67,25 @@ export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
       variant="rounded"
       padding="lg"
       radius="xl"
-      className="flex flex-col justify-between group relative overflow-hidden cursor-pointer hover:border-violet-500 dark:hover:border-[#E8FF4D]/40 transition-all"
-      onClick={handleManageAcquisition}
+      className="flex flex-col justify-between group relative overflow-hidden hover:border-violet-500 dark:hover:border-[#E8FF4D]/40 transition-all"
     >
-      {/* Decorative SVG Background */}
-      <div className="absolute top-0 right-0 p-8 opacity-[0.03] dark:opacity-[0.05] scale-150 group-hover:rotate-12 transition-transform duration-1000 pointer-events-none">
-        <svg width="180" height="180" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-        </svg>
-      </div>
-
       <div>
-        <CardHeader className="p-0 pb-8">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
           <Typography variant="h5">Acquisition Intel</Typography>
-        </CardHeader>
+          <div className="flex items-center gap-3">
+            <LearningHubButton
+              snippets={learningSnippets}
+              title="Acquisition Intel Learning Hub"
+              subtitle="Strategic insights for property acquisition"
+              componentKey="acquisition-intel"
+            />
+          </div>
+        </div>
 
         <div className="space-y-6">
-          {/* Entry Value */}
-          {purchasePrice !== null && (
-            <div>
-              <Typography
-                variant="caption"
-                className="text-slate-500 dark:text-slate-400 mb-1 opacity-100"
-              >
-                Entry Value
-              </Typography>
-              <Typography
-                variant="h3"
-                className="tabular-nums text-slate-900 dark:text-white"
-              >
-                ${purchasePrice.toLocaleString()}
-              </Typography>
-            </div>
-          )}
-
-          {/* Current Basis */}
-          {currentBasis !== null && (
+          {/* Current Basis - Primary Metric */}
+          {metrics.currentBasis !== null && (
             <div>
               <Typography
                 variant="caption"
@@ -180,82 +95,88 @@ export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
               </Typography>
               <Typography
                 variant="h3"
-                className="tabular-nums text-emerald-500"
+                className="tabular-nums text-emerald-500 dark:text-emerald-400"
               >
-                ${currentBasis.toLocaleString()}
+                ${metrics.currentBasis.toLocaleString()}
               </Typography>
+              {metrics.purchasePrice !== null &&
+                metrics.currentBasis !== metrics.purchasePrice &&
+                metrics.closingCostsPercentage !== null && (
+                  <Typography
+                    variant="overline"
+                    className="text-slate-400 dark:text-slate-500 mt-1"
+                  >
+                    Includes {metrics.closingCostsPercentage.toFixed(1)}%
+                    closing costs
+                  </Typography>
+                )}
             </div>
           )}
 
-          {/* Total Acquisition Cost */}
-          {totalAcquisitionCost !== null && (
+          {/* Equity Velocity - Secondary Metric (Performance Indicator) */}
+          {metrics.equityVelocity !== null && (
             <div>
               <Typography
                 variant="caption"
                 className="text-slate-500 dark:text-slate-400 mb-1 opacity-100"
               >
-                Total Acquisition Cost
+                Equity Velocity
               </Typography>
               <Typography
                 variant="h3"
-                className="tabular-nums text-violet-500 dark:text-violet-400"
+                className={`tabular-nums ${
+                  metrics.equityVelocity >= 0
+                    ? 'text-emerald-500 dark:text-emerald-400'
+                    : 'text-rose-500 dark:text-rose-400'
+                }`}
               >
-                ${totalAcquisitionCost.toLocaleString()}
+                {metrics.equityVelocity >= 0 ? '+' : ''}
+                {metrics.equityVelocity.toFixed(1)}%
               </Typography>
+              {metrics.unrealizedGain !== null && (
+                <Typography
+                  variant="overline"
+                  className="text-slate-400 dark:text-slate-300 mt-1"
+                >
+                  ${metrics.unrealizedGain.toLocaleString()} unrealized{' '}
+                  {metrics.unrealizedGain >= 0 ? 'gain' : 'loss'}
+                </Typography>
+              )}
             </div>
           )}
         </div>
 
         {/* Additional Metrics */}
-        {(equityVelocity !== null ||
-          cashInDeal !== null ||
-          acquisitionMethod ||
-          purchaseDate) && (
+        {(metrics.cashInDeal !== null ||
+          metrics.acquisitionMethod ||
+          metrics.purchaseDate) && (
           <div className="mt-8 pt-8 border-t border-slate-200 dark:border-white/5 space-y-4">
-            {equityVelocity !== null && (
-              <div className="flex justify-between items-center">
-                <Typography variant="caption" className="opacity-40 uppercase">
-                  Equity Velocity
-                </Typography>
-                <Typography
-                  variant="body-sm"
-                  weight="black"
-                  className={
-                    equityVelocity >= 0 ? 'text-emerald-500' : 'text-red-500'
-                  }
-                >
-                  {equityVelocity >= 0 ? '+' : ''}
-                  {equityVelocity.toFixed(1)}%
-                </Typography>
-              </div>
-            )}
-
-            {cashInDeal !== null && (
+            {metrics.cashInDeal !== null && (
               <div className="flex justify-between items-center">
                 <Typography variant="caption" className="opacity-40 uppercase">
                   Cash in Deal
                 </Typography>
                 <Typography variant="body-sm" weight="black">
-                  ${cashInDeal.toLocaleString()}
+                  ${metrics.cashInDeal.toLocaleString()}
                 </Typography>
               </div>
             )}
 
-            {(acquisitionMethod || purchaseDate) && (
+            {(metrics.acquisitionMethod || metrics.purchaseDate) && (
               <Typography
                 variant="overline"
                 className="text-slate-500 dark:text-slate-400 italic mt-4 opacity-100"
               >
-                {acquisitionMethod && (
+                {metrics.acquisitionMethod && (
                   <>
                     Acquisition via{' '}
                     <span className="text-violet-500 dark:text-[#E8FF4D]">
-                      {acquisitionMethod}
+                      {metrics.acquisitionMethod}
                     </span>
-                    {purchaseDate && ' '}
+                    {metrics.purchaseDate && ' '}
                   </>
                 )}
-                {purchaseDate && `on ${purchaseDate}.`}
+                {metrics.purchaseDate && `on ${metrics.purchaseDate}.`}
               </Typography>
             )}
           </div>

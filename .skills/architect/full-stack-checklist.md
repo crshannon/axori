@@ -349,7 +349,9 @@ See [planning-workflow.md](../.skills/architect/planning-workflow.md) for templa
 
 ## Phase 10: Frontend Hooks
 
-### Frontend Hook Implementation
+### Step 10.1: API Hooks (Data Fetching)
+
+**Use for:** Direct API calls, data fetching, mutations
 
 - [ ] Create hook file in `apps/web/src/hooks/api/`
 - [ ] Import Zod-inferred types from `@axori/shared` (not Drizzle types directly)
@@ -359,7 +361,7 @@ See [planning-workflow.md](../.skills/architect/planning-workflow.md) for templa
 - [ ] Handle loading, error, and success states
 - [ ] Export hook from `apps/web/src/hooks/api/index.ts`
 
-### Example Frontend Hook
+### Example API Hook
 
 ```typescript
 // apps/web/src/hooks/api/useProperties.ts
@@ -379,6 +381,76 @@ export function useCreateProperty() {
 }
 ```
 
+### Step 10.2: Computed Hooks (Business Logic)
+
+**Use for:** Derived/computed data, calculations, combining multiple API hooks
+
+- [ ] Create hook file in `apps/web/src/hooks/computed/`
+- [ ] Use `useMemo` for expensive calculations
+- [ ] Combine multiple API hooks to compute derived data
+- [ ] Return typed interface for computed metrics
+- [ ] Add JSDoc comments explaining what the hook calculates
+- [ ] Export hook from `apps/web/src/hooks/computed/index.ts`
+- [ ] Keep business logic separate from presentation
+
+### Example Computed Hook
+
+```typescript
+// apps/web/src/hooks/computed/useFinancialPulse.ts
+import { useMemo } from 'react'
+import { useProperty } from '@/hooks/api/useProperties'
+import { usePropertyTransactions } from '@/hooks/api/useTransactions'
+
+interface FinancialMetrics {
+  netCashFlow: number
+  totalFixedExpenses: number
+  // ... other metrics
+}
+
+/**
+ * Hook to calculate financial metrics for a property
+ * Fetches property data and transactions, then calculates derived metrics
+ */
+export function useFinancialPulse(propertyId: string): FinancialMetrics {
+  const { data: property } = useProperty(propertyId)
+  const { data: transactionsData } = usePropertyTransactions(propertyId, {
+    page: 1,
+    pageSize: 1000,
+  })
+
+  const metrics = useMemo(() => {
+    if (!property || !transactionsData?.transactions) {
+      return { /* default values */ }
+    }
+
+    // Calculate derived metrics from raw data
+    const netCashFlow = /* calculation logic */
+    
+    return {
+      netCashFlow,
+      // ... other computed values
+    }
+  }, [property, transactionsData])
+
+  return metrics
+}
+```
+
+### Hook Organization Guidelines
+
+**API Hooks (`hooks/api/`):**
+- Direct API calls (GET, POST, PUT, DELETE)
+- React Query hooks (`useQuery`, `useMutation`)
+- Data fetching and mutations
+- One-to-one mapping with API endpoints
+
+**Computed Hooks (`hooks/computed/`):**
+- Derived/computed data from multiple sources
+- Business logic calculations
+- Combining multiple API hooks
+- Expensive calculations with `useMemo`
+- Metrics, aggregations, transformations
+
 ## Quick Reference: File Locations
 
 - **Drizzle Schema**: `packages/db/src/schema/index.ts`
@@ -389,7 +461,8 @@ export function useCreateProperty() {
 - **Zod-Inferred Types**: `packages/shared/src/types/index.ts`
 - **API Routes**: `apps/api/src/routes/`
 - **API Index**: `apps/api/src/index.ts`
-- **Frontend Hooks**: `apps/web/src/hooks/api/`
+- **API Hooks**: `apps/web/src/hooks/api/` (data fetching, mutations)
+- **Computed Hooks**: `apps/web/src/hooks/computed/` (business logic, derived data)
 
 ## Common Mistakes to Avoid
 
@@ -405,6 +478,9 @@ export function useCreateProperty() {
 - ❌ Missing authentication middleware on protected routes
 - ❌ Not verifying ownership before mutations
 - ❌ Using base schemas in API routes (should use enhanced schemas)
+- ❌ Putting computed/business logic hooks in `hooks/api/` (use `hooks/computed/`)
+- ❌ Putting API/data fetching hooks in `hooks/computed/` (use `hooks/api/`)
+- ❌ Mixing business logic calculations directly in components (extract to computed hooks)
 
 ## Summary
 

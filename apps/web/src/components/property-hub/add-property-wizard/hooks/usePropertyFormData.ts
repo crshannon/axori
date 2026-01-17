@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { apiFetch } from '@/lib/api/client'
 import type { PropertyFormData } from '../types'
+import { apiFetch } from '@/lib/api/client'
 
 interface RentcastData {
   bedrooms?: number
@@ -95,24 +95,24 @@ export const usePropertyFormData = ({
           : null,
         mapboxPlaceId: existingProperty.mapboxPlaceId || null,
         fullAddress: existingProperty.fullAddress || null,
-        
+
         // Step 2: Physical characteristics
         beds: characteristics?.bedrooms ?? prev.beds,
         baths: characteristics?.bathrooms ?? prev.baths,
         sqft: characteristics?.squareFeet ?? prev.sqft,
         yearBuilt: characteristics?.yearBuilt ?? prev.yearBuilt,
         lotSize: characteristics?.lotSize ?? prev.lotSize,
-        
+
         // Step 2: Valuation data
         purchasePrice: valuation?.purchasePrice?.toString() ?? prev.purchasePrice,
         currentValue: valuation?.currentMarketValue?.toString() ?? prev.currentValue,
-        
+
         // Step 3: Acquisition data
         purchaseDate: acquisition?.purchaseDate ?? prev.purchaseDate,
         closingCosts: acquisition?.closingCosts?.toString() ?? prev.closingCosts,
         entityType: acquisition?.entityType ?? prev.entityType,
         entityName: acquisition?.entityName ?? prev.entityName,
-        
+
         // Step 4: Loan data
         loanType: activeLoan?.loanType ?? prev.loanType,
         loanAmount: activeLoan?.loanAmount?.toString() ?? prev.loanAmount,
@@ -120,12 +120,12 @@ export const usePropertyFormData = ({
         loanTerm: activeLoan?.loanTerm?.toString() ?? prev.loanTerm,
         provider: activeLoan?.lenderName ?? prev.provider,
         financeType: activeLoan ? (activeLoan.loanType === 'cash' ? 'Cash' : 'Mortgage') : prev.financeType,
-        
+
         // Step 5: Rental income
-        isRented: rentalIncome?.isRented ? 'Yes' : 'No',
-        rentAmount: rentalIncome?.monthlyBaseRent?.toString() ?? prev.rentAmount,
-        leaseEnd: rentalIncome?.leaseEndDate ?? prev.leaseEnd,
-        
+        isRented: rentalIncome?.rentSource === 'lease' ? 'Yes' : 'No',
+        rentAmount: rentalIncome?.monthlyRent?.toString() ?? prev.rentAmount,
+        leaseEnd: prev.leaseEnd, // leaseEndDate not in schema, keep previous value
+
         // Step 5: Management (from property_management table)
         mgmtType: management?.isSelfManaged ? 'Self-Managed' : management?.companyName ? 'Property Manager' : prev.mgmtType,
         pmCompany: management?.companyName ?? prev.pmCompany,

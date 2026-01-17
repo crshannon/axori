@@ -4,23 +4,27 @@ interface AsyncLoaderProps {
   isVisible: boolean
   onComplete?: () => void
   duration?: number // in ms
+  statuses?: Array<string> // Custom status messages
 }
 
 export const AsyncLoader: React.FC<AsyncLoaderProps> = ({
   isVisible,
   onComplete,
   duration = 5000,
+  statuses: customStatuses,
 }) => {
   const [progress, setProgress] = useState(0)
   const [statusIndex, setStatusIndex] = useState(0)
 
-  const statuses = [
+  const defaultStatuses = [
     'Initializing Secure Handshake...',
     'Crawling Municipal Tax Records...',
     'Indexing Neighborhood Alpha...',
     'Modeling Yield Projections...',
     'Securing Asset Intelligence DNA...',
   ]
+
+  const statuses = customStatuses || defaultStatuses
 
   useEffect(() => {
     if (!isVisible) {
@@ -52,7 +56,7 @@ export const AsyncLoader: React.FC<AsyncLoaderProps> = ({
       clearInterval(timer)
       clearInterval(statusTimer)
     }
-  }, [isVisible, duration, onComplete])
+  }, [isVisible, duration, onComplete, statuses.length])
 
   if (!isVisible) return null
 

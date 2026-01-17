@@ -4,6 +4,7 @@ import { PropertyHero, PropertyMetrics } from '@/components/property-hub'
 import { cn } from '@/utils/helpers'
 import { useProperty } from '@/hooks/api/useProperties'
 import { DataCompleteness } from '@/components/property-hub/property-details/overview/DataCompleteness'
+import { AsyncLoader } from '@/components/loader/async-loader'
 
 export const Route = createFileRoute('/_authed/property-hub/$propertyId/')({
   component: PropertyOverviewPage,
@@ -15,17 +16,20 @@ function PropertyOverviewPage() {
   // Fetch property data using the hook (includes normalized data)
   const { data: property, isLoading, error } = useProperty(propertyId)
 
-  // Show loading state
+  // Show loading state with AsyncLoader
   if (isLoading) {
     return (
-      <div className="p-8 w-full flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 dark:border-[#E8FF4D] mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400">
-            Loading property...
-          </p>
-        </div>
-      </div>
+      <AsyncLoader
+        isVisible={isLoading}
+        duration={4000}
+        statuses={[
+          'Loading Property Intelligence...',
+          'Analyzing Financial Metrics...',
+          'Crawling Transaction History...',
+          'Computing Yield Projections...',
+          'Finalizing Asset Profile...',
+        ]}
+      />
     )
   }
 

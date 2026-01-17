@@ -25,6 +25,8 @@ export interface EmptyStateCardProps {
   showPlaceholders?: boolean;
   /** Custom icon (defaults to Plus) */
   icon?: LucideIcon;
+  /** Size/layout variant */
+  size?: "default" | "condensed";
   /** Additional className for the card */
   className?: string;
 }
@@ -41,6 +43,7 @@ const variantStyles = {
     highlight: "text-violet-500",
     button: "dark:bg-violet-600 dark:hover:bg-violet-700 dark:text-white",
     focusRing: "focus:ring-violet-500 dark:focus:ring-violet-500",
+    gradient: "from-violet-500/[0.03]",
   },
   slate: {
     card: "bg-slate-50 dark:bg-white/5 border-dashed border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20",
@@ -53,6 +56,7 @@ const variantStyles = {
     highlight: "text-slate-600 dark:text-slate-300",
     button: "",
     focusRing: "focus:ring-slate-500 dark:focus:ring-slate-400",
+    gradient: "from-slate-500/[0.03]",
   },
   indigo: {
     card: "bg-indigo-600/5 border-dashed border-indigo-500/30 hover:border-indigo-500/60",
@@ -65,6 +69,7 @@ const variantStyles = {
     highlight: "text-indigo-500",
     button: "dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:text-white",
     focusRing: "focus:ring-indigo-500 dark:focus:ring-indigo-500",
+    gradient: "from-indigo-500/[0.03]",
   },
   emerald: {
     card: "bg-emerald-600/5 border-dashed border-emerald-500/30 hover:border-emerald-500/60",
@@ -77,6 +82,7 @@ const variantStyles = {
     highlight: "text-emerald-500",
     button: "dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:text-white",
     focusRing: "focus:ring-emerald-500 dark:focus:ring-emerald-500",
+    gradient: "from-emerald-500/[0.03]",
   },
 };
 
@@ -90,9 +96,11 @@ export const EmptyStateCard = ({
   variant = "violet",
   showPlaceholders = true,
   icon: Icon = Plus,
+  size = "default",
   className,
 }: EmptyStateCardProps) => {
   const styles = variantStyles[variant];
+  const isCondensed = size === "condensed";
 
   // Process description to highlight terms
   const renderDescription = () => {
@@ -150,10 +158,92 @@ export const EmptyStateCard = ({
     return <div className="mb-6">{description}</div>;
   };
 
+  // Condensed horizontal layout (matches FinancialPulse style)
+  if (isCondensed) {
+    return (
+      <Card
+        variant="rounded"
+        padding="lg"
+        radius="xl"
+        className={cn(
+          "flex flex-col md:flex-row items-center gap-8 relative overflow-hidden group py-8",
+          styles.card,
+          className
+        )}
+      >
+        {/* Gradient Background */}
+        <div
+          className={cn(
+            "absolute inset-0 bg-gradient-to-r to-transparent pointer-events-none",
+            styles.gradient
+          )}
+        />
+        {/* Blueprint Hatching Overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(45deg, currentColor 0, currentColor 1px, transparent 0, transparent 20px)",
+            backgroundSize: "20px 20px",
+          }}
+        ></div>
+
+        {/* Left: Title and Description */}
+        <div className="flex-grow flex flex-col justify-center relative z-10">
+          <Typography
+            variant="caption"
+            weight="black"
+            className={cn(
+              styles.title,
+              "mb-2 flex items-center gap-2 tracking-[0.2em] opacity-100 text-sm"
+            )}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+            {title}
+          </Typography>
+          {description && (
+            <Typography
+              variant="caption"
+              className="text-slate-500 dark:text-slate-400 mt-2 max-w-md"
+            >
+              {typeof description === "string" ? description : description}
+            </Typography>
+          )}
+        </div>
+
+        {/* Right: Button */}
+        <div className="relative z-10">
+          {showPlaceholders && (
+            <div className="flex items-center gap-4 mb-4">
+              <div
+                className={cn("w-24 h-3 rounded-full", styles.placeholder)}
+              ></div>
+              <div
+                className={cn("w-32 h-6 rounded-xl", styles.placeholderLarge)}
+              ></div>
+            </div>
+          )}
+          <Button
+            onClick={onButtonClick}
+            variant="primary"
+            className={cn(
+              "py-3 px-6 rounded-xl font-black text-xs uppercase tracking-widest whitespace-nowrap shadow-lg group-hover:scale-[1.02] transition-transform",
+              styles.button,
+              styles.focusRing
+            )}
+          >
+            {buttonText}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  // Default vertical layout
   return (
     <Card
       variant="rounded"
-      padding="sm"
+      padding="lg"
       radius="xl"
       className={cn(
         "flex flex-col justify-between group relative overflow-hidden",
@@ -161,7 +251,7 @@ export const EmptyStateCard = ({
         className
       )}
     >
-      <div className="h-full p-8 flex flex-col justify-between">
+      <div className="h-full flex flex-col justify-between">
         {/* Blueprint Hatching Overlay */}
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none"

@@ -9,27 +9,27 @@ import {
   propertyOperatingExpenses,
   propertyManagement,
   loans,
-  propertyExpenses,
+  propertyTransactions,
   users,
   eq,
   and,
   desc,
 } from "@axori/db";
-import { gte, lte } from "drizzle-orm";
+import { gte, lte, sql } from "drizzle-orm";
 import {
   propertyInsertSchema,
   propertyUpdateSchema,
   propertyCharacteristicsInsertSchema,
   propertyValuationInsertSchema,
-  propertyAcquisitionInsertSchema,
   propertyRentalIncomeInsertSchema,
   propertyOperatingExpensesInsertSchema,
   propertyManagementInsertSchema,
   // Use enhanced schemas for API validation
   loanInsertApiSchema,
   loanUpdateApiSchema,
-  propertyExpenseInsertApiSchema,
-  propertyExpenseUpdateApiSchema,
+  propertyAcquisitionInsertApiSchema,
+  propertyTransactionInsertApiSchema,
+  propertyTransactionUpdateApiSchema,
 } from "@axori/shared/src/validation";
 import { RentcastClient, type PropertyDetails } from "@axori/shared/src/integrations/rentcast";
 import { transformRentcastToAxori } from "@axori/shared/src/integrations/data-transformers";
@@ -327,18 +327,14 @@ propertiesRouter.get("/:id", async (c) => {
     .where(eq(propertyManagement.propertyId, id))
     .limit(1);
 
-  // Get active loan (if any) - primary active loan for the property
-  const activeLoans = await db
+  // Get all active loans for the property (not just primary)
+  const propertyLoans = await db
     .select()
     .from(loans)
     .where(and(
       eq(loans.propertyId, id),
-      eq(loans.status, "active"),
-      eq(loans.isPrimary, true)
-    ))
-    .limit(1);
-
-  const activeLoan = activeLoans.length > 0 ? activeLoans[0] : null;
+      eq(loans.status, "active")
+    ));
 
   // Return property with all normalized data
   return c.json({
@@ -350,7 +346,7 @@ propertiesRouter.get("/:id", async (c) => {
       rentalIncome: rentalIncome || null,
       operatingExpenses: operatingExpenses || null,
       management: management || null,
-      loans: activeLoan ? [activeLoan] : [], // Return as array for consistency
+      loans: propertyLoans || [], // Return all active loans
     },
   });
 });
@@ -493,7 +489,8 @@ propertiesRouter.put("/:id", async (c) => {
 
     // Update or insert acquisition
     if (acquisition) {
-      const acquisitionData = propertyAcquisitionInsertSchema.parse({
+      // Use enhanced API schema that accepts numbers (converts to strings for DB)
+      const acquisitionData = propertyAcquisitionInsertApiSchema.parse({
         propertyId: id,
         ...acquisition,
       });
@@ -840,16 +837,12 @@ propertiesRouter.put("/:id", async (c) => {
             isPrimary: validated.isPrimary ?? true,
           };
 
-          // Add optional fields
+          // Add optional fields (dates are already strings in YYYY-MM-DD format)
           if (validated.startDate) {
-            loanDataForInsert.startDate = validated.startDate instanceof Date
-              ? validated.startDate.toISOString().split('T')[0]
-              : validated.startDate;
+            loanDataForInsert.startDate = validated.startDate;
           }
           if (validated.maturityDate) {
-            loanDataForInsert.maturityDate = validated.maturityDate instanceof Date
-              ? validated.maturityDate.toISOString().split('T')[0]
-              : validated.maturityDate;
+            loanDataForInsert.maturityDate = validated.maturityDate;
           }
 
           // Mark existing active loans as paid off (when adding new loan)
@@ -1286,11 +1279,11 @@ propertiesRouter.get("/drafts/me", async (c) => {
 });
 
 // ============================================================================
-// Property Expenses Routes
+// Property Transactions Routes (Unified: Income, Expenses, Capital)
 // ============================================================================
 
-// GET /api/properties/:id/expenses - List expenses for property
-propertiesRouter.get("/:id/expenses", async (c) => {
+// GET /api/properties/:id/transactions - List transactions for property
+propertiesRouter.get("/:id/transactions", async (c) => {
   const { id } = c.req.param();
 
   // Security: Get user from auth header
@@ -1326,46 +1319,67 @@ propertiesRouter.get("/:id/expenses", async (c) => {
   // Get query parameters for filtering
   const startDate = c.req.query("startDate");
   const endDate = c.req.query("endDate");
+  const type = c.req.query("type"); // income, expense, capital
   const category = c.req.query("category");
-  const isTaxDeductible = c.req.query("isTaxDeductible");
+  const reviewStatus = c.req.query("reviewStatus");
+  const page = parseInt(c.req.query("page") || "1", 10);
+  const pageSize = parseInt(c.req.query("pageSize") || "20", 10);
+  const offset = (page - 1) * pageSize;
 
   // Build where conditions
-  const conditions = [eq(propertyExpenses.propertyId, id)];
+  const conditions = [eq(propertyTransactions.propertyId, id)];
 
   if (startDate) {
-    conditions.push(gte(propertyExpenses.expenseDate, startDate));
+    conditions.push(gte(propertyTransactions.transactionDate, startDate));
   }
   if (endDate) {
-    conditions.push(lte(propertyExpenses.expenseDate, endDate));
+    conditions.push(lte(propertyTransactions.transactionDate, endDate));
+  }
+  if (type) {
+    type TransactionType = "income" | "expense" | "capital";
+    conditions.push(eq(propertyTransactions.type, type as TransactionType));
   }
   if (category) {
-    // Cast category string to enum type for type safety
-    // The enum type comes from the pgEnum definition in the schema
-    // Valid enum values: "acquisition" | "property_tax" | "insurance" | "hoa" | "management" |
-    // "repairs" | "maintenance" | "capex" | "utilities" | "legal" | "accounting" | "marketing" |
-    // "travel" | "office" | "bank_fees" | "licenses" | "other"
-    type ExpenseCategory = "acquisition" | "property_tax" | "insurance" | "hoa" | "management" | "repairs" | "maintenance" | "capex" | "utilities" | "legal" | "accounting" | "marketing" | "travel" | "office" | "bank_fees" | "licenses" | "other";
-    conditions.push(eq(propertyExpenses.category, category as ExpenseCategory));
+    // Cast to transaction category enum type
+    type TransactionCategory = "rent" | "parking" | "laundry" | "pet_rent" | "storage" | "utility_reimbursement" | "late_fees" | "application_fees" | "acquisition" | "property_tax" | "insurance" | "hoa" | "management" | "repairs" | "maintenance" | "capex" | "utilities" | "legal" | "accounting" | "marketing" | "travel" | "office" | "bank_fees" | "licenses" | "other";
+    conditions.push(eq(propertyTransactions.category, category as TransactionCategory));
   }
-  if (isTaxDeductible !== undefined) {
-    conditions.push(
-      eq(propertyExpenses.isTaxDeductible, isTaxDeductible === "true")
-    );
+  if (reviewStatus) {
+    type ReviewStatus = "pending" | "approved" | "flagged" | "excluded";
+    conditions.push(eq(propertyTransactions.reviewStatus, reviewStatus as ReviewStatus));
   }
 
-  // Query expenses with filters
-  const expenses = await db
+  // Get total count for pagination
+  const [countResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(propertyTransactions)
+    .where(and(...conditions));
+
+  const total = Number(countResult?.count || 0);
+
+  // Query transactions with filters and pagination
+  const transactions = await db
     .select()
-    .from(propertyExpenses)
+    .from(propertyTransactions)
     .where(and(...conditions))
-    .orderBy(desc(propertyExpenses.expenseDate));
+    .orderBy(desc(propertyTransactions.transactionDate))
+    .limit(pageSize)
+    .offset(offset);
 
-  return c.json({ expenses });
+  return c.json({
+    transactions,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  });
 });
 
-// GET /api/properties/:id/expenses/:expenseId - Get single expense
-propertiesRouter.get("/:id/expenses/:expenseId", async (c) => {
-  const { id, expenseId } = c.req.param();
+// GET /api/properties/:id/transactions/:transactionId - Get single transaction
+propertiesRouter.get("/:id/transactions/:transactionId", async (c) => {
+  const { id, transactionId } = c.req.param();
 
   // Security: Get user from auth header
   const authHeader = c.req.header("Authorization");
@@ -1397,27 +1411,27 @@ propertiesRouter.get("/:id/expenses/:expenseId", async (c) => {
     return c.json({ error: "Property not found" }, 404);
   }
 
-  // Get expense and verify it belongs to the property
-  const [expense] = await db
+  // Get transaction and verify it belongs to the property
+  const [transaction] = await db
     .select()
-    .from(propertyExpenses)
+    .from(propertyTransactions)
     .where(
       and(
-        eq(propertyExpenses.id, expenseId),
-        eq(propertyExpenses.propertyId, id)
+        eq(propertyTransactions.id, transactionId),
+        eq(propertyTransactions.propertyId, id)
       )
     )
     .limit(1);
 
-  if (!expense) {
-    return c.json({ error: "Expense not found" }, 404);
+  if (!transaction) {
+    return c.json({ error: "Transaction not found" }, 404);
   }
 
-  return c.json({ expense });
+  return c.json({ transaction });
 });
 
-// POST /api/properties/:id/expenses - Create expense
-propertiesRouter.post("/:id/expenses", async (c) => {
+// POST /api/properties/:id/transactions - Create transaction
+propertiesRouter.post("/:id/transactions", async (c) => {
   const { id } = c.req.param();
 
   // Security: Get user from auth header
@@ -1451,46 +1465,55 @@ propertiesRouter.post("/:id/expenses", async (c) => {
   }
 
   // Parse and validate request body
-  const data = propertyExpenseInsertApiSchema.parse(await c.req.json());
+  const data = propertyTransactionInsertApiSchema.parse(await c.req.json());
 
   // Convert data types for database (numeric fields need to be strings, dates are already strings from enhanced schema)
-  const expenseDataForDb: Record<string, unknown> = {
+  const transactionDataForDb: Record<string, unknown> = {
     propertyId: id,
     createdBy: user.id, // Use user.id (UUID), not clerkId
-    expenseDate: data.expenseDate, // Enhanced schema validates as ISO date string
+    type: data.type,
+    transactionDate: data.transactionDate, // Enhanced schema validates as ISO date string
     amount: String(data.amount), // numeric column expects string
     category: data.category,
     isRecurring: data.isRecurring ?? false,
     isTaxDeductible: data.isTaxDeductible ?? true,
-    source: data.source ?? 'manual',
+    source: data.source ?? "manual",
+    reviewStatus: data.reviewStatus ?? "pending",
+    isExcluded: data.isExcluded ?? false,
   };
 
-  // Add optional fields
-  if (data.subcategory != null) expenseDataForDb.subcategory = data.subcategory;
-  if (data.vendor != null) expenseDataForDb.vendor = data.vendor;
-  if (data.description != null) expenseDataForDb.description = data.description;
-  if (data.recurrenceFrequency != null) expenseDataForDb.recurrenceFrequency = data.recurrenceFrequency;
-  if (data.recurrenceEndDate != null) {
-    expenseDataForDb.recurrenceEndDate = data.recurrenceEndDate instanceof Date
-      ? data.recurrenceEndDate.toISOString().split('T')[0]
-      : data.recurrenceEndDate;
+  // Add type-specific fields
+  if (data.type === "expense" && data.vendor) {
+    transactionDataForDb.vendor = data.vendor;
   }
-  if (data.taxCategory != null) expenseDataForDb.taxCategory = data.taxCategory;
-  if (data.documentId != null) expenseDataForDb.documentId = data.documentId;
-  if (data.externalId != null) expenseDataForDb.externalId = data.externalId;
+  if (data.type === "income" && data.payer) {
+    transactionDataForDb.payer = data.payer;
+  }
 
-  // Create expense with propertyId and createdBy
-  const expense = await db
-    .insert(propertyExpenses)
-    .values(expenseDataForDb as typeof propertyExpenses.$inferInsert)
+  // Add optional fields
+  if (data.subcategory != null) transactionDataForDb.subcategory = data.subcategory;
+  if (data.description != null) transactionDataForDb.description = data.description;
+  if (data.recurrenceFrequency != null) transactionDataForDb.recurrenceFrequency = data.recurrenceFrequency;
+  if (data.recurrenceEndDate != null) {
+    transactionDataForDb.recurrenceEndDate = data.recurrenceEndDate;
+  }
+  if (data.taxCategory != null) transactionDataForDb.taxCategory = data.taxCategory;
+  if (data.documentId != null) transactionDataForDb.documentId = data.documentId;
+  if (data.externalId != null) transactionDataForDb.externalId = data.externalId;
+  if (data.notes != null) transactionDataForDb.notes = data.notes;
+
+  // Create transaction
+  const transaction = await db
+    .insert(propertyTransactions)
+    .values(transactionDataForDb as typeof propertyTransactions.$inferInsert)
     .returning();
 
-  return c.json({ expense: expense[0] });
+  return c.json({ transaction: transaction[0] });
 });
 
-// PUT /api/properties/:id/expenses/:expenseId - Update expense
-propertiesRouter.put("/:id/expenses/:expenseId", async (c) => {
-  const { id, expenseId } = c.req.param();
+// PUT /api/properties/:id/transactions/:transactionId - Update transaction
+propertiesRouter.put("/:id/transactions/:transactionId", async (c) => {
+  const { id, transactionId } = c.req.param();
 
   // Security: Get user from auth header
   const authHeader = c.req.header("Authorization");
@@ -1522,67 +1545,78 @@ propertiesRouter.put("/:id/expenses/:expenseId", async (c) => {
     return c.json({ error: "Property not found" }, 404);
   }
 
-  // Verify expense belongs to property
-  const [existingExpense] = await db
+  // Verify transaction belongs to property
+  const [existingTransaction] = await db
     .select()
-    .from(propertyExpenses)
+    .from(propertyTransactions)
     .where(
       and(
-        eq(propertyExpenses.id, expenseId),
-        eq(propertyExpenses.propertyId, id)
+        eq(propertyTransactions.id, transactionId),
+        eq(propertyTransactions.propertyId, id)
       )
     )
     .limit(1);
 
-  if (!existingExpense) {
-    return c.json({ error: "Expense not found" }, 404);
+  if (!existingTransaction) {
+    return c.json({ error: "Transaction not found" }, 404);
   }
 
   // Parse and validate request body
-  const data = propertyExpenseUpdateApiSchema.parse(await c.req.json());
+  const data = propertyTransactionUpdateApiSchema.parse(await c.req.json());
 
-  // Convert data types for database (numeric fields need to be strings, dates need to be strings)
-  const expenseDataForDb: Record<string, unknown> = {
+  // Convert data types for database
+  const transactionDataForDb: Record<string, unknown> = {
     updatedAt: new Date(),
   };
 
-  // Convert date and numeric fields (enhanced schema validates dates as strings)
-  if (data.expenseDate !== undefined) {
-    expenseDataForDb.expenseDate = data.expenseDate; // Already validated as ISO date string
+  // Convert date and numeric fields
+  if (data.transactionDate !== undefined) {
+    transactionDataForDb.transactionDate = data.transactionDate;
   }
   if (data.amount !== undefined) {
-    expenseDataForDb.amount = String(data.amount); // numeric column expects string
+    transactionDataForDb.amount = String(data.amount);
   }
-  if (data.recurrenceEndDate !== undefined && data.recurrenceEndDate !== null) {
-    expenseDataForDb.recurrenceEndDate = data.recurrenceEndDate; // Already validated as ISO date string or null
+  if (data.recurrenceEndDate !== undefined) {
+    transactionDataForDb.recurrenceEndDate = data.recurrenceEndDate;
   }
 
   // Add other optional fields
-  if (data.category !== undefined) expenseDataForDb.category = data.category;
-  if (data.subcategory !== undefined) expenseDataForDb.subcategory = data.subcategory;
-  if (data.vendor !== undefined) expenseDataForDb.vendor = data.vendor;
-  if (data.description !== undefined) expenseDataForDb.description = data.description;
-  if (data.isRecurring !== undefined) expenseDataForDb.isRecurring = data.isRecurring;
-  if (data.recurrenceFrequency !== undefined) expenseDataForDb.recurrenceFrequency = data.recurrenceFrequency;
-  if (data.isTaxDeductible !== undefined) expenseDataForDb.isTaxDeductible = data.isTaxDeductible;
-  if (data.taxCategory !== undefined) expenseDataForDb.taxCategory = data.taxCategory;
-  if (data.documentId !== undefined) expenseDataForDb.documentId = data.documentId;
-  if (data.source !== undefined) expenseDataForDb.source = data.source;
-  if (data.externalId !== undefined) expenseDataForDb.externalId = data.externalId;
+  if (data.type !== undefined) transactionDataForDb.type = data.type;
+  if (data.category !== undefined) transactionDataForDb.category = data.category;
+  if (data.subcategory !== undefined) transactionDataForDb.subcategory = data.subcategory;
+  if (data.vendor !== undefined) transactionDataForDb.vendor = data.vendor;
+  if (data.payer !== undefined) transactionDataForDb.payer = data.payer;
+  if (data.description !== undefined) transactionDataForDb.description = data.description;
+  if (data.isRecurring !== undefined) transactionDataForDb.isRecurring = data.isRecurring;
+  if (data.recurrenceFrequency !== undefined) transactionDataForDb.recurrenceFrequency = data.recurrenceFrequency;
+  if (data.isTaxDeductible !== undefined) transactionDataForDb.isTaxDeductible = data.isTaxDeductible;
+  if (data.taxCategory !== undefined) transactionDataForDb.taxCategory = data.taxCategory;
+  if (data.documentId !== undefined) transactionDataForDb.documentId = data.documentId;
+  if (data.source !== undefined) transactionDataForDb.source = data.source;
+  if (data.externalId !== undefined) transactionDataForDb.externalId = data.externalId;
+  if (data.notes !== undefined) transactionDataForDb.notes = data.notes;
+  if (data.reviewStatus !== undefined) transactionDataForDb.reviewStatus = data.reviewStatus;
+  if (data.isExcluded !== undefined) transactionDataForDb.isExcluded = data.isExcluded;
 
-  // Update expense
-  const expense = await db
-    .update(propertyExpenses)
-    .set(expenseDataForDb as Partial<typeof propertyExpenses.$inferInsert>)
-    .where(eq(propertyExpenses.id, expenseId))
+  // Update reviewedBy and reviewedAt if reviewStatus is being set
+  if (data.reviewStatus !== undefined && data.reviewStatus !== "pending") {
+    transactionDataForDb.reviewedBy = user.id;
+    transactionDataForDb.reviewedAt = new Date();
+  }
+
+  // Update transaction
+  const transaction = await db
+    .update(propertyTransactions)
+    .set(transactionDataForDb as Partial<typeof propertyTransactions.$inferInsert>)
+    .where(eq(propertyTransactions.id, transactionId))
     .returning();
 
-  return c.json({ expense: expense[0] });
+  return c.json({ transaction: transaction[0] });
 });
 
-// DELETE /api/properties/:id/expenses/:expenseId - Delete expense
-propertiesRouter.delete("/:id/expenses/:expenseId", async (c) => {
-  const { id, expenseId } = c.req.param();
+// DELETE /api/properties/:id/transactions/:transactionId - Delete transaction
+propertiesRouter.delete("/:id/transactions/:transactionId", async (c) => {
+  const { id, transactionId } = c.req.param();
 
   // Security: Get user from auth header
   const authHeader = c.req.header("Authorization");
@@ -1614,26 +1648,26 @@ propertiesRouter.delete("/:id/expenses/:expenseId", async (c) => {
     return c.json({ error: "Property not found" }, 404);
   }
 
-  // Verify expense belongs to property
-  const [existingExpense] = await db
+  // Verify transaction belongs to property
+  const [existingTransaction] = await db
     .select()
-    .from(propertyExpenses)
+    .from(propertyTransactions)
     .where(
       and(
-        eq(propertyExpenses.id, expenseId),
-        eq(propertyExpenses.propertyId, id)
+        eq(propertyTransactions.id, transactionId),
+        eq(propertyTransactions.propertyId, id)
       )
     )
     .limit(1);
 
-  if (!existingExpense) {
-    return c.json({ error: "Expense not found" }, 404);
+  if (!existingTransaction) {
+    return c.json({ error: "Transaction not found" }, 404);
   }
 
-  // Delete expense
-  await db.delete(propertyExpenses).where(eq(propertyExpenses.id, expenseId));
+  // Delete transaction
+  await db.delete(propertyTransactions).where(eq(propertyTransactions.id, transactionId));
 
-  return c.json({ message: "Expense deleted successfully" });
+  return c.json({ message: "Transaction deleted successfully" });
 });
 
 export default propertiesRouter;

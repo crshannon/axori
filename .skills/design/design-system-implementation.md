@@ -271,6 +271,9 @@ Extract market selection card pattern from Step7MarketSelection.
 3. **Extract Reusable Components** for repeated patterns
 4. **Document Design Tokens** and keep them updated
 5. **Support Dark Mode** consistently across all components
+6. **Use Typography Component** instead of raw HTML elements (`<p>`, `<h1>`, etc.)
+7. **Use Card Component** props (`variant`, `padding`, `radius`) instead of overriding with `className`
+8. **Prefer Tailwind `dark:` classes** instead of conditional `isDark` logic
 
 ---
 
@@ -280,3 +283,4 @@ Extract market selection card pattern from Step7MarketSelection.
 - [CSS Variables in Tailwind](https://tailwindcss.com/docs/customizing-colors#using-css-variables)
 - Design tokens: `packages/ui/DESIGN_TOKENS.md`
 - Review document: `DESIGN_SYSTEM_REVIEW.md`
+

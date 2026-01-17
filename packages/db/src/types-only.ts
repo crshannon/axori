@@ -28,8 +28,8 @@ export type {
   LoanHistoryInsert,
   PropertyHistory,
   PropertyHistoryInsert,
-  PropertyExpense,
-  PropertyExpenseInsert,
+  PropertyTransaction,
+  PropertyTransactionInsert,
   ApiCache,
   ApiCacheInsert,
 } from "./types";

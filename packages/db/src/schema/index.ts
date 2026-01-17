@@ -51,7 +51,8 @@ export const loanStatusEnum = pgEnum("loan_status", [
   "sold",
 ]);
 
-// Expense category enum
+// Expense category enum - DEPRECATED: Use transactionCategoryEnum instead
+// Keeping for backward compatibility during migration
 export const expenseCategoryEnum = pgEnum("expense_category", [
   "acquisition",
   "property_tax",
@@ -85,6 +86,21 @@ export const expenseSourceEnum = pgEnum("expense_source", [
   "appfolio",
   "plaid",
   "document_ai",
+]);
+
+// Transaction type enum
+export const transactionTypeEnum = pgEnum("transaction_type", [
+  "income", // Income transactions (rent, fees, etc.)
+  "expense", // Expense transactions (repairs, taxes, etc.)
+  "capital", // Capital transactions (deposits, withdrawals, etc.)
+]);
+
+// Transaction review status enum
+export const transactionReviewStatusEnum = pgEnum("transaction_review_status", [
+  "pending", // Awaiting review
+  "approved", // Reviewed and approved
+  "flagged", // Flagged for review/issue
+  "excluded", // Excluded from calculations (but still shown)
 ]);
 
 export const properties = pgTable("properties", {
@@ -494,21 +510,58 @@ export const propertyHistory = pgTable("property_history", {
   changedAt: timestamp("changed_at").defaultNow().notNull(),
 });
 
-// Property Expenses - Track actual expense transactions for properties
-export const propertyExpenses = pgTable(
-  "property_expenses",
+// Unified transaction category enum (combines expense and income categories)
+export const transactionCategoryEnum = pgEnum("transaction_category", [
+  // Income categories
+  "rent",
+  "parking",
+  "laundry",
+  "pet_rent",
+  "storage",
+  "utility_reimbursement",
+  "late_fees",
+  "application_fees",
+  // Expense categories
+  "acquisition",
+  "property_tax",
+  "insurance",
+  "hoa",
+  "management",
+  "repairs",
+  "maintenance",
+  "capex",
+  "utilities",
+  "legal",
+  "accounting",
+  "marketing",
+  "travel",
+  "office",
+  "bank_fees",
+  "licenses",
+  // Common
+  "other",
+]);
+
+// Property Transactions - Unified table for all financial transactions (income, expenses, capital)
+export const propertyTransactions = pgTable(
+  "property_transactions",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     propertyId: uuid("property_id")
       .notNull()
       .references(() => properties.id, { onDelete: "cascade" }),
 
-    // Transaction Details
-    expenseDate: date("expense_date").notNull(),
+    // Transaction Type & Details
+    type: transactionTypeEnum("type").notNull(), // income, expense, capital
+    transactionDate: date("transaction_date").notNull(),
     amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
-    category: expenseCategoryEnum("category").notNull(),
+    category: transactionCategoryEnum("category").notNull(),
     subcategory: text("subcategory"),
-    vendor: text("vendor"),
+    
+    // Party Information (vendor for expenses, payer for income)
+    vendor: text("vendor"), // For expenses: who was paid
+    payer: text("payer"), // For income: who paid (tenant, etc.)
+    
     description: text("description"),
 
     // Recurring
@@ -516,16 +569,23 @@ export const propertyExpenses = pgTable(
     recurrenceFrequency: recurrenceFrequencyEnum("recurrence_frequency"),
     recurrenceEndDate: date("recurrence_end_date"),
 
-    // Tax
-    isTaxDeductible: boolean("is_tax_deductible").default(true),
-    taxCategory: text("tax_category"),
+    // Tax (primarily for expenses, but flexible)
+    isTaxDeductible: boolean("is_tax_deductible").default(true), // Only relevant for expenses
+    taxCategory: text("tax_category"), // Sch E category, etc.
 
-    // Document Link (optional - property_documents table may not exist yet)
+    // Document Link
     documentId: uuid("document_id"), // .references(() => propertyDocuments.id) - if table exists
 
     // Source Tracking
-    source: expenseSourceEnum("source").default("manual"),
-    externalId: text("external_id"),
+    source: expenseSourceEnum("source").default("manual"), // manual, appfolio, plaid, document_ai
+    externalId: text("external_id"), // External system ID (Plaid transaction ID, etc.)
+
+    // Review Workflow
+    notes: text("notes"), // Generic notes field
+    reviewStatus: transactionReviewStatusEnum("review_status").default("pending"),
+    isExcluded: boolean("is_excluded").default(false), // Exclude from calculations (but still shown)
+    reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+    reviewedAt: timestamp("reviewed_at"),
 
     // Metadata
     createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
@@ -533,9 +593,11 @@ export const propertyExpenses = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
-    propertyIdIdx: index("idx_property_expenses_property_id").on(table.propertyId),
-    dateIdx: index("idx_property_expenses_date").on(table.expenseDate),
-    categoryIdx: index("idx_property_expenses_category").on(table.category),
+    propertyIdIdx: index("idx_property_transactions_property_id").on(table.propertyId),
+    dateIdx: index("idx_property_transactions_date").on(table.transactionDate),
+    typeIdx: index("idx_property_transactions_type").on(table.type),
+    categoryIdx: index("idx_property_transactions_category").on(table.category),
+    statusIdx: index("idx_property_transactions_status").on(table.reviewStatus),
   })
 );
 
@@ -653,6 +715,9 @@ export const usersRelations = relations(users, ({ many }) => ({
   addedProperties: many(properties, {
     relationName: "propertyAdder",
   }),
+  reviewedTransactions: many(propertyTransactions, {
+    relationName: "transactionReviewer",
+  }),
 }));
 
 export const portfoliosRelations = relations(portfolios, ({ one, many }) => ({
@@ -717,7 +782,7 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
   }),
   loans: many(loans),
   history: many(propertyHistory),
-  expenses: many(propertyExpenses),
+  transactions: many(propertyTransactions),
 }));
 
 export const propertyCharacteristicsRelations = relations(propertyCharacteristics, ({ one }) => ({
@@ -796,18 +861,23 @@ export const propertyHistoryRelations = relations(propertyHistory, ({ one }) => 
   }),
 }));
 
-export const propertyExpensesRelations = relations(propertyExpenses, ({ one }) => ({
+export const propertyTransactionsRelations = relations(propertyTransactions, ({ one }) => ({
   property: one(properties, {
-    fields: [propertyExpenses.propertyId],
+    fields: [propertyTransactions.propertyId],
     references: [properties.id],
   }),
-  createdByUser: one(users, {
-    fields: [propertyExpenses.createdBy],
+  creator: one(users, {
+    fields: [propertyTransactions.createdBy],
     references: [users.id],
   }),
-  // Note: document relation can be added when propertyDocuments table exists
-  // document: one(propertyDocuments, {
-  //   fields: [propertyExpenses.documentId],
+  reviewer: one(users, {
+    fields: [propertyTransactions.reviewedBy],
+    references: [users.id],
+    relationName: "transactionReviewer",
+  }),
+  // TODO: Add document relation when property_documents table exists
+  //   document: one(propertyDocuments, {
+  //   fields: [propertyTransactions.documentId],
   //   references: [propertyDocuments.id],
   // }),
 }));
@@ -822,5 +892,6 @@ export const userMarketsRelations = relations(userMarkets, ({ one }) => ({
     references: [markets.id],
   }),
 }));
+
 
 

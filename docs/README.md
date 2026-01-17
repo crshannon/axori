@@ -9,6 +9,9 @@ docs/
 ├── architecture/          # Architectural Decision Records (ADRs)
 │   ├── README.md         # Index of all architectural decisions
 │   └── 001-*.md          # Individual ADRs
+├── tasks/                # Task tracking and todos
+│   ├── TODO.md          # Active tasks and todos
+│   └── COMPLETED.md     # Archive of completed tasks
 ├── api/                  # API documentation (to be created)
 ├── database/             # Database schema documentation (to be created)
 └── guides/               # Developer guides (to be created)
@@ -17,14 +20,22 @@ docs/
 ## Quick Links
 
 ### Architecture
+
 - [Architecture Overview](./architecture/README.md)
 - [ADR-001: Property Schema Refactoring](./architecture/001-property-schema-refactoring.md)
 
+### Tasks & Development
+
+- [Active Tasks & Todos](./tasks/TODO.md) - Current development work
+- [Completed Tasks](./tasks/COMPLETED.md) - Archive of finished work
+
 ### Development
+
 - [Architect Skill](../.skills/architect/SKILL.md) - Full-stack development guidelines
 - [Setup Guide](../SETUP.md) - Getting started with local development
 
 ### Schema & Types
+
 - [Database Schema](../packages/db/src/schema/) - Drizzle ORM definitions
 - [TypeScript Types](../packages/db/src/types.ts) - Type exports
 - [Validation Schemas](../packages/shared/src/validation/) - Zod validation
@@ -41,6 +52,7 @@ When making significant changes:
 ### ADR Format
 
 Each Architectural Decision Record should include:
+
 - **Status**: Proposed | Accepted | Deprecated | Superseded
 - **Date**: When the decision was made
 - **Context**: What problem are we solving?
@@ -53,12 +65,14 @@ Each Architectural Decision Record should include:
 > **Document decisions, not just implementations**
 
 We document:
+
 - **Why** we made a choice (rationale)
 - **What** alternatives we considered
 - **How** we implemented it
 - **What** we learned
 
 We don't document:
+
 - Implementation details that are obvious from code
 - Temporary workarounds (unless they're important to know about)
 - External library APIs (link to official docs instead)
@@ -73,8 +87,8 @@ We don't document:
 ## AI-Assisted Development
 
 Since we're using AI for development, documentation is especially important:
+
 - **Context preservation** - Help AI understand past decisions
 - **Consistency** - Ensure AI follows established patterns
 - **Learning** - Document what works and what doesn't
 - **Handoff** - Enable smooth transitions between sessions
-

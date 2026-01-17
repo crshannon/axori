@@ -28,16 +28,17 @@ export {
 } from "./base/loans";
 
 export {
-  propertyExpenseInsertSchema,
-  propertyExpenseSelectSchema,
-} from "./base/expenses";
+  propertyTransactionInsertSchema,
+  propertyTransactionSelectSchema,
+} from "./base/transactions";
 
 // ============================================================================
 // ENHANCED SCHEMAS (Phase 4)
 // ============================================================================
 // Export enhanced schemas with API-specific validation
 export * from "./enhanced/loans";
-export * from "./enhanced/expenses";
+export * from "./enhanced/transactions";
+export * from "./enhanced/properties";
 
 // ============================================================================
 // DEPRECATED SCHEMAS (Phase 8 Cleanup)
@@ -45,7 +46,7 @@ export * from "./enhanced/expenses";
 // These schemas from normalized-property.ts are kept for backward compatibility
 // but are deprecated. Update schemas can be generated from base schemas using .partial()
 // when needed. History and cache schemas are kept until those features are implemented.
-// 
+//
 // TODO: Generate update schemas from base schemas using .partial() when needed
 // TODO: Remove history and cache schemas when those features are implemented
 export {
@@ -57,7 +58,6 @@ export {
   propertyOperatingExpensesUpdateSchema,
   propertyManagementUpdateSchema,
   loanUpdateSchema,
-  propertyExpenseUpdateSchema,
   // History schemas (kept until history feature is implemented)
   loanHistoryInsertSchema,
   loanHistorySelectSchema,

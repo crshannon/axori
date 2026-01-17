@@ -1,17 +1,16 @@
 /**
  * Enhanced Zod schemas for loans with API-specific validation
  *
- * These schemas extend the base schemas with custom validation rules for API usage.
- * - interestRate: Converted to percentage (0-100) for API, decimal for DB
- * - userId: Added for authorization (not stored in loans table)
- * - Numeric fields: Enhanced with min/max validation and type conversion
+ * These schemas provide API-specific validation while maintaining alignment with
+ * the Drizzle table definition as the single source of truth.
  *
- * Note: Drizzle numeric() fields generate as z.string() in base schema,
- * so we override them to z.number() for API usage.
+ * Note: We use a standalone schema here instead of extending the drizzle-generated
+ * schema due to Zod version compatibility issues with .extend() on drizzle-generated schemas.
+ * The schema structure mirrors the Drizzle table definition exactly.
  */
 
-import { loanInsertSchema, loanSelectSchema } from "../base/loans";
 import { z } from "zod";
+import { loanSelectSchema } from "../base/loans";
 
 // ============================================================================
 // Enhanced Loan Schemas
@@ -19,44 +18,76 @@ import { z } from "zod";
 
 /**
  * Loan insert schema for API usage
+ *
+ * This schema accepts numbers for numeric fields (API format) instead of strings (DB format).
+ * The API route handles converting numbers to strings for the database.
+ *
+ * Schema structure mirrors the loans Drizzle table definition:
+ * - Single source of truth: Drizzle table definition in @axori/db/src/schema
+ * - Type safety: API receives numbers, DB stores strings
+ * - Field structure: Matches Drizzle schema exactly
+ *
  * - interestRate: Expects percentage (0-100), will be converted to decimal for DB
  * - userId: Required for authorization, not stored in loans table
- * - Numeric fields: Converted from string (DB) to number (API)
- * - Note: createInsertSchema already excludes auto-generated fields (id, createdAt, updatedAt)
- *
- * Using .extend() to override field types from base schema (numeric fields are strings in DB)
- *
- * @note Type annotation needed due to Zod version mismatch (v3 in shared, v4 in web)
- * This doesn't affect runtime behavior - the schema works correctly.
  */
-export const loanInsertApiSchema = (loanInsertSchema.extend({
-  // API expects interestRate as percentage (0-100), override string from base schema
-  interestRate: z.number().min(0).max(100, "Interest rate must be between 0 and 100"),
+export const loanInsertApiSchema = z.object({
+  propertyId: z.string().uuid("Property ID must be a valid UUID"),
+  // Status
+  status: z.enum(["active", "paid_off", "refinanced", "defaulted", "sold"]).optional(),
+  isPrimary: z.boolean().optional(),
+  loanPosition: z.number().int().min(1).optional(),
+  // Lender
+  lenderName: z.string().min(1, "Lender name is required"),
+  servicerName: z.string().optional().nullable(),
+  loanNumber: z.string().optional().nullable(),
+  // Type
+  loanType: z.enum([
+    "conventional",
+    "fha",
+    "va",
+    "usda",
+    "dscr",
+    "portfolio",
+    "hard_money",
+    "bridge",
+    "heloc",
+    "construction",
+    "owner_financed",
+    "seller_finance",
+    "commercial",
+    "other",
+  ]).optional(),
+  loanPurpose: z.string().optional().nullable(),
+  // Terms - numeric fields as numbers (will be converted to strings in API route)
+  originalLoanAmount: z.number().min(0, "Original loan amount must be positive"),
+  interestRate: z.number().min(0).max(100, "Interest rate must be between 0 and 100"), // Percentage (0-100)
+  termMonths: z.number().int().min(1, "Term must be at least 1 month"),
+  startDate: z.string().optional().nullable(),
+  maturityDate: z.string().optional().nullable(),
+  // Current - numeric fields as numbers
+  currentBalance: z.number().min(0, "Current balance must be positive"),
+  balanceAsOfDate: z.string().optional().nullable(),
+  // Payment - numeric fields as numbers
+  monthlyPrincipalInterest: z.number().min(0).optional().nullable(),
+  monthlyEscrow: z.number().min(0).optional().nullable(),
+  monthlyPmi: z.number().min(0).optional().nullable(),
   // userId for authorization (not stored in loans table)
   userId: z.string().uuid("User ID must be a valid UUID"),
-  // Convert numeric string fields to numbers for API
-  originalLoanAmount: z.number().min(0, "Original loan amount must be positive"),
-  currentBalance: z.number().min(0, "Current balance must be positive"),
-  // termMonths is already a number in base schema, just add validation
-  termMonths: z.number().int().min(1, "Term must be at least 1 month"),
-}) as unknown) as z.ZodType<any>;
+}).strict(); // Use strict() to only allow defined fields
 
 /**
  * Loan update schema for API usage
  * All fields optional except propertyId
  * Note: userId is not included in updates (only needed for authorization on create)
- *
- * @note Type annotation needed due to Zod version mismatch (v3 in shared, v4 in web)
- * This doesn't affect runtime behavior - the schema works correctly.
  */
-export const loanUpdateApiSchema = ((loanInsertApiSchema as any)
+export const loanUpdateApiSchema = loanInsertApiSchema
   .omit({
     userId: true, // userId not needed for updates
   })
   .partial()
   .extend({
     propertyId: z.string().uuid("Property ID must be a valid UUID"),
-  }) as unknown) as z.ZodType<any>;
+  });
 
 /**
  * Loan select schema (no changes needed, just re-export)
