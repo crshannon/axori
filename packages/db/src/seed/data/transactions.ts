@@ -19,93 +19,53 @@ export function generateSampleTransactions(
   userId: string
 ): Array<Omit<PropertyTransactionInsert, "id" | "createdAt" | "updatedAt">> {
   const today = new Date();
+  const transactions: Array<Omit<PropertyTransactionInsert, "id" | "createdAt" | "updatedAt">> = [];
 
-  return [
-    // Income transactions
-    {
+  // Generate 6 months of historical data (current month + 5 previous months)
+  for (let monthOffset = 5; monthOffset >= 0; monthOffset--) {
+    const monthDate = new Date(today.getFullYear(), today.getMonth() - monthOffset, 1);
+    const monthYear = monthDate.getFullYear();
+    const monthMonth = monthDate.getMonth();
+
+    // Monthly rent income (1st of each month)
+    transactions.push({
       propertyId,
       type: "income",
-      transactionDate: new Date(today.getFullYear(), today.getMonth() - 1, 1)
-        .toISOString()
-        .split("T")[0], // Last month
+      transactionDate: new Date(monthYear, monthMonth, 1).toISOString().split("T")[0],
       amount: "1850",
       category: "rent",
       payer: "Tenant - John Doe",
       description: "Monthly rent payment",
       isRecurring: true,
       recurrenceFrequency: "monthly",
-      source: "plaid", // Bank sync - rent payments typically come from bank
+      source: "plaid",
       reviewStatus: "approved",
       isExcluded: false,
       isTaxDeductible: true,
       createdBy: userId,
-    },
-    {
+    });
+
+    // Parking income (15th of each month)
+    transactions.push({
       propertyId,
       type: "income",
-      transactionDate: new Date(today.getFullYear(), today.getMonth(), 1)
-        .toISOString()
-        .split("T")[0], // This month
-      amount: "1850",
-      category: "rent",
-      payer: "Tenant - John Doe",
-      description: "Monthly rent payment",
-      isRecurring: true,
-      recurrenceFrequency: "monthly",
-      source: "plaid", // Bank sync
-      reviewStatus: "approved",
-      isExcluded: false,
-      isTaxDeductible: true,
-      createdBy: userId,
-    },
-    {
-      propertyId,
-      type: "income",
-      transactionDate: new Date(
-        today.getFullYear(),
-        today.getMonth() - 1,
-        15
-      )
-        .toISOString()
-        .split("T")[0],
+      transactionDate: new Date(monthYear, monthMonth, 15).toISOString().split("T")[0],
       amount: "75",
       category: "parking",
       payer: "Tenant - John Doe",
       description: "Parking spot rental",
-      source: "manual", // Small amounts often manually entered
+      source: "manual",
       reviewStatus: "approved",
       isExcluded: false,
       isTaxDeductible: true,
       createdBy: userId,
-    },
-    // Expense transactions
-    {
+    });
+
+    // Monthly maintenance expense (10th of each month)
+    transactions.push({
       propertyId,
       type: "expense",
-      transactionDate: new Date(today.getFullYear(), today.getMonth() - 1, 5)
-        .toISOString()
-        .split("T")[0],
-      amount: "350",
-      category: "repairs",
-      vendor: "ABC Plumbing",
-      description: "Faucet repair and leak fix",
-      isTaxDeductible: true,
-      taxCategory: "Repairs",
-      source: "document_ai", // Receipt scanned/parsed from invoice
-      reviewStatus: "approved",
-      isExcluded: false,
-      createdBy: userId,
-    },
-    {
-      propertyId,
-      type: "expense",
-      transactionDate: new Date(
-        today.getFullYear(),
-        today.getMonth() - 1,
-        10
-      )
-        .toISOString()
-        .split("T")[0],
+      transactionDate: new Date(monthYear, monthMonth, 10).toISOString().split("T")[0],
       amount: "150",
       category: "maintenance",
       vendor: "Green Thumb Lawn Care",
@@ -114,21 +74,17 @@ export function generateSampleTransactions(
       recurrenceFrequency: "monthly",
       isTaxDeductible: true,
       taxCategory: "Maintenance",
-      source: "plaid", // Recurring maintenance often auto-synced from bank
+      source: "plaid",
       reviewStatus: "approved",
       isExcluded: false,
       createdBy: userId,
-    },
-    {
+    });
+
+    // Monthly management fee (15th of each month)
+    transactions.push({
       propertyId,
       type: "expense",
-      transactionDate: new Date(
-        today.getFullYear(),
-        today.getMonth() - 1,
-        15
-      )
-        .toISOString()
-        .split("T")[0],
+      transactionDate: new Date(monthYear, monthMonth, 15).toISOString().split("T")[0],
       amount: "185",
       category: "management",
       vendor: "ABC Property Management",
@@ -137,89 +93,89 @@ export function generateSampleTransactions(
       recurrenceFrequency: "monthly",
       isTaxDeductible: true,
       taxCategory: "Management",
-      source: "appfolio", // Property management platform integration
+      source: "appfolio",
       reviewStatus: "approved",
       isExcluded: false,
       createdBy: userId,
-    },
-    {
+    });
+
+    // Quarterly property tax (only in Jan, Apr, Jul, Oct - every 3 months)
+    const quarter = Math.floor(monthMonth / 3);
+    const monthsInQuarter = [0, 3, 6, 9]; // Jan, Apr, Jul, Oct
+    if (monthsInQuarter.includes(monthMonth)) {
+      transactions.push({
+        propertyId,
+        type: "expense",
+        transactionDate: new Date(monthYear, monthMonth, 20).toISOString().split("T")[0],
+        amount: "1050", // Quarterly payment = 350 * 3
+        category: "property_tax",
+        vendor: "Shelby County Tax Assessor",
+        description: "Quarterly property tax payment",
+        isRecurring: true,
+        recurrenceFrequency: "quarterly",
+        isTaxDeductible: true,
+        taxCategory: "Property Tax",
+        source: "plaid",
+        reviewStatus: "approved",
+        isExcluded: false,
+        createdBy: userId,
+      });
+    }
+
+    // Occasional repairs (randomly in some months)
+    if (monthOffset % 3 === 0) {
+      transactions.push({
+        propertyId,
+        type: "expense",
+        transactionDate: new Date(monthYear, monthMonth, 5).toISOString().split("T")[0],
+        amount: "350",
+        category: "repairs",
+        vendor: "ABC Plumbing",
+        description: "Repair and maintenance",
+        isTaxDeductible: true,
+        taxCategory: "Repairs",
+        source: "document_ai",
+        reviewStatus: "approved",
+        isExcluded: false,
+        createdBy: userId,
+      });
+    }
+
+    // Bank fees (end of month)
+    transactions.push({
       propertyId,
       type: "expense",
-      transactionDate: new Date(
-        today.getFullYear(),
-        today.getMonth() - 1,
-        20
-      )
-        .toISOString()
-        .split("T")[0],
-      amount: "350",
-      category: "property_tax",
-      vendor: "Shelby County Tax Assessor",
-      description: "Quarterly property tax payment",
-      isRecurring: true,
-      recurrenceFrequency: "quarterly",
-      isTaxDeductible: true,
-      taxCategory: "Property Tax",
-      source: "plaid", // Tax payments typically from bank account
-      reviewStatus: "approved",
-      isExcluded: false,
-      createdBy: userId,
-    },
-    {
-      propertyId,
-      type: "expense",
-      transactionDate: new Date(today.getFullYear(), today.getMonth(), 3)
-        .toISOString()
-        .split("T")[0], // This month
-      amount: "200",
-      category: "repairs",
-      vendor: "Quick Fix HVAC",
-      description: "AC unit maintenance and filter replacement",
-      isTaxDeductible: true,
-      taxCategory: "Repairs",
-      source: "document_ai", // Recent receipt scanned/parsed - pending review
-      reviewStatus: "pending",
-      isExcluded: false,
-      createdBy: userId,
-    },
-    {
-      propertyId,
-      type: "expense",
-      transactionDate: new Date(today.getFullYear(), today.getMonth() - 2, 28)
-        .toISOString()
-        .split("T")[0], // 2 months ago
-      amount: "1200",
-      category: "capex",
-      vendor: "Home Depot",
-      description: "New water heater installation",
-      isTaxDeductible: true,
-      taxCategory: "Capital Improvements",
-      source: "document_ai", // Large purchase with receipt scanned
-      reviewStatus: "approved",
-      isExcluded: false,
-      createdBy: userId,
-    },
-    {
-      propertyId,
-      type: "expense",
-      transactionDate: new Date(
-        today.getFullYear(),
-        today.getMonth() - 1,
-        25
-      )
-        .toISOString()
-        .split("T")[0],
+      transactionDate: new Date(monthYear, monthMonth + 1, 0).toISOString().split("T")[0], // Last day of month
       amount: "50",
       category: "bank_fees",
       vendor: "First National Bank",
       description: "Account maintenance fee",
       isTaxDeductible: true,
       taxCategory: "Bank Fees",
-      source: "plaid", // Bank fees come from bank sync
+      source: "plaid",
       reviewStatus: "approved",
       isExcluded: false,
       createdBy: userId,
-    },
-  ];
+    });
+  }
+
+  // Add one-time Capex expense 2 months ago
+  transactions.push({
+    propertyId,
+    type: "expense",
+    transactionDate: new Date(today.getFullYear(), today.getMonth() - 2, 28).toISOString().split("T")[0],
+    amount: "1200",
+    category: "capex",
+    vendor: "Home Depot",
+    description: "New water heater installation",
+    isTaxDeductible: true,
+    taxCategory: "Capital Improvements",
+    source: "document_ai",
+    reviewStatus: "approved",
+    isExcluded: false,
+    createdBy: userId,
+  });
+
+  return transactions;
 }
 

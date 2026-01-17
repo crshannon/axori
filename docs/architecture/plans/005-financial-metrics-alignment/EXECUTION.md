@@ -32,6 +32,7 @@
 ### Tier 1: Operating Metrics (Projected/Budgeted)
 
 **Data Source**: Structured property data
+
 - `propertyRentalIncome` → Gross Income
 - `propertyOperatingExpenses` → Operating Expenses
 - Calculated NOI (excludes financing)
@@ -41,6 +42,7 @@
 ### Tier 2: Cash Flow Metrics (Projected)
 
 **Data Source**: Structured data + Loan data
+
 - NOI (from Tier 1)
 - Loan Payments (from loan data)
 - Net Cash Flow = NOI - Loan Payments
@@ -50,6 +52,7 @@
 ### Tier 3: Actual Metrics (Historical)
 
 **Data Source**: Transactions
+
 - Actual Income (sum of income transactions)
 - Actual Expenses (sum of expense transactions)
 - Actual Cash Flow = Actual Income - Actual Expenses
@@ -73,11 +76,13 @@
 ### Phase 3: Unified Calculation (Recommended)
 
 **Option A: Projected Cash Flow from Structured Data**
+
 - Calculate Net Cash Flow as: `NOI - Loan Payments`
 - Use structured data for consistency
 - Show in FinancialPulse as "Projected Cash Flow"
 
 **Option B: Keep Both Views**
+
 - Show "Projected Cash Flow" (NOI - Loan Payments) from structured data
 - Show "Actual Cash Flow" from transactions
 - Allow users to compare projected vs actual
@@ -94,6 +99,7 @@
 **Goal**: Enable pattern detection through projected vs actual month-over-month comparison
 
 **Data Requirements**:
+
 - [ ] Generate monthly projected values from structured data
   - Lease rent by month (accounting for term dates)
   - Mortgage payment as constant
@@ -103,6 +109,7 @@
 - [ ] Store monthly aggregates (consider caching/denormalization)
 
 **Component Development**:
+
 - [ ] Create `MonthlyComparisonChart` component
   - Chart library selection (Recharts, Chart.js, or similar)
   - Projected as baseline (subtle reference line or shaded band)
@@ -117,6 +124,7 @@
 - [ ] Add month drill-down capability (click month → show transaction detail)
 
 **Action Item Generation**:
+
 - [ ] Create `useFinancialActionItems` hook
   - Pattern detection logic:
     - 3+ months actual below projected → "Rent collection issue" flag
@@ -131,11 +139,13 @@
 - [ ] Integrate action items below chart
 
 **Empty State**:
+
 - [ ] Show projected line alone when <3 months of transaction history
 - [ ] Display messaging: "Track actuals over time to see how your property performs against expectations"
 - [ ] Prompt for transaction data entry
 
 **Integration Points**:
+
 - [ ] Add to `financials.tsx` page (new section or tab)
 - [ ] Consider adding to property overview as summary widget
 - [ ] Link from FinancialPulse component ("View monthly trends")
@@ -145,6 +155,7 @@
 ### Decision 1: What should "Net Cash Flow" in FinancialPulse represent?
 
 **✅ DECIDED**: Use structured data (leases, mortgages) for projected figures, transactions for actuals
+
 - Structured data is the foundation for projections
 - Transactions validate reality
 - Show both when data supports it
@@ -153,6 +164,7 @@
 ### Decision 2: Should loan payments be in OperatingCore expenses list?
 
 **✅ DECIDED**: Keep separate from operating expenses
+
 - Preserves NOI as a distinct metric
 - Essential for property comparison
 - Aligns with standard real estate investment analysis
@@ -161,6 +173,7 @@
 ### Decision 3: How to handle missing data?
 
 **✅ DECIDED**: Always show something when you have any signal
+
 - Label where the number comes from ("projected from lease" vs "avg collected")
 - Prompt specifically for what's missing rather than showing zeros or blanks
 - When only one source exists, show what you have with clear label and prompt for missing piece
@@ -217,6 +230,7 @@
 ## Rollout Plan
 
 ### Phase 1: Foundation (Weeks 1-2)
+
 1. ✅ Document current state (this document)
 2. ✅ Get user feedback on proposed approach
 3. [ ] Update `useFinancialPulse` to calculate both projected and actual
@@ -225,6 +239,7 @@
 6. [ ] Add tooltips/help text explaining metrics
 
 ### Phase 2: Monthly Metrics Hook (Week 3)
+
 1. [ ] Create `useMonthlyMetrics` hook
 2. [ ] Implement monthly projection calculation from structured data
 3. [ ] Implement monthly aggregation from transactions
@@ -232,6 +247,7 @@
 5. [ ] Test with various data scenarios
 
 ### Phase 3: Chart Component (Week 4)
+
 1. [ ] Select and integrate chart library
 2. [ ] Create `MonthlyComparisonChart` component
 3. [ ] Implement projected baseline visualization
@@ -241,6 +257,7 @@
 7. [ ] Add month drill-down capability
 
 ### Phase 4: Action Items (Week 5)
+
 1. [ ] Create `useFinancialActionItems` hook
 2. [ ] Implement pattern detection logic
 3. [ ] Create `ActionItemsPanel` component
@@ -248,6 +265,7 @@
 5. [ ] Test pattern detection with various scenarios
 
 ### Phase 5: Integration & Polish (Week 6)
+
 1. [ ] Add monthly comparison to `financials.tsx` page
 2. [ ] Implement empty state for <3 months of data
 3. [ ] Add loading states
@@ -258,6 +276,7 @@
 ## Testing Strategy
 
 ### Unit Tests
+
 - [ ] `useMonthlyMetrics` hook calculations
 - [ ] Monthly projection generation
 - [ ] Transaction aggregation logic
@@ -265,12 +284,14 @@
 - [ ] Pattern detection logic in `useFinancialActionItems`
 
 ### Integration Tests
+
 - [ ] Chart renders with projected and actual data
 - [ ] Action items generate correctly from patterns
 - [ ] Month drill-down shows correct transaction details
 - [ ] Time range selector updates chart correctly
 
 ### Manual Testing Scenarios
+
 1. **Property with only structured data** (no transactions)
    - Should show projected line only
    - Should prompt for transaction data
@@ -291,9 +312,9 @@
    - Should suggest rent increase opportunities
 
 ### Edge Cases
+
 - [ ] Missing lease term dates
 - [ ] Transactions outside property date range
 - [ ] Multiple leases overlapping
 - [ ] Loan payment changes mid-period
 - [ ] Expense spikes that are one-time vs recurring
-

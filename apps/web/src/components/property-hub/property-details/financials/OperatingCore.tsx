@@ -132,14 +132,28 @@ export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
                 </Typography>
               </div>
             ))}
+
+          {/* Visual separator before financing costs */}
+          <div className="pt-2 border-t border-slate-200/50 dark:border-white/5 mt-3" />
+
+          {/* Loan Payment - Financing Cost (not included in NOI) */}
           <div className="flex justify-between items-center group">
-            <Typography
-              variant="body-sm"
-              weight="bold"
-              className="opacity-40 uppercase tracking-tight"
-            >
-              Loan Payment
-            </Typography>
+            <div className="flex items-center gap-2">
+              <Typography
+                variant="body-sm"
+                weight="bold"
+                className="opacity-40 uppercase tracking-tight"
+              >
+                Loan Payment
+              </Typography>
+              <Typography
+                variant="overline"
+                className="text-slate-400 opacity-60 text-[9px]"
+                title="Financing cost - not included in NOI (Net Operating Income)"
+              >
+                (Financing)
+              </Typography>
+            </div>
             <Typography
               variant="body-sm"
               weight="black"
@@ -169,9 +183,18 @@ export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
         {/* NOI Summary */}
         <div className="pt-6 border-t border-slate-500/10 dark:border-white/5 flex justify-between items-end">
           <div>
-            <Typography variant="caption" className="text-slate-500 mb-1">
-              Projected NOI
-            </Typography>
+            <div className="flex items-center gap-2 mb-1">
+              <Typography variant="caption" className="text-slate-500">
+                Projected NOI
+              </Typography>
+              <Typography
+                variant="overline"
+                className="text-slate-400 opacity-70 text-[9px]"
+                title="Net Operating Income = Gross Income - Operating Expenses - CapEx. Excludes financing costs (loan payments)."
+              >
+                (Excludes Financing)
+              </Typography>
+            </div>
             <Typography
               variant="h1"
               className="tabular-nums tracking-tighter leading-none"

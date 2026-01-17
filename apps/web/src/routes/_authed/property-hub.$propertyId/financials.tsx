@@ -5,6 +5,7 @@ import { OperatingCore } from '@/components/property-hub/property-details/financ
 import { DebtLogic } from '@/components/property-hub/property-details/financials/DebtLogic'
 import { AcquisitionIntel } from '@/components/property-hub/property-details/financials/AcquisitionIntel'
 import { TaxShieldIntel } from '@/components/property-hub/property-details/financials/TaxShieldIntel'
+import { MonthlyComparisonChart } from '@/components/property-hub/property-details/financials/MonthlyComparisonChart'
 import { PropertyTransactions } from '@/components/property-hub/property-details/financials/PropertyTransactions'
 import {
   AddLoanDrawer,
@@ -104,6 +105,11 @@ function FinancialsPage() {
             <TaxShieldIntel propertyId={propertyId} />
           </div>
           <DebtLogic propertyId={propertyId} />
+        </div>
+
+        {/* Monthly Comparison Chart */}
+        <div className="w-full">
+          <MonthlyComparisonChart propertyId={propertyId} />
         </div>
 
         {/* Historical P&L Registry */}
