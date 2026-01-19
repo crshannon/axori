@@ -1,14 +1,14 @@
 #!/usr/bin/env tsx
 /**
  * Create Commit Script
- * 
+ *
  * Creates a commit with proper branch management and Linear integration.
- * 
+ *
  * - Prevents committing to main/master
  * - Creates branch if needed (from Linear ticket or name)
  * - Links commit to Linear issue
  * - Generates descriptive commit message
- * 
+ *
  * Usage:
  *   tsx .cursor/scripts/create-commit.ts --message "Fix bug" --linear AXO-123
  */
@@ -51,24 +51,72 @@ function isProtectedBranch(branch: string): boolean {
 }
 
 /**
+ * Validate and sanitize Linear identifier components
+ */
+function validateIdentifier(identifier: string): { teamKey: string; issueNumber: number } | null {
+  // Parse identifier (e.g., "AXO-7" -> teamKey: "AXO", number: 7)
+  const parts = identifier.split('-')
+  if (parts.length !== 2) {
+    return null
+  }
+
+  const teamKey = parts[0].trim()
+  const issueNumberStr = parts[1].trim()
+
+  // Validate teamKey: alphanumeric, 1-10 characters (typical Linear team keys)
+  // This prevents GraphQL injection by ensuring only safe characters
+  if (!/^[A-Z0-9]{1,10}$/i.test(teamKey)) {
+    return null
+  }
+
+  // Validate issueNumber: must be a positive integer
+  const issueNumber = parseInt(issueNumberStr, 10)
+  if (isNaN(issueNumber) || issueNumber <= 0 || issueNumber > 999999) {
+    return null
+  }
+
+  return { teamKey: teamKey.toUpperCase(), issueNumber }
+}
+
+/**
  * Get Linear issue details
  */
 async function getLinearIssue(apiKey: string, identifier: string): Promise<LinearIssue | null> {
   const LINEAR_API_URL = 'https://api.linear.app/graphql'
-  
-  // Extract issue number from identifier (e.g., "AXO-123" -> "123")
-  const issueNumber = identifier.split('-')[1]
-  if (!issueNumber) {
+
+  // Validate and sanitize identifier
+  const validated = validateIdentifier(identifier)
+  if (!validated) {
+    console.warn(`⚠️  Invalid Linear identifier format: ${identifier}`)
     return null
   }
 
+  const { teamKey, issueNumber } = validated
+
+  // Query issues by team and number
+  // teamKey is validated to be alphanumeric only, preventing injection
+  // issueNumber is validated to be a safe integer
   const query = `
     query {
-      issue(identifier: "${identifier}") {
-        id
-        identifier
-        title
-        url
+      issues(
+        filter: {
+          team: {
+            key: {
+              eq: "${teamKey}"
+            }
+          }
+          number: {
+            eq: ${issueNumber}
+          }
+        }
+        first: 1
+      ) {
+        nodes {
+          id
+          identifier
+          title
+          url
+        }
       }
     }
   `
@@ -84,11 +132,18 @@ async function getLinearIssue(apiKey: string, identifier: string): Promise<Linea
     })
 
     const result = await response.json()
-    if (result.data?.issue) {
-      return result.data.issue
+
+    if (result.errors) {
+      console.warn(`⚠️  Linear API error: ${result.errors[0]?.message || 'Unknown error'}`)
+      return null
+    }
+
+    if (result.data?.issues?.nodes?.length > 0) {
+      return result.data.issues.nodes[0]
     }
     return null
-  } catch {
+  } catch (error) {
+    console.warn(`⚠️  Error fetching Linear issue: ${error instanceof Error ? error.message : error}`)
     return null
   }
 }
@@ -102,7 +157,7 @@ async function updateLinearIssueStatus(
   status: 'started' | 'completed'
 ): Promise<boolean> {
   const LINEAR_API_URL = 'https://api.linear.app/graphql'
-  
+
   // Get workflow states
   const workflowQuery = `
     query {
@@ -128,7 +183,7 @@ async function updateLinearIssueStatus(
 
     const workflowResult = await workflowResponse.json()
     const states = workflowResult.data?.workflowStates?.nodes || []
-    
+
     // Find "In Progress" or "Started" state
     const inProgressState = states.find(
       (state: { name: string; type: string }) =>
@@ -173,7 +228,7 @@ function generateBranchName(linearIssue: LinearIssue, type?: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .substring(0, 40)
-  
+
   return `${prefix}/${linearIssue.identifier.toLowerCase()}-${slug}`
 }
 
@@ -187,7 +242,7 @@ function generateBranchNameFromMessage(message: string, type?: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .substring(0, 40)
-  
+
   return `${prefix}/${slug}`
 }
 
@@ -273,18 +328,18 @@ function analyzeDiff(filePath: string): { added: number; removed: number; type: 
     if (status.startsWith('??')) {
       return { added: 0, removed: 0, type: 'add' }
     }
-    
+
     // Get diff stats
     const diff = execSync(`git diff --numstat "${filePath}" 2>/dev/null || git diff --cached --numstat "${filePath}" 2>/dev/null`, { encoding: 'utf-8' }).trim()
     if (diff) {
       const [added, removed] = diff.split('\t').map(Number)
-      return { 
-        added: added || 0, 
-        removed: removed || 0, 
-        type: added > removed * 2 ? 'add' : removed > added * 2 ? 'delete' : 'modify' 
+      return {
+        added: added || 0,
+        removed: removed || 0,
+        type: added > removed * 2 ? 'add' : removed > added * 2 ? 'delete' : 'modify'
       }
     }
-    
+
     return { added: 0, removed: 0, type: 'modify' }
   } catch {
     return { added: 0, removed: 0, type: 'modify' }
@@ -298,7 +353,7 @@ function generateCommitMessageFromChanges(linearIssue?: LinearIssue | null): str
   const stagedFiles = getStagedFiles()
   const unstagedFiles = getUnstagedFiles()
   const allFiles = [...new Set([...stagedFiles, ...unstagedFiles])]
-  
+
   if (allFiles.length === 0) {
     return linearIssue?.title || 'Update files'
   }
@@ -317,9 +372,9 @@ function generateCommitMessageFromChanges(linearIssue?: LinearIssue | null): str
   }
 
   // Analyze the primary file to determine action
-  const primaryFile = allFiles.find(f => 
-    patterns.component.test(f) || 
-    patterns.hook.test(f) || 
+  const primaryFile = allFiles.find(f =>
+    patterns.component.test(f) ||
+    patterns.hook.test(f) ||
     patterns.api.test(f)
   ) || allFiles[0]
 
@@ -327,7 +382,7 @@ function generateCommitMessageFromChanges(linearIssue?: LinearIssue | null): str
     const diff = analyzeDiff(primaryFile)
     const fileName = primaryFile.split('/').pop()?.replace(/\.(ts|tsx|js|jsx)$/, '') || ''
     const baseName = fileName.split(/(?=[A-Z])/).join(' ').toLowerCase()
-    
+
     // Determine action based on diff and file patterns
     let action = 'Update'
     if (diff.type === 'add' || primaryFile.includes('add') || primaryFile.includes('create')) {
@@ -346,32 +401,32 @@ function generateCommitMessageFromChanges(linearIssue?: LinearIssue | null): str
     if (patterns.component.test(primaryFile)) {
       return `${action} ${baseName} component`
     }
-    
+
     // Check for hook changes
     if (patterns.hook.test(primaryFile)) {
       return `${action} ${baseName} hook`
     }
-    
+
     // Check for API changes
     if (patterns.api.test(primaryFile)) {
       return `${action} API ${baseName}`
     }
-    
+
     // Check for test changes
     if (patterns.test.test(primaryFile)) {
       return `${action} tests for ${baseName}`
     }
-    
+
     // Check for config/rule changes
     if (patterns.rule.test(primaryFile) || patterns.command.test(primaryFile)) {
       return `${action} ${baseName} configuration`
     }
-    
+
     // Check for script changes
     if (patterns.script.test(primaryFile)) {
       return `${action} ${baseName} script`
     }
-    
+
     return `${action} ${baseName}`
   }
 
@@ -506,7 +561,7 @@ async function main() {
   // Check if we're on a protected branch
   if (isProtectedBranch(currentBranch)) {
     console.warn(`⚠️  You're on protected branch: ${currentBranch}`)
-    
+
     if (!options.branch && !options.linear) {
       console.error('❌ Cannot commit directly to protected branch')
       console.error('   Provide --branch or --linear to create a new branch')
@@ -579,7 +634,7 @@ async function main() {
 
   // Generate commit message
   let commitMessage = options.message
-  
+
   // If no message provided, generate one from changes
   if (!commitMessage) {
     console.log('📝 Generating commit message from changes...')
@@ -609,7 +664,7 @@ async function main() {
   console.log('✅ Commit created successfully!')
   console.log(`   Hash: ${commitHash}`)
   console.log(`   Branch: ${currentBranch}`)
-  
+
   if (linearIssue) {
     console.log(`   Linear: ${linearIssue.identifier} - ${linearIssue.title}`)
     console.log(`   Link: ${linearIssue.url}`)

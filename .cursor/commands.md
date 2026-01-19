@@ -5,6 +5,7 @@ Quick reference for common commands in the Axori project.
 ## Development Commands
 
 ### Start Development Servers
+
 ```bash
 # Start all apps
 pnpm dev
@@ -16,6 +17,7 @@ pnpm --filter @axori/mobile dev    # Mobile app
 ```
 
 ### Build Commands
+
 ```bash
 # Build all apps
 pnpm build
@@ -29,6 +31,7 @@ pnpm --filter @axori/mobile build
 ## Database Commands
 
 ### Schema Management
+
 ```bash
 # Generate migration from schema changes
 pnpm --filter @axori/db db:generate
@@ -68,6 +71,7 @@ pnpm test:e2e:debug
 ## Code Quality Commands
 
 ### Linting
+
 ```bash
 # Lint all packages
 pnpm lint
@@ -79,6 +83,7 @@ pnpm --filter @axori/mobile lint
 ```
 
 ### Type Checking
+
 ```bash
 # Type check all packages
 pnpm type-check
@@ -90,6 +95,7 @@ pnpm --filter @axori/mobile type-check
 ```
 
 ### Formatting
+
 ```bash
 # Format code
 pnpm format
@@ -109,6 +115,7 @@ pnpm clean
 
 These commands can be used in Cursor chat with `/` prefix:
 
+- `/plan-feature` - Plan a feature from Linear ticket (see `.cursor/commands/plan-feature.md`)
 - `/create-linear-issue` - Create a Linear issue (see `.cursor/commands/create-linear-issue.md`)
 - `/create-commit` - Create a commit with branch management (see `.cursor/commands/create-commit.md`)
 - `/create-pr` - Create a GitHub pull request (see `.cursor/commands/create-pr.md`)
@@ -126,6 +133,7 @@ LINEAR_API_KEY=xxx tsx .cursor/scripts/test-linear-connection.ts
 ```
 
 This will:
+
 - Verify your API key works
 - Show your logged-in user
 - List all available teams with their IDs
@@ -134,11 +142,13 @@ This will:
 **Setup Steps:**
 
 1. **Add API key to `.env` file:**
+
    ```bash
    echo "LINEAR_API_KEY=lin_api_..." >> .env
    ```
 
 2. **Test the connection:**
+
    ```bash
    source .env  # Load environment variables
    tsx .cursor/scripts/test-linear-connection.ts
@@ -154,6 +164,7 @@ This will:
 Create a new Linear issue from the command line:
 
 **Easy way (recommended):**
+
 ```bash
 # Uses .env file automatically
 .cursor/scripts/linear-issue.sh \
@@ -163,6 +174,7 @@ Create a new Linear issue from the command line:
 ```
 
 **Direct usage:**
+
 ```bash
 # Basic usage (requires LINEAR_API_KEY)
 LINEAR_API_KEY=xxx LINEAR_TEAM_ID=xxx tsx .cursor/scripts/create-linear-issue.ts \
@@ -183,10 +195,12 @@ LINEAR_API_KEY=xxx tsx .cursor/scripts/create-linear-issue.ts --interactive
 ```
 
 **Environment Variables:**
+
 - `LINEAR_API_KEY` (required) - Get from https://linear.app/settings/api
 - `LINEAR_TEAM_ID` (optional) - Will auto-detect if only one team exists
 
 **Options:**
+
 - `--title` / `-t` - Issue title (required)
 - `--description` / `-d` - Issue description
 - `--priority` / `-p` - Priority: urgent, high, medium, low (default: medium)
@@ -209,7 +223,9 @@ LINEAR_API_KEY=xxx tsx .cursor/scripts/create-linear-issue.ts \
 ```
 
 ### `linear:sync-todos`
+
 One-time migration of TODO.md tasks to Linear.
+
 - Parses markdown structure
 - Creates issues with proper hierarchy
 - Generates migration report
@@ -219,14 +235,91 @@ LINEAR_API_KEY=xxx LINEAR_TEAM_ID=xxx tsx .cursor/scripts/migrate-todos-to-linea
 ```
 
 ### `linear:update-status`
+
 Updates Linear issue status from commit messages.
+
 - Recognizes patterns: `Fixes LINEAR-123`, `Closes LINEAR-456`
 - Can be run as git hook or manually
 
 ### `linear:link-pr`
+
 Links PR to Linear issue when creating PRs.
+
 - Adds Linear issue reference to PR description
 - Updates Linear issue with PR link
+
+## Feature Planning Commands
+
+### Plan Feature
+
+Create a structured plan for implementing a feature from a Linear ticket:
+
+**Easy way (recommended):**
+
+```bash
+# Uses .env file automatically
+.cursor/scripts/plan-feature.sh --linear AXO-123
+```
+
+**Direct usage:**
+
+```bash
+tsx .cursor/scripts/plan-feature.ts --linear AXO-123
+```
+
+**Options:**
+
+- `--linear` / `-l` - Linear issue identifier (required, e.g., `AXO-123`)
+- `--scope` / `-s` - Feature scope: `frontend`, `backend`, `fullstack`, `infra` (auto-detected if not provided)
+- `--focus` / `-f` - Focus area: `components`, `api`, `database`, `ui`, `integration` (auto-detected if not provided)
+- `--no-branch` - Don't create a feature branch automatically
+
+**Features:**
+
+- ✅ **Fetches Linear Issue** - Gets ticket details, description, and context
+- ✅ **Auto-detects Scope** - Analyzes issue to determine frontend/backend/fullstack
+- ✅ **Applies All Rules** - Automatically includes relevant rules based on scope/focus
+- ✅ **Generates Tasks** - Creates step-by-step implementation tasks
+- ✅ **Creates Plan File** - Saves structured plan in `.cursor/plans/`
+- ✅ **Creates Branch** - Optionally creates feature branch automatically
+
+**Examples:**
+
+```bash
+# Basic planning (auto-detects scope and focus)
+.cursor/scripts/plan-feature.sh --linear AXO-45
+
+# Frontend component feature
+.cursor/scripts/plan-feature.sh --linear AXO-45 --scope frontend --focus components
+
+# Backend API feature
+.cursor/scripts/plan-feature.sh --linear AXO-45 --scope backend --focus api
+
+# Full-stack feature
+.cursor/scripts/plan-feature.sh --linear AXO-45 --scope fullstack
+
+# Don't create branch automatically
+.cursor/scripts/plan-feature.sh --linear AXO-45 --no-branch
+```
+
+**Plan Structure:**
+The generated plan includes:
+
+- Overview from Linear ticket
+- Requirements and acceptance criteria
+- Architecture considerations
+- Step-by-step implementation tasks
+- Testing strategy
+- Design system considerations
+- All relevant rules listed
+
+**Workflow:**
+
+1. Run `/plan-feature linear=AXO-123` in Cursor chat
+2. Review generated plan in `.cursor/plans/`
+3. Follow tasks in order, referencing rules as needed
+4. Use `/create-commit -l AXO-123` to commit
+5. Use `/create-pr` when ready
 
 ## Git Commit Commands
 
@@ -235,6 +328,7 @@ Links PR to Linear issue when creating PRs.
 Create a commit with automatic branch management and Linear integration:
 
 **Easy way (recommended):**
+
 ```bash
 # Uses .env file automatically
 .cursor/scripts/create-commit.sh \
@@ -244,6 +338,7 @@ Create a commit with automatic branch management and Linear integration:
 ```
 
 **Direct usage:**
+
 ```bash
 tsx .cursor/scripts/create-commit.ts \
   --message "Fix bug" \
@@ -252,6 +347,7 @@ tsx .cursor/scripts/create-commit.ts \
 ```
 
 **Options:**
+
 - `--message` / `-m` - Commit message (required)
 - `--linear` / `-l` - Linear issue identifier (e.g., `AXO-123`)
 - `--branch` / `-b` - Branch name (auto-generated if not provided)
@@ -260,12 +356,14 @@ tsx .cursor/scripts/create-commit.ts \
 - `--stage-all` / `-a` - Stage all changes before committing
 
 **Features:**
+
 - ✅ **Prevents commits to main/master** - Will create a new branch automatically
 - ✅ **Auto-branch naming** - Creates branches like `linear/AXO-123-short-description`
 - ✅ **Linear integration** - Links commit to Linear issue
 - ✅ **Smart commit messages** - Adds Linear reference and type prefix
 
 **Examples:**
+
 ```bash
 # Create commit with Linear ticket (auto-creates branch if on main)
 .cursor/scripts/create-commit.sh \
@@ -288,11 +386,13 @@ tsx .cursor/scripts/create-commit.ts \
 ```
 
 **Branch Naming:**
+
 - With Linear: `linear/AXO-123-short-description`
 - Without Linear: `feat/short-description` or `fix/short-description`
 - Custom: Use `--branch` to specify
 
 **Workflow:**
+
 1. Make your changes
 2. Run commit command with message and Linear ticket
 3. Script creates branch if needed (prevents main commits)
@@ -307,6 +407,7 @@ tsx .cursor/scripts/create-commit.ts \
 Create a GitHub pull request from the current branch:
 
 **Easy way (recommended):**
+
 ```bash
 # Uses .env file automatically
 .cursor/scripts/create-pr.sh \
@@ -316,6 +417,7 @@ Create a GitHub pull request from the current branch:
 ```
 
 **Direct usage:**
+
 ```bash
 GITHUB_TOKEN=xxx tsx .cursor/scripts/create-pr.ts \
   --base main \
@@ -324,6 +426,7 @@ GITHUB_TOKEN=xxx tsx .cursor/scripts/create-pr.ts \
 ```
 
 **Options:**
+
 - `--base` / `-b` - Base branch (default: `main`)
 - `--head` / `-h` - Head branch (default: current branch)
 - `--title` / `-t` - PR title (required)
@@ -333,10 +436,12 @@ GITHUB_TOKEN=xxx tsx .cursor/scripts/create-pr.ts \
 - `--labels` / `-l` - Comma-separated labels
 
 **Environment Variables:**
+
 - `GITHUB_TOKEN` (required) - Get from https://github.com/settings/tokens
   - Required scopes: `repo` (private repos) or `public_repo` (public repos)
 
 **Examples:**
+
 ```bash
 # Create PR from current branch to main
 .cursor/scripts/create-pr.sh \
@@ -367,6 +472,7 @@ pnpm --filter @axori/ui <command>
 ## Common Workflows
 
 ### Adding a New Database Table
+
 ```bash
 # 1. Modify schema in packages/db/src/schema/index.ts
 # 2. Generate migration
@@ -378,6 +484,7 @@ pnpm --filter @axori/db db:push
 ```
 
 ### Running Tests Before Commit
+
 ```bash
 # Run all tests
 pnpm test
@@ -387,6 +494,7 @@ pnpm test:e2e
 ```
 
 ### Starting Full Development Environment
+
 ```bash
 # Start all services
 pnpm dev
@@ -399,8 +507,8 @@ pnpm --filter @axori/web dev      # Web on port 3000
 ## Environment Variables
 
 Make sure to set up `.env` file with required variables:
+
 - Database connection (Supabase or PostgreSQL)
 - Clerk authentication keys
 - API keys for external services
 - See `SETUP.md` for complete list
-
