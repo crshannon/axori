@@ -1,0 +1,117 @@
+---
+description: "TypeScript type inference patterns using Drizzle and Zod to avoid type duplication and ensure type safety"
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: false
+---
+
+# Type Safety Patterns
+
+## Core Principle: Always Use Type Inference
+
+**Never manually define types that duplicate Drizzle schemas or Zod schemas.** Always use type inference utilities.
+
+## Drizzle Type Inference
+
+### InferSelectModel
+Use for types representing data read from the database:
+
+```typescript
+import { InferSelectModel } from 'drizzle-orm';
+import { users } from '@axori/db';
+
+export type UserProfile = InferSelectModel<typeof users>;
+```
+
+### InferInsertModel
+Use for types representing data to be inserted:
+
+```typescript
+import { InferInsertModel } from 'drizzle-orm';
+import { users } from '@axori/db';
+
+export type UserProfileInsert = InferInsertModel<typeof users>;
+```
+
+## Zod Type Inference
+
+Export Zod-inferred types for frontend use:
+
+```typescript
+import type { z } from "zod";
+import { loanInsertApiSchema } from "@axori/shared/src/validation";
+
+export type LoanInsertApi = z.infer<typeof loanInsertApiSchema>;
+```
+
+## Export Pattern
+
+All inferred types should be exported from `packages/db/src/types.ts`:
+
+```typescript
+import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import { users, properties } from './schema';
+
+export type UserProfile = InferSelectModel<typeof users>;
+export type UserProfileInsert = InferInsertModel<typeof users>;
+export type Property = InferSelectModel<typeof properties>;
+export type PropertyInsert = InferInsertModel<typeof properties>;
+```
+
+## Usage in Shared Package
+
+Import from `@axori/db` instead of defining types manually:
+
+```typescript
+// ❌ WRONG - Manual type definition
+export type Property = {
+  id: string;
+  address: string;
+  // ... manually defined
+};
+
+// ✅ CORRECT - Import from db package
+import type { Property, PropertyInsert } from '@axori/db';
+export type { Property, PropertyInsert } from '@axori/db';
+```
+
+## When to Use Each Type
+
+### InferSelectModel
+- API response types
+- Component prop types for displaying data
+- Type annotations for query results
+- Return types from database queries
+
+### InferInsertModel
+- API request body types
+- Form data types
+- Type annotations for insert operations
+- Input validation (used with Zod)
+
+## Partial Types for Updates
+
+For update operations, use TypeScript's `Partial` utility:
+
+```typescript
+import type { PropertyInsert } from '@axori/db';
+
+export type PropertyUpdate = Partial<PropertyInsert> & {
+  id: string; // ID is always required for updates
+};
+```
+
+## Anti-Patterns
+
+```typescript
+// ❌ Avoid type assertions
+const property = data as Property;
+
+// ✅ Use proper typing
+const property: Property = await db.select()...
+```
+
+## References
+
+- Full Guide: `.skills/architect/type-inference-patterns.md`
+- Schema Alignment: `.cursor/rules/schema-alignment.mdc`
+- Architecture: `.cursor/rules/architecture.mdc`

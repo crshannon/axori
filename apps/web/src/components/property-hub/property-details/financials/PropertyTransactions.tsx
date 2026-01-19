@@ -7,12 +7,12 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
+import { useNavigate } from '@tanstack/react-router'
 import type {
   ColumnDef,
   ColumnFiltersState,
   SortingState,
 } from '@tanstack/react-table'
-import { useNavigate } from '@tanstack/react-router'
 import { usePropertyTransactions } from '@/hooks/api/useTransactions'
 import { useTheme } from '@/utils/providers/theme-provider'
 import { cn } from '@/utils/helpers/cn'
@@ -79,7 +79,7 @@ export const PropertyTransactions = ({
       documentId: tx.documentId,
       notes: tx.notes || null,
       reviewStatus: (tx.reviewStatus ||
-        'pending') as TransactionRow['reviewStatus'],
+        'pending'),
       isExcluded: tx.isExcluded || false,
       taxCategory: tx.taxCategory,
     }))

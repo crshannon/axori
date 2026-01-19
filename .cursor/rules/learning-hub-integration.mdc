@@ -1,0 +1,313 @@
+---
+description: "Learning Hub integration patterns for components, drawers, and content structure"
+globs: ["apps/web/src/components/**", "apps/web/src/data/learning-hub/**"]
+alwaysApply: false
+---
+
+# Learning Hub Integration
+
+This rule covers best practices for integrating the Learning Hub into components, including drawer patterns, content structure, and future page linking.
+
+## Overview
+
+The Learning Hub provides contextual educational content to help users understand financial concepts as they work. It consists of:
+
+- **LearningHubButton** - Button component that opens the drawer
+- **LearningHubDrawer** - Drawer component that displays learning content
+- **Learning Snippets** - Content files in `apps/web/src/data/learning-hub/`
+
+## When to Add Learning Hub
+
+Add Learning Hub to components that:
+
+- Display financial metrics or calculations
+- Show complex data that benefits from explanation
+- Present investment strategies or concepts
+- Contain industry-specific terminology
+- Help users make informed decisions
+
+**Examples:**
+- ✅ Debt Logic component (loan management)
+- ✅ Operating Core (NOI, cash flow)
+- ✅ Acquisition Intel (purchase analysis)
+- ✅ Tax Shield Intel (depreciation strategies)
+- ❌ Simple form inputs
+- ❌ Basic navigation components
+
+## Component Integration Pattern
+
+### 1. Import Required Components
+
+```tsx
+import { LearningHubButton } from './LearningHubButton'
+import { generateComponentLearning } from '@/data/learning-hub/component-snippets'
+```
+
+### 2. Generate Learning Snippets
+
+Create a function that generates snippets based on component data:
+
+```tsx
+// In component
+const learningSnippets = generateDebtLogicLearning(
+  primaryLoanData.interestRate,
+  marketAverageRate,
+)
+```
+
+### 3. Add LearningHubButton to Header
+
+Place the button in the component header, typically next to the title:
+
+```tsx
+<div className="flex justify-between items-center mb-8">
+  <Typography variant="h5">Component Title</Typography>
+  <div className="flex items-center gap-3">
+    <LearningHubButton
+      snippets={learningSnippets}
+      title="Component Learning Hub"
+      subtitle="Strategic insights for [topic]"
+      componentKey="component-key" // Unique identifier (e.g., 'debt-logic', 'operating-core')
+    />
+  </div>
+</div>
+```
+
+## Learning Snippet Structure
+
+### File Organization
+
+Create snippet files in `apps/web/src/data/learning-hub/`:
+
+```
+apps/web/src/data/learning-hub/
+  ├── types.ts                    # Shared LearningSnippet type
+  ├── component-snippets.tsx      # Snippets for specific component
+  └── ...
+```
+
+### Snippet Definition
+
+Each snippet follows the `LearningSnippet` interface:
+
+```tsx
+import type { LearningSnippet } from './types'
+
+export const snippetName: LearningSnippet = {
+  id: 'unique-snippet-id',
+  title: 'Snippet Title',
+  category: 'Category Name', // e.g., 'Debt Management', 'Tax Strategy'
+  context: 'component-context', // Optional: 'debt-logic', 'acquisition', etc.
+  content: 'String content or ReactNode for rich content',
+}
+```
+
+### Snippet Generator Function
+
+Create a function that generates snippets based on component data:
+
+```tsx
+/**
+ * Generate learning snippets for Debt Logic component
+ * @param currentRate - Current interest rate (percentage)
+ * @param marketRate - Market average rate (percentage)
+ * @returns Array of LearningSnippet objects
+ */
+export function generateDebtLogicLearning(
+  currentRate: number | null,
+  marketRate: number,
+): Array<LearningSnippet> {
+  const snippets: Array<LearningSnippet> = []
+
+  if (currentRate !== null) {
+    if (currentRate < marketRate) {
+      snippets.push(refinancingStrategySnippet)
+    }
+    snippets.push(interestRateAnalysisSnippet)
+  }
+
+  snippets.push(helocVsPrimarySnippet)
+  snippets.push(loanPositionSnippet)
+
+  return snippets
+}
+```
+
+### Content Types
+
+Snippets can have string or ReactNode content:
+
+```tsx
+// Simple string content
+content: 'Educational text explaining the concept.'
+
+// Rich ReactNode content
+content: (
+  <div>
+    <Typography variant="h6">Key Points</Typography>
+    <ul>
+      <li>Point 1</li>
+      <li>Point 2</li>
+    </ul>
+  </div>
+)
+```
+
+## Drawer Component
+
+The `LearningHubDrawer` component handles:
+
+- Slide-in animation from right
+- Backdrop overlay
+- Escape key handling
+- Body scroll lock
+- Portal rendering
+
+**No modifications needed** - use as-is from `@/components/drawers/LearningHubDrawer`.
+
+## Future Page Linking
+
+**Note:** The learning hub pages haven't been established yet. When implementing:
+
+### Placeholder for Future Links
+
+When creating snippets, consider where they might link to:
+
+```tsx
+export interface LearningSnippet {
+  id: string
+  title: string
+  category: string
+  content: string | ReactNode
+  context?: string
+  // Future: linkToPage?: string // e.g., '/learning-hub/debt-management'
+  // Future: relatedPages?: string[] // Related learning hub pages
+}
+```
+
+### Link Patterns (Future)
+
+When pages are created, links should:
+
+1. **Use consistent routing**: `/learning-hub/[category]/[topic]`
+2. **Link from drawer**: Add "Learn More" buttons in drawer
+3. **Deep link from snippets**: Link specific concepts to detailed pages
+4. **Maintain context**: Pass component context to learning hub pages
+
+### Example Future Implementation
+
+```tsx
+// In LearningHubDrawer (future)
+{snippet.linkToPage && (
+  <Button
+    onClick={() => navigate(snippet.linkToPage)}
+    variant="outline"
+  >
+    Learn More
+  </Button>
+)}
+```
+
+## Best Practices
+
+### Snippet Content
+
+- **Be concise**: Keep snippets focused and actionable
+- **Use plain language**: Avoid jargon without explanation
+- **Provide context**: Explain why the concept matters
+- **Include examples**: Use real-world scenarios when possible
+- **Link concepts**: Reference related financial concepts
+
+### Component Keys
+
+Use descriptive, kebab-case keys for `componentKey`:
+
+- ✅ `debt-logic`
+- ✅ `operating-core`
+- ✅ `acquisition-intel`
+- ✅ `tax-shield-intel`
+- ❌ `debt` (too generic)
+- ❌ `debtLogic` (not kebab-case)
+
+### Conditional Snippets
+
+Generate snippets based on component state:
+
+```tsx
+const learningSnippets = useMemo(() => {
+  const snippets: Array<LearningSnippet> = []
+  
+  if (hasActiveLoans) {
+    snippets.push(loanManagementSnippet)
+  }
+  
+  if (hasHeloc) {
+    snippets.push(helocStrategySnippet)
+  }
+  
+  // Always include general education
+  snippets.push(generalDebtSnippet)
+  
+  return snippets
+}, [hasActiveLoans, hasHeloc])
+```
+
+### Empty State Handling
+
+The `LearningHubButton` automatically hides if:
+- No snippets provided
+- User has dismissed learning hub globally
+- User has already opened learning for this component
+
+No additional handling needed.
+
+## LocalStorage Keys
+
+The Learning Hub uses localStorage keys:
+
+- **Global dismissal**: `axori:learning-hub:dismissed`
+- **Component opened**: `axori:learning-hub:opened:{componentKey}`
+
+These are handled automatically by `LearningHubButton`.
+
+## Accessibility
+
+- LearningHubButton includes `aria-label="Open Learning Hub"`
+- Drawer includes backdrop with `aria-hidden="true"`
+- Escape key closes drawer
+- Focus management handled by drawer component
+
+## Examples
+
+See existing implementations:
+
+- `apps/web/src/components/property-hub/property-details/financials/DebtLogic.tsx`
+- `apps/web/src/components/property-hub/property-details/financials/OperatingCore.tsx`
+- `apps/web/src/components/property-hub/property-details/financials/AcquisitionIntel.tsx`
+- `apps/web/src/data/learning-hub/loan-snippets.tsx`
+
+## Checklist
+
+When adding Learning Hub to a component:
+
+- [ ] Create snippet file in `apps/web/src/data/learning-hub/`
+- [ ] Define snippet objects with proper types
+- [ ] Create generator function that accepts component data
+- [ ] Import `LearningHubButton` in component
+- [ ] Generate snippets based on component state
+- [ ] Add `LearningHubButton` to component header
+- [ ] Use unique, descriptive `componentKey`
+- [ ] Test drawer opens and displays snippets correctly
+- [ ] Verify snippets are contextually relevant
+- [ ] Consider future page linking (document in comments)
+
+## Future Enhancements
+
+When learning hub pages are established:
+
+1. Add `linkToPage` property to `LearningSnippet` type
+2. Update `LearningHubDrawer` to show "Learn More" buttons
+3. Create learning hub route structure
+4. Implement deep linking from snippets to pages
+5. Add breadcrumb navigation in learning hub pages
+6. Consider search functionality for learning content

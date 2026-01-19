@@ -1,0 +1,129 @@
+---
+description: "Testing best practices, reminders to write tests, and Playwright E2E patterns"
+globs: ["**/*.test.ts", "**/*.test.tsx", "tests/**", "apps/web/tests/**"]
+alwaysApply: true
+---
+
+# Testing Reminders
+
+**This rule always applies to remind about testing best practices.**
+
+## Automatic Reminders
+
+The agent will remind you to:
+
+- ✅ Write tests after implementing features
+- ✅ Run tests before committing
+- ✅ Write appropriate test types (unit, integration, E2E)
+- ✅ Follow test organization patterns
+
+## When to Write Tests
+
+- **After implementing features**: Write tests for new functionality
+- **Before refactoring**: Ensure existing tests cover behavior
+- **For bug fixes**: Write regression tests
+- **For utilities**: Always write unit tests
+
+## Testing Patterns
+
+### Unit Tests
+
+- **For**: Utilities, helpers, pure functions
+- **Location**: Co-located with source or in `__tests__/` directory
+- **Example**: `utils/formatCurrency.test.ts`
+
+### Integration Tests
+
+- **For**: API routes, database operations
+- **Location**: `apps/api/src/routes/__tests__/`
+- **Example**: Test API endpoints with database
+
+### E2E Tests
+
+- **For**: User flows, critical paths
+- **Location**: `apps/web/tests/e2e/`
+- **Tool**: Playwright
+- **Example**: Complete user workflows
+
+## Test Organization
+
+Mirror source structure:
+
+```
+apps/web/src/
+  components/
+    Button.tsx
+    Button.test.tsx  # Co-located
+  utils/
+    format.ts
+    __tests__/
+      format.test.ts  # Or in __tests__ directory
+```
+
+## Playwright E2E Patterns
+
+### Configuration
+
+```typescript
+// apps/web/playwright.config.ts
+export default defineConfig({
+  testDir: "./tests/e2e",
+  use: {
+    baseURL: "http://localhost:3000",
+    trace: "on-first-retry",
+  },
+});
+```
+
+### Best Practices
+
+- Use `baseURL` for navigation
+- Use proper selectors (data-testid, role, text)
+- Enable trace on retry for debugging
+- Use `page.waitForLoadState()` when needed
+- Test critical user flows
+
+### Example Test
+
+```typescript
+import { test, expect } from "@playwright/test";
+
+test("user can create property", async ({ page }) => {
+  await page.goto("/properties");
+  await page.click("text=Add Property");
+  await page.fill('[name="address"]', "123 Main St");
+  await page.click('button[type="submit"]');
+  await expect(page.locator("text=123 Main St")).toBeVisible();
+});
+```
+
+## Checklist
+
+Before committing, ask:
+
+- [ ] Did you write tests for new features?
+- [ ] Did you run tests locally?
+- [ ] Did you run E2E tests for critical flows?
+- [ ] Are tests passing?
+
+## Commands
+
+```bash
+# Run all tests
+pnpm test
+
+# Run E2E tests
+pnpm test:e2e
+
+# Run E2E tests with UI
+pnpm test:e2e:ui
+
+# Run E2E tests in debug mode
+pnpm test:e2e:debug
+```
+
+## References
+
+- Playwright Config: `apps/web/playwright.config.ts`
+- Testing Documentation: See project README
+- Architecture: `.cursor/rules/architecture.mdc`

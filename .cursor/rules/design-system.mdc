@@ -1,0 +1,90 @@
+---
+description: "Design system usage patterns, CSS variables, dark mode support, and component extraction guidelines"
+globs: ["packages/ui/**", "apps/web/src/**"]
+alwaysApply: false
+---
+
+# Design System Usage
+
+This rule ensures consistent design system usage across the Axori application.
+
+## Core Principles
+
+1. **Use Design System Components**: Always prefer `@axori/ui` components over raw HTML elements
+2. **CSS Variables for Colors**: Use CSS variables (`rgb(var(--color-*))`) for brand colors instead of hardcoded values
+3. **Dark Mode First**: Use Tailwind `dark:` classes instead of conditional `isDark` logic
+4. **Component Extraction**: Extract repeated patterns into reusable components in `packages/ui/src/components/`
+5. **Typography Component**: Use Typography component instead of raw HTML elements
+
+## CSS Variables
+
+Use CSS variables for colors instead of hardcoded hex values:
+
+```tsx
+// ❌ Incorrect - Hardcoded color
+className="bg-[#E8FF4D] text-black"
+
+// ✅ Correct - CSS variable
+className="bg-[rgb(var(--color-accent))] text-black"
+```
+
+Available CSS variables:
+- `--color-primary` - Primary brand color (violet-600)
+- `--color-accent` - Accent color (#E8FF4D)
+- `--color-bg-dark` - Dark mode background (#0F1115)
+- `--color-bg-dark-card` - Dark mode card background (#1A1A1A)
+
+## Dark Mode Patterns
+
+Use Tailwind `dark:` classes instead of conditional logic:
+
+```tsx
+// ❌ Incorrect - Conditional isDark logic
+<div className={isDark ? "bg-[#1A1A1A]" : "bg-white"}>
+
+// ✅ Correct - Tailwind dark: classes
+<div className="bg-white dark:bg-[rgb(var(--color-bg-dark-card))]">
+```
+
+## Component Extraction
+
+Extract repeated patterns into reusable components:
+
+```tsx
+// ❌ Incorrect - Repeated pattern
+<div className="p-16 rounded-[4rem] border bg-white dark:bg-[#1A1A1A]">
+  {/* Content */}
+</div>
+
+// ✅ Correct - Use OnboardingCard component
+import { OnboardingCard } from "@axori/ui";
+<OnboardingCard isDark={isDark}>
+  {/* Content */}
+</OnboardingCard>
+```
+
+## Available Components
+
+### Core Components
+- `Button` - Variants: primary, secondary, ghost, destructive
+- `Input` - Variants: default, rounded
+- `Select` - Variants: default, rounded
+- `Card` - With variant, padding, radius props
+- `Typography` - Use instead of raw HTML elements
+- `OnboardingCard` - Variants: default, compact
+- `FormLabel` - Standardized form labels
+
+## Best Practices
+
+1. **Check Design System First**: Look in `packages/ui/src/components/` for existing components
+2. **Convert Raw HTML**: Replace `<button>`, `<input>`, card divs with design system components
+3. **Use CSS Variables**: Replace hardcoded colors with `bg-[rgb(var(--color-*))]`
+4. **Extract Reusable Patterns**: Move common patterns to `packages/ui/src/components/`
+5. **Use Typography Component**: Instead of raw `<p>`, `<h1>`, etc.
+
+## References
+
+- Design Tokens: `packages/ui/DESIGN_TOKENS.md`
+- Implementation Summary: `.skills/design/design-system-implementation.md`
+- Design System Review: `DESIGN_SYSTEM_REVIEW.md`
+- Component Library: `packages/ui/src/components/`

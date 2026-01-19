@@ -1,0 +1,72 @@
+---
+description: "Project structure, monorepo organization, component placement, and import patterns for the Axori application"
+globs: []
+alwaysApply: true
+---
+
+# Project Structure
+
+This rule defines the organization and structure of the Axori monorepo.
+
+## Monorepo Structure
+
+```
+axori/
+├── apps/
+│   ├── web/          # TanStack Start web app
+│   ├── mobile/       # React Native/Expo app
+│   └── api/          # Backend API (Hono)
+├── packages/
+│   ├── shared/       # Shared utilities, types, integrations
+│   ├── db/           # Drizzle schema and migrations
+│   └── ui/           # Design system components
+```
+
+## Component Placement Rules
+
+### Reusable Components
+- **Location**: `packages/ui/src/components/ComponentName.tsx`
+- **Export**: Must export from `packages/ui/src/index.ts`
+- **Usage**: Use across web and mobile apps
+- **When**: Components used in multiple places or part of design system
+
+### Page-Specific Components
+- **Location**: `apps/web/src/components/ComponentName.tsx`
+- **Usage**: Import directly in routes
+- **When**: Components specific to web app pages
+
+### Full Pages/Routes
+- **Location**: `apps/web/src/routes/page-name.tsx`
+- **Routing**: Follow TanStack Router file-based routing
+- **When**: Complete page components
+
+## Import Patterns
+
+### Import Order
+1. External dependencies (React, third-party libraries)
+2. Internal packages (`@axori/db`, `@axori/shared`, `@axori/ui`)
+3. Local imports (relative paths)
+
+### Package Imports
+```typescript
+// ✅ Correct - Use package names
+import { db } from "@axori/db";
+import { Button } from "@axori/ui";
+import { propertyInsertSchema } from "@axori/shared";
+
+// ❌ Incorrect - Don't use relative paths across packages
+import { db } from "../../../packages/db/src/client";
+```
+
+## Package Management
+
+- **Package Manager**: pnpm (version >= 8.0.0)
+- **Workspace**: Defined in `pnpm-workspace.yaml`
+- **Build System**: Turborepo
+- **Filtering**: Use `--filter` for package-specific commands
+
+## References
+
+- Project README: `README.md`
+- Setup Guide: `SETUP.md`
+- Contributing Guide: `CONTRIBUTING.md`

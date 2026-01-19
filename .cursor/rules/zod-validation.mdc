@@ -1,0 +1,121 @@
+---
+description: "Zod validation schema best practices, drizzle-zod workflow, and API-specific validation patterns"
+globs: ["packages/shared/src/validation/**", "apps/api/src/routes/**"]
+alwaysApply: false
+---
+
+# Zod Validation Best Practices
+
+## Workflow Enforcement
+
+The agent will follow the drizzle-zod workflow: **Base schemas → Enhanced schemas**
+
+## Drizzle-Zod Alignment Workflow
+
+### Step 1: Generate Base Schemas
+Always start with auto-generated base schemas from Drizzle:
+
+```typescript
+// packages/shared/src/validation/base/loans.ts
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { loans } from "@axori/db";
+
+// Auto-generated base schemas
+export const loanInsertSchema = createInsertSchema(loans);
+export const loanSelectSchema = createSelectSchema(loans);
+```
+
+**Key Points:**
+- `createInsertSchema()` automatically excludes auto-generated fields (id, createdAt, updatedAt)
+- Numeric fields from Drizzle generate as `z.string()` (PostgreSQL numeric is stored as string)
+- Enum fields from `pgEnum()` generate as `z.enum()` with correct values
+- All field names use camelCase (matching Drizzle code layer)
+
+### Step 2: Create Enhanced Schemas for API
+Create API-specific validation schemas that extend base schemas:
+
+```typescript
+// packages/shared/src/validation/enhanced/loans.ts
+import { loanInsertSchema } from "../base/loans";
+import { z } from "zod";
+
+export const loanInsertApiSchema = loanInsertSchema.extend({
+  // API expects interestRate as percentage (0-100), override string from base schema
+  interestRate: z.number().min(0).max(100, "Interest rate must be between 0 and 100"),
+  // userId for authorization (not stored in loans table)
+  userId: z.string().uuid("User ID must be a valid UUID"),
+  // Convert numeric string fields to numbers for API
+  originalLoanAmount: z.number().min(0, "Original loan amount must be positive"),
+});
+```
+
+**Key Points:**
+- Enhanced schemas extend base schemas with API-specific validation
+- Override field types when needed (e.g., numeric strings → numbers)
+- Add fields not in the database (e.g., `userId` for authorization)
+- Use `.partial()` for update schemas
+
+## Validation Error Messages
+
+Always provide user-friendly, descriptive error messages:
+
+```typescript
+// ✅ Good error messages
+z.string().min(1, "Address is required");
+z.string().email("Please enter a valid email address");
+z.number().min(0).max(100, "Interest rate must be between 0 and 100");
+
+// ❌ Bad error messages
+z.string().min(1);
+z.string().email();
+z.number().min(0).max(100);
+```
+
+## Reusable Validation Patterns
+
+Create reusable validation patterns:
+
+```typescript
+// packages/shared/src/validation/patterns.ts
+export const emailSchema = z.string().email("Invalid email address");
+export const zipCodeSchema = z.string().regex(/^\d{5}(-\d{4})?$/, "Invalid ZIP code");
+export const stateSchema = z.string().length(2, "State must be 2 characters");
+
+// Use in schemas
+export const propertyInsertSchema = z.object({
+  address: z.string().min(1, "Address is required"),
+  state: stateSchema,
+  zipCode: zipCodeSchema,
+});
+```
+
+## Type Inference from Zod Schemas
+
+Export Zod-inferred types for frontend use:
+
+```typescript
+// packages/shared/src/types/index.ts
+import type { z } from "zod";
+import { loanInsertApiSchema } from "../validation";
+
+export type LoanInsertApi = z.infer<typeof loanInsertApiSchema>;
+```
+
+## Reminders
+
+The agent will remind you to:
+- ✅ Create enhanced schemas for API-specific validation
+- ✅ Add user-friendly error messages
+- ✅ Override numeric fields (string → number) in enhanced schemas
+- ✅ Use reusable validation patterns when appropriate
+
+## When to Enhance vs Use Base
+
+- **Base schemas**: Reflect database structure exactly
+- **Enhanced schemas**: Add API-specific validation, type conversions, business logic
+
+## References
+
+- Full Guide: `.skills/architect/drizzle-zod-alignment.md`
+- Schema Alignment: `.cursor/rules/schema-alignment.mdc`
+- Architecture: `.cursor/rules/architecture.mdc`

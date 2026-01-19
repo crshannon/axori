@@ -1,0 +1,100 @@
+---
+description: "Architectural best practices for database schemas, API routes, naming conventions, and code organization"
+globs: ["packages/db/**", "apps/api/**", "packages/shared/**"]
+alwaysApply: false
+---
+
+# Architectural Best Practices
+
+This rule enforces architectural consistency across the Axori application.
+
+## Core Principles
+
+1. **Single Source of Truth**: Drizzle schema is the single source of truth
+2. **Schema Alignment**: Drizzle schemas, Zod schemas, and TypeScript types must be perfectly aligned
+3. **Type Safety**: Always use Drizzle/Zod type inference instead of manual type definitions
+4. **Security First**: User data must be isolated and protected with proper authorization
+5. **Consistency**: Follow established patterns across all layers
+
+## Naming Conventions
+
+### Database Schema
+- **Table names**: Plural, snake_case (e.g., `properties`, `user_properties`)
+- **Column names in DB**: snake_case (e.g., `user_id`, `created_at`)
+- **Column names in code**: camelCase (e.g., `userId`, `createdAt`)
+- **Foreign keys**: `{tableName}Id` pattern (e.g., `userId`, `propertyId`)
+
+### TypeScript Types
+- **Type names**: PascalCase (e.g., `Property`, `UserProfile`)
+- **Insert types**: Suffix with `Insert` (e.g., `PropertyInsert`)
+- **Select types**: Use base name (e.g., `Property`)
+
+### API Routes
+- **Route files**: Plural, kebab-case (e.g., `properties.ts`, `user-properties.ts`)
+- **Endpoints**: RESTful conventions
+  - `GET /api/properties` - List resources
+  - `GET /api/properties/:id` - Get single resource
+  - `POST /api/properties` - Create resource
+  - `PUT /api/properties/:id` - Update resource
+  - `DELETE /api/properties/:id` - Delete resource
+
+### Zod Schemas
+- **Schema names**: Descriptive with suffix (e.g., `propertyInsertSchema`, `propertySelectSchema`)
+- **Variable names**: camelCase (e.g., `propertySchema`)
+
+## Schema Organization
+
+### Single File per Domain
+Group related tables in the same schema file:
+```typescript
+// packages/db/src/schema/properties.ts
+export const properties = pgTable("properties", { /* ... */ });
+export const propertyImages = pgTable("property_images", { /* ... */ });
+```
+
+### Index File Pattern
+Re-export all schemas from an index file:
+```typescript
+// packages/db/src/schema/index.ts
+export * from "./users";
+export * from "./properties";
+```
+
+## Error Handling
+
+**⚠️ IMPORTANT: All API routes MUST use centralized error handling utilities from `apps/api/src/utils/errors.ts`**
+
+Use `withErrorHandling` wrapper for automatic error handling:
+```typescript
+import { withErrorHandling, validateData } from "../utils/errors";
+
+router.post(
+  "/",
+  withErrorHandling(
+    async (c) => {
+      const body = await c.req.json();
+      const validated = validateData(body, propertyInsertSchema, {
+        operation: "createProperty",
+      });
+      // ... handler logic
+      return c.json({ property }, 201);
+    },
+    { operation: "createProperty" }
+  )
+);
+```
+
+## Documentation and Planning
+
+For major architectural changes:
+1. Create a plan in `docs/architecture/plans/003-feature-name/`
+2. Write `SUMMARY.md` and `EXECUTION.md`
+3. Document as you go
+4. Archive to `docs/architecture/completed/` when done
+
+## References
+
+- Full Best Practices: `.skills/architect/best-practices.md`
+- Schema Alignment: `docs/architecture/SCHEMA_ALIGNMENT_PATTERN.md`
+- Error Handling: `apps/api/src/utils/README.md`
+- Type Inference: `.skills/architect/type-inference-patterns.md`

@@ -1,0 +1,170 @@
+---
+description: "Linear integration best practices for delegating issues to Cursor, using @Cursor mentions, and configuring Cloud Agents"
+globs: []
+alwaysApply: false
+---
+
+# Linear Integration with Cursor
+
+This rule covers best practices for using Linear with Cursor Cloud Agents.
+
+## Setup Requirements
+
+1. **Connect Linear in Cursor Dashboard**
+   - Go to [Cursor integrations](https://www.cursor.com/dashboard?tab=integrations)
+   - Connect Linear workspace and select team
+   - Connect GitHub and select default repository
+   - Enable usage-based pricing
+   - Confirm privacy settings
+
+2. **Configure Repository Labels in Linear**
+   - Create label group named "repo" (exactly "repo", case insensitive)
+   - Add labels for each repository: `owner/repo` format
+   - Assign to issues or projects to specify repository
+
+3. **Set Up Cloud Agent Settings**
+   - Default Repository: Set in Cursor Dashboard
+   - Default Model: Configure AI model preference
+   - Base Branch: Typically `main` or `develop`
+
+## Delegating Issues to Cursor
+
+### Method 1: Assign to Cursor
+1. Open Linear issue
+2. Click assignee field
+3. Select "Cursor"
+4. Cursor automatically analyzes and filters non-development work
+5. Cloud Agent creates PRs automatically when complete
+
+### Method 2: Mention @Cursor
+Mention `@Cursor` in a comment to assign a new agent or provide additional instructions:
+- `@Cursor fix the authentication bug described above`
+- `@Cursor implement the feature as specified`
+- `@Cursor review the code and suggest improvements`
+
+## Configuration Methods
+
+### Issue Description/Comments
+Use `[key=value]` syntax in issue descriptions or comments:
+
+```
+@cursor please fix [repo=owner/repository]
+@cursor implement feature [model=claude-3.5-sonnet] [branch=feature-branch]
+```
+
+Supported configuration keys:
+- `repo`: Specify target repository (e.g., `owner/repository`)
+- `branch`: Specify base branch for PR creation
+- `model`: Specify AI model to use
+
+### Issue Labels
+Use parent-child label structure:
+- Parent label: Configuration key (e.g., "repo")
+- Child label: Value (e.g., "owner/repository")
+
+### Project Labels
+Same parent-child structure as issue labels, applied at the project level.
+
+## Repository Selection Priority
+
+Cursor determines which repository to work on using this priority order:
+
+1. **Issue description/comments**: `[repo=owner/repository]` syntax
+2. **Issue labels**: Repository labels attached to the specific Linear issue
+3. **Project labels**: Repository labels attached to the Linear project
+4. **Default repository**: Repository specified in Cursor dashboard settings
+
+## Cloud Agent Behavior
+
+- **Real-time Status**: Cloud Agents show real-time status in Linear
+- **Automatic PRs**: PRs are created automatically when work is complete
+- **Progress Tracking**: Track progress in [Cursor dashboard](https://www.cursor.com/dashboard?tab=cloud-agents)
+
+## Follow-up Instructions
+
+You can respond in the agent session and it'll get sent as a follow-up to the agent. Simply mention `@Cursor` in a Linear comment to provide additional guidance to a running Cloud Agent.
+
+## Best Practices
+
+### Issue Formatting
+Structure issues for best agent results:
+- Clear title describing the task
+- Detailed description with acceptance criteria
+- Include relevant code snippets or file paths
+- Reference related issues or documentation
+
+### When to Delegate
+- Development tasks that can be automated
+- Code changes, bug fixes, feature implementations
+- Refactoring tasks
+- Documentation updates
+
+### When NOT to Delegate
+- Non-development work (automatically filtered)
+- Tasks requiring human judgment or creativity
+- Complex architectural decisions
+- Security-sensitive changes (review carefully)
+
+## Creating Issues from Cursor
+
+You can create Linear issues directly from the command line using the provided script.
+
+### Setup
+
+1. **Get Linear API Key**
+   - Go to https://linear.app/settings/api
+   - Create a new Personal API Key
+   - Copy the key (starts with `lin_api_`)
+
+2. **Set Environment Variables**
+   ```bash
+   export LINEAR_API_KEY="lin_api_..."
+   export LINEAR_TEAM_ID="team-id-here"  # Optional, will auto-detect
+   ```
+
+### Creating Issues
+
+**Basic Usage:**
+```bash
+LINEAR_API_KEY=xxx tsx .cursor/scripts/create-linear-issue.ts \
+  --title "Issue Title" \
+  --description "Issue description" \
+  --priority high
+```
+
+**From Cursor Context:**
+When you identify a bug or need to track a feature:
+```bash
+# Quick bug report
+LINEAR_API_KEY=xxx tsx .cursor/scripts/create-linear-issue.ts \
+  --title "Bug: [Component] Issue description" \
+  --description "Detailed description of the bug..." \
+  --priority high
+
+# Feature request
+LINEAR_API_KEY=xxx tsx .cursor/scripts/create-linear-issue.ts \
+  --title "Feature: [Component] Feature name" \
+  --description "Feature description and acceptance criteria" \
+  --priority medium
+```
+
+**With Additional Options:**
+```bash
+LINEAR_API_KEY=xxx tsx .cursor/scripts/create-linear-issue.ts \
+  --title "Issue Title" \
+  --description "Description" \
+  --priority high \
+  --project-id "project-id" \
+  --labels "bug,frontend" \
+  --assignee-id "user-id"
+```
+
+See `.cursor/commands.md` for complete documentation.
+
+## References
+
+- Linear Integration Docs: https://cursor.com/docs/integrations/linear
+- Linear API Docs: https://developers.linear.app/docs/graphql/working-with-the-graphql-api
+- Linear API Key: https://linear.app/settings/api
+- Cursor Dashboard: https://www.cursor.com/dashboard?tab=cloud-agents
+- Cloud Agents Docs: https://cursor.com/docs/cloud-agent

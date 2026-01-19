@@ -1,0 +1,141 @@
+---
+description: "Drizzle ORM patterns: schema definition, migration workflow, type inference, and query best practices"
+globs: ["packages/db/**", "apps/api/src/routes/**"]
+alwaysApply: false
+---
+
+# Drizzle ORM Patterns
+
+## Schema Definition Patterns
+
+### Use pgEnum() for Enums
+
+```typescript
+// ✅ Correct - Use pgEnum
+export const loanTypeEnum = pgEnum("loan_type", [
+  "conventional", "fha", "va", "usda", ...
+]);
+
+export const loans = pgTable("loans", {
+  loanType: loanTypeEnum("loan_type").notNull().default("conventional"),
+});
+
+// ❌ Incorrect - Don't use text()
+loanType: text("loan_type").notNull()
+```
+
+### Proper Types
+
+Use appropriate Drizzle types:
+- `uuid()` for IDs
+- `text()` for strings
+- `numeric()` for decimal numbers (stored as string in DB)
+- `integer()` for whole numbers
+- `timestamp()` for dates/times
+- `pgEnum()` for constrained values
+
+## Type Inference
+
+**Always use Drizzle type inference, never manual types:**
+
+```typescript
+// ✅ Correct - Use inference
+import { InferSelectModel, InferInsertModel } from "drizzle-orm";
+export type Property = InferSelectModel<typeof properties>;
+export type PropertyInsert = InferInsertModel<typeof properties>;
+
+// ❌ Incorrect - Manual type definition
+export type Property = {
+  id: string;
+  address: string;
+  // ... manually defined
+};
+```
+
+## Migration Workflow
+
+**The agent will remind you to generate migrations after schema changes:**
+
+1. **Modify schema** in `packages/db/src/schema/index.ts`
+2. **Generate migration**: `pnpm --filter @axori/db db:generate`
+3. **Review SQL** in generated migration file
+4. **Test locally** before committing
+5. **Commit migration** with schema changes
+6. **Apply in order**: Dev → Staging → Production
+
+### Migration Naming
+
+Drizzle generates migrations with timestamps. Always review the generated SQL:
+
+```sql
+-- ✅ Good migration
+CREATE TABLE "properties" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  "user_id" uuid NOT NULL REFERENCES "users"("id"),
+  "address" text NOT NULL,
+  "created_at" timestamp NOT NULL DEFAULT now()
+);
+
+CREATE INDEX "properties_user_id_idx" ON "properties"("user_id");
+```
+
+## Query Patterns and Best Practices
+
+### Use Proper Indexes
+
+Add indexes for frequently queried fields:
+
+```typescript
+export const properties = pgTable(
+  "properties",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").references(() => users.id).notNull(),
+    address: text("address").notNull(),
+  },
+  (table) => ({
+    userIdIdx: index("properties_user_id_idx").on(table.userId),
+    addressIdx: index("properties_address_idx").on(table.address),
+  })
+);
+```
+
+### Query Optimization
+
+- Use `.limit()` for list queries
+- Use `.select()` with specific fields when possible
+- Avoid N+1 queries with proper joins
+- Use transactions for related operations
+
+## Numeric Field Handling
+
+Drizzle `numeric()` columns are stored as strings in PostgreSQL. Convert in API routes:
+
+```typescript
+// Drizzle schema
+interestRate: numeric("interest_rate", { precision: 5, scale: 4 }),
+
+// Base Zod schema (auto-generated)
+interestRate: z.string(), // From Drizzle numeric()
+
+// Enhanced Zod schema (API-specific)
+interestRate: z.number().min(0).max(100), // Override for API
+
+// API route: Convert percentage to decimal
+interestRate: String(validated.interestRate / 100), // 6.5% → "0.065"
+```
+
+## Automatic Reminders
+
+The agent will remind you to:
+- ✅ Generate migrations after schema changes
+- ✅ Use `pgEnum()` instead of `text()` for enums
+- ✅ Use type inference instead of manual types
+- ✅ Review generated migration SQL before committing
+
+## References
+
+- Full Guide: `.skills/architect/drizzle-zod-alignment.md`
+- Best Practices: `.skills/architect/best-practices.md`
+- Schema Alignment: `.cursor/rules/schema-alignment.mdc`
+- Type Safety: `.cursor/rules/type-safety.mdc`

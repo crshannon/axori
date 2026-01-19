@@ -1,0 +1,123 @@
+---
+description: "UI component conversion rules for using @axori/ui design system components instead of raw HTML elements"
+globs: ["packages/ui/**", "apps/web/src/components/**"]
+alwaysApply: false
+---
+
+> **Note:** For Learning Hub integration patterns, see `.cursor/rules/learning-hub-integration.mdc`
+
+# UI Component Conversion
+
+When working with UI components from AI Studio or other sources, always convert to use the @axori/ui design system.
+
+## Core Principle
+
+**Always use @axori/ui design system components when possible.** Never use raw HTML elements when a design system component exists.
+
+## Component Conversion Rules
+
+### Buttons
+```tsx
+// ❌ Before (raw HTML)
+<button className="bg-blue-500 text-white px-4 py-2 rounded">Click</button>
+
+// ✅ After (Design System)
+import { Button } from "@axori/ui";
+<Button variant="primary" size="md">Click</Button>
+```
+
+### Cards
+```tsx
+// ❌ Before
+<div className="rounded-lg border bg-white p-6">
+  <h3>Title</h3>
+  <p>Content</p>
+</div>
+
+// ✅ After
+import { Card, CardHeader, CardTitle, CardContent } from "@axori/ui";
+<Card>
+  <CardHeader>
+    <CardTitle>Title</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <p>Content</p>
+  </CardContent>
+</Card>
+```
+
+### Inputs
+```tsx
+// ❌ Before
+<input type="text" className="border rounded px-3 py-2" />
+
+// ✅ After
+import { Input } from "@axori/ui";
+<Input label="Name" placeholder="Enter name" />
+```
+
+## Available Design System Components
+
+### Base Components
+- `Button` - Variants: primary, secondary, danger, success, warning
+- `Card`, `CardHeader`, `CardTitle`, `CardContent`, `CardFooter` - Containers
+- `Input` - Text inputs with label and error handling
+- `Select` - Dropdown selects
+- `Text` - Typography component
+- `Badge` - Status indicators
+- `Loading` - Loading spinners
+- `Modal` - Dialogs/modals
+
+### Utilities
+- `cn()` - Merge Tailwind classes: `cn("base-class", conditional && "conditional-class")`
+
+## Component Placement
+
+1. **Reusable Components** → `packages/ui/src/components/ComponentName.tsx`
+   - Export from `packages/ui/src/index.ts`
+   - Use across web and mobile apps
+
+2. **Page-Specific Components** → `apps/web/src/components/ComponentName.tsx`
+   - Import directly in routes
+
+3. **Full Pages** → `apps/web/src/routes/page-name.tsx`
+   - Follow TanStack Router file-based routing
+
+## TypeScript Best Practices
+
+- Always define proper interfaces for component props
+- Use shared types from `@axori/shared` when applicable
+- Export types alongside components
+- Use `BaseComponentProps` for common props
+
+## Styling Guidelines
+
+- Use Tailwind utility classes
+- Leverage `cn()` for conditional classes
+- Follow design tokens from `packages/ui/DESIGN_TOKENS.md`
+- Maintain consistent spacing and colors
+- Use variants instead of hardcoded colors
+
+## Conversion Process
+
+1. **Analyze**: Identify what the component does and its dependencies
+2. **Extract**: Find reusable parts that should be in the design system
+3. **Convert**: Replace raw HTML with design system components
+4. **Type**: Add proper TypeScript interfaces
+5. **Test**: Ensure the component works and is accessible
+6. **Document**: Add JSDoc comments for complex components
+
+## Key Principles
+
+- **Consistency**: Always use design system components when possible
+- **Reusability**: Extract common patterns into shared components
+- **Type Safety**: Ensure all props are properly typed
+- **Accessibility**: Maintain proper ARIA labels and keyboard navigation
+- **Performance**: Keep components lightweight and optimized
+
+## References
+
+- Design System: `packages/ui/README.md`
+- Design Tokens: `packages/ui/DESIGN_TOKENS.md`
+- Integration Guide: `packages/ui/INTEGRATION.md`
+- Legacy Rules: `packages/ui/.cursorrules` (to be archived)

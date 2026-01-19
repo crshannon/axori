@@ -1,0 +1,126 @@
+---
+description: "API error handling patterns using centralized error utilities for consistent error responses and logging"
+globs: ["apps/api/src/routes/**"]
+alwaysApply: false
+---
+
+# API Error Handling
+
+**⚠️ CRITICAL: All API routes MUST use centralized error handling utilities from `apps/api/src/utils/errors.ts`**
+
+## Why Centralized Error Handling?
+
+- **No more hunting** - All validation errors are logged with full context
+- **Consistent responses** - Error responses follow the same format
+- **Better debugging** - Error logs include route, operation, and received data
+- **Type safety** - Validated data is properly typed
+- **Database errors** - PostgreSQL error codes are automatically handled
+
+## Recommended Pattern: `withErrorHandling` Wrapper
+
+Wrap route handlers for automatic error handling:
+
+```typescript
+import { withErrorHandling, validateData } from "../utils/errors";
+
+propertiesRouter.post(
+  "/",
+  withErrorHandling(
+    async (c) => {
+      const body = await c.req.json();
+      const validated = validateData(body, propertyInsertSchema, {
+        operation: "createProperty",
+      });
+      // ... handler logic
+      return c.json({ property }, 201);
+    },
+    { operation: "createProperty" }
+  )
+);
+```
+
+## Validation Pattern: `validateData`
+
+For validating non-request data (e.g., nested objects):
+
+```typescript
+import { validateData } from "../utils/errors";
+
+if (rentalIncome) {
+  const rentalIncomeData = validateData(
+    { propertyId: id, ...rentalIncome },
+    propertyRentalIncomeInsertSchema,
+    { operation: "updatePropertyRentalIncome" }
+  );
+  // ... use validated data
+}
+```
+
+## Error Response Format
+
+All errors follow a consistent format:
+
+```typescript
+{
+  "error": "Validation failed",
+  "details": [  // Only for Zod validation errors
+    {
+      "code": "invalid_type",
+      "path": ["propertyId"],
+      "message": "Expected string, received undefined"
+    }
+  ],
+  "message": "Optional: Additional context"  // Optional
+}
+```
+
+### Status Codes
+- `200` - Success
+- `201` - Created
+- `400` - Bad Request (validation errors)
+- `401` - Unauthorized
+- `404` - Not Found
+- `409` - Conflict (duplicate entry)
+- `500` - Internal Server Error
+
+## Error Logging
+
+All errors are automatically logged with context:
+
+```
+[VALIDATION ERROR] {
+  route: "/api/properties/123",
+  operation: "updateProperty",
+  errors: [...],
+  receivedData: {...}
+}
+
+[API ERROR] {
+  route: "/api/properties/123",
+  operation: "updateProperty",
+  errorMessage: "...",
+  errorStack: "...",
+  errorType: "ApiError"
+}
+```
+
+## Anti-Patterns (Do NOT Use)
+
+```typescript
+// ❌ Manual error handling without utilities
+try {
+  const validated = schema.parse(body);
+} catch (error) {
+  if (error instanceof z.ZodError) {
+    return c.json({ error: "Validation failed", details: error.errors }, 400);
+  }
+  console.error("Error:", error);
+  return c.json({ error: "Internal server error" }, 500);
+}
+```
+
+## References
+
+- Full Documentation: `apps/api/src/utils/README.md`
+- Error Utilities: `apps/api/src/utils/errors.ts`
+- Architecture Best Practices: `.cursor/rules/architecture.mdc`

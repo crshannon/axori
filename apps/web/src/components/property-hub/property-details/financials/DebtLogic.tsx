@@ -1,8 +1,10 @@
-import { Button, Card, EmptyStateCard, Typography } from '@axori/ui'
+import { Badge, Button, Card, EmptyStateCard, Typography } from '@axori/ui'
 import { useNavigate } from '@tanstack/react-router'
 import { LearningHubButton } from './LearningHubButton'
+import type { Loan } from '@axori/shared'
 import { generateDebtLogicLearning } from '@/data/learning-hub/loan-snippets'
 import { useProperty } from '@/hooks/api/useProperties'
+import { useLoanSummary } from '@/hooks/useLoanSummary'
 
 interface DebtLogicProps {
   propertyId: string
@@ -56,6 +58,9 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
   const activeLoans =
     property.loans?.filter((loan) => loan.status === 'active') || []
 
+  // Loan summary calculations
+  const summary = useLoanSummary(activeLoans)
+
   // Helper functions
   const formatLoanTerm = (termMonths: number | null | undefined) => {
     if (!termMonths) return null
@@ -80,12 +85,10 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
   }
 
   // Format a single loan's data for display
-  const formatLoanData = (loan: any) => {
-    const loanBalance = loan?.currentBalance
-      ? Number(loan.currentBalance)
-      : null
+  const formatLoanData = (loan: Loan) => {
+    const loanBalance = loan.currentBalance ? Number(loan.currentBalance) : null
 
-    const originalLoanAmount = loan?.originalLoanAmount
+    const originalLoanAmount = loan.originalLoanAmount
       ? Number(loan.originalLoanAmount)
       : null
 
@@ -95,28 +98,26 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
         : null
 
     // Format interest rate (convert from decimal to percentage for display)
-    const interestRate = loan?.interestRate
+    const interestRate = loan.interestRate
       ? Number(loan.interestRate) * 100
       : null
 
-    const loanTerm = formatLoanTerm(loan?.termMonths ?? null)
+    const loanTerm = formatLoanTerm(loan.termMonths)
 
-    const monthlyPAndI = loan?.monthlyPrincipalInterest
+    const monthlyPAndI = loan.monthlyPrincipalInterest
       ? Number(loan.monthlyPrincipalInterest)
       : null
 
-    const monthlyEscrow = loan?.monthlyEscrow
-      ? Number(loan.monthlyEscrow)
-      : null
+    const monthlyEscrow = loan.monthlyEscrow ? Number(loan.monthlyEscrow) : null
 
-    const totalMonthlyPayment = loan?.totalMonthlyPayment
+    const totalMonthlyPayment = loan.totalMonthlyPayment
       ? Number(loan.totalMonthlyPayment)
       : monthlyPAndI && monthlyEscrow
         ? monthlyPAndI + monthlyEscrow
         : monthlyPAndI
 
-    const startDate = formatDate(loan?.startDate ?? null)
-    const maturityDate = formatDate(loan?.maturityDate ?? null)
+    const startDate = formatDate(loan.startDate ?? null)
+    const maturityDate = formatDate(loan.maturityDate ?? null)
 
     return {
       loan,
@@ -198,11 +199,87 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
           </div>
         </div>
 
+        {/* Loan Summary Totals */}
+        {summary.loanCount > 0 && (
+          <Card
+            variant="rounded"
+            padding="sm"
+            radius="lg"
+            className="mb-8 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10"
+          >
+            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+              <div className="min-w-0">
+                <Typography
+                  variant="caption"
+                  className="text-slate-500 dark:text-slate-400 mb-2 block"
+                >
+                  Total Debt
+                </Typography>
+                <Typography
+                  variant="h4"
+                  className="tabular-nums text-slate-900 dark:text-white tracking-tighter break-words"
+                >
+                  $
+                  {summary.totalDebt.toLocaleString(undefined, {
+                    maximumFractionDigits: 0,
+                  })}
+                </Typography>
+              </div>
+              <div className="min-w-0">
+                <Typography
+                  variant="caption"
+                  className="text-slate-500 dark:text-slate-400 mb-2 block"
+                >
+                  Weighted Rate
+                </Typography>
+                <Typography
+                  variant="h4"
+                  className="tabular-nums text-slate-900 dark:text-white tracking-tighter"
+                >
+                  {summary.weightedInterestRate.toFixed(2)}%
+                </Typography>
+              </div>
+              <div className="min-w-0">
+                <Typography
+                  variant="caption"
+                  className="text-slate-500 dark:text-slate-400 mb-2 block"
+                >
+                  Total Monthly
+                </Typography>
+                <Typography
+                  variant="h4"
+                  className="tabular-nums text-slate-900 dark:text-white tracking-tighter break-words"
+                >
+                  $
+                  {summary.totalMonthlyPayment.toLocaleString(undefined, {
+                    maximumFractionDigits: 0,
+                  })}
+                </Typography>
+              </div>
+              <div className="min-w-0">
+                <Typography
+                  variant="caption"
+                  className="text-slate-500 dark:text-slate-400 mb-2 block"
+                >
+                  Loan Count
+                </Typography>
+                <Typography
+                  variant="h4"
+                  className="tabular-nums text-slate-900 dark:text-white tracking-tighter"
+                >
+                  {summary.loanCount}
+                </Typography>
+              </div>
+            </div>
+          </Card>
+        )}
+
         <div className="space-y-0">
           {activeLoans.map((loan, index) => {
             const loanData = formatLoanData(loan)
             const isPrimary = loan.isPrimary
             const isLast = index === activeLoans.length - 1
+            const isHeloc = loan.loanType === 'heloc'
 
             return (
               <div key={loan.id}>
@@ -212,7 +289,7 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
                 >
                   <div className="space-y-3">
                     {/* Header: Lender Name & Badges */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Typography
                         variant="body-sm"
                         weight="bold"
@@ -221,16 +298,29 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
                         {loan.lenderName}
                       </Typography>
                       {isPrimary && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400">
+                        <Badge
+                          variant="primary"
+                          className="text-[9px] font-black uppercase tracking-wider"
+                        >
                           Primary
-                        </span>
+                        </Badge>
                       )}
-                      <Typography
-                        variant="caption"
-                        className="text-slate-400 uppercase ml-auto"
-                      >
-                        {loan.loanType}
-                      </Typography>
+                      {isHeloc && (
+                        <Badge
+                          variant="warning"
+                          className="text-[9px] font-black uppercase tracking-wider"
+                        >
+                          HELOC
+                        </Badge>
+                      )}
+                      {!isPrimary && !isHeloc && (
+                        <Badge
+                          variant="outline"
+                          className="text-[9px] font-black uppercase tracking-wider"
+                        >
+                          {loan.loanType}
+                        </Badge>
+                      )}
                     </div>
 
                     {/* Main Balance */}
@@ -299,7 +389,7 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
                   </div>
                 </div>
                 {!isLast && activeLoans.length > 1 && (
-                  <div className="h-[1px] bg-gradient-to-r from-transparent via-violet-200 dark:via-violet-500/30 to-transparent my-4" />
+                  <div className="h-[1px] bg-gradient-to-r from-transparent via-[rgb(var(--color-primary))]/20 dark:via-[rgb(var(--color-primary))]/30 to-transparent my-4" />
                 )}
               </div>
             )
