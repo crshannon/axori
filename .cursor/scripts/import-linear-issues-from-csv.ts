@@ -1062,7 +1062,13 @@ function parseArgs(): {
         options.dryRun = true
         break
       case '--delay':
-        options.delay = parseInt(args[++i], 10) || 500
+        const delayArg = args[++i]
+        if (delayArg === undefined) {
+          console.error(`❌ Error: --delay requires a value`)
+          process.exit(1)
+        }
+        const delayValue = parseInt(delayArg, 10)
+        options.delay = isNaN(delayValue) ? 500 : delayValue
         break
     }
   }

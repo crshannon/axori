@@ -737,7 +737,13 @@ function parseArgs(): {
         break
       case '--labels':
       case '-l':
-        options.labels = args[++i].split(',').map((s) => s.trim())
+        const labelsValue = args[++i]
+        if (labelsValue) {
+          options.labels = labelsValue.split(',').map((s) => s.trim())
+        } else {
+          console.error(`❌ Error: --labels requires a value`)
+          process.exit(1)
+        }
         break
       case '--assignee':
       case '--assignee-id':

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Import Linear Issues from CSV
-# 
+#
 # Wrapper script for import-linear-issues-from-csv.ts
 # Automatically loads .env file if it exists
 

@@ -1,2 +1,3 @@
 Title,Description,Priority,Status,Labels,Estimate,Project
 "Overview: Calculate Property Match Score","Currently shows hardcoded match score (92). Need to implement calculation based on property data completeness, financial metrics alignment, and market benchmarks.","High","Todo","property-hub,overview,calculations",5,"property-hub-f8f5d1322dfe"
+
