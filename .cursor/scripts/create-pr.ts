@@ -220,11 +220,23 @@ function parseArgs(): {
         break
       case '--reviewers':
       case '-r':
-        options.reviewers = args[++i].split(',').map((s) => s.trim())
+        const reviewersValue = args[++i]
+        if (reviewersValue) {
+          options.reviewers = reviewersValue.split(',').map((s) => s.trim())
+        } else {
+          console.error(`❌ Error: --reviewers requires a value`)
+          process.exit(1)
+        }
         break
       case '--labels':
       case '-l':
-        options.labels = args[++i].split(',').map((s) => s.trim())
+        const labelsValue = args[++i]
+        if (labelsValue) {
+          options.labels = labelsValue.split(',').map((s) => s.trim())
+        } else {
+          console.error(`❌ Error: --labels requires a value`)
+          process.exit(1)
+        }
         break
     }
   }

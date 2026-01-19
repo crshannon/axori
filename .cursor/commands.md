@@ -208,6 +208,101 @@ LINEAR_API_KEY=xxx tsx .cursor/scripts/create-linear-issue.ts \
   --priority high
 ```
 
+### Import Linear Issues from CSV
+
+Batch import issues from a CSV file into Linear. Perfect for importing multiple issues at once (e.g., from project planning).
+
+**Easy way (recommended):**
+```bash
+# Uses .env file automatically
+.cursor/scripts/import-linear-issues.sh \
+  --csv "linear/property hub.csv" \
+  --project-id "property-hub-f8f5d1322dfe"
+```
+
+**Direct usage:**
+```bash
+# Basic usage
+LINEAR_API_KEY=xxx tsx .cursor/scripts/import-linear-issues-from-csv.ts \
+  --csv "linear/property hub.csv" \
+  --project-id "property-hub-f8f5d1322dfe"
+
+# Dry run to preview what would be created
+LINEAR_API_KEY=xxx tsx .cursor/scripts/import-linear-issues-from-csv.ts \
+  --csv "linear/property hub.csv" \
+  --project-id "property-hub-f8f5d1322dfe" \
+  --dry-run
+
+# With custom delay between requests (to avoid rate limiting)
+LINEAR_API_KEY=xxx tsx .cursor/scripts/import-linear-issues-from-csv.ts \
+  --csv "linear/property hub.csv" \
+  --project-id "property-hub-f8f5d1322dfe" \
+  --delay 1000
+```
+
+**CSV Format:**
+The CSV file should have the following columns:
+- `Title` (required) - Issue title
+- `Description` (optional) - Issue description
+- `Priority` (optional) - urgent, high, medium, low, or "No priority" (default: medium)
+- `Status` (optional) - Workflow state (not used, all issues created in "Backlog" state)
+- `Labels` (optional) - Comma-separated label names (e.g., "database,frontend,backend,api,billing,ai")
+- `Estimate` (optional) - Story points estimate
+- `Project` or `Project ID` (optional) - Project ID (can also use --project-id flag)
+- `Parent issue` (optional) - Parent issue identifier (e.g., "AXO-123") - creates sub-issue
+- `Related issues` (optional) - Comma-separated issue identifiers (e.g., "AXO-123,AXO-456") - links as related
+- `Due Date` (optional) - Due date in any format (e.g., "2026-12-31", "Dec 31, 2026")
+- `Assignee` (optional) - Assignee email address or user ID
+- `Requirements` (optional) - Requirements section (appended to description with markdown formatting)
+- `Acceptance Criteria` (optional) - Acceptance criteria (appended to description with markdown formatting)
+
+**Note:** The script supports both our simple CSV format and Linear's export format. All issues are automatically created in the "Backlog" state. Labels are automatically looked up and matched to existing Linear labels (case-insensitive). Parent and related issues are resolved by identifier (e.g., "AXO-123").
+
+**Options:**
+- `--csv <path>` - Path to CSV file (default: `linear/property hub.csv`)
+- `--project-id <id>` - Linear project ID (required)
+- `--team-id <id>` - Linear team ID (optional, will auto-detect)
+- `--dry-run` - Preview what would be created without actually creating issues
+- `--delay <ms>` - Delay between issue creation in milliseconds (default: 500)
+
+**Environment Variables:**
+- `LINEAR_API_KEY` (required) - Get from https://linear.app/settings/api
+- `LINEAR_TEAM_ID` (optional) - Will auto-detect if only one team exists
+- `LINEAR_PROJECT_ID` (optional) - Can be used instead of --project-id flag
+
+**Example:**
+```bash
+# Import all issues from CSV to Linear project
+.cursor/scripts/import-linear-issues.sh \
+  --csv "linear/property hub.csv" \
+  --project-id "property-hub-f8f5d1322dfe"
+
+# Preview first (dry run)
+.cursor/scripts/import-linear-issues.sh \
+  --csv "linear/property hub.csv" \
+  --project-id "property-hub-f8f5d1322dfe" \
+  --dry-run
+```
+
+**Label Support:**
+The script automatically:
+1. Fetches all labels for your team
+2. Matches label names from CSV (case-insensitive)
+3. **Automatically creates missing labels** if they don't exist
+4. Applies matching labels to issues
+
+**Standard Labels:**
+The following labels are recommended and will be auto-created if missing:
+- `database`, `frontend`, `backend`, `api`, `billing`, `ai`, `user`, `auth`
+
+**Setup Labels Upfront:**
+To create all standard labels before importing:
+```bash
+.cursor/scripts/setup-linear-labels.sh
+```
+
+This will create any missing standard labels with appropriate colors.
+
 ### `linear:sync-todos`
 One-time migration of TODO.md tasks to Linear.
 - Parses markdown structure
