@@ -1,0 +1,306 @@
+import { useCallback, useEffect, useState } from 'react'
+import { useProperty, useUpdateProperty } from './useProperties'
+
+/**
+ * Property Settings form state interface
+ * Matches the Asset Configuration form fields
+ */
+export interface PropertySettingsFormData {
+  // Basic Info
+  nickname: string
+  propertyType: string
+
+  // Address
+  address: string
+  city: string
+  state: string
+  zipCode: string
+
+  // Tax & Currency
+  taxJurisdiction: string
+  currencyOverride: string
+
+  // Acquisition Metadata
+  purchasePrice: string
+  closingDate: string
+  yearBuilt: string
+
+  // Asset DNA
+  investmentStrategy: string
+
+  // Calculation Presumptions
+  vacancyRate: string
+  maintenanceRate: string
+  expenseInflation: string
+  capexSinking: string
+
+  // Notifications
+  notifications: {
+    email: boolean
+    sms: boolean
+    push: boolean
+  }
+}
+
+/**
+ * Default form values
+ */
+const DEFAULT_FORM_DATA: PropertySettingsFormData = {
+  nickname: '',
+  propertyType: 'single-family',
+  address: '',
+  city: '',
+  state: '',
+  zipCode: '',
+  taxJurisdiction: '',
+  currencyOverride: 'Portfolio Default (USD)',
+  purchasePrice: '',
+  closingDate: '',
+  yearBuilt: '',
+  investmentStrategy: 'yield-maximization',
+  vacancyRate: '5.0',
+  maintenanceRate: '8.0',
+  expenseInflation: '3.0',
+  capexSinking: '2500',
+  notifications: {
+    email: true,
+    sms: false,
+    push: true,
+  },
+}
+
+/**
+ * Parse numeric string from API (handles null/undefined)
+ */
+function parseNumericString(value: string | null | undefined, defaultValue = ''): string {
+  if (value === null || value === undefined) return defaultValue
+  return value
+}
+
+/**
+ * Parse rate value (convert decimal to percentage display)
+ */
+function parseRate(value: string | null | undefined, defaultValue = ''): string {
+  if (value === null || value === undefined) return defaultValue
+  const num = parseFloat(value)
+  if (isNaN(num)) return defaultValue
+  // If stored as decimal (0.05), convert to percentage string (5.0)
+  if (num < 1) {
+    return (num * 100).toFixed(1)
+  }
+  return num.toFixed(1)
+}
+
+/**
+ * Format rate for API (convert percentage to decimal)
+ */
+function formatRateForApi(value: string): string {
+  const num = parseFloat(value)
+  if (isNaN(num)) return '0'
+  // Convert percentage to decimal for storage
+  return (num / 100).toString()
+}
+
+/**
+ * Hook for managing property settings form state
+ * Provides form data, handlers, and save functionality
+ */
+export function usePropertySettings(propertyId: string | null | undefined) {
+  // Fetch property data
+  const {
+    data: property,
+    isLoading: isLoadingProperty,
+    error: propertyError,
+  } = useProperty(propertyId)
+
+  // Update mutation
+  const updateMutation = useUpdateProperty()
+
+  // Form state
+  const [formData, setFormData] = useState<PropertySettingsFormData>(DEFAULT_FORM_DATA)
+  const [isDirty, setIsDirty] = useState(false)
+  const [initialFormData, setInitialFormData] = useState<PropertySettingsFormData>(DEFAULT_FORM_DATA)
+
+  // Populate form data when property loads
+  useEffect(() => {
+    if (property) {
+      const newFormData: PropertySettingsFormData = {
+        // Basic Info
+        nickname: property.fullAddress || property.address || '',
+        propertyType: property.characteristics?.propertyType?.toLowerCase().replace(/\s+/g, '-') || 'single-family',
+
+        // Address
+        address: property.address || '',
+        city: property.city || '',
+        state: property.state || '',
+        zipCode: property.zipCode || '',
+
+        // Tax & Currency (not in current schema, using defaults)
+        taxJurisdiction: '',
+        currencyOverride: 'Portfolio Default (USD)',
+
+        // Acquisition Metadata
+        purchasePrice: property.acquisition?.purchasePrice
+          ? `$${Number(property.acquisition.purchasePrice).toLocaleString()}`
+          : '',
+        closingDate: property.acquisition?.purchaseDate || '',
+        yearBuilt: property.characteristics?.yearBuilt?.toString() || '',
+
+        // Asset DNA
+        investmentStrategy: 'yield-maximization',
+
+        // Calculation Presumptions
+        vacancyRate: parseRate(property.operatingExpenses?.vacancyRate, '5.0'),
+        maintenanceRate: parseRate(property.operatingExpenses?.maintenanceRate, '8.0'),
+        expenseInflation: '3.0', // Not in current schema
+        capexSinking: parseNumericString(property.operatingExpenses?.capexRate, '2500'),
+
+        // Notifications (not in current schema, using defaults)
+        notifications: {
+          email: true,
+          sms: false,
+          push: true,
+        },
+      }
+
+      setFormData(newFormData)
+      setInitialFormData(newFormData)
+      setIsDirty(false)
+    }
+  }, [property])
+
+  // Update a single field
+  const updateField = useCallback((
+    field: keyof Omit<PropertySettingsFormData, 'notifications'>,
+    value: string
+  ) => {
+    setFormData((prev) => {
+      const updated = { ...prev, [field]: value }
+      return updated
+    })
+    setIsDirty(true)
+  }, [])
+
+  // Update notification setting
+  const updateNotification = useCallback((
+    notifType: keyof PropertySettingsFormData['notifications'],
+    value: boolean
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      notifications: {
+        ...prev.notifications,
+        [notifType]: value,
+      },
+    }))
+    setIsDirty(true)
+  }, [])
+
+  // Reset form to initial values
+  const resetForm = useCallback(() => {
+    setFormData(initialFormData)
+    setIsDirty(false)
+  }, [initialFormData])
+
+  // Save form data to API
+  const saveSettings = useCallback(async () => {
+    if (!propertyId) {
+      throw new Error('Property ID is required')
+    }
+
+    // Parse purchase price (remove $ and commas)
+    const purchasePriceRaw = formData.purchasePrice.replace(/[$,]/g, '')
+    const purchasePrice = purchasePriceRaw ? parseFloat(purchasePriceRaw) : undefined
+
+    // Build update payload
+    const updatePayload: Record<string, unknown> = {
+      id: propertyId,
+      // Core property fields
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      zipCode: formData.zipCode,
+    }
+
+    // Characteristics
+    const characteristics: Record<string, unknown> = {}
+    if (formData.propertyType) {
+      // Convert type back to display format
+      const typeMap: Record<string, string> = {
+        'single-family': 'Single Family',
+        'multi-family': 'Multi-Family',
+        'commercial-retail': 'Commercial - Retail',
+        'industrial-flex': 'Industrial Flex',
+      }
+      characteristics.propertyType = typeMap[formData.propertyType] || formData.propertyType
+    }
+    if (formData.yearBuilt) {
+      characteristics.yearBuilt = parseInt(formData.yearBuilt, 10)
+    }
+    if (Object.keys(characteristics).length > 0) {
+      updatePayload.characteristics = characteristics
+    }
+
+    // Acquisition
+    const acquisition: Record<string, unknown> = {}
+    if (purchasePrice) {
+      acquisition.purchasePrice = purchasePrice
+    }
+    if (formData.closingDate) {
+      acquisition.purchaseDate = formData.closingDate
+    }
+    if (Object.keys(acquisition).length > 0) {
+      updatePayload.acquisition = acquisition
+    }
+
+    // Operating Expenses (calculation presumptions)
+    const operatingExpenses: Record<string, unknown> = {}
+    if (formData.vacancyRate) {
+      operatingExpenses.vacancyRate = formatRateForApi(formData.vacancyRate)
+    }
+    if (formData.maintenanceRate) {
+      operatingExpenses.maintenanceRate = formatRateForApi(formData.maintenanceRate)
+    }
+    if (formData.capexSinking) {
+      operatingExpenses.capexRate = formData.capexSinking
+    }
+    if (Object.keys(operatingExpenses).length > 0) {
+      updatePayload.operatingExpenses = operatingExpenses
+    }
+
+    // Execute update
+    await updateMutation.mutateAsync(updatePayload as { id: string })
+
+    // Reset dirty state after successful save
+    setInitialFormData(formData)
+    setIsDirty(false)
+  }, [propertyId, formData, updateMutation])
+
+  // Computed values
+  const isLoading = isLoadingProperty
+  const isSaving = updateMutation.isPending
+  const saveError = updateMutation.error
+  const hasError = !!propertyError || !!saveError
+
+  return {
+    // Data
+    formData,
+    property,
+    
+    // State
+    isLoading,
+    isSaving,
+    isDirty,
+    hasError,
+    propertyError,
+    saveError,
+    
+    // Actions
+    updateField,
+    updateNotification,
+    resetForm,
+    saveSettings,
+  }
+}
+
+export type UsePropertySettingsReturn = ReturnType<typeof usePropertySettings>

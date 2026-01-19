@@ -1,6 +1,7 @@
-import { FormLabel, Input, Select, cn } from '@axori/ui'
+import { Button, FormLabel, Input, Loading, Select, cn } from '@axori/ui'
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
+import { usePropertySettings } from '@/hooks/api'
 
 export const Route = createFileRoute(
   '/_authed/property-hub/$propertyId/settings',
@@ -9,89 +10,111 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const { propertyId } = Route.useParams()
+  
+  const {
+    formData,
+    isLoading,
+    isSaving,
+    isDirty,
+    hasError,
+    propertyError,
+    saveError,
+    updateField,
+    updateNotification,
+    resetForm,
+    saveSettings,
+  } = usePropertySettings(propertyId)
+
+  // Track selected DNA strategy locally (separate from form data for now)
+  const [selectedDna, setSelectedDna] = useState('Yield Maximization')
+
+  // Collaborators (static for now - future: connect to API)
+  const [collaborators] = useState([
+    { name: 'Sarah Jenkins', role: 'Partner', status: 'Active' },
+    { name: 'Michael Ross', role: 'CPA', status: 'View Only' },
+  ])
+
+  // Save handler with error handling
+  const handleSave = useCallback(async () => {
+    try {
+      await saveSettings()
+    } catch (error) {
+      console.error('Failed to save settings:', error)
+    }
+  }, [saveSettings])
+
   const cardClass = cn(
     'p-10 rounded-[3.5rem] border transition-all duration-500',
     'bg-white border-slate-200 shadow-sm',
     'dark:bg-[#1A1A1A] dark:border-white/5',
   )
 
-  const prop = {
-    nickname: 'The Golden Goose',
-    addr: '123 Main St, Austin, TX 78701',
-    thesis: 'Cash Flow Optimization',
-    currency: 'USD ($)',
-    city: 'Austin',
-    state: 'TX',
-    zip: '78701',
-    taxJurisdiction: 'Travis County CAD',
-    currencyOverride: 'Portfolio Default (USD)',
-    purchasePrice: '$425,000',
-    closingDate: '2021-04-12',
-    yearBuilt: '2021',
-    yieldMaximization: 'Yield Maximization',
-    equityGrowth: 'Equity Growth',
-    capitalRecirculation: 'Capital Recirculation',
-    collaborators: [
-      { name: 'John Doe', role: 'Owner', status: 'Active' },
-      { name: 'Jane Doe', role: 'Co-Owner', status: 'Active' },
-    ],
-    type: 'single-family',
-    notificationEngine: [
-      {
-        id: 'email',
-        label: 'Fiscal Ledger Digest',
-        sub: 'Weekly P&L Summaries',
-      },
-      {
-        id: 'sms',
-        label: 'Operational Emergency',
-        sub: 'Immediate Repairs/Calls',
-      },
-      {
-        id: 'push',
-        label: 'Legal Climate Shift',
-        sub: 'Zoning & Regulatory Updates',
-      },
-    ],
-    calculationPresumptions: [
-      { l: 'Vacancy Reserve', v: '5.0%', d: 'Calculated from Gross' },
-    ],
-    cloudConnect: [
-      {
-        id: 'appfolio',
-        label: 'AppFolio Active',
-        sub: 'Stream: AppFolio Active',
-      },
-    ],
-    dangerZone: [
-      {
-        t: 'Archive Asset',
-        d: 'Move this property to the historical archive. Recalculates portfolio aggregates but preserves documents.',
-        b: 'Confirm Archival',
-      },
-      {
-        t: 'Purge Fiscal Logs',
-        d: 'Delete all extracted P&L metadata, OCR receipts, and expense histories. Irreversible.',
-        b: 'Purge Logs',
-        danger: true,
-      },
-      {
-        t: 'Self-Destruct',
-        d: 'Complete deletion of property profile, document vault, and intelligence mapping.',
-        b: 'Destroy Asset',
-        danger: true,
-      },
-    ],
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="p-8 w-full flex items-center justify-center min-h-[400px]">
+        <Loading size="lg" />
+      </div>
+    )
   }
-  const [notifs, setNotifs] = useState({ email: true, sms: false, push: true })
 
-  const [collaborators] = useState([
-    { name: 'Sarah Jenkins', role: 'Partner', status: 'Active' },
-    { name: 'Michael Ross', role: 'CPA', status: 'View Only' },
-  ])
+  // Error state
+  if (hasError && propertyError) {
+    return (
+      <div className="p-8 w-full">
+        <div className={cn(cardClass, 'text-center py-20')}>
+          <h3 className="text-xl font-bold text-red-500 mb-4">
+            Failed to load property settings
+          </h3>
+          <p className="text-sm opacity-60">
+            {propertyError instanceof Error ? propertyError.message : 'Unknown error'}
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-8 w-full space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+      {/* Save Bar - Fixed at top when dirty */}
+      {isDirty && (
+        <div className="fixed top-20 left-0 right-0 z-50 flex justify-center animate-in slide-in-from-top-4 duration-300">
+          <div className="bg-slate-900 dark:bg-white text-white dark:text-black px-8 py-4 rounded-full shadow-2xl flex items-center gap-6">
+            <span className="text-sm font-bold">You have unsaved changes</span>
+            <div className="flex gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetForm}
+                disabled={isSaving}
+                className="text-white/70 hover:text-white dark:text-black/70 dark:hover:text-black"
+              >
+                Discard
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="bg-violet-500 hover:bg-violet-600 dark:bg-[#E8FF4D] dark:hover:bg-[#d4eb3d] dark:text-black"
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Error Toast */}
+      {saveError && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-3 rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <span className="text-sm font-bold">
+            Failed to save: {saveError instanceof Error ? saveError.message : 'Unknown error'}
+          </span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Column: Configuration & Collaboration */}
         <div className="lg:col-span-8 space-y-8">
@@ -107,12 +130,17 @@ function RouteComponent() {
                   <Input
                     type="text"
                     variant="rounded"
-                    defaultValue={prop.nickname}
+                    value={formData.nickname}
+                    onChange={(e) => updateField('nickname', e.target.value)}
                   />
                 </div>
                 <div className="space-y-1.5">
                   <FormLabel>Property Type</FormLabel>
-                  <Select variant="rounded" defaultValue={prop.type}>
+                  <Select
+                    variant="rounded"
+                    value={formData.propertyType}
+                    onChange={(e) => updateField('propertyType', e.target.value)}
+                  >
                     <option value="multi-family">Multi-Family Duplex</option>
                     <option value="single-family">
                       Single Family Residential
@@ -131,7 +159,8 @@ function RouteComponent() {
                   <Input
                     type="text"
                     variant="rounded"
-                    defaultValue={prop.addr}
+                    value={formData.address}
+                    onChange={(e) => updateField('address', e.target.value)}
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -140,7 +169,8 @@ function RouteComponent() {
                     <Input
                       type="text"
                       variant="rounded"
-                      defaultValue={prop.city}
+                      value={formData.city}
+                      onChange={(e) => updateField('city', e.target.value)}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -148,7 +178,8 @@ function RouteComponent() {
                     <Input
                       type="text"
                       variant="rounded"
-                      defaultValue={prop.state}
+                      value={formData.state}
+                      onChange={(e) => updateField('state', e.target.value)}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -156,7 +187,8 @@ function RouteComponent() {
                     <Input
                       type="text"
                       variant="rounded"
-                      defaultValue={prop.zip}
+                      value={formData.zipCode}
+                      onChange={(e) => updateField('zipCode', e.target.value)}
                     />
                   </div>
                 </div>
@@ -168,15 +200,21 @@ function RouteComponent() {
                   <Input
                     type="text"
                     variant="rounded"
-                    defaultValue="Travis County CAD"
+                    value={formData.taxJurisdiction}
+                    onChange={(e) => updateField('taxJurisdiction', e.target.value)}
+                    placeholder="e.g., Travis County CAD"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <FormLabel>Currency Override</FormLabel>
-                  <Select variant="rounded">
-                    <option>Portfolio Default (USD)</option>
-                    <option>Local (CAD)</option>
-                    <option>Local (EUR)</option>
+                  <Select
+                    variant="rounded"
+                    value={formData.currencyOverride}
+                    onChange={(e) => updateField('currencyOverride', e.target.value)}
+                  >
+                    <option value="Portfolio Default (USD)">Portfolio Default (USD)</option>
+                    <option value="Local (CAD)">Local (CAD)</option>
+                    <option value="Local (EUR)">Local (EUR)</option>
                   </Select>
                 </div>
               </div>
@@ -191,14 +229,21 @@ function RouteComponent() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-1.5">
                 <FormLabel>Purchase Price ($)</FormLabel>
-                <Input type="text" variant="rounded" defaultValue="$425,000" />
+                <Input
+                  type="text"
+                  variant="rounded"
+                  value={formData.purchasePrice}
+                  onChange={(e) => updateField('purchasePrice', e.target.value)}
+                  placeholder="$0"
+                />
               </div>
               <div className="space-y-1.5">
                 <FormLabel>Closing Date</FormLabel>
                 <Input
                   type="date"
                   variant="rounded"
-                  defaultValue="2021-04-12"
+                  value={formData.closingDate}
+                  onChange={(e) => updateField('closingDate', e.target.value)}
                 />
               </div>
               <div className="space-y-1.5">
@@ -206,7 +251,9 @@ function RouteComponent() {
                 <Input
                   type="text"
                   variant="rounded"
-                  defaultValue={prop.yearBuilt}
+                  value={formData.yearBuilt}
+                  onChange={(e) => updateField('yearBuilt', e.target.value)}
+                  placeholder="e.g., 2021"
                 />
               </div>
             </div>
@@ -238,7 +285,12 @@ function RouteComponent() {
               ].map((dna) => (
                 <button
                   key={dna}
-                  className={`p-6 rounded-[2rem] border text-left transition-all ${dna === 'Yield Maximization' ? 'bg-slate-900 text-white border-slate-900 shadow-xl dark:bg-white dark:text-black dark:border-white' : 'border-slate-100 hover:border-slate-300 dark:border-white/5 dark:hover:border-white/20'}`}
+                  onClick={() => setSelectedDna(dna)}
+                  className={`p-6 rounded-[2rem] border text-left transition-all ${
+                    dna === selectedDna
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-xl dark:bg-white dark:text-black dark:border-white'
+                      : 'border-slate-100 hover:border-slate-300 dark:border-white/5 dark:hover:border-white/20'
+                  }`}
                 >
                   <p className="text-[11px] font-black uppercase tracking-tight">
                     {dna}
@@ -317,17 +369,17 @@ function RouteComponent() {
             <div className="space-y-6">
               {[
                 {
-                  id: 'email',
+                  id: 'email' as const,
                   label: 'Fiscal Ledger Digest',
                   sub: 'Weekly P&L Summaries',
                 },
                 {
-                  id: 'sms',
+                  id: 'sms' as const,
                   label: 'Operational Emergency',
                   sub: 'Immediate Repairs/Calls',
                 },
                 {
-                  id: 'push',
+                  id: 'push' as const,
                   label: 'Legal Climate Shift',
                   sub: 'Zoning & Regulatory Updates',
                 },
@@ -342,16 +394,19 @@ function RouteComponent() {
                     </p>
                   </div>
                   <button
-                    onClick={() =>
-                      setNotifs({
-                        ...notifs,
-                        [n.id]: !notifs[n.id as keyof typeof notifs],
-                      })
-                    }
-                    className={`w-12 h-6 rounded-full transition-all relative ${notifs[n.id as keyof typeof notifs] ? 'bg-violet-600 dark:bg-[#E8FF4D]' : 'bg-slate-500/20'}`}
+                    onClick={() => updateNotification(n.id, !formData.notifications[n.id])}
+                    className={`w-12 h-6 rounded-full transition-all relative ${
+                      formData.notifications[n.id]
+                        ? 'bg-violet-600 dark:bg-[#E8FF4D]'
+                        : 'bg-slate-500/20'
+                    }`}
                   >
                     <div
-                      className={`absolute top-1 w-4 h-4 rounded-full transition-all ${notifs[n.id as keyof typeof notifs] ? 'right-1 bg-white dark:bg-black' : 'left-1 bg-slate-400'}`}
+                      className={`absolute top-1 w-4 h-4 rounded-full transition-all ${
+                        formData.notifications[n.id]
+                          ? 'right-1 bg-white dark:bg-black'
+                          : 'left-1 bg-slate-400'
+                      }`}
                     ></div>
                   </button>
                 </div>
@@ -366,36 +421,57 @@ function RouteComponent() {
             </h3>
             <div className="space-y-6">
               {[
-                { l: 'Vacancy Reserve', v: '5.0%', d: 'Calculated from Gross' },
                 {
-                  l: 'Maintenance Reserve',
-                  v: '8.0%',
-                  d: 'Based on asset age',
+                  field: 'vacancyRate' as const,
+                  label: 'Vacancy Reserve',
+                  desc: 'Calculated from Gross',
+                  suffix: '%',
                 },
-                { l: 'Expense Inflation', v: '3.0%', d: 'Annual projection' },
                 {
-                  l: 'CapEx Sinking',
-                  v: '$2,500',
-                  d: 'Target annual set-aside',
+                  field: 'maintenanceRate' as const,
+                  label: 'Maintenance Reserve',
+                  desc: 'Based on asset age',
+                  suffix: '%',
+                },
+                {
+                  field: 'expenseInflation' as const,
+                  label: 'Expense Inflation',
+                  desc: 'Annual projection',
+                  suffix: '%',
+                },
+                {
+                  field: 'capexSinking' as const,
+                  label: 'CapEx Sinking',
+                  desc: 'Target annual set-aside',
+                  prefix: '$',
                 },
               ].map((item) => (
                 <div
-                  key={item.l}
+                  key={item.field}
                   className="flex justify-between items-end border-b border-slate-500/10 pb-4 dark:border-white/5"
                 >
                   <div>
                     <p className="text-[10px] font-black uppercase text-slate-500">
-                      {item.l}
+                      {item.label}
                     </p>
                     <p className="text-[8px] font-bold opacity-30 uppercase">
-                      {item.d}
+                      {item.desc}
                     </p>
                   </div>
-                  <input
-                    type="text"
-                    defaultValue={item.v}
-                    className="w-16 text-right font-black text-sm bg-transparent outline-none border-none focus:text-violet-500 dark:focus:text-[#E8FF4D]"
-                  />
+                  <div className="flex items-center gap-1">
+                    {item.prefix && (
+                      <span className="font-black text-sm opacity-40">{item.prefix}</span>
+                    )}
+                    <input
+                      type="text"
+                      value={formData[item.field]}
+                      onChange={(e) => updateField(item.field, e.target.value)}
+                      className="w-16 text-right font-black text-sm bg-transparent outline-none border-none focus:text-violet-500 dark:focus:text-[#E8FF4D]"
+                    />
+                    {item.suffix && (
+                      <span className="font-black text-sm opacity-40">{item.suffix}</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -466,7 +542,11 @@ function RouteComponent() {
                 {item.d}
               </p>
               <button
-                className={`w-full py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${item.danger ? 'bg-red-500 text-white shadow-xl shadow-red-500/20 hover:scale-105' : 'border border-red-500/30 text-red-500 hover:bg-red-500/10'}`}
+                className={`w-full py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${
+                  item.danger
+                    ? 'bg-red-500 text-white shadow-xl shadow-red-500/20 hover:scale-105'
+                    : 'border border-red-500/30 text-red-500 hover:bg-red-500/10'
+                }`}
               >
                 {item.b}
               </button>
