@@ -15,6 +15,10 @@ import {
   propertyHistory,
   propertyTransactions,
   apiCache,
+  propertyDepreciation,
+  propertyImprovements,
+  costSegregationStudies,
+  annualDepreciationRecords,
 } from './schema'
 
 /**
@@ -240,4 +244,60 @@ export type PropertyFinances = any
 export type PropertyFinancesInsert = any
 
 // Note: PropertyManagement types are now defined above using the new property_management table
+
+// ============================================================================
+// Property Depreciation (Tax Shield Tracking)
+// ============================================================================
+
+/**
+ * Property Depreciation type inferred from Drizzle schema (for read operations)
+ */
+export type PropertyDepreciation = InferSelectModel<typeof propertyDepreciation>
+
+/**
+ * Property Depreciation insert type inferred from Drizzle schema (for insert operations)
+ */
+export type PropertyDepreciationInsert = InferInsertModel<typeof propertyDepreciation>
+
+// ============================================================================
+// Property Improvements (Capital Improvements that add to basis)
+// ============================================================================
+
+/**
+ * Property Improvements type inferred from Drizzle schema (for read operations)
+ */
+export type PropertyImprovement = InferSelectModel<typeof propertyImprovements>
+
+/**
+ * Property Improvements insert type inferred from Drizzle schema (for insert operations)
+ */
+export type PropertyImprovementInsert = InferInsertModel<typeof propertyImprovements>
+
+// ============================================================================
+// Cost Segregation Studies
+// ============================================================================
+
+/**
+ * Cost Segregation Study type inferred from Drizzle schema (for read operations)
+ */
+export type CostSegregationStudy = InferSelectModel<typeof costSegregationStudies>
+
+/**
+ * Cost Segregation Study insert type inferred from Drizzle schema (for insert operations)
+ */
+export type CostSegregationStudyInsert = InferInsertModel<typeof costSegregationStudies>
+
+// ============================================================================
+// Annual Depreciation Records
+// ============================================================================
+
+/**
+ * Annual Depreciation Record type inferred from Drizzle schema (for read operations)
+ */
+export type AnnualDepreciationRecord = InferSelectModel<typeof annualDepreciationRecords>
+
+/**
+ * Annual Depreciation Record insert type inferred from Drizzle schema (for insert operations)
+ */
+export type AnnualDepreciationRecordInsert = InferInsertModel<typeof annualDepreciationRecords>
 

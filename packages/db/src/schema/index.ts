@@ -514,6 +514,163 @@ export const propertyHistory = pgTable("property_history", {
   changedAt: timestamp("changed_at").defaultNow().notNull(),
 });
 
+// Depreciation type enum
+export const depreciationTypeEnum = pgEnum("depreciation_type", [
+  "residential", // 27.5 years
+  "commercial", // 39 years
+]);
+
+// Component depreciation class enum (for cost segregation)
+export const depreciationClassEnum = pgEnum("depreciation_class", [
+  "5_year", // 5-year property (appliances, carpets, etc.)
+  "7_year", // 7-year property (office furniture, fixtures)
+  "15_year", // 15-year property (land improvements, sidewalks)
+  "27_5_year", // 27.5-year residential
+  "39_year", // 39-year commercial
+]);
+
+// Property Depreciation - Main depreciation tracking (1:1)
+export const propertyDepreciation = pgTable("property_depreciation", {
+  propertyId: uuid("property_id")
+    .references(() => properties.id, { onDelete: "cascade" })
+    .primaryKey(),
+
+  // Depreciation Type
+  depreciationType: depreciationTypeEnum("depreciation_type").notNull().default("residential"),
+
+  // Placed in Service Date (when depreciation starts - IRS requirement)
+  placedInServiceDate: date("placed_in_service_date"),
+
+  // Cost Basis Components
+  purchasePrice: numeric("purchase_price", { precision: 12, scale: 2 }),
+  closingCosts: numeric("closing_costs", { precision: 10, scale: 2 }).default("0"),
+  initialImprovements: numeric("initial_improvements", { precision: 10, scale: 2 }).default("0"), // Pre-rental improvements
+
+  // Land Value (not depreciable)
+  landValue: numeric("land_value", { precision: 12, scale: 2 }),
+  landValueSource: text("land_value_source"), // "tax_assessment", "appraisal", "manual", "ratio"
+  landValueRatio: numeric("land_value_ratio", { precision: 5, scale: 4 }), // e.g., 0.20 = 20% of purchase price
+
+  // User's Marginal Tax Rate (for tax shield calculation)
+  marginalTaxRate: numeric("marginal_tax_rate", { precision: 5, scale: 4 }).default("0.24"), // e.g., 0.24 = 24%
+
+  // Accumulated Depreciation (for tracking)
+  accumulatedDepreciation: numeric("accumulated_depreciation", { precision: 12, scale: 2 }).default("0"),
+  lastDepreciationYear: integer("last_depreciation_year"), // Last tax year depreciation was claimed
+
+  // Notes for CPA
+  notes: text("notes"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Property Improvements - Track capital improvements that add to basis (1:many)
+export const propertyImprovements = pgTable("property_improvements", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  propertyId: uuid("property_id")
+    .references(() => properties.id, { onDelete: "cascade" })
+    .notNull(),
+
+  description: text("description").notNull(),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  completedDate: date("completed_date").notNull(),
+  placedInServiceDate: date("placed_in_service_date"), // May differ from completed date
+
+  // Depreciation class (determined by cost seg study or default to building class)
+  depreciationClass: depreciationClassEnum("depreciation_class").default("27_5_year"),
+
+  // Accumulated depreciation for this improvement
+  accumulatedDepreciation: numeric("accumulated_depreciation", { precision: 10, scale: 2 }).default("0"),
+
+  // Document reference
+  documentId: uuid("document_id"),
+
+  notes: text("notes"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  propertyIdIdx: index("idx_property_improvements_property_id").on(table.propertyId),
+}));
+
+// Cost Segregation Studies - Results from cost seg analysis (1:many, usually 1 per property)
+export const costSegregationStudies = pgTable("cost_segregation_studies", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  propertyId: uuid("property_id")
+    .references(() => properties.id, { onDelete: "cascade" })
+    .notNull(),
+
+  // Study Details
+  studyDate: date("study_date").notNull(),
+  studyProvider: text("study_provider"), // Company that performed the study
+  studyCost: numeric("study_cost", { precision: 10, scale: 2 }),
+
+  // Original Depreciable Basis Before Study
+  originalBasis: numeric("original_basis", { precision: 12, scale: 2 }).notNull(),
+
+  // Reclassified Amounts (moved from 27.5/39 year to accelerated classes)
+  amount5Year: numeric("amount_5_year", { precision: 10, scale: 2 }).default("0"),
+  amount7Year: numeric("amount_7_year", { precision: 10, scale: 2 }).default("0"),
+  amount15Year: numeric("amount_15_year", { precision: 10, scale: 2 }).default("0"),
+
+  // Remaining in original class after reclassification
+  amountRemaining: numeric("amount_remaining", { precision: 12, scale: 2 }).notNull(),
+
+  // Bonus Depreciation (100% for assets placed in service 2017-2022, then phases out)
+  bonusDepreciationPercent: numeric("bonus_depreciation_percent", { precision: 5, scale: 4 }).default("0"), // e.g., 0.80 = 80%
+  bonusDepreciationAmount: numeric("bonus_depreciation_amount", { precision: 12, scale: 2 }).default("0"),
+
+  // Tax Year Applied
+  taxYearApplied: integer("tax_year_applied"),
+
+  // Document reference
+  documentId: uuid("document_id"),
+
+  notes: text("notes"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  propertyIdIdx: index("idx_cost_seg_studies_property_id").on(table.propertyId),
+}));
+
+// Annual Depreciation Records - Track depreciation claimed per tax year (1:many)
+export const annualDepreciationRecords = pgTable("annual_depreciation_records", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  propertyId: uuid("property_id")
+    .references(() => properties.id, { onDelete: "cascade" })
+    .notNull(),
+
+  taxYear: integer("tax_year").notNull(),
+
+  // Regular Depreciation
+  regularDepreciation: numeric("regular_depreciation", { precision: 10, scale: 2 }).notNull(),
+
+  // Bonus Depreciation (from cost seg)
+  bonusDepreciation: numeric("bonus_depreciation", { precision: 12, scale: 2 }).default("0"),
+
+  // Improvement Depreciation
+  improvementDepreciation: numeric("improvement_depreciation", { precision: 10, scale: 2 }).default("0"),
+
+  // Total Depreciation for the Year
+  totalDepreciation: numeric("total_depreciation", { precision: 12, scale: 2 }).notNull(),
+
+  // Months depreciated (for mid-month convention in first/last year)
+  monthsDepreciated: integer("months_depreciated").notNull().default(12),
+
+  // Verified by CPA
+  verifiedByCpa: boolean("verified_by_cpa").default(false),
+  verifiedDate: date("verified_date"),
+
+  notes: text("notes"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  propertyYearIdx: index("idx_annual_depreciation_property_year").on(table.propertyId, table.taxYear),
+}));
+
 // Unified transaction category enum (combines expense and income categories)
 export const transactionCategoryEnum = pgEnum("transaction_category", [
   // Income categories
@@ -784,9 +941,16 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
     fields: [properties.id],
     references: [propertyManagement.propertyId],
   }),
+  depreciation: one(propertyDepreciation, {
+    fields: [properties.id],
+    references: [propertyDepreciation.propertyId],
+  }),
   loans: many(loans),
   history: many(propertyHistory),
   transactions: many(propertyTransactions),
+  improvements: many(propertyImprovements),
+  costSegStudies: many(costSegregationStudies),
+  depreciationRecords: many(annualDepreciationRecords),
 }));
 
 export const propertyCharacteristicsRelations = relations(propertyCharacteristics, ({ one }) => ({
@@ -884,6 +1048,35 @@ export const propertyTransactionsRelations = relations(propertyTransactions, ({ 
   //   fields: [propertyTransactions.documentId],
   //   references: [propertyDocuments.id],
   // }),
+}));
+
+// Property Depreciation Relations
+export const propertyDepreciationRelations = relations(propertyDepreciation, ({ one }) => ({
+  property: one(properties, {
+    fields: [propertyDepreciation.propertyId],
+    references: [properties.id],
+  }),
+}));
+
+export const propertyImprovementsRelations = relations(propertyImprovements, ({ one }) => ({
+  property: one(properties, {
+    fields: [propertyImprovements.propertyId],
+    references: [properties.id],
+  }),
+}));
+
+export const costSegregationStudiesRelations = relations(costSegregationStudies, ({ one }) => ({
+  property: one(properties, {
+    fields: [costSegregationStudies.propertyId],
+    references: [properties.id],
+  }),
+}));
+
+export const annualDepreciationRecordsRelations = relations(annualDepreciationRecords, ({ one }) => ({
+  property: one(properties, {
+    fields: [annualDepreciationRecords.propertyId],
+    references: [properties.id],
+  }),
 }));
 
 export const userMarketsRelations = relations(userMarkets, ({ one }) => ({
