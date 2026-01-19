@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { db } from "@axori/db";
-import { users, userMarkets, markets } from "@axori/db/src/schema";
-import { eq } from "drizzle-orm";
+import { users, userMarkets, markets, portfolios, userPortfolios } from "@axori/db/src/schema";
+import { eq } from "@axori/db";
 
 const usersRouter = new Hono();
 
@@ -51,6 +51,27 @@ usersRouter.post("/", async (c) => {
       })
       .returning();
 
+    // Auto-create default portfolio for new user
+    const portfolioName = firstName && lastName
+      ? `${firstName} ${lastName}'s Portfolio`
+      : `${email.split('@')[0]}'s Portfolio`;
+
+    const [defaultPortfolio] = await db
+      .insert(portfolios)
+      .values({
+        name: portfolioName,
+        description: "Default portfolio",
+        createdBy: newUser.id,
+      })
+      .returning();
+
+    // Create user-portfolio relationship with owner role
+    await db.insert(userPortfolios).values({
+      userId: newUser.id,
+      portfolioId: defaultPortfolio.id,
+      role: "owner",
+    });
+
     return c.json(
       {
         id: newUser.id,
@@ -58,6 +79,7 @@ usersRouter.post("/", async (c) => {
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         clerkId: newUser.clerkId,
+        defaultPortfolioId: defaultPortfolio.id,
       },
       201
     );
@@ -105,12 +127,119 @@ usersRouter.get("/me", async (c) => {
     return c.json({ error: "User not found" }, 404);
   }
 
+  // Ensure user has a default portfolio (create if missing)
+  const userPortfoliosList = await db
+    .select()
+    .from(userPortfolios)
+    .where(eq(userPortfolios.userId, user.id))
+    .limit(1);
+
+  if (userPortfoliosList.length === 0) {
+    // User exists but has no portfolio - create default one
+    const portfolioName = user.firstName && user.lastName
+      ? `${user.firstName} ${user.lastName}'s Portfolio`
+      : `${user.email.split('@')[0]}'s Portfolio`;
+
+    const [defaultPortfolio] = await db
+      .insert(portfolios)
+      .values({
+        name: portfolioName,
+        description: "Default portfolio",
+        createdBy: user.id,
+      })
+      .returning();
+
+    await db.insert(userPortfolios).values({
+      userId: user.id,
+      portfolioId: defaultPortfolio.id,
+      role: "owner",
+    });
+  }
+
   return c.json({
     id: user.id,
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
     clerkId: user.clerkId,
+  });
+});
+
+// GET /api/users/me/portfolio - Get current user's default portfolio
+usersRouter.get("/me/portfolio", async (c) => {
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "User not found" }, 404);
+  }
+
+  // Get user's portfolios (prefer owner role, or first one)
+  const userPortfoliosList = await db
+    .select({
+      portfolioId: userPortfolios.portfolioId,
+      role: userPortfolios.role,
+      portfolio: {
+        id: portfolios.id,
+        name: portfolios.name,
+        description: portfolios.description,
+        createdBy: portfolios.createdBy,
+        createdAt: portfolios.createdAt,
+        updatedAt: portfolios.updatedAt,
+      },
+    })
+    .from(userPortfolios)
+    .innerJoin(portfolios, eq(userPortfolios.portfolioId, portfolios.id))
+    .where(eq(userPortfolios.userId, user.id));
+
+  if (userPortfoliosList.length === 0) {
+    // No portfolio found - create default one (shouldn't happen but handle gracefully)
+    const portfolioName = user.firstName && user.lastName
+      ? `${user.firstName} ${user.lastName}'s Portfolio`
+      : `${user.email.split('@')[0]}'s Portfolio`;
+
+    const [defaultPortfolio] = await db
+      .insert(portfolios)
+      .values({
+        name: portfolioName,
+        description: "Default portfolio",
+        createdBy: user.id,
+      })
+      .returning();
+
+    await db.insert(userPortfolios).values({
+      userId: user.id,
+      portfolioId: defaultPortfolio.id,
+      role: "owner",
+    });
+
+    return c.json({
+      id: defaultPortfolio.id,
+      name: defaultPortfolio.name,
+      description: defaultPortfolio.description,
+      role: "owner",
+    });
+  }
+
+  // Prefer owner role, otherwise return first portfolio
+  const ownerPortfolio = userPortfoliosList.find((up) => up.role === "owner");
+  const defaultPortfolio = ownerPortfolio || userPortfoliosList[0];
+
+  return c.json({
+    id: defaultPortfolio.portfolio.id,
+    name: defaultPortfolio.portfolio.name,
+    description: defaultPortfolio.portfolio.description,
+    role: defaultPortfolio.role,
   });
 });
 

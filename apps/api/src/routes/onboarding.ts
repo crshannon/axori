@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { db } from "@axori/db";
 import { users, userMarkets } from "@axori/db/src/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray } from "@axori/db";
 import {
   onboardingUpdateSchema,
   onboardingDataSchema,
@@ -55,13 +55,14 @@ onboardingRouter.get("/", async (c) => {
 
   // Parse onboarding data if it exists
   let onboardingData = null;
-  if (user.onboardingData) {
+  if (user.onboardingData && typeof user.onboardingData === 'string' && user.onboardingData !== 'undefined') {
     try {
       onboardingData = JSON.parse(user.onboardingData);
       // Validate parsed data
       onboardingDataSchema.parse(onboardingData);
     } catch (error) {
       // If parsing fails, return null
+      console.error('Error parsing onboarding data:', error);
       onboardingData = null;
     }
   }
@@ -158,7 +159,7 @@ onboardingRouter.put("/", async (c) => {
         validated.markets.map((marketId) => ({
           userId: user.id,
           marketId,
-          relationshipType: "target_market",
+          relationshipType: "target_market" as const,
         }))
       );
     }
@@ -167,7 +168,7 @@ onboardingRouter.put("/", async (c) => {
   // Update onboarding data (merge with existing)
   if (validated.data) {
     let existingData = {};
-    if (user.onboardingData) {
+    if (user.onboardingData && typeof user.onboardingData === 'string' && user.onboardingData !== 'undefined') {
       try {
         existingData = JSON.parse(user.onboardingData);
       } catch {
@@ -182,10 +183,10 @@ onboardingRouter.put("/", async (c) => {
     updateData.onboardingData = JSON.stringify(mergedData);
   } else if (validated.markets) {
     // If only markets are provided without other data, still update onboardingData
-    let existingData = {};
-    if (user.onboardingData) {
+    let existingData: Record<string, unknown> = {};
+    if (user.onboardingData && typeof user.onboardingData === 'string' && user.onboardingData !== 'undefined') {
       try {
-        existingData = JSON.parse(user.onboardingData);
+        existingData = JSON.parse(user.onboardingData) as Record<string, unknown>;
       } catch {
         existingData = {};
       }
@@ -216,7 +217,7 @@ onboardingRouter.put("/", async (c) => {
 
   // Parse onboarding data for response
   let onboardingData = null;
-  if (updated.onboardingData) {
+  if (updated.onboardingData && typeof updated.onboardingData === 'string' && updated.onboardingData !== 'undefined') {
     try {
       onboardingData = JSON.parse(updated.onboardingData);
     } catch {

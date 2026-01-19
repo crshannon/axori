@@ -2,8 +2,10 @@ import { HTMLAttributes, ReactNode } from "react";
 import { cn } from "../utils/cn";
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "bento";
+  variant?: "default" | "bento" | "rounded";
   theme?: "light" | "dark";
+  padding?: "sm" | "md" | "lg" | "xl";
+  radius?: "sm" | "md" | "lg" | "xl";
   children?: ReactNode;
 }
 
@@ -12,21 +14,44 @@ export const Card = ({
   children, 
   variant = "default",
   theme,
+  padding = "md",
+  radius = "md",
   ...props 
 }: CardProps) => {
   const isBento = variant === "bento";
+  const isRounded = variant === "rounded";
+  
+  // Padding mapping for rounded variant
+  const paddingMap = {
+    sm: "p-6",
+    md: "p-8",
+    lg: "p-10",
+    xl: "p-12",
+  };
+
+  // Radius mapping for rounded variant
+  const radiusMap = {
+    sm: "rounded-[2rem]",
+    md: "rounded-[2.5rem]",
+    lg: "rounded-[3rem]",
+    xl: "rounded-[3.5rem]",
+  };
   
   return (
     <div
       className={cn(
-        "shadow-sm transition-all duration-500",
+        "transition-all duration-500",
         // Default variant
-        variant === "default" && "rounded-lg border border-gray-200 bg-white",
+        variant === "default" && "shadow-sm rounded-lg border border-gray-200 bg-white",
         // Bento variant with theme support - larger rounded corners
-        isBento && "rounded-2xl",
+        isBento && "shadow-sm rounded-2xl",
         isBento && theme === "dark" && "bg-white text-black",
         isBento && theme === "light" && "bg-slate-900 text-white",
         isBento && !theme && "border border-gray-200 bg-white",
+        // Rounded variant - modern card style used throughout the app
+        isRounded && "border shadow-sm bg-white border-slate-200 dark:bg-[#1A1A1A] dark:border-white/5",
+        isRounded && paddingMap[padding],
+        isRounded && radiusMap[radius],
         className
       )}
       {...props}

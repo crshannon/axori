@@ -2,6 +2,28 @@
 
 This guide outlines best practices for maintaining consistency and quality across the Axori application.
 
+## Documentation and Planning
+
+### Plan Before You Build
+
+For any major architectural change (new tables, migrations, refactors):
+
+1. **Create a Plan** - Document your approach before starting
+   - Create versioned folder: `docs/architecture/plans/003-feature-name/`
+   - Write `SUMMARY.md` - Quick read (1-2 pages) for stakeholders
+   - Write `EXECUTION.md` - Detailed guide for implementation
+
+2. **Document as You Go** - Don't wait until the end
+   - Update execution plan as you work
+   - Note decisions and trade-offs
+   - Track file changes
+
+3. **Archive When Complete** - Move to completed folder
+   - Create `COMPLETION.md` summary
+   - Move folder to `docs/architecture/completed/`
+
+See [planning-workflow.md](./planning-workflow.md) for detailed templates and workflow.
+
 ## Naming Conventions
 
 ### Database Schema
@@ -15,7 +37,9 @@ This guide outlines best practices for maintaining consistency and quality acros
 // ✅ Correct naming
 export const properties = pgTable("properties", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id).notNull(),
+  userId: uuid("user_id")
+    .references(() => users.id)
+    .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 ```
@@ -28,8 +52,8 @@ export const properties = pgTable("properties", {
 
 ```typescript
 // ✅ Correct type naming
-export type Property = InferSelectModel<typeof properties>
-export type PropertyInsert = InferInsertModel<typeof properties>
+export type Property = InferSelectModel<typeof properties>;
+export type PropertyInsert = InferInsertModel<typeof properties>;
 ```
 
 ### API Routes
@@ -55,9 +79,15 @@ Group related tables in the same schema file:
 
 ```typescript
 // packages/db/src/schema/properties.ts
-export const properties = pgTable("properties", { /* ... */ });
-export const propertyImages = pgTable("property_images", { /* ... */ });
-export const propertyAnalytics = pgTable("property_analytics", { /* ... */ });
+export const properties = pgTable("properties", {
+  /* ... */
+});
+export const propertyImages = pgTable("property_images", {
+  /* ... */
+});
+export const propertyAnalytics = pgTable("property_analytics", {
+  /* ... */
+});
 ```
 
 ### Index File Pattern
@@ -66,9 +96,9 @@ Re-export all schemas from an index file:
 
 ```typescript
 // packages/db/src/schema/index.ts
-export * from './users'
-export * from './properties'
-export * from './property-images'
+export * from "./users";
+export * from "./properties";
+export * from "./property-images";
 ```
 
 ### Schema Relationships
@@ -79,7 +109,9 @@ Define relationships explicitly with foreign keys:
 // ✅ Explicit foreign key
 export const properties = pgTable("properties", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id).notNull(),
+  userId: uuid("user_id")
+    .references(() => users.id)
+    .notNull(),
   // ...
 });
 ```
@@ -157,14 +189,14 @@ Provide clear, user-friendly error messages:
 
 ```typescript
 // ✅ Good error messages
-z.string().min(1, "Address is required")
-z.string().email("Please enter a valid email address")
-z.string().regex(/^\d{5}(-\d{4})?$/, "ZIP code must be 5 digits (e.g., 12345)")
+z.string().min(1, "Address is required");
+z.string().email("Please enter a valid email address");
+z.string().regex(/^\d{5}(-\d{4})?$/, "ZIP code must be 5 digits (e.g., 12345)");
 
 // ❌ Bad error messages
-z.string().min(1)
-z.string().email()
-z.string().regex(/^\d{5}(-\d{4})?$/)
+z.string().min(1);
+z.string().email();
+z.string().regex(/^\d{5}(-\d{4})?$/);
 ```
 
 ### Reusable Validation Patterns
@@ -174,7 +206,9 @@ Create reusable validation patterns:
 ```typescript
 // packages/shared/src/validation/patterns.ts
 export const emailSchema = z.string().email("Invalid email address");
-export const zipCodeSchema = z.string().regex(/^\d{5}(-\d{4})?$/, "Invalid ZIP code");
+export const zipCodeSchema = z
+  .string()
+  .regex(/^\d{5}(-\d{4})?$/, "Invalid ZIP code");
 export const stateSchema = z.string().length(2, "State must be 2 characters");
 
 // Use in schemas
@@ -189,16 +223,106 @@ export const propertyInsertSchema = z.object({
 
 ## Error Handling Consistency
 
-### API Error Response Format
+**⚠️ IMPORTANT: All API routes MUST use centralized error handling utilities from `apps/api/src/utils/errors.ts`**
 
-Use consistent error response format:
+### Centralized Error Handling
+
+Use the error handling utilities to avoid hunting for schema/type/Zod errors:
+
+```typescript
+import {
+  withErrorHandling,
+  validateData,
+  validateRequest,
+  handleError,
+} from "../utils/errors";
+```
+
+### Recommended Patterns
+
+#### Pattern 1: Using `withErrorHandling` Wrapper (Recommended)
+
+Wrap route handlers for automatic error handling:
+
+```typescript
+// ✅ Automatic error handling with logging
+propertiesRouter.post(
+  "/",
+  withErrorHandling(
+    async (c) => {
+      const body = await c.req.json();
+      const validated = validateData(body, propertyInsertSchema, {
+        operation: "createProperty",
+      });
+      // ... handler logic
+      return c.json({ property }, 201);
+    },
+    { operation: "createProperty" }
+  )
+);
+```
+
+#### Pattern 2: Using `validateData` for Nested Validation
+
+For validating non-request data (e.g., nested objects):
+
+```typescript
+// ✅ Validate nested objects with context logging
+if (rentalIncome) {
+  const rentalIncomeData = validateData(
+    { propertyId: id, ...rentalIncome },
+    propertyRentalIncomeInsertSchema,
+    { operation: "updatePropertyRentalIncome" }
+  );
+  // ... use validated data
+}
+```
+
+#### Pattern 3: Manual Error Handling (For Complex Cases)
+
+For complex error handling within a try-catch:
+
+```typescript
+// ✅ Manual error handling with context
+try {
+  // ... complex logic
+} catch (error) {
+  const handled = handleError(error, {
+    operation: "updateProperty",
+    params: { id },
+  });
+
+  const responseBody: Record<string, unknown> = { error: handled.error };
+  if ("details" in handled) {
+    responseBody.details = handled.details;
+  }
+  if ("message" in handled && handled.message) {
+    responseBody.message = handled.message;
+  }
+
+  return c.json(
+    responseBody,
+    handled.statusCode as 400 | 401 | 404 | 409 | 500
+  );
+}
+```
+
+### Error Response Format
+
+All errors follow a consistent format:
 
 ```typescript
 // ✅ Consistent error format
 {
-  "error": "Property not found",
-  "code": "PROPERTY_NOT_FOUND",  // Optional: error code
-  "details": {}  // Optional: additional details
+  "error": "Validation failed",
+  "details": [  // Only for Zod validation errors
+    {
+      "code": "invalid_type",
+      "path": ["propertyId"],
+      "message": "Expected string, received undefined"
+    }
+  ],
+  "message": "Optional: Additional context"  // Optional: for other errors
 }
 
 // Status codes
@@ -207,37 +331,70 @@ Use consistent error response format:
 400 - Bad Request (validation errors)
 401 - Unauthorized
 404 - Not Found
+409 - Conflict (duplicate entry)
 500 - Internal Server Error
 ```
 
-### Error Handling Pattern
+### Error Logging
+
+All errors are automatically logged with context:
 
 ```typescript
-// ✅ Consistent error handling
-propertiesRouter.get("/:id", async (c) => {
-  try {
-    const { userId } = c.req.var.auth;
-    
-    if (!userId) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
+// Validation errors are logged as:
+[VALIDATION ERROR] {
+  route: "/api/properties/123",
+  operation: "updateProperty",
+  errors: [...],
+  receivedData: {...}
+}
 
-    // ... logic
-    
-    return c.json({ property });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return c.json({ 
-        error: "Validation failed", 
-        details: error.errors 
-      }, 400);
-    }
-    
-    console.error("Error:", error);
-    return c.json({ error: "Internal server error" }, 500);
-  }
-});
+// API errors are logged as:
+[API ERROR] {
+  route: "/api/properties/123",
+  operation: "updateProperty",
+  errorMessage: "...",
+  errorStack: "...",
+  errorType: "ApiError"
+}
 ```
+
+### Anti-Patterns (Do NOT Use)
+
+```typescript
+// ❌ Manual error handling without utilities
+try {
+  const validated = schema.parse(body);
+} catch (error) {
+  if (error instanceof z.ZodError) {
+    return c.json({ error: "Validation failed", details: error.errors }, 400);
+  }
+  console.error("Error:", error);
+  return c.json({ error: "Internal server error" }, 500);
+}
+
+// ❌ Silent failures
+try {
+  // ... logic
+} catch (error) {
+  // No logging or context!
+  return c.json({ error: "Error occurred" }, 500);
+}
+
+// ❌ Inconsistent error formats
+catch (error) {
+  return c.json({ message: "Failed" }, 400);  // Using "message" instead of "error"
+}
+```
+
+### Benefits of Centralized Error Handling
+
+1. **No More Hunting** - All validation errors are logged with full context (route, operation, received data)
+2. **Consistent Responses** - Error responses follow the same format across all routes
+3. **Better Debugging** - Error logs include route, operation, and received data automatically
+4. **Type Safety** - Validated data is properly typed
+5. **Database Errors** - PostgreSQL error codes are automatically handled (unique constraints, foreign keys, etc.)
+
+See `apps/api/src/utils/README.md` for detailed usage guide and migration examples.
 
 ## Code Organization
 
@@ -294,11 +451,13 @@ import { requireAuth } from "../utils/auth";
 
 ```typescript
 // 1. Define schema
-export const properties = pgTable("properties", { /* ... */ });
+export const properties = pgTable("properties", {
+  /* ... */
+});
 
 // 2. Infer types
-export type Property = InferSelectModel<typeof properties>
-export type PropertyInsert = InferInsertModel<typeof properties>
+export type Property = InferSelectModel<typeof properties>;
+export type PropertyInsert = InferInsertModel<typeof properties>;
 
 // 3. Use in API
 async function getProperty(id: string): Promise<Property | null> {
@@ -327,15 +486,21 @@ Add indexes for frequently queried fields:
 
 ```typescript
 // Add indexes for foreign keys and search fields
-export const properties = pgTable("properties", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id).notNull(),
-  address: text("address").notNull(),
-  // ...
-}, (table) => ({
-  userIdIdx: index("properties_user_id_idx").on(table.userId),
-  addressIdx: index("properties_address_idx").on(table.address),
-}));
+export const properties = pgTable(
+  "properties",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    address: text("address").notNull(),
+    // ...
+  },
+  (table) => ({
+    userIdIdx: index("properties_user_id_idx").on(table.userId),
+    addressIdx: index("properties_address_idx").on(table.address),
+  })
+);
 ```
 
 ### Query Optimization
@@ -354,15 +519,15 @@ Add JSDoc comments for complex types and functions:
 ```typescript
 /**
  * User profile type inferred from Drizzle schema (for read operations)
- * 
+ *
  * @example
  * const user: UserProfile = await db.select().from(users).limit(1)
  */
-export type UserProfile = InferSelectModel<typeof users>
+export type UserProfile = InferSelectModel<typeof users>;
 
 /**
  * Creates a new property for the authenticated user
- * 
+ *
  * @param data - Property data (validated with Zod)
  * @returns Created property
  * @throws {Error} If user is not authenticated
@@ -375,9 +540,9 @@ async function createProperty(data: PropertyInsert): Promise<Property> {
 ## Summary
 
 Follow these best practices to ensure:
+
 - ✅ Consistent naming across the codebase
 - ✅ Maintainable and scalable architecture
 - ✅ Type safety throughout the stack
 - ✅ Clear error handling and validation
 - ✅ Well-organized and documented code
-

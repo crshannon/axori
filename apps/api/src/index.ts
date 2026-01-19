@@ -41,6 +41,18 @@ import { logger } from "hono/logger";
 // Clerk middleware setup - uncomment when ready
 // import { clerkMiddleware } from "@clerk/clerk-sdk-node/hono";
 
+// Initialize tracking
+import { tracking } from "./utils/tracking";
+import { initializePostHog } from "./utils/tracking/providers/posthog";
+
+const posthogProvider = initializePostHog();
+if (posthogProvider) {
+  tracking.initialize(posthogProvider, true);
+  console.log("✓ PostHog tracking initialized");
+} else {
+  console.log("⚠️  Tracking disabled (no PostHog API key)");
+}
+
 const app = new Hono();
 
 // Middleware
@@ -63,10 +75,12 @@ import propertiesRouter from "./routes/properties";
 import onboardingRouter from "./routes/onboarding";
 import usersRouter from "./routes/users";
 import marketsRouter from "./routes/markets";
+import mapboxRouter from "./routes/mapbox";
 app.route("/api/properties", propertiesRouter);
 app.route("/api/onboarding", onboardingRouter);
 app.route("/api/users", usersRouter);
 app.route("/api/markets", marketsRouter);
+app.route("/api/mapbox", mapboxRouter);
 
 const port = Number(process.env.PORT) || 3001;
 

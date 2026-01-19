@@ -7,6 +7,9 @@ export const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
+// Re-export transaction category utilities
+export * from "./transaction-categories";
+
 export const formatDate = (date: Date | string): string => {
   return new Intl.DateTimeFormat("en-US", {
     year: "numeric",

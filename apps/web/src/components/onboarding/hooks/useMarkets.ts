@@ -9,7 +9,7 @@ export interface UseMarketsOptions {
   investmentProfile?: 'cash_flow' | 'appreciation' | 'hybrid'
   active?: boolean
   trending?: boolean
-  ids?: string[] // Array of market IDs to fetch
+  ids?: Array<string> // Array of market IDs to fetch
 }
 
 export function useMarkets(options: UseMarketsOptions = {}) {
@@ -22,7 +22,7 @@ export function useMarkets(options: UseMarketsOptions = {}) {
       if (search) params.append('search', search)
       if (state) params.append('state', state)
       if (investmentProfile) params.append('investment_profile', investmentProfile)
-      if (active !== undefined) params.append('active', active.toString())
+      params.append('active', active.toString())
       if (trending) params.append('trending', 'true')
       if (ids && ids.length > 0) params.append('ids', ids.join(','))
 
@@ -30,7 +30,7 @@ export function useMarkets(options: UseMarketsOptions = {}) {
       if (!response.ok) {
         throw new Error('Failed to fetch markets')
       }
-      return response.json() as Promise<Market[]>
+      return response.json() as Promise<Array<Market>>
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   })

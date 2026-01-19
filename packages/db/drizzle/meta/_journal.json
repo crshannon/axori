@@ -5,8 +5,43 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1766366774364,
-      "tag": "0000_rare_speed_demon",
+      "when": 1768068609123,
+      "tag": "0000_heavy_gladiator",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1768111433779,
+      "tag": "0001_conscious_joshua_kane",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768535178563,
+      "tag": "0002_cynical_misty_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1737062400000,
+      "tag": "0003_unified_transactions",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1737062500000,
+      "tag": "0004_drop_property_expenses",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1737062600000,
+      "tag": "0005_add_lease_dates_to_rental_income",
       "breakpoints": true
     }
   ]

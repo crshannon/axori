@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUser } from '@clerk/clerk-react'
 import type { OnboardingData, OnboardingUpdate } from '../types'
 
@@ -24,7 +24,7 @@ export function useOnboarding() {
           credentials: 'include',
           body: JSON.stringify({
             email:
-              (user.emailAddresses && user.emailAddresses[0]?.emailAddress) ||
+              user.emailAddresses[0]?.emailAddress ||
               user.primaryEmailAddress?.emailAddress ||
               '',
             firstName: user.firstName || null,

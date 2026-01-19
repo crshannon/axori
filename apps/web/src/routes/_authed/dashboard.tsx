@@ -3,6 +3,7 @@ import { useUser } from '@clerk/tanstack-react-start'
 import { useEffect } from 'react'
 import { Body, Caption, Heading, Label, Overline, Typography } from '@axori/ui'
 import PropertyScoreGauge from '@/components/home/PropertyScoreGauge'
+import { PageHeader } from '@/components/layouts/PageHeader'
 import { cn } from '@/utils/helpers'
 import { useOnboardingStatus } from '@/utils/onboarding'
 import { useTheme } from '@/utils/providers/theme-provider'
@@ -43,109 +44,81 @@ function RouteComponent() {
 
   return (
     <main className="flex-grow flex flex-col overflow-y-auto max-h-screen">
-      {/* Top Header - Glassmorphism for light mode */}
-      <header
-        className={`px-8 py-6 flex items-center justify-between transition-all duration-500 sticky top-0 z-40 backdrop-blur-xl ${
-          isDark
-            ? 'bg-black/60 border-b border-white/5'
-            : 'bg-white/80 border-b border-slate-200 shadow-sm'
-        }`}
-      >
-        <div>
-          <Heading
-            level={3}
-            className={cn(isDark ? 'text-white' : 'text-slate-900')}
-          >
-            Portfolio Overview
-          </Heading>
-          <Caption
-            className={cn('mt-1', isDark ? 'text-white/60' : 'text-slate-400')}
-          >
-            Good morning, {user?.firstName || 'Investor'}
-          </Caption>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className={`relative hidden md:block`}>
-            <svg
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search properties..."
-              className={`pl-12 pr-6 py-3 rounded-full text-xs font-bold border transition-all w-72 outline-none ${
-                isDark
-                  ? 'bg-white/5 border-white/10 text-white focus:bg-white/10 focus:border-[#E8FF4D]/30'
-                  : 'bg-slate-100 border-slate-200 text-slate-900 focus:bg-white focus:shadow-lg focus:border-violet-300 shadow-inner'
-              }`}
-            />
-          </div>
-          <button
-            className={`relative p-2.5 rounded-full transition-all hover:scale-110 ${
-              isDark
-                ? 'bg-white/5 hover:bg-white/10'
-                : 'bg-slate-100 hover:bg-slate-200'
-            }`}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-            <span
-              className={`absolute top-1 right-1 w-2.5 h-2.5 rounded-full border-2 bg-red-500 ${
-                isDark ? 'border-black' : 'border-white'
-              }`}
-            ></span>
-          </button>
-          <div
-            className={`flex items-center gap-3 pl-6 border-l ${
-              isDark ? 'border-white/10' : 'border-slate-200'
-            }`}
-          >
-            <div className="text-right hidden sm:block">
-              <Overline
-                className={cn(isDark ? 'text-white/40' : 'text-slate-400')}
+      <PageHeader
+        title="Portfolio Overview"
+        rightContent={
+          <>
+            <div className={`relative hidden md:block`}>
+              <svg
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
               >
-                Account #{user?.id ? user.id.slice(-4) : '9042'}
-              </Overline>
-              <Label
-                size="sm"
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search properties..."
+                className={`pl-12 pr-6 py-3 rounded-full text-xs font-bold border transition-all w-72 outline-none ${
+                  isDark
+                    ? 'bg-white/5 border-white/10 text-white focus:bg-white/10 focus:border-[#E8FF4D]/30'
+                    : 'bg-slate-100 border-slate-200 text-slate-900 focus:bg-white focus:shadow-lg focus:border-violet-300 shadow-inner'
+                }`}
+              />
+            </div>
+            <button className="relative cursor-pointer bg-slate-900 dark:bg-[#1A1A1A] hover:bg-black dark:hover:bg-[#252525] text-white dark:text-slate-300 text-xs font-bold p-3 rounded-full transition-all border border-white/5 shadow-sm dark:shadow-black/20">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              <span
+                className={`absolute top-1 right-1 w-2.5 h-2.5 rounded-full border-2 bg-red-500 ${
+                  isDark ? 'border-black' : 'border-white'
+                }`}
+              ></span>
+            </button>
+            <div
+              className={`flex items-center gap-3 pl-6 border-l ${
+                isDark ? 'border-white/10' : 'border-slate-200'
+              }`}
+            >
+              <div className="text-right hidden sm:block">
+                <Overline className="dark:text-white text-slate-400">
+                  Account #{user?.id ? user.id.slice(-4) : '9042'}
+                </Overline>
+                <Label
+                  size="sm"
+                  className={'mt-1 block dark:text-[#E8FF4D] text-violet-600'}
+                >
+                  Private Equity
+                </Label>
+              </div>
+              <div
                 className={cn(
-                  'mt-1 block',
-                  isDark ? 'text-[#E8FF4D]' : 'text-violet-600',
+                  'w-11 h-11 rounded-full flex items-center justify-center font-black shadow-md transition-colors',
+                  isDark
+                    ? 'bg-[#1A1A1A] border border-white/10 text-white'
+                    : 'bg-slate-200 border border-white text-slate-900',
                 )}
               >
-                Private Equity
-              </Label>
+                {userInitial}
+              </div>
             </div>
-            <div
-              className={cn(
-                'w-11 h-11 rounded-full flex items-center justify-center font-black shadow-md transition-colors',
-                isDark
-                  ? 'bg-[#1A1A1A] border border-white/10 text-white'
-                  : 'bg-slate-200 border border-white text-slate-900',
-              )}
-            >
-              {userInitial}
-            </div>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* Dashboard Grid */}
       <div className="p-6 xl:p-8 grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8">

@@ -8,7 +8,7 @@ interface Step2JourneyPhaseProps {
   isDark: boolean
 }
 
-const phases: OnboardingPhase[] = ['Explorer', 'Starting', 'Building', 'Optimizing']
+const phases: Array<OnboardingPhase> = ['Explorer', 'Starting', 'Building', 'Optimizing']
 
 const phaseDescriptions: Record<OnboardingPhase, string> = {
   Explorer: 'Researching, no properties.',

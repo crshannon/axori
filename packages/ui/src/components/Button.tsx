@@ -6,14 +6,21 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
   isLoading?: boolean;
+  fullWidth?: boolean;
 }
 
 const buttonVariants: Record<Variant, string> = {
-  primary: "bg-violet-600 hover:bg-violet-700 text-white dark:bg-[#E8FF4D] dark:text-black dark:hover:bg-[#E8FF4D]/90",
-  secondary: "bg-gray-200 hover:bg-gray-300 text-gray-900 dark:bg-white/10 dark:text-white dark:hover:bg-white/20",
-  danger: "bg-red-600 hover:bg-red-700 text-white",
-  success: "bg-green-600 hover:bg-green-700 text-white",
-  warning: "bg-yellow-600 hover:bg-yellow-700 text-white",
+  primary:
+    "bg-violet-600 hover:bg-violet-700 text-white dark:bg-[#E8FF4D] dark:text-black dark:hover:bg-[#E8FF4D]/90",
+  secondary:
+    "bg-gray-200 hover:bg-gray-300 text-gray-900 dark:bg-white/10 dark:text-white dark:hover:bg-white/20",
+  danger: "bg-red-500 hover:bg-red-700 text-white dark:text-white",
+  success:
+    "bg-green-600 hover:bg-green-700 text-white dark:bg-green-600 dark:hover:bg-green-700 dark:text-white",
+  warning:
+    "bg-yellow-600 hover:bg-yellow-700 text-white dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:text-white",
+  outline:
+    "border border-gray-300 dark:border-white/10 bg-transparent hover:bg-gray-50 dark:hover:bg-white/5 text-gray-900 dark:text-white",
 };
 
 const buttonSizes: Record<Size, string> = {
@@ -29,6 +36,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "primary",
       size = "md",
       isLoading = false,
+      fullWidth = false,
       disabled,
       children,
       ...props
@@ -40,9 +48,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type="button"
         className={cn(
-          "inline-flex items-center justify-center rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 dark:focus:ring-[#E8FF4D] disabled:opacity-50 disabled:pointer-events-none",
+          "inline-flex items-center justify-center rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 dark:focus:ring-[#E8FF4D] cursor-pointer disabled:opacity-50 disabled:pointer-events-none",
           buttonVariants[variant],
           buttonSizes[size],
+          fullWidth && "w-full",
           className
         )}
         disabled={disabled || isLoading}
@@ -81,4 +90,3 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = "Button";
-

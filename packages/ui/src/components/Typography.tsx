@@ -21,9 +21,21 @@ export type TypographyVariant =
   | "caption" // Captions/helper text
   | "overline"; // Overline text
 
-export type TypographyWeight = "normal" | "medium" | "semibold" | "bold" | "black";
+export type TypographyWeight =
+  | "normal"
+  | "medium"
+  | "semibold"
+  | "bold"
+  | "black";
 export type TypographyTransform = "none" | "uppercase" | "lowercase";
-export type TypographyTracking = "tighter" | "tight" | "normal" | "wide" | "wider" | "widest" | "custom";
+export type TypographyTracking =
+  | "tighter"
+  | "tight"
+  | "normal"
+  | "wide"
+  | "wider"
+  | "widest"
+  | "custom";
 
 // ============================================================================
 // Typography Component
@@ -40,7 +52,8 @@ export interface TypographyProps extends HTMLAttributes<HTMLElement> {
 }
 
 const variantStyles: Record<TypographyVariant, string> = {
-  display: "text-[clamp(3rem,8vw,6rem)] md:text-6xl lg:text-7xl xl:text-8xl font-black uppercase tracking-tighter leading-[0.9]",
+  display:
+    "text-[clamp(3rem,8vw,6rem)] md:text-6xl lg:text-7xl xl:text-8xl font-black uppercase tracking-tighter leading-[0.9]",
   h1: "text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none",
   h2: "text-4xl md:text-5xl font-black uppercase tracking-tighter leading-tight",
   h3: "text-3xl md:text-4xl font-black uppercase tracking-tighter leading-tight",
@@ -109,11 +122,17 @@ export function Typography({
 }: TypographyProps) {
   const Component = as || defaultElements[variant];
   const variantClass = variantStyles[variant];
-  
+
   // Override weight/transform/tracking if provided
   const weightClass = weight ? weightStyles[weight] : "";
   const transformClass = transform ? transformStyles[transform] : "";
   const trackingClass = tracking ? trackingStyles[tracking] : "";
+
+  if (!Component) {
+    throw new Error(
+      `Typography: No valid HTML element or component type for variant "${variant}"`
+    );
+  }
 
   return (
     <Component
@@ -158,7 +177,8 @@ export interface BodyProps extends Omit<TypographyProps, "variant"> {
 }
 
 export function Body({ size = "default", ...props }: BodyProps) {
-  const variant = size === "sm" ? "body-sm" : size === "lg" ? "body-lg" : "body";
+  const variant =
+    size === "sm" ? "body-sm" : size === "lg" ? "body-lg" : "body";
   return <Typography variant={variant} {...props} />;
 }
 
@@ -173,4 +193,3 @@ export interface OverlineProps extends Omit<TypographyProps, "variant"> {}
 export function Overline(props: OverlineProps) {
   return <Typography variant="overline" {...props} />;
 }
-
