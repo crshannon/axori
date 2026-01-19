@@ -128,7 +128,7 @@ export function calculateManagementFee(
  * @returns Map of category to total amount for recurring monthly expense transactions
  */
 export function calculateRecurringExpensesFromTransactions(
-  transactions: Transaction[],
+  transactions: Array<Transaction>,
   operatingExpenses: OperatingExpensesData | null | undefined,
   hasManagementExpense: boolean,
 ): Map<string, number> {
@@ -179,7 +179,7 @@ export function calculateRecurringExpensesFromTransactions(
  */
 export function calculateTotalFixedExpenses(
   operatingExpenses: OperatingExpensesData | null | undefined,
-  transactions: Transaction[],
+  transactions: Array<Transaction>,
   grossIncome: number,
 ): number {
   // Start with structured expenses (excluding management, added separately)

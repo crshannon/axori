@@ -1,0 +1,102 @@
+---
+description: "Tailwind CSS best practices: design system components, CSS variables, dark mode patterns, and consistent styling"
+globs: ["packages/ui/**", "apps/web/src/**"]
+alwaysApply: false
+---
+
+# Tailwind CSS Best Practices
+
+## Automatic Checks
+
+The agent will verify:
+- ✅ Use of design system components vs raw HTML
+- ✅ CSS variables vs hardcoded colors
+- ✅ Proper dark mode patterns
+- ✅ Consistent spacing and typography
+- ✅ `cn()` utility usage
+
+## Design System Components vs Raw HTML
+
+```tsx
+// ❌ Incorrect - Raw HTML
+<button className="bg-blue-500 text-white px-4 py-2 rounded">Click</button>
+
+// ✅ Correct - Design System
+import { Button } from "@axori/ui";
+<Button variant="primary" size="md">Click</Button>
+```
+
+## CSS Variables vs Hardcoded Colors
+
+```tsx
+// ❌ Incorrect - Hardcoded hex color
+className="bg-[#E8FF4D] text-black"
+
+// ✅ Correct - CSS variable
+className="bg-[rgb(var(--color-accent))] text-black"
+```
+
+Available CSS variables:
+- `--color-primary` - Primary brand color
+- `--color-accent` - Accent color (#E8FF4D)
+- `--color-bg-dark` - Dark mode background
+- `--color-bg-dark-card` - Dark mode card background
+
+## Dark Mode Patterns
+
+Use Tailwind `dark:` classes instead of conditional `isDark` logic:
+
+```tsx
+// ❌ Incorrect - Conditional logic
+<div className={isDark ? "bg-[#1A1A1A]" : "bg-white"}>
+
+// ✅ Correct - Tailwind dark: classes
+<div className="bg-white dark:bg-[rgb(var(--color-bg-dark-card))]">
+```
+
+## Spacing and Typography Consistency
+
+Use Tailwind's spacing scale consistently:
+- `p-2` - 8px
+- `p-4` - 16px
+- `p-6` - 24px
+- `gap-4` - 16px
+- `gap-6` - 24px
+
+Use Typography component instead of raw HTML:
+```tsx
+// ❌ Incorrect
+<p className="text-lg">Content</p>
+
+// ✅ Correct
+import { Typography } from "@axori/ui";
+<Typography variant="body-lg">Content</Typography>
+```
+
+## cn() Utility Usage
+
+Use `cn()` for conditional classes:
+
+```tsx
+import { cn } from "@axori/ui";
+
+<div className={cn(
+  "base-class",
+  condition && "conditional-class",
+  anotherCondition && "another-class"
+)}>
+```
+
+## Reminders
+
+The agent will suggest improvements when:
+- Hardcoded colors are detected (suggest CSS variables)
+- Raw HTML elements are used (suggest design system components)
+- Conditional `isDark` logic is found (suggest `dark:` classes)
+- Inconsistent spacing is detected
+
+## References
+
+- Design Tokens: `packages/ui/DESIGN_TOKENS.md`
+- Design System Review: `DESIGN_SYSTEM_REVIEW.md`
+- Design System Rule: `.cursor/rules/design-system.mdc`

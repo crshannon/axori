@@ -2,12 +2,12 @@ import { useMemo } from 'react'
 import { useProperty } from '@/hooks/api/useProperties'
 import { usePropertyTransactions } from '@/hooks/api/useTransactions'
 import {
-  calculateGrossIncomeFromStructured,
-  calculateFixedExpensesFromStructured,
-  calculateManagementFee,
   calculateCapExReserve,
-  calculateNOI,
   calculateCashFlow,
+  calculateFixedExpensesFromStructured,
+  calculateGrossIncomeFromStructured,
+  calculateManagementFee,
+  calculateNOI,
   calculateTotalDebtService,
 } from '@/utils/finances'
 
