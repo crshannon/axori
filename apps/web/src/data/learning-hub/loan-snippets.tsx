@@ -5,15 +5,7 @@
  * and related loan features. They're displayed in the Learning Hub drawer.
  */
 
-import type { ReactNode } from 'react'
-
-export interface LearningSnippet {
-  id: string
-  title: string
-  category: string
-  content: string | ReactNode
-  context?: 'debt-logic' | 'acquisition' | 'operating-core' | 'general'
-}
+import type { LearningSnippet } from './types'
 
 /**
  * Refinancing Strategy Snippet
@@ -49,7 +41,7 @@ export const helocVsPrimarySnippet: LearningSnippet = {
   category: 'Debt Management',
   context: 'debt-logic',
   content:
-    'A HELOC (Home Equity Line of Credit) is a second-lien loan that allows you to access equity. Unlike a primary mortgage, HELOCs typically have variable rates and require interest-only payments during the draw period. They\'re useful for accessing equity without refinancing your primary loan.',
+    "A HELOC (Home Equity Line of Credit) is a second-lien loan that allows you to access equity. Unlike a primary mortgage, HELOCs typically have variable rates and require interest-only payments during the draw period. They're useful for accessing equity without refinancing your primary loan.",
 }
 
 /**
@@ -129,9 +121,11 @@ export function generateDebtLogicLearning(
         </div>
       ),
     }
-    return [enhancedRefiSnippet, ...snippets.filter((s) => s.id !== 'refi-strategy')]
+    return [
+      enhancedRefiSnippet,
+      ...snippets.filter((s) => s.id !== 'refi-strategy'),
+    ]
   }
 
   return snippets
 }
-

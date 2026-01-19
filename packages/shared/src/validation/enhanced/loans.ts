@@ -71,6 +71,9 @@ export const loanInsertApiSchema = z.object({
   monthlyPrincipalInterest: z.number().min(0).optional().nullable(),
   monthlyEscrow: z.number().min(0).optional().nullable(),
   monthlyPmi: z.number().min(0).optional().nullable(),
+  monthlyMip: z.number().min(0).optional().nullable(), // FHA mortgage insurance
+  totalMonthlyPayment: z.number().min(0).optional().nullable(),
+  paymentDueDay: z.number().int().min(1).max(31).optional().nullable(),
   // userId for authorization (not stored in loans table)
   userId: z.string().uuid("User ID must be a valid UUID"),
 }).strict(); // Use strict() to only allow defined fields

@@ -1,7 +1,7 @@
 import { IconButton } from '@axori/ui'
 import { Brain } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import type { LearningSnippet } from '@/data/learning-hub/loan-snippets'
+import type { LearningSnippet } from '@/data/learning-hub/types'
 import { LearningHubDrawer } from '@/components/drawers/LearningHubDrawer'
 
 interface LearningHubButtonProps {
@@ -88,4 +88,3 @@ export const LearningHubButton = ({
     </>
   )
 }
-

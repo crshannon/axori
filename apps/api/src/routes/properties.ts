@@ -34,6 +34,12 @@ import {
 import { RentcastClient, type PropertyDetails } from "@axori/shared/src/integrations/rentcast";
 import { transformRentcastToAxori } from "@axori/shared/src/integrations/data-transformers";
 import { z } from "zod";
+import {
+  withErrorHandling,
+  validateRequest,
+  validateData,
+  handleError,
+} from "../utils/errors";
 
 const propertiesRouter = new Hono();
 
@@ -352,10 +358,14 @@ propertiesRouter.get("/:id", async (c) => {
 });
 
 // Create new property (draft or active)
-propertiesRouter.post("/", async (c) => {
-  try {
+propertiesRouter.post(
+  "/",
+  withErrorHandling(async (c) => {
     const body = await c.req.json();
-    const validated = propertyInsertSchema.parse(body);
+    // Use validateData wrapper for consistent error logging
+    const validated = validateData(body, propertyInsertSchema as { parse: typeof propertyInsertSchema.parse }, {
+      operation: "createProperty",
+    });
 
     const [property] = await db
       .insert(properties)
@@ -366,17 +376,8 @@ propertiesRouter.post("/", async (c) => {
       .returning();
 
     return c.json({ property }, 201);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return c.json(
-        { error: "Validation failed", details: error.errors },
-        400
-      );
-    }
-    console.error("Error creating property:", error);
-    return c.json({ error: "Internal server error" }, 500);
-  }
-});
+  }, { operation: "createProperty" })
+);
 
 // Update existing property (used for draft updates and finalizing)
 // Accepts property core data + optional normalized table data
@@ -580,10 +581,47 @@ propertiesRouter.put("/:id", async (c) => {
 
     // Update or insert operating expenses
     if (operatingExpenses) {
-      const operatingExpensesData = propertyOperatingExpensesInsertSchema.parse({
+      // Convert numbers to strings before validation (schema expects strings)
+      const preprocessedOperatingExpenses: Record<string, unknown> = {
         propertyId: id,
-        ...operatingExpenses,
-      });
+      };
+
+      // Convert all numeric fields to strings
+      const numericFields = [
+        'vacancyRate',
+        'managementRate',
+        'maintenanceRate',
+        'capexRate',
+        'propertyTaxAnnual',
+        'insuranceAnnual',
+        'hoaMonthly',
+        'waterSewerMonthly',
+        'trashMonthly',
+        'electricMonthly',
+        'gasMonthly',
+        'internetMonthly',
+        'lawnCareMonthly',
+        'snowRemovalMonthly',
+        'pestControlMonthly',
+        'poolMaintenanceMonthly',
+        'alarmMonitoringMonthly',
+        'otherExpensesMonthly',
+        'managementFlatFee',
+      ];
+
+      for (const [key, value] of Object.entries(operatingExpenses)) {
+        if (value != null) {
+          if (numericFields.includes(key) && typeof value === 'number') {
+            preprocessedOperatingExpenses[key] = String(value);
+          } else {
+            preprocessedOperatingExpenses[key] = value;
+          }
+        }
+      }
+
+      const operatingExpensesData = propertyOperatingExpensesInsertSchema.parse(
+        preprocessedOperatingExpenses,
+      );
 
       const [existing] = await db
         .select()
@@ -803,11 +841,16 @@ propertiesRouter.put("/:id", async (c) => {
 
     // Handle loan data (mark old loans inactive, insert new one)
     if (loan) {
-      // Get userId from request header for user isolation
-      const authHeader = c.req.header("Authorization");
-      const clerkId = authHeader?.replace("Bearer ", "");
+      try {
+        // Get userId from request header for user isolation
+        const authHeader = c.req.header("Authorization");
+        const clerkId = authHeader?.replace("Bearer ", "");
 
-      if (clerkId) {
+        if (!clerkId) {
+          console.error("Loan creation failed: No authorization header found");
+          throw new Error("Unauthorized: No authorization header for loan creation");
+        }
+
         const { users } = await import("@axori/db/src/schema");
         const [user] = await db
           .select()
@@ -815,61 +858,91 @@ propertiesRouter.put("/:id", async (c) => {
           .where(eq(users.clerkId, clerkId))
           .limit(1);
 
-        if (user) {
-          const validated = loanInsertApiSchema.parse({
-            propertyId: id,
-            userId: user.id,
-            ...loan,
-          });
-
-          // Convert to database format (remove userId, convert numbers to strings)
-          const loanDataForInsert: Record<string, unknown> = {
-            propertyId: id,
-            loanType: validated.loanType,
-            lenderName: validated.lenderName || '',
-            servicerName: validated.servicerName || null,
-            loanNumber: validated.loanNumber || null,
-            originalLoanAmount: validated.originalLoanAmount ? String(validated.originalLoanAmount) : '0',
-            interestRate: validated.interestRate ? String(validated.interestRate / 100) : '0', // Convert percentage to decimal
-            termMonths: validated.termMonths || null,
-            currentBalance: validated.currentBalance ? String(validated.currentBalance) : '0',
-            status: validated.status || 'active',
-            isPrimary: validated.isPrimary ?? true,
-          };
-
-          // Add optional fields (dates are already strings in YYYY-MM-DD format)
-          if (validated.startDate) {
-            loanDataForInsert.startDate = validated.startDate;
-          }
-          if (validated.maturityDate) {
-            loanDataForInsert.maturityDate = validated.maturityDate;
-          }
-
-          // Mark existing active loans as paid off (when adding new loan)
-          await db
-            .update(loans)
-            .set({ status: "paid_off", updatedAt: new Date() })
-            .where(and(
-              eq(loans.propertyId, id),
-              eq(loans.status, "active")
-            ));
-
-          // Insert new active loan
-          await db.insert(loans).values(loanDataForInsert as typeof loans.$inferInsert);
+        if (!user) {
+          console.error("Loan creation failed: User not found for clerkId:", clerkId);
+          throw new Error("Unauthorized: User not found for loan creation");
         }
+
+        const validated = validateData(
+          { propertyId: id, userId: user.id, ...loan },
+          loanInsertApiSchema,
+          { operation: "createLoan" }
+        );
+
+        // Convert to database format (remove userId, convert numbers to strings)
+        const loanDataForInsert: Record<string, unknown> = {
+          propertyId: id,
+          loanType: validated.loanType,
+          lenderName: validated.lenderName || '',
+          servicerName: validated.servicerName || null,
+          loanNumber: validated.loanNumber || null,
+          originalLoanAmount: validated.originalLoanAmount ? String(validated.originalLoanAmount) : '0',
+          interestRate: validated.interestRate ? String(validated.interestRate / 100) : '0', // Convert percentage to decimal
+          termMonths: validated.termMonths || null,
+          currentBalance: validated.currentBalance ? String(validated.currentBalance) : '0',
+          status: validated.status || 'active',
+          isPrimary: validated.isPrimary ?? true,
+          loanPosition: validated.loanPosition ?? 1,
+        };
+
+        // Add payment fields (convert numbers to strings for DB numeric columns)
+        if (validated.monthlyPrincipalInterest != null) {
+          loanDataForInsert.monthlyPrincipalInterest = String(validated.monthlyPrincipalInterest);
+        }
+        if (validated.monthlyEscrow != null) {
+          loanDataForInsert.monthlyEscrow = String(validated.monthlyEscrow);
+        }
+        if (validated.monthlyPmi != null) {
+          loanDataForInsert.monthlyPmi = String(validated.monthlyPmi);
+        }
+        if (validated.totalMonthlyPayment != null) {
+          loanDataForInsert.totalMonthlyPayment = String(validated.totalMonthlyPayment);
+        }
+        if (validated.paymentDueDay != null) {
+          loanDataForInsert.paymentDueDay = validated.paymentDueDay;
+        }
+
+        // Add optional fields (dates are already strings in YYYY-MM-DD format)
+        if (validated.startDate) {
+          loanDataForInsert.startDate = validated.startDate;
+        }
+        if (validated.maturityDate) {
+          loanDataForInsert.maturityDate = validated.maturityDate;
+        }
+
+        // Mark existing active loans as paid off (when adding new loan)
+        await db
+          .update(loans)
+          .set({ status: "paid_off", updatedAt: new Date() })
+          .where(and(
+            eq(loans.propertyId, id),
+            eq(loans.status, "active")
+          ));
+
+        // Insert new active loan
+        await db.insert(loans).values(loanDataForInsert as typeof loans.$inferInsert);
+      } catch (loanError) {
+        // Re-throw with context - will be handled by outer error handler
+        throw loanError;
       }
     }
 
     return c.json({ property: updated });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return c.json(
-        { error: "Validation failed", details: error.errors },
-        400
-      );
+    const handled = handleError(error, {
+      operation: "updateProperty",
+      params: { id: c.req.param("id") },
+    });
+
+    const responseBody: Record<string, unknown> = { error: handled.error };
+    if ("details" in handled) {
+      responseBody.details = handled.details;
     }
-    console.error("Error updating property:", error);
-    return c.json({ error: "Internal server error" }, 500);
+    if ("message" in handled && handled.message) {
+      responseBody.message = handled.message;
+    }
+
+    return c.json(responseBody, handled.statusCode as 400 | 401 | 404 | 409 | 500);
   }
 });
 

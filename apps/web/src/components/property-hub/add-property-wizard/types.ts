@@ -48,15 +48,16 @@ export interface PropertyFormData {
 
   // Financing details
   financeType: 'Cash' | 'Mortgage'
-  loanType: string
+  loanType: string // Should use database enum values: "conventional", "fha", "va", "usda", "dscr", "portfolio", "hard_money", "bridge", "heloc", "construction", "owner_financed", "seller_finance", "commercial", "other"
   loanAmount: string
-  interestRate: string
-  loanTerm: string
-  provider: string
+  interestRate: string // Percentage as string (e.g., "6.5" for 6.5%), will be converted to number in mapping
+  loanTerm: string // Years as string (e.g., "30" for 30 years), will be converted to months in mapping
+  provider: string // Lender name
 
   // Rental information
   isRented: string
   rentAmount: string
+  leaseStart: string
   leaseEnd: string
   tenantName: string
 

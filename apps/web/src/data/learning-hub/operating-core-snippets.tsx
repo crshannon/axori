@@ -5,15 +5,7 @@
  * and related property operations features. They're displayed in the Learning Hub drawer.
  */
 
-import type { ReactNode } from 'react'
-
-export interface LearningSnippet {
-  id: string
-  title: string
-  category: string
-  content: string | ReactNode
-  context?: 'debt-logic' | 'acquisition' | 'operating-core' | 'general'
-}
+import type { LearningSnippet } from './types'
 
 /**
  * NOI (Net Operating Income) Snippet
@@ -24,7 +16,7 @@ export const noiSnippet: LearningSnippet = {
   category: 'Operations',
   context: 'operating-core',
   content:
-    'NOI is your property\'s income after operating expenses but before financing costs and taxes. It\'s the true measure of property performance. Higher NOI means more cash flow available for debt service, reserves, and profit.',
+    "NOI is your property's income after operating expenses but before financing costs and taxes. It's the true measure of property performance. Higher NOI means more cash flow available for debt service, reserves, and profit.",
 }
 
 /**
@@ -60,7 +52,7 @@ export const fixedExpensesSnippet: LearningSnippet = {
   category: 'Operations',
   context: 'operating-core',
   content:
-    'Fixed expenses are recurring costs that don\'t vary with occupancy (property taxes, insurance, management fees). Variable expenses fluctuate with use (utilities, repairs, maintenance). Understanding this helps with cash flow planning.',
+    "Fixed expenses are recurring costs that don't vary with occupancy (property taxes, insurance, management fees). Variable expenses fluctuate with use (utilities, repairs, maintenance). Understanding this helps with cash flow planning.",
 }
 
 /**
@@ -72,7 +64,7 @@ export const grossIncomeSnippet: LearningSnippet = {
   category: 'Operations',
   context: 'operating-core',
   content:
-    'Gross income is your total rental income before expenses. Market-adjusted rent reflects current market rates, not just what you\'re collecting. Use this for projections and when evaluating refinancing or selling.',
+    "Gross income is your total rental income before expenses. Market-adjusted rent reflects current market rates, not just what you're collecting. Use this for projections and when evaluating refinancing or selling.",
 }
 
 /**
@@ -113,8 +105,8 @@ export function generateOperatingCoreLearning(
             {grossIncome !== null && (
               <>
                 {' '}
-                from{' '}
-                <strong>${grossIncome.toLocaleString()}</strong> in gross income.
+                from <strong>${grossIncome.toLocaleString()}</strong> in gross
+                income.
               </>
             )}
           </p>
@@ -123,9 +115,9 @@ export function generateOperatingCoreLearning(
               Why it matters:
             </p>
             <p className="text-sm text-slate-700 dark:text-slate-300 italic">
-              NOI determines how much cash flow you have after operations but before debt service
-              and taxes. A strong NOI means you can comfortably cover your loan payments and build
-              reserves.
+              NOI determines how much cash flow you have after operations but
+              before debt service and taxes. A strong NOI means you can
+              comfortably cover your loan payments and build reserves.
             </p>
           </div>
         </div>
@@ -143,8 +135,8 @@ export function generateOperatingCoreLearning(
               <strong className="text-slate-900 dark:text-white">
                 {margin.toFixed(1)}%
               </strong>
-              . This means you're earning {margin.toFixed(1)}% on a property valued at{' '}
-              <strong>${currentValue.toLocaleString()}</strong>.
+              . This means you're earning {margin.toFixed(1)}% on a property
+              valued at <strong>${currentValue.toLocaleString()}</strong>.
             </p>
             <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
               <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100 mb-2">
@@ -165,7 +157,9 @@ export function generateOperatingCoreLearning(
       return [
         enhancedNoiSnippet,
         enhancedYieldSnippet,
-        ...snippets.filter((s) => s.id !== 'noi' && s.id !== 'yield-efficiency'),
+        ...snippets.filter(
+          (s) => s.id !== 'noi' && s.id !== 'yield-efficiency',
+        ),
       ]
     }
 
@@ -174,4 +168,3 @@ export function generateOperatingCoreLearning(
 
   return snippets
 }
-

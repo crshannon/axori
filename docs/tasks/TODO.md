@@ -2,7 +2,7 @@
 
 This document tracks all active tasks, todos, and development work for the Axori application.
 
-> **Last Updated**: 2026-01-16 (Learning Hub implementation completed)
+> **Last Updated**: 2026-01-16 (Financial chart improvements, DebtLogic redesign, validation fixes)
 > **Workflow**: Move completed items to `COMPLETED.md` and archive monthly
 
 ## How to Use
@@ -41,10 +41,11 @@ This document tracks all active tasks, todos, and development work for the Axori
 
 ### Data & Infrastructure
 
-- [ ] Fix remaining Zod validation schema issues
+- [x] Fix remaining Zod validation schema issues
   - [x] Fixed loan schema (standalone `z.object()` pattern)
   - [x] Fixed property acquisition schema
-  - [ ] Review and fix any other schema extension issues
+  - [x] Fixed onboarding data schema (handles legacy enum values gracefully)
+  - [x] Fixed operating expenses API route (type conversion for numeric fields)
 - [ ] Audit all API routes for proper error handling
 - [ ] Add API rate limiting and request validation
 
@@ -60,8 +61,21 @@ This document tracks all active tasks, todos, and development work for the Axori
   - [ ] Improve spacing and visual hierarchy
   - [ ] Ensure proper contrast for all text elements
 
-- [ ] Enhance `DebtLogic` component
+- [ ] **New Property flow - Strategy selection education**
+  - [ ] Add educational content when user selects property strategy
+  - [ ] Connect strategy selection with Learning Hub for contextual learning
+  - [ ] Provide clear guidance on what each strategy means
+
+- [ ] **New Property flow - Rented property toggle clarity**
+  - [ ] Review and improve "is rented" toggle UI/UX
+  - [ ] Add explanatory language around the rented property toggle
+  - [ ] Make it clearer what enabling/disabling this toggle means for the property
+
+- [x] Enhance `DebtLogic` component
   - [x] Display all active loans (not just primary)
+  - [x] Redesigned to vertical, compact layout with flat appearance
+  - [x] Added hover state that transforms to card with rounded corners
+  - [x] Added colored gradient separator between multiple loans
   - [ ] Add loan sorting/ordering (by position or date)
   - [ ] Improve HELOC vs primary loan visual distinction
   - [ ] Add loan summary totals (total debt, weighted rate, etc.)
@@ -72,6 +86,8 @@ This document tracks all active tasks, todos, and development work for the Axori
   - [ ] Connect to tax-related property data
 
 - [ ] Improve `OperatingCore` component
+  - [x] Fixed loan payment calculation alignment with `DebtLogic` (now uses totalMonthlyPayment)
+  - [x] Fixed duplicate operating expenses issue (filtered loan payments and grouped by category)
   - [ ] Add historical trend indicators
   - [ ] Show variance vs projections
   - [ ] Add drill-down to expense details

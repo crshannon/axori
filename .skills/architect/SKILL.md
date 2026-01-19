@@ -27,6 +27,7 @@ This skill ensures full-stack architectural consistency and security across the 
 - **Drizzle-Zod Pattern**: See [drizzle-zod-alignment.md](./drizzle-zod-alignment.md) for the complete workflow using `drizzle-zod`
 - **Schema Alignment**: See [drizzle-zod-alignment.md](./drizzle-zod-alignment.md) for field mapping rules and type conversions
 - **Type Patterns**: See [type-inference-patterns.md](./type-inference-patterns.md) for type inference usage
+- **Error Handling**: See [best-practices.md](./best-practices.md#error-handling-consistency) for centralized error handling patterns
 - **Security**: See [security-guidelines.md](./security-guidelines.md) for user privacy and authorization patterns
 - **Best Practices**: See [best-practices.md](./best-practices.md) for architectural patterns
 - **Common Issues**: See [common-pitfalls.md](./common-pitfalls.md) for known problems and solutions

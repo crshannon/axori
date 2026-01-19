@@ -6,6 +6,66 @@ This document archives all completed tasks and development work.
 
 ---
 
+## 2026-01-16 (Session 2)
+
+### Financial Chart Improvements
+
+- ✅ **Added time period selection to `MonthlyComparisonChart`**
+  - Added tabs for 1 month, 3 months, and 1 year views (defaults to 3 months)
+  - Positioned tabs in top right of card header
+  - Dynamic footer text based on selected period
+
+- ✅ **Implemented day-by-day view for short-term periods**
+  - Created `useDailyMetrics` hook for daily financial aggregation
+  - Shows day-by-day changes for 1-month and 3-month views
+  - Enables drilling down on outliers in financial data
+  - Monthly view remains for 1-year period
+
+### Component Enhancements
+
+- ✅ **Redesigned `DebtLogic` component**
+  - Changed to vertical, compact layout showing essential loan information
+  - Flat appearance by default, transforms to card on hover
+  - Added rounded corners on hover (`hover:rounded-2xl`)
+  - Added colored gradient separator between multiple loans (violet gradient)
+  - Simplified to show: lender, loan type, primary badge, balance, term, monthly payment, interest rate
+
+- ✅ **Fixed `OperatingCore` loan payment calculation**
+  - Updated `useFinancialPulse` to use `totalMonthlyPayment` (P&I + Escrow) instead of just `monthlyPrincipalInterest`
+  - Now matches the monthly payment displayed in `DebtLogic` component
+  - Ensures consistency across financial components
+
+- ✅ **Fixed duplicate operating expenses issue**
+  - Modified `useOperatingCore` to filter out loan payments from transaction expenses
+  - Grouped transaction-based expenses by category to prevent duplicates
+  - Excluded property tax and insurance from transactions if already in structured expenses
+
+### Data & Validation Fixes
+
+- ✅ **Fixed onboarding data schema validation**
+  - Updated `onboardingDataSchema` to handle legacy enum values gracefully
+  - Maps legacy values (`active_investor` → `Building`, `portfolio_builder` → `Optimizing`)
+  - Handles legacy object formats for `ownership` and `strategy` fields
+  - Filters invalid UUIDs from markets array
+  - Uses `.passthrough()` to allow additional fields without validation errors
+
+- ✅ **Fixed operating expenses API route**
+  - Added preprocessing step to convert numeric fields to strings before Zod validation
+  - Resolves "expected string, received number" errors when saving operating expenses
+  - Ensures data type alignment with database schema
+
+### Seed Data Improvements
+
+- ✅ **Made seed data more realistic**
+  - Adjusted rental income, expenses, and loan amounts for "456 Oak Avenue"
+  - Set property to self-managed (removed management fee transactions)
+  - Reduced operating expenses to realistic levels
+  - Adjusted loan amounts and payments to achieve positive cash flow
+  - Fixed transaction categories to match database enum values
+  - Removed duplicate monthly expense transactions (now handled by structured expenses)
+
+---
+
 ## 2026-01-16
 
 ### Learning Hub Feature Implementation

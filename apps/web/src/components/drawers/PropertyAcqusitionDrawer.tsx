@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Drawer, Input, Select } from '@axori/ui'
+import { Drawer, ErrorCard, Input, Select } from '@axori/ui'
 import { transformFormData } from '@axori/shared'
 import { DrawerSectionTitle } from './DrawerSectionTitle'
 import { useProperty, useUpdateProperty } from '@/hooks/api/useProperties'
@@ -311,13 +311,7 @@ export const PropertyAcquisitionDrawer = ({
         </section>
 
         {/* Error Message */}
-        {errors.submit && (
-          <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-6">
-            <p className="text-sm font-bold text-red-600 dark:text-red-400">
-              {errors.submit}
-            </p>
-          </div>
-        )}
+        {errors.submit && <ErrorCard message={errors.submit} />}
       </form>
     </Drawer>
   )

@@ -1,6 +1,15 @@
 import { useMemo } from 'react'
 import { useProperty } from '@/hooks/api/useProperties'
 import { usePropertyTransactions } from '@/hooks/api/useTransactions'
+import {
+  calculateGrossIncomeFromStructured,
+  calculateFixedExpensesFromStructured,
+  calculateManagementFee,
+  calculateCapExReserve,
+  calculateNOI,
+  calculateCashFlow,
+  calculateTotalDebtService,
+} from '@/utils/finances'
 
 interface MonthlyProjected {
   income: number
@@ -71,13 +80,8 @@ export function useMonthlyMetrics(
     const operatingExpenses = property?.operatingExpenses
     const activeLoans = property?.loans?.filter((l) => l.status === 'active') || []
 
-    // Calculate total loan payments (constant across months)
-    const totalDebtService = activeLoans.reduce((sum, loan) => {
-      if (loan.monthlyPrincipalInterest) {
-        return sum + parseFloat(loan.monthlyPrincipalInterest)
-      }
-      return sum
-    }, 0)
+    // Calculate total loan payments using shared utility (constant across months)
+    const totalDebtService = calculateTotalDebtService(activeLoans)
 
     // Calculate projected monthly values from structured data
     const calculateProjectedForMonth = (): MonthlyProjected | null => {
@@ -86,74 +90,24 @@ export function useMonthlyMetrics(
         return null
       }
 
-      // Calculate projected income
-      let projectedIncome = 0
-      if (rentalIncome) {
-        projectedIncome =
-          (rentalIncome.monthlyRent ? parseFloat(rentalIncome.monthlyRent) : 0) +
-          (rentalIncome.otherIncomeMonthly ? parseFloat(rentalIncome.otherIncomeMonthly) : 0) +
-          (rentalIncome.parkingIncomeMonthly ? parseFloat(rentalIncome.parkingIncomeMonthly) : 0) +
-          (rentalIncome.laundryIncomeMonthly ? parseFloat(rentalIncome.laundryIncomeMonthly) : 0) +
-          (rentalIncome.petRentMonthly ? parseFloat(rentalIncome.petRentMonthly) : 0) +
-          (rentalIncome.storageIncomeMonthly ? parseFloat(rentalIncome.storageIncomeMonthly) : 0) +
-          (rentalIncome.utilityReimbursementMonthly ? parseFloat(rentalIncome.utilityReimbursementMonthly) : 0)
-      }
+      // Calculate projected income using shared utility
+      const projectedIncome = calculateGrossIncomeFromStructured(rentalIncome)
 
-      // Calculate projected expenses
-      let projectedExpenses = 0
-      if (operatingExpenses) {
-        // Annual expenses converted to monthly
-        if (operatingExpenses.propertyTaxAnnual) {
-          projectedExpenses += parseFloat(operatingExpenses.propertyTaxAnnual) / 12
-        }
-        if (operatingExpenses.insuranceAnnual) {
-          projectedExpenses += parseFloat(operatingExpenses.insuranceAnnual) / 12
-        }
+      // Calculate projected expenses using shared utilities
+      let projectedExpenses = calculateFixedExpensesFromStructured(operatingExpenses)
+      
+      // Add management fee (requires gross income)
+      projectedExpenses += calculateManagementFee(operatingExpenses, projectedIncome)
 
-        // Monthly expenses
-        if (operatingExpenses.hoaMonthly)
-          projectedExpenses += parseFloat(operatingExpenses.hoaMonthly)
-        if (operatingExpenses.waterSewerMonthly)
-          projectedExpenses += parseFloat(operatingExpenses.waterSewerMonthly)
-        if (operatingExpenses.trashMonthly)
-          projectedExpenses += parseFloat(operatingExpenses.trashMonthly)
-        if (operatingExpenses.electricMonthly)
-          projectedExpenses += parseFloat(operatingExpenses.electricMonthly)
-        if (operatingExpenses.gasMonthly)
-          projectedExpenses += parseFloat(operatingExpenses.gasMonthly)
-        if (operatingExpenses.internetMonthly)
-          projectedExpenses += parseFloat(operatingExpenses.internetMonthly)
-        if (operatingExpenses.lawnCareMonthly)
-          projectedExpenses += parseFloat(operatingExpenses.lawnCareMonthly)
-        if (operatingExpenses.snowRemovalMonthly)
-          projectedExpenses += parseFloat(operatingExpenses.snowRemovalMonthly)
-        if (operatingExpenses.pestControlMonthly)
-          projectedExpenses += parseFloat(operatingExpenses.pestControlMonthly)
-        if (operatingExpenses.poolMaintenanceMonthly)
-          projectedExpenses += parseFloat(operatingExpenses.poolMaintenanceMonthly)
-        if (operatingExpenses.alarmMonitoringMonthly)
-          projectedExpenses += parseFloat(operatingExpenses.alarmMonitoringMonthly)
-        if (operatingExpenses.otherExpensesMonthly)
-          projectedExpenses += parseFloat(operatingExpenses.otherExpensesMonthly)
+      // Calculate CapEx reserve using shared utility
+      const capexReserve = calculateCapExReserve(
+        projectedIncome,
+        operatingExpenses?.capexRate,
+      )
 
-        // Management fee
-        if (operatingExpenses.managementFlatFee) {
-          projectedExpenses += parseFloat(operatingExpenses.managementFlatFee)
-        } else if (operatingExpenses.managementRate && projectedIncome > 0) {
-          projectedExpenses +=
-            projectedIncome * parseFloat(operatingExpenses.managementRate)
-        }
-      }
-
-      // Calculate CapEx reserve
-      let capexReserve = 0
-      if (operatingExpenses?.capexRate && projectedIncome > 0) {
-        capexReserve = projectedIncome * parseFloat(operatingExpenses.capexRate)
-      }
-
-      // Calculate NOI and cash flow
-      const noi = projectedIncome - projectedExpenses - capexReserve
-      const cashFlow = noi - totalDebtService
+      // Calculate NOI and cash flow using shared utilities
+      const noi = calculateNOI(projectedIncome, projectedExpenses, capexReserve)
+      const cashFlow = calculateCashFlow(noi, totalDebtService)
 
       return {
         income: projectedIncome,

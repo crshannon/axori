@@ -1,7 +1,12 @@
 import { Card, Typography } from '@axori/ui'
+import { LearningHubButton } from './LearningHubButton'
 import { useProperty } from '@/hooks/api/useProperties'
 import { generateTaxShieldLearning } from '@/data/learning-hub/tax-shield-snippets'
-import { LearningHubButton } from './LearningHubButton'
+import {
+  calculateCostSegPotential,
+  calculateUnclaimedDepreciation,
+  getDepreciationSchedule,
+} from '@/utils/finances'
 
 interface TaxShieldIntelProps {
   propertyId: string
@@ -25,22 +30,35 @@ export const TaxShieldIntel = ({ propertyId }: TaxShieldIntelProps) => {
     )
   }
 
-  // TODO: Calculate actual unclaimed depreciation from property data
-  // For now, using placeholder value
-  const unclaimedDepreciation = 42100
-  const costSegPotential = 'High Alpha'
-  const costSegPercentage = 85
-
-  // Get depreciation basis from acquisition data
+  // Get property data for calculations
+  const acquisition = property.acquisition
+  const propertyType = property.characteristics?.propertyType
   const depreciationBasis =
-    property?.acquisition?.depreciationBasis !== null &&
-    property?.acquisition?.depreciationBasis !== undefined
-      ? Number(property.acquisition.depreciationBasis)
+    acquisition != null && (acquisition as any).depreciationBasis != null
+      ? Number((acquisition as any).depreciationBasis)
       : null
 
-  // Calculate cost seg potential value (estimate based on depreciation basis)
+  // Calculate depreciation schedule based on property type
+  const depreciationSchedule = getDepreciationSchedule(propertyType)
+
+  // Calculate unclaimed depreciation
+  const unclaimedDepreciation =
+    calculateUnclaimedDepreciation(
+      acquisition?.purchaseDate || null,
+      depreciationBasis,
+      depreciationSchedule,
+    ) ?? 0
+
+  // Calculate cost segregation potential
+  const costSeg = calculateCostSegPotential(depreciationBasis)
+  const costSegPotential = costSeg?.level ?? 'Low'
+  const costSegPercentage = costSeg?.percentage ?? 0
+
+  // Calculate cost seg potential value (estimate based on depreciation basis and percentage)
   const costSegPotentialValue =
-    depreciationBasis !== null ? Math.round(depreciationBasis * 0.3) : null
+    depreciationBasis !== null && costSeg
+      ? Math.round(depreciationBasis * (costSeg.percentage / 100))
+      : null
 
   // Generate learning snippets based on tax shield metrics
   const learningSnippets = generateTaxShieldLearning(

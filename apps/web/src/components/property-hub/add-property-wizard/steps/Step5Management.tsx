@@ -129,6 +129,17 @@ export const Step5Management = ({
               />
             </div>
             <div className="space-y-1">
+              <FormLabel>Lease Start Date</FormLabel>
+              <Input
+                type="date"
+                variant="rounded"
+                value={formData.leaseStart}
+                onChange={(e) =>
+                  setFormData({ ...formData, leaseStart: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-1">
               <FormLabel>Lease End Date</FormLabel>
               <Input
                 type="date"

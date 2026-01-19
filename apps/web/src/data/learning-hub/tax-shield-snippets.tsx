@@ -5,15 +5,7 @@
  * and related tax strategy features. They're displayed in the Learning Hub drawer.
  */
 
-import type { ReactNode } from 'react'
-
-export interface LearningSnippet {
-  id: string
-  title: string
-  category: string
-  content: string | ReactNode
-  context?: 'debt-logic' | 'acquisition' | 'operating-core' | 'tax-shield' | 'general'
-}
+import type { LearningSnippet } from './types'
 
 /**
  * Depreciation Snippet
@@ -60,7 +52,7 @@ export const unclaimedDepreciationSnippet: LearningSnippet = {
   category: 'Tax Strategy',
   context: 'tax-shield',
   content:
-    'Unclaimed depreciation represents potential tax savings you haven\'t yet taken. You can amend prior tax returns (up to 3 years) or carry forward unused depreciation. Tracking this helps you maximize your tax strategy.',
+    "Unclaimed depreciation represents potential tax savings you haven't yet taken. You can amend prior tax returns (up to 3 years) or carry forward unused depreciation. Tracking this helps you maximize your tax strategy.",
 }
 
 /**
@@ -116,9 +108,9 @@ export function generateTaxShieldLearning(
               Action Required:
             </p>
             <p className="text-sm text-slate-700 dark:text-slate-300 italic">
-              Consider amending prior tax returns (up to 3 years) or ensure you're claiming this
-              depreciation on your current return. This could result in significant tax savings or
-              refunds.
+              Consider amending prior tax returns (up to 3 years) or ensure
+              you're claiming this depreciation on your current return. This
+              could result in significant tax savings or refunds.
             </p>
           </div>
         </div>
@@ -143,9 +135,10 @@ export function generateTaxShieldLearning(
                 Strategy:
               </p>
               <p className="text-sm text-slate-700 dark:text-slate-300 italic">
-                Cost segregation studies typically cost $3,000-$10,000 but can generate tens of
-                thousands in tax savings. The study identifies property components that can be
-                depreciated over 5, 7, or 15 years instead of 27.5/39 years.
+                Cost segregation studies typically cost $3,000-$10,000 but can
+                generate tens of thousands in tax savings. The study identifies
+                property components that can be depreciated over 5, 7, or 15
+                years instead of 27.5/39 years.
               </p>
             </div>
           </div>
@@ -156,7 +149,8 @@ export function generateTaxShieldLearning(
         enhancedUnclaimedSnippet,
         enhancedCostSegSnippet,
         ...snippets.filter(
-          (s) => s.id !== 'unclaimed-depreciation' && s.id !== 'cost-segregation',
+          (s) =>
+            s.id !== 'unclaimed-depreciation' && s.id !== 'cost-segregation',
         ),
       ]
     }
@@ -178,7 +172,8 @@ export function generateTaxShieldLearning(
             <strong className="text-slate-900 dark:text-white">
               ${depreciationBasis.toLocaleString()}
             </strong>
-            . This is the amount you can depreciate over the property's useful life.
+            . This is the amount you can depreciate over the property's useful
+            life.
           </p>
           <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100 mb-2">
@@ -186,17 +181,20 @@ export function generateTaxShieldLearning(
             </p>
             <p className="text-sm text-slate-700 dark:text-slate-300 italic">
               For residential properties (27.5 years): $
-              {Math.round(depreciationBasis / 27.5).toLocaleString()}/year. For commercial
-              (39 years): ${Math.round(depreciationBasis / 39).toLocaleString()}/year.
+              {Math.round(depreciationBasis / 27.5).toLocaleString()}/year. For
+              commercial (39 years): $
+              {Math.round(depreciationBasis / 39).toLocaleString()}/year.
             </p>
           </div>
         </div>
       ),
     }
 
-    return [enhancedDepreciationSnippet, ...snippets.filter((s) => s.id !== 'depreciation')]
+    return [
+      enhancedDepreciationSnippet,
+      ...snippets.filter((s) => s.id !== 'depreciation'),
+    ]
   }
 
   return snippets
 }
-

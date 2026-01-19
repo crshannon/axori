@@ -18,6 +18,8 @@ export interface DrawerProps extends HTMLAttributes<HTMLDivElement> {
   children?: ReactNode;
   /** Footer actions (buttons, etc.) */
   footer?: ReactNode;
+  /** Header actions (buttons, etc.) - rendered next to close button */
+  headerActions?: ReactNode;
   /** Drawer width */
   width?: "sm" | "md" | "lg" | "xl" | "2xl";
   /** Whether to show close button */
@@ -29,11 +31,11 @@ export interface DrawerProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const widthClasses = {
-  sm: "w-full max-w-md", // 448px
-  md: "w-full max-w-lg", // 512px
-  lg: "w-full max-w-2xl", // 672px
-  xl: "w-full max-w-4xl", // 896px
-  "2xl": "w-full max-w-6xl", // 1152px
+  sm: "w-full max-w-md min-w-[448px]", // 448px
+  md: "w-full max-w-lg min-w-[512px]", // 512px
+  lg: "w-full max-w-2xl min-w-[672px]", // 672px
+  xl: "w-full max-w-4xl min-w-[896px]", // 896px
+  "2xl": "w-full max-w-6xl min-w-[1152px]", // 1152px
 };
 
 export const Drawer = ({
@@ -43,6 +45,7 @@ export const Drawer = ({
   subtitle,
   children,
   footer,
+  headerActions,
   width = "lg",
   showCloseButton = true,
   closeOnOverlayClick = true,
@@ -117,12 +120,13 @@ export const Drawer = ({
       />
 
       {/* Drawer Panel */}
-      <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
+      <div className="fixed inset-y-0 right-0 flex pl-10">
         <div
           className={cn(
-            "relative w-screen transform transition-transform duration-300 ease-in-out",
+            "relative transform transition-transform duration-300 ease-in-out",
             isAnimating ? "translate-x-0" : "translate-x-full",
-            widthClasses[width]
+            widthClasses[width],
+            "h-full" // Ensure drawer takes full height
           )}
         >
           <div
@@ -158,16 +162,19 @@ export const Drawer = ({
                     </Heading>
                   )}
                 </div>
-                {showCloseButton && (
-                  <IconButton
-                    icon={X}
-                    onClick={onClose}
-                    size="md"
-                    variant="default"
-                    shape="rounded"
-                    aria-label="Close drawer"
-                  />
-                )}
+                <div className="flex items-center gap-2">
+                  {headerActions}
+                  {showCloseButton && (
+                    <IconButton
+                      icon={X}
+                      onClick={onClose}
+                      size="md"
+                      variant="default"
+                      shape="rounded"
+                      aria-label="Close drawer"
+                    />
+                  )}
+                </div>
               </div>
             )}
 

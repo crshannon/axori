@@ -27,13 +27,14 @@ export const sampleValuation = {
 
 /**
  * Sample property acquisition data
+ * Updated to match loan amount (increased down payment for better cash flow)
  */
 export const sampleAcquisition = {
   purchasePrice: "265000",
   purchaseDate: "2023-06-15",
   acquisitionMethod: "traditional",
   closingCostsTotal: "8500",
-  downPaymentAmount: "53000",
+  downPaymentAmount: "60000", // Increased from $53k to $60k for better cash flow
   downPaymentSource: "savings",
   earnestMoney: "5000",
   sellerCredits: "2000",
@@ -42,9 +43,11 @@ export const sampleAcquisition = {
 
 /**
  * Sample rental income data
+ * For a $265k property in Memphis, realistic rent is ~$1,750-1,850/month
+ * Adjusted to ensure positive cash flow after all expenses
  */
 export const sampleRentalIncome = {
-  monthlyRent: "1850",
+  monthlyRent: "1850", // Realistic for Memphis market, adjusted for positive cash flow
   marketRentEstimate: "1900",
   otherIncomeMonthly: "0", // Additional income sources
   parkingIncomeMonthly: "0",
@@ -56,51 +59,55 @@ export const sampleRentalIncome = {
 
 /**
  * Sample operating expenses data
+ * Realistic expenses for a $265k single-family rental property
  */
 export const sampleOperatingExpenses = {
-  propertyTaxAnnual: "4200",
-  insuranceAnnual: "1800",
+  propertyTaxAnnual: "4200", // ~$350/month - realistic for TN
+  insuranceAnnual: "1800", // ~$150/month
   hoaMonthly: "0",
-  waterSewerMonthly: "0",
-  electricMonthly: "0",
-  gasMonthly: "0",
-  lawnCareMonthly: "75",
-  pestControlMonthly: "25",
-  otherExpensesMonthly: "250", // Other miscellaneous expenses
+  waterSewerMonthly: "0", // Typically tenant pays
+  electricMonthly: "0", // Typically tenant pays
+  gasMonthly: "0", // Typically tenant pays
+  lawnCareMonthly: "75", // Monthly lawn maintenance
+  pestControlMonthly: "25", // Quarterly service = ~$25/month
+  otherExpensesMonthly: "75", // Other miscellaneous expenses (reduced for realistic cash flow)
   vacancyRate: "0.05", // 5% as decimal
-  managementRate: "0.10", // 10% as decimal (for management fee calculation)
+  managementRate: "0.08", // 8% as decimal (slightly lower for better cash flow)
   maintenanceRate: "0.05", // 5% as decimal (for maintenance budgeting)
   capexRate: "0.08", // 8% as decimal (for CapEx reserve calculation)
 };
 
 /**
  * Sample property management data
+ * Set to self-managed to improve cash flow (no management fee)
  */
 export const sampleManagement = {
-  isSelfManaged: false,
-  companyName: "ABC Property Management",
-  contactName: "John Smith",
-  contactEmail: "john@abcpm.com",
-  contactPhone: "555-123-4567",
-  contractStartDate: "2023-07-01",
-  feePercentage: "0.10", // 10% as decimal
+  isSelfManaged: true, // Self-managed for better cash flow
+  companyName: null,
+  contactName: null,
+  contactEmail: null,
+  contactPhone: null,
+  contractStartDate: null,
+  feePercentage: null, // No fee for self-managed
 };
 
 /**
  * Sample loan data
+ * For $265k purchase with $60k down = $205k loan (increased down payment for better cash flow)
+ * At 6.5% for 30 years, P&I = ~$1,295/month
  */
 export const sampleLoan = {
   loanType: "conventional" as const,
   lenderName: "First National Bank",
   servicerName: "First National Bank",
   loanNumber: "LN-2023-001",
-  originalLoanAmount: "212000",
-  interestRate: "0.065", // 6.5%
-  termMonths: 360,
-  currentBalance: "208500",
-  monthlyPrincipalInterest: "1340", // Example P&I payment for ~$208k @ 6.5% for 30 years
-  monthlyEscrow: "500", // Estimated escrow (taxes + insurance)
-  totalMonthlyPayment: "1840", // P&I + Escrow
+  originalLoanAmount: "205000", // $265k - $60k down (increased down payment)
+  interestRate: "0.065", // 6.5% - realistic for 2023
+  termMonths: 360, // 30 years
+  currentBalance: "201500", // Slightly paid down
+  monthlyPrincipalInterest: "1295", // P&I payment for $201.5k @ 6.5% for 30 years
+  monthlyEscrow: "500", // Escrow (taxes $350 + insurance $150)
+  totalMonthlyPayment: "1795", // P&I + Escrow
   startDate: "2023-06-15",
   maturityDate: "2053-06-15",
   status: "active" as const,

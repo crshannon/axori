@@ -6,6 +6,7 @@ import {
   useProperty,
   useUpdateProperty,
 } from '@/hooks/api'
+import { calculateMonthlyPrincipalInterest } from '@/utils/finances'
 
 interface UsePropertyPersistenceProps {
   existingPropertyId?: string
@@ -72,31 +73,64 @@ export const usePropertyPersistence = ({
         },
 
         // Acquisition data (Step 3: Purchase info)
+        // Map closingCosts to closingCostsTotal and convert to number for API schema
         acquisition: {
           purchaseDate: formData.purchaseDate || null,
-          closingCosts: formData.closingCosts || null,
-          entityType: formData.entityType || null,
-          entityName: formData.entityName || null,
+          closingCostsTotal: formData.closingCosts
+            ? parseFloat(formData.closingCosts.replace(/,/g, '')) || null
+            : null,
+          // Note: entityType and entityName are not in propertyAcquisition schema
+          // They may be stored elsewhere or added in a future phase
         },
 
         // Loan data (Step 4: Financing)
-        loan: formData.loanAmount ? {
-          loanType: formData.loanType || 'conventional',
-          loanAmount: formData.loanAmount || null,
-          interestRate: formData.interestRate || null,
-          loanTerm: formData.loanTerm || null,
-          lenderName: formData.provider || null,
-          rateType: 'fixed' as const,
-          status: 'active' as const,
-          isPrimary: true,
-        } : undefined,
+        // Only create loan if we have required fields (loanAmount, interestRate, loanTerm, provider)
+        loan: formData.loanAmount && formData.loanAmount.trim() &&
+              formData.interestRate && formData.interestRate.trim() &&
+              formData.loanTerm && formData.loanTerm.trim() &&
+              formData.provider && formData.provider.trim() ? (() => {
+          const originalLoanAmount = parseFloat(formData.loanAmount.replace(/,/g, '')) || 0
+          const interestRate = parseFloat(formData.interestRate) || 0 // percentage 0-100
+          const termMonths = parseInt(formData.loanTerm) * 12
+
+          // Calculate monthly P&I payment using shared utility
+          const monthlyPrincipalInterest = calculateMonthlyPrincipalInterest(
+            originalLoanAmount,
+            interestRate,
+            termMonths,
+          )
+
+          return {
+            loanType: (formData.loanType || 'conventional').toLowerCase(),
+            originalLoanAmount,
+            interestRate, // percentage as number (0-100)
+            termMonths,
+            currentBalance: originalLoanAmount, // Default to original amount for new loans
+            lenderName: formData.provider.trim(),
+            // Status and position (explicit defaults)
+            status: 'active' as const,
+            isPrimary: true,
+            loanPosition: 1, // First loan for this property
+            // Calculated payment fields
+            monthlyPrincipalInterest, // Store calculated P&I
+            totalMonthlyPayment: monthlyPrincipalInterest, // For new loans: P&I = total (no escrow/PMI yet)
+            // Explicit defaults for clarity (database has defaults, but explicit is better)
+            monthlyEscrow: 0,
+            monthlyPmi: 0,
+            monthlyMip: 0,
+            paymentDueDay: 1,
+          }
+        })() : undefined,
 
         // Rental income data (Step 5: Revenue)
+        // Convert rentAmount from comma-formatted string to numeric string for database
         rentalIncome: {
-          monthlyRent: formData.rentAmount || null,
+          monthlyRent: formData.rentAmount
+            ? formData.rentAmount.replace(/,/g, '') // Remove commas for numeric database column
+            : null,
           rentSource: formData.isRented === 'Yes' ? 'lease' : 'estimate',
-          // Note: leaseEndDate doesn't exist in schema, but keeping for backward compatibility
-          // Will be ignored by API if not in schema
+          leaseStartDate: formData.leaseStart || null, // Lease start date
+          leaseEndDate: formData.leaseEnd || null, // Lease expiration date
         },
 
         // Operating expenses (Step 5: Operations) - no management data here
@@ -111,10 +145,29 @@ export const usePropertyPersistence = ({
 
       try {
         if (propertyId) {
-          await updateProperty.mutateAsync({
+          // For updates, send all fields - the API route will destructure out normalized fields
+          // The propertyUpdateSchema only validates core property fields after destructuring
+          const updatePayload = {
             id: propertyId,
-            ...saveData,
-          })
+            // Core property fields (validated by propertyUpdateSchema after destructuring)
+            address: saveData.address,
+            city: saveData.city,
+            state: saveData.state,
+            zipCode: saveData.zipCode,
+            latitude: saveData.latitude,
+            longitude: saveData.longitude,
+            mapboxPlaceId: saveData.mapboxPlaceId,
+            fullAddress: saveData.fullAddress,
+            // Normalized fields (destructured out by API route before propertyUpdateSchema validation)
+            characteristics: saveData.characteristics,
+            valuation: saveData.valuation,
+            acquisition: saveData.acquisition,
+            loan: saveData.loan,
+            rentalIncome: saveData.rentalIncome,
+            operatingExpenses: saveData.operatingExpenses,
+            management: saveData.management,
+          }
+          await updateProperty.mutateAsync(updatePayload)
           return propertyId
         } else {
           const result = await createProperty.mutateAsync(saveData)
@@ -122,8 +175,8 @@ export const usePropertyPersistence = ({
           setPropertyId(newPropertyId)
           return newPropertyId
         }
-      } catch (error) {
-        console.error('Error saving property:', error)
+      } catch (error: unknown) {
+        // Error details are included in the error message from apiFetch
         return null
       }
     },

@@ -72,11 +72,20 @@ export const Step4Financing = ({
                 setFormData({ ...formData, loanType: e.target.value })
               }
             >
-              <option>Conventional</option>
-              <option>FHA</option>
-              <option>VA</option>
-              <option>DSCR</option>
-              <option>Hard Money</option>
+              <option value="conventional">Conventional</option>
+              <option value="fha">FHA</option>
+              <option value="va">VA</option>
+              <option value="usda">USDA</option>
+              <option value="dscr">DSCR</option>
+              <option value="portfolio">Portfolio</option>
+              <option value="hard_money">Hard Money</option>
+              <option value="bridge">Bridge</option>
+              <option value="heloc">HELOC</option>
+              <option value="construction">Construction</option>
+              <option value="owner_financed">Owner Financed</option>
+              <option value="seller_finance">Seller Finance</option>
+              <option value="commercial">Commercial</option>
+              <option value="other">Other</option>
             </Select>
           </div>
           <div className="space-y-1">

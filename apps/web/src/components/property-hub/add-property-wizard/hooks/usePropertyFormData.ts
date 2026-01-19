@@ -47,13 +47,14 @@ export const usePropertyFormData = ({
     entityType: 'Personal',
     entityName: '',
     financeType: 'Mortgage',
-    loanType: 'Conventional',
+    loanType: 'conventional', // Use lowercase enum value
     loanAmount: '',
     interestRate: '6.5',
     loanTerm: '30',
     provider: '',
     isRented: 'Yes',
     rentAmount: '2,500',
+    leaseStart: '',
     leaseEnd: '',
     tenantName: '',
     mgmtType: 'Self-Managed',
@@ -124,7 +125,8 @@ export const usePropertyFormData = ({
         // Step 5: Rental income
         isRented: rentalIncome?.rentSource === 'lease' ? 'Yes' : 'No',
         rentAmount: rentalIncome?.monthlyRent?.toString() ?? prev.rentAmount,
-        leaseEnd: prev.leaseEnd, // leaseEndDate not in schema, keep previous value
+        leaseStart: rentalIncome?.leaseStartDate ?? prev.leaseStart,
+        leaseEnd: rentalIncome?.leaseEndDate ?? prev.leaseEnd,
 
         // Step 5: Management (from property_management table)
         mgmtType: management?.isSelfManaged ? 'Self-Managed' : management?.companyName ? 'Property Manager' : prev.mgmtType,

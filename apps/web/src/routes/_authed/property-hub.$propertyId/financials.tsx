@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { z } from 'zod'
 import { FinancialPulse } from '@/components/property-hub/property-details/financials/FinancialPulse'
 import { Liquidity } from '@/components/property-hub/property-details/financials/Liquidity'
 import { OperatingCore } from '@/components/property-hub/property-details/financials/OperatingCore'
@@ -9,6 +10,7 @@ import { MonthlyComparisonChart } from '@/components/property-hub/property-detai
 import { PropertyTransactions } from '@/components/property-hub/property-details/financials/PropertyTransactions'
 import {
   AddLoanDrawer,
+  AddTransactionDrawer,
   BankAccountConnectionDrawer,
   OperatingExpensesDrawer,
   PropertyAcquisitionDrawer,
@@ -16,16 +18,28 @@ import {
 import { useProperty } from '@/hooks/api/useProperties'
 import { AsyncLoader } from '@/components/loader/async-loader'
 
+const financialsSearchSchema = z.object({
+  drawer: z.string().optional(),
+  loanId: z.string().optional(),
+  bankAccountId: z.string().optional(),
+  transactionId: z.string().optional(),
+})
+
 export const Route = createFileRoute(
   '/_authed/property-hub/$propertyId/financials',
 )({
   component: FinancialsPage,
   validateSearch: (search: Record<string, unknown>) => {
-    return {
-      drawer: (search.drawer as string) || undefined,
-      loanId: (search.loanId as string) || undefined,
-      bankAccountId: (search.bankAccountId as string) || undefined,
+    const parsed = financialsSearchSchema.safeParse(search)
+    if (!parsed.success) {
+      return {
+        drawer: undefined,
+        loanId: undefined,
+        bankAccountId: undefined,
+        transactionId: undefined,
+      }
     }
+    return parsed.data
   },
 })
 
@@ -39,10 +53,16 @@ function FinancialsPage() {
   const isAcquisitionDrawerOpen = search.drawer === 'acquisition'
   const isBankAccountDrawerOpen = search.drawer === 'connect-bank-account'
   const isOperatingExpensesDrawerOpen = search.drawer === 'operating-expenses'
+  const isAddTransactionDrawerOpen = search.drawer === 'add-transaction'
 
   const handleCloseDrawer = () => {
     navigate({
-      search: (prev) => ({ ...prev, drawer: undefined, loanId: undefined }),
+      search: (prev) => ({
+        ...prev,
+        drawer: undefined,
+        loanId: undefined,
+        transactionId: undefined,
+      }),
       replace: true,
     })
   }
@@ -144,6 +164,14 @@ function FinancialsPage() {
         isOpen={isOperatingExpensesDrawerOpen}
         onClose={handleCloseDrawer}
         propertyId={propertyId}
+        onSuccess={handleLoanSuccess}
+      />
+
+      <AddTransactionDrawer
+        isOpen={isAddTransactionDrawerOpen}
+        onClose={handleCloseDrawer}
+        propertyId={propertyId}
+        transactionId={search.transactionId}
         onSuccess={handleLoanSuccess}
       />
     </>

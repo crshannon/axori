@@ -223,24 +223,111 @@ export const userMarketSchema = z.object({
 });
 
 // Onboarding schemas
+// Note: This schema uses .passthrough() and transforms to handle legacy data gracefully
+// Legacy enum values are transformed to valid values or ignored
 export const onboardingDataSchema = z
   .object({
-    phase: z.enum(["Explorer", "Starting", "Building", "Optimizing"]).optional(),
-    persona: z
-      .enum([
-        "House Hacker",
-        "Accidental Landlord",
-        "Aggressive Grower",
-        "Passive Income Seeker",
-        "Value-Add Investor",
+    phase: z
+      .union([
+        z.enum(["Explorer", "Starting", "Building", "Optimizing"]),
+        z.enum(["active_investor", "portfolio_builder"]), // Legacy values
+        z.string(), // Accept any string, will be transformed
       ])
-      .optional(),
-    ownership: z.enum(["Personal", "LLC"]).optional(),
+      .optional()
+      .transform((val) => {
+        // Map legacy values to new values
+        if (val === "active_investor") return "Building";
+        if (val === "portfolio_builder") return "Optimizing";
+        // If it's a valid new value, return it
+        if (["Explorer", "Starting", "Building", "Optimizing"].includes(val || "")) {
+          return val;
+        }
+        // Otherwise, return undefined to ignore invalid values
+        return undefined;
+      }),
+    persona: z
+      .union([
+        z.enum([
+          "House Hacker",
+          "Accidental Landlord",
+          "Aggressive Grower",
+          "Passive Income Seeker",
+          "Value-Add Investor",
+        ]),
+        z.enum(["portfolio_builder"]), // Legacy value
+        z.string(), // Accept any string, will be transformed
+      ])
+      .optional()
+      .transform((val) => {
+        // Map legacy values to new values
+        if (val === "portfolio_builder") return "Aggressive Grower";
+        // If it's a valid new value, return it
+        if (
+          [
+            "House Hacker",
+            "Accidental Landlord",
+            "Aggressive Grower",
+            "Passive Income Seeker",
+            "Value-Add Investor",
+          ].includes(val || "")
+        ) {
+          return val;
+        }
+        // Otherwise, return undefined to ignore invalid values
+        return undefined;
+      }),
+    ownership: z
+      .union([
+        z.enum(["Personal", "LLC"]),
+        z.object({}).passthrough(), // Handle legacy object format
+        z.string(), // Accept any string, will be transformed
+      ])
+      .optional()
+      .transform((val) => {
+        // If it's an object, try to extract a value or default to undefined
+        if (typeof val === "object" && val !== null) {
+          return undefined;
+        }
+        // If it's a valid string value, return it
+        if (val === "Personal" || val === "LLC") {
+          return val;
+        }
+        // Otherwise, return undefined to ignore invalid values
+        return undefined;
+      }),
     llcName: z.string().optional(),
     freedomNumber: z.number().int().min(1000).max(100000).optional(),
-    strategy: z.enum(["Cash Flow", "Appreciation", "BRRRR", "Hybrid"]).optional(),
-    markets: z.array(z.string().uuid()).max(3, "Select at most 3 markets").optional(), // Array of market IDs (0-3)
+    strategy: z
+      .union([
+        z.enum(["Cash Flow", "Appreciation", "BRRRR", "Hybrid"]),
+        z.object({}).passthrough(), // Handle legacy object format
+        z.string(), // Accept any string, will be transformed
+      ])
+      .optional()
+      .transform((val) => {
+        // If it's an object, try to extract a value or default to undefined
+        if (typeof val === "object" && val !== null) {
+          return undefined;
+        }
+        // If it's a valid string value, return it
+        if (["Cash Flow", "Appreciation", "BRRRR", "Hybrid"].includes(val || "")) {
+          return val;
+        }
+        // Otherwise, return undefined to ignore invalid values
+        return undefined;
+      }),
+    markets: z
+      .array(z.union([z.string().uuid(), z.string()])) // Accept UUIDs or strings (legacy)
+      .max(3, "Select at most 3 markets")
+      .optional()
+      .transform((val) => {
+        // Filter out invalid UUIDs, keep only valid ones
+        if (!val) return undefined;
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        return val.filter((id) => typeof id === "string" && uuidRegex.test(id)).slice(0, 3);
+      }),
   })
+  .passthrough() // Allow additional fields that we don't validate
   .refine(
     (data) => {
       // If ownership is LLC, llcName is required

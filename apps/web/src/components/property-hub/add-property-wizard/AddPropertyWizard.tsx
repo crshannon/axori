@@ -14,6 +14,7 @@ import {
 } from './hooks'
 import { AsyncLoader } from '@/components/loader/async-loader'
 import { useCurrentUser, useDefaultPortfolio } from '@/hooks/api'
+import { calculateMonthlyPrincipalInterest } from '@/utils/finances'
 
 interface AddPropertyWizardProps {
   onClose: () => void
@@ -97,13 +98,20 @@ export const AddPropertyWizard = ({
       formData, // Pass formData for saving
     })
 
+  // Calculate P&I for display using shared utility
   const calculatePI = () => {
-    const p = parseFloat(formData.loanAmount.replace(/,/g, '')) || 0
-    const r = (parseFloat(formData.interestRate) || 0) / 100 / 12
-    const n = (parseInt(formData.loanTerm) || 30) * 12
-    if (r === 0) return (p / n).toFixed(2)
-    const pi = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1)
-    return pi.toLocaleString(undefined, { maximumFractionDigits: 0 })
+    const principal = parseFloat(formData.loanAmount.replace(/,/g, '')) || 0
+    const interestRate = parseFloat(formData.interestRate) || 0
+    const termMonths = (parseInt(formData.loanTerm) || 30) * 12
+
+    const monthlyPI = calculateMonthlyPrincipalInterest(
+      principal,
+      interestRate,
+      termMonths,
+    )
+
+    // Format for display (remove decimals, add comma formatting)
+    return monthlyPI.toLocaleString(undefined, { maximumFractionDigits: 0 })
   }
 
   const handleClose = () => {

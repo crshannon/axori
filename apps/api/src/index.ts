@@ -41,6 +41,18 @@ import { logger } from "hono/logger";
 // Clerk middleware setup - uncomment when ready
 // import { clerkMiddleware } from "@clerk/clerk-sdk-node/hono";
 
+// Initialize tracking
+import { tracking } from "./utils/tracking";
+import { initializePostHog } from "./utils/tracking/providers/posthog";
+
+const posthogProvider = initializePostHog();
+if (posthogProvider) {
+  tracking.initialize(posthogProvider, true);
+  console.log("✓ PostHog tracking initialized");
+} else {
+  console.log("⚠️  Tracking disabled (no PostHog API key)");
+}
+
 const app = new Hono();
 
 // Middleware

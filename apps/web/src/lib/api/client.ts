@@ -34,10 +34,19 @@ async function apiFetch<T>(
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({
+    const errorData = await response.json().catch(() => ({
       error: response.statusText,
     }))
-    throw new Error(error.error || `API request failed: ${response.statusText}`)
+    // Include validation details if available
+    const errorMessage = errorData.details
+      ? `${errorData.error || 'Validation failed'}: ${JSON.stringify(errorData.details)}`
+      : errorData.error || `API request failed: ${response.statusText}`
+    const error = new Error(errorMessage)
+    // Attach details for programmatic access
+    if (errorData.details) {
+      ;(error as { details?: unknown }).details = errorData.details
+    }
+    throw error
   }
 
   return response.json()

@@ -2,6 +2,11 @@ import { useMemo } from 'react'
 import { useFinancialPulse } from './useFinancialPulse'
 import { useProperty } from '@/hooks/api/useProperties'
 import { usePropertyTransactions } from '@/hooks/api/useTransactions'
+import {
+  calculateCapExReserve,
+  calculateGrossIncome,
+  calculateNOI,
+} from '@/utils/finances'
 
 interface FixedExpense {
   id: string
@@ -43,50 +48,8 @@ export function useOperatingCore(propertyId: string): OperatingCoreMetrics {
     const activeTransactions =
       (transactionsData?.transactions || []).filter((t) => !t.isExcluded)
 
-    // Calculate gross income - prefer structured data, fallback to transactions
-    let grossIncome = 0
-
-    // Start with structured rental income
-    if (rentalIncome) {
-      const monthlyRent = rentalIncome.monthlyRent
-        ? parseFloat(rentalIncome.monthlyRent)
-        : 0
-      const otherIncome = rentalIncome.otherIncomeMonthly
-        ? parseFloat(rentalIncome.otherIncomeMonthly)
-        : 0
-      const parkingIncome = rentalIncome.parkingIncomeMonthly
-        ? parseFloat(rentalIncome.parkingIncomeMonthly)
-        : 0
-      const laundryIncome = rentalIncome.laundryIncomeMonthly
-        ? parseFloat(rentalIncome.laundryIncomeMonthly)
-        : 0
-      const petRent = rentalIncome.petRentMonthly
-        ? parseFloat(rentalIncome.petRentMonthly)
-        : 0
-      const storageIncome = rentalIncome.storageIncomeMonthly
-        ? parseFloat(rentalIncome.storageIncomeMonthly)
-        : 0
-      const utilityReimbursement = rentalIncome.utilityReimbursementMonthly
-        ? parseFloat(rentalIncome.utilityReimbursementMonthly)
-        : 0
-
-      grossIncome =
-        monthlyRent +
-        otherIncome +
-        parkingIncome +
-        laundryIncome +
-        petRent +
-        storageIncome +
-        utilityReimbursement
-    }
-
-    // Add income from transactions if structured data is missing or to supplement
-    if (!rentalIncome || grossIncome === 0) {
-      const transactionIncome = activeTransactions
-        .filter((t) => t.type === 'income')
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0)
-      grossIncome = grossIncome > 0 ? grossIncome : transactionIncome
-    }
+    // Calculate gross income using shared utility
+    const grossIncome = calculateGrossIncome(rentalIncome, activeTransactions)
 
     // Calculate fixed expenses - combine structured data and transactions
     const fixedExpenses: Array<FixedExpense> = []
@@ -213,36 +176,65 @@ export function useOperatingCore(propertyId: string): OperatingCoreMetrics {
     }
 
     // Add recurring monthly expenses from transactions
-    // Filter out duplicates - exclude transactions with category "Management" if we already have management from structured data
+    // Filter out duplicates and financing costs
     const hasManagementExpense = fixedExpenses.some(
       (exp) => exp.id === 'management',
     )
 
-    const transactionExpenses = activeTransactions
+    // Group transaction expenses by category to avoid duplicates
+    const transactionExpensesMap = new Map<string, number>()
+
+    activeTransactions
       .filter(
         (t) =>
           t.type === 'expense' &&
           t.isRecurring &&
           t.recurrenceFrequency === 'monthly' &&
           // Exclude management transactions if we already have structured management
-          !(hasManagementExpense && t.category?.toLowerCase() === 'management'),
+          !(hasManagementExpense && t.category?.toLowerCase() === 'management') &&
+          // Exclude loan payments (financing costs, not operating expenses)
+          !(
+            t.category?.toLowerCase() === 'other' &&
+            (t.subcategory?.toLowerCase() === 'loan_payment' ||
+              t.description?.toLowerCase().includes('loan') ||
+              t.description?.toLowerCase().includes('mortgage') ||
+              t.description?.toLowerCase().includes('heloc'))
+          ) &&
+          // Exclude property tax and insurance if already in structured data
+          !(
+            (t.category === 'property_tax' || t.category === 'insurance') &&
+            operatingExpenses
+          ),
       )
-      .map((t) => ({
-        id: t.id,
-        label: t.category || 'Other',
-        amount: parseFloat(t.amount),
-      }))
+      .forEach((t) => {
+        const category = t.category || 'Other'
+        const currentAmount = transactionExpensesMap.get(category) || 0
+        // Sum amounts for the same category (in case there are multiple transactions)
+        transactionExpensesMap.set(
+          category,
+          currentAmount + parseFloat(t.amount),
+        )
+      })
+
+    // Convert grouped expenses to array
+    const transactionExpenses = Array.from(transactionExpensesMap.entries()).map(
+      ([category, amount]) => ({
+        id: `transaction-${category}`,
+        label: category.charAt(0).toUpperCase() + category.slice(1).replace(/_/g, ' '),
+        amount,
+      }),
+    )
 
     // Combine structured and transaction expenses
     fixedExpenses.push(...transactionExpenses)
 
-    // Calculate CapEx reserve - use capexRate from operatingExpenses
-    let capexReserve = 0
-    if (operatingExpenses?.capexRate && grossIncome > 0) {
-      const capexRate = parseFloat(operatingExpenses.capexRate)
-      capexReserve = grossIncome * capexRate
-    } else {
-      // Fallback to estimated calculation if capexRate not set
+    // Calculate CapEx reserve using shared utility
+    let capexReserve = calculateCapExReserve(
+      grossIncome,
+      operatingExpenses?.capexRate,
+    )
+    // Fallback to estimated calculation if capexRate not set
+    if (capexReserve === 0) {
       capexReserve = metrics.liquidReserves / 12 || 0
     }
 
@@ -252,9 +244,9 @@ export function useOperatingCore(propertyId: string): OperatingCoreMetrics {
       0,
     )
 
-    // Calculate NOI (Net Operating Income = gross income - operating expenses)
+    // Calculate NOI using shared utility
     // NOI excludes debt service and capital expenses
-    const noi = grossIncome - totalFixedExpenses - capexReserve
+    const noi = calculateNOI(grossIncome, totalFixedExpenses, capexReserve)
 
     // Calculate margin (net cash flow as percentage of gross income)
     const margin = grossIncome === 0 ? 0 : (metrics.netCashFlow / grossIncome) * 100

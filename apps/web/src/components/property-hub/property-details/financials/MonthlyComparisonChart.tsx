@@ -1,43 +1,83 @@
+import { useMemo, useState } from 'react'
 import {
-  ComposedChart,
-  Line,
   Area,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
 } from 'recharts'
-import { Card, Typography } from '@axori/ui'
+import { Card, Typography, cn } from '@axori/ui'
 import { useMonthlyMetrics } from '@/hooks/computed/useMonthlyMetrics'
+import { useDailyMetrics } from '@/hooks/computed/useDailyMetrics'
 
 interface MonthlyComparisonChartProps {
   propertyId: string
   monthsCount?: number
 }
 
+type TimePeriod = 1 | 3 | 12
+
 /**
  * MonthlyComparisonChart component - Displays projected vs actual cash flow over time
- * 
+ *
  * Features:
  * - Projected baseline (area chart, subtle)
  * - Actual data points (line chart, emphasized)
  * - Variance visualization (color-coded)
- * - Time range selector (trailing 12 months default)
+ * - Time range selector (1 month, 3 months, 1 year)
  * - Month drill-down (on click)
  */
 export const MonthlyComparisonChart = ({
   propertyId,
-  monthsCount = 12,
+  monthsCount: initialMonthsCount,
 }: MonthlyComparisonChartProps) => {
-  const { months, hasProjectedData, hasActualData } =
-    useMonthlyMetrics(propertyId, monthsCount)
+  // Default to 3 months, but allow prop override for initial state
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>(
+    (initialMonthsCount === 1 ||
+    initialMonthsCount === 3 ||
+    initialMonthsCount === 12
+      ? initialMonthsCount
+      : 3) as TimePeriod,
+  )
+  const monthsCount = selectedPeriod
+
+  // Use daily metrics for 1M and 3M, monthly for 1Y
+  const useDailyView = selectedPeriod === 1 || selectedPeriod === 3
+  const daysCount = selectedPeriod === 1 ? 30 : selectedPeriod === 3 ? 90 : 0
+
+  const monthlyMetrics = useMonthlyMetrics(
+    propertyId,
+    useDailyView ? 0 : monthsCount,
+  )
+  const dailyMetrics = useDailyMetrics(propertyId, daysCount)
+
+  const data = useDailyView ? dailyMetrics.days : monthlyMetrics.months
+  const hasProjectedData = useDailyView
+    ? dailyMetrics.hasProjectedData
+    : monthlyMetrics.hasProjectedData
+  const hasActualData = useDailyView
+    ? dailyMetrics.hasActualData
+    : monthlyMetrics.hasActualData
 
   // Format month for display (e.g., "2025-01" -> "Jan")
   const formatMonth = (monthStr: string): string => {
     const [, month] = monthStr.split('-')
     const date = new Date(2000, parseInt(month, 10) - 1, 1)
+    return date.toLocaleDateString('en-US', { month: 'short' })
+  }
+
+  // Format date for display (e.g., "2025-01-15" -> "Jan 15" or "15" for daily view)
+  const formatDate = (dateStr: string): string => {
+    const [year, month, day] = dateStr.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    if (useDailyView) {
+      // For daily view, show day of month (e.g., "15")
+      return String(day)
+    }
     return date.toLocaleDateString('en-US', { month: 'short' })
   }
 
@@ -55,14 +95,41 @@ export const MonthlyComparisonChart = ({
   }
 
   // Prepare chart data
-  const chartData = months.map((month) => ({
-    month: formatMonth(month.month),
-    monthFull: month.month, // Keep full month for reference
-    projected: month.projected?.cashFlow ?? null,
-    actual: month.actual?.cashFlow ?? null,
-    variance: month.variance?.cashFlow ?? null,
-    variancePercent: month.variance?.cashFlowPercent ?? null,
-  }))
+  const chartData = useMemo(() => {
+    if (useDailyView) {
+      return dailyMetrics.days.map((day, index) => {
+        const [year, month, dayNum] = day.date.split('-').map(Number)
+        const date = new Date(year, month - 1, dayNum)
+        // Show month label on first day of month or every 7 days for better readability
+        const isFirstOfMonth = dayNum === 1
+        const showMonthLabel = isFirstOfMonth || (index > 0 && index % 7 === 0)
+        const dateLabel = showMonthLabel
+          ? `${date.toLocaleDateString('en-US', { month: 'short' })} ${dayNum}`
+          : String(dayNum)
+        return {
+          date: dateLabel,
+          dateFull: day.date, // Keep full date for reference
+          projected: day.projected?.cashFlow ?? null,
+          actual: day.actual?.cashFlow ?? null,
+          variance: day.variance?.cashFlow ?? null,
+          variancePercent: day.variance?.cashFlowPercent ?? null,
+        }
+      })
+    } else {
+      return monthlyMetrics.months.map((month) => {
+        const [, monthNum] = month.month.split('-')
+        const date = new Date(2000, parseInt(monthNum, 10) - 1, 1)
+        return {
+          date: date.toLocaleDateString('en-US', { month: 'short' }),
+          dateFull: month.month, // Keep full month for reference
+          projected: month.projected?.cashFlow ?? null,
+          actual: month.actual?.cashFlow ?? null,
+          variance: month.variance?.cashFlow ?? null,
+          variancePercent: month.variance?.cashFlowPercent ?? null,
+        }
+      })
+    }
+  }, [dailyMetrics.days, monthlyMetrics.months, useDailyView])
 
   // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {
@@ -73,13 +140,32 @@ export const MonthlyComparisonChart = ({
     const actual = data.actual ?? null
     const variance = data.variance ?? null
 
+    // Format date for tooltip
+    const formatTooltipDate = (dateStr: string) => {
+      if (useDailyView) {
+        const [year, month, day] = dateStr.split('-').map(Number)
+        const date = new Date(year, month - 1, day)
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      }
+      const [year, month] = dateStr.split('-').map(Number)
+      const date = new Date(year, month - 1, 1)
+      return date.toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric',
+      })
+    }
+
     return (
       <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg p-3 shadow-lg">
         <Typography
           variant="caption"
           className="text-slate-500 dark:text-slate-400 mb-2 block"
         >
-          {data.monthFull}
+          {formatTooltipDate(data.dateFull)}
         </Typography>
         {projected !== null && (
           <div className="mb-1">
@@ -150,27 +236,58 @@ export const MonthlyComparisonChart = ({
     )
   }
 
-  // Empty state: projected only, <3 months of actuals
-  const actualMonthsCount = months.filter((m) => m.actual !== null).length
-  const showEmptyState = hasProjectedData && actualMonthsCount < 3
+  // Empty state: projected only, <3 months of actuals (only for monthly view)
+  const actualDataPointsCount = useDailyView
+    ? dailyMetrics.days.filter((d) => d.actual !== null).length
+    : monthlyMetrics.months.filter((m) => m.actual !== null).length
+  const showEmptyState =
+    !useDailyView && hasProjectedData && actualDataPointsCount < 3
+
+  const timePeriods: Array<{ value: TimePeriod; label: string }> = [
+    { value: 1, label: '1M' },
+    { value: 3, label: '3M' },
+    { value: 12, label: '1Y' },
+  ]
 
   return (
     <Card variant="rounded" padding="lg" radius="xl">
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <Typography variant="h5" className="mb-1">
-            Monthly Comparison
-          </Typography>
-          <Typography variant="overline" className="text-slate-400">
-            Projected vs Actual Cash Flow
-          </Typography>
+        <div className="flex justify-between items-start">
+          <div>
+            <Typography variant="h5" className="mb-1">
+              Monthly Comparison
+            </Typography>
+            <Typography variant="overline" className="text-slate-400">
+              Projected vs Actual Cash Flow
+            </Typography>
+          </div>
+          {/* Time Period Tabs */}
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 rounded-lg p-1">
+            {timePeriods.map((period) => (
+              <button
+                key={period.value}
+                onClick={() => setSelectedPeriod(period.value)}
+                className={cn(
+                  'px-3 py-1.5 rounded-md text-xs font-semibold transition-all',
+                  selectedPeriod === period.value
+                    ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300',
+                )}
+              >
+                {period.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Empty state message */}
         {showEmptyState && (
           <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 border border-slate-200 dark:border-white/10">
-            <Typography variant="body-sm" className="text-slate-600 dark:text-slate-400">
+            <Typography
+              variant="body-sm"
+              className="text-slate-600 dark:text-slate-400"
+            >
               Track actuals over time to see how your property performs against
               expectations.
             </Typography>
@@ -189,9 +306,13 @@ export const MonthlyComparisonChart = ({
                 className="stroke-slate-200 dark:stroke-white/10"
               />
               <XAxis
-                dataKey="month"
+                dataKey="date"
                 className="text-xs text-slate-500 dark:text-slate-400"
                 tick={{ fill: 'currentColor' }}
+                angle={useDailyView ? -45 : 0}
+                textAnchor={useDailyView ? 'end' : 'middle'}
+                height={useDailyView ? 60 : 30}
+                interval={useDailyView ? 'preserveStartEnd' : 0}
               />
               <YAxis
                 className="text-xs text-slate-500 dark:text-slate-400"
@@ -256,11 +377,14 @@ export const MonthlyComparisonChart = ({
             )}
           </div>
           <Typography variant="overline" className="text-slate-400">
-            Trailing {monthsCount} months
+            {monthsCount === 1
+              ? 'Last month'
+              : monthsCount === 12
+                ? 'Last year'
+                : `Trailing ${monthsCount} months`}
           </Typography>
         </div>
       </div>
     </Card>
   )
 }
-

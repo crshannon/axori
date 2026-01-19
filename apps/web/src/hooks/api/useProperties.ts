@@ -299,9 +299,11 @@ export function useUpdateProperty() {
         body: JSON.stringify(data),
       })
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['properties', 'drafts', 'me'] })
       queryClient.invalidateQueries({ queryKey: ['properties'] })
+      // Invalidate specific property query to refresh finance page data (includes loans)
+      queryClient.invalidateQueries({ queryKey: ['properties', variables.id] })
     },
   })
 }

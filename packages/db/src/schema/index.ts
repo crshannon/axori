@@ -254,6 +254,10 @@ export const propertyRentalIncome = pgTable("property_rental_income", {
   rentSource: text("rent_source"), // "lease", "estimate", "manual"
   marketRentEstimate: numeric("market_rent_estimate", { precision: 10, scale: 2 }),
 
+  // Lease Dates
+  leaseStartDate: date("lease_start_date"), // Lease start date
+  leaseEndDate: date("lease_end_date"), // Lease expiration date
+
   // Rent History
   rentLastIncreasedDate: date("rent_last_increased_date"),
   rentLastIncreasedAmount: numeric("rent_last_increased_amount", { precision: 10, scale: 2 }),
@@ -557,11 +561,11 @@ export const propertyTransactions = pgTable(
     amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
     category: transactionCategoryEnum("category").notNull(),
     subcategory: text("subcategory"),
-    
+
     // Party Information (vendor for expenses, payer for income)
     vendor: text("vendor"), // For expenses: who was paid
     payer: text("payer"), // For income: who paid (tenant, etc.)
-    
+
     description: text("description"),
 
     // Recurring

@@ -12,6 +12,7 @@ import type {
   ColumnFiltersState,
   SortingState,
 } from '@tanstack/react-table'
+import { useNavigate } from '@tanstack/react-router'
 import { usePropertyTransactions } from '@/hooks/api/useTransactions'
 import { useTheme } from '@/utils/providers/theme-provider'
 import { cn } from '@/utils/helpers/cn'
@@ -42,6 +43,7 @@ export const PropertyTransactions = ({
 }: PropertyTransactionsProps) => {
   const { appTheme } = useTheme()
   const isDark = appTheme === 'dark'
+  const navigate = useNavigate()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [sorting, setSorting] = useState<SortingState>([
@@ -322,6 +324,28 @@ export const PropertyTransactions = ({
     console.log('Export functionality to be implemented')
   }
 
+  const handleAddTransaction = () => {
+    navigate({
+      search: (prev: any) => ({
+        ...prev,
+        drawer: 'add-transaction',
+        transactionId: undefined,
+      }),
+      replace: true,
+    })
+  }
+
+  const handleRowClick = (transactionId: string) => {
+    navigate({
+      search: (prev: any) => ({
+        ...prev,
+        drawer: 'add-transaction',
+        transactionId,
+      }),
+      replace: true,
+    })
+  }
+
   return (
     <Card
       variant="rounded"
@@ -376,8 +400,16 @@ export const PropertyTransactions = ({
             <Button
               variant="primary"
               size="sm"
-              onClick={handleExport}
+              onClick={handleAddTransaction}
               className="px-8 py-4 rounded-3xl font-black text-[10px] uppercase tracking-widest shadow-xl"
+            >
+              Add Transaction
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              className="px-8 py-4 rounded-3xl font-black text-[10px] uppercase tracking-widest"
             >
               Export Ledger
             </Button>
@@ -450,8 +482,9 @@ export const PropertyTransactions = ({
                 {table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}
+                    onClick={() => handleRowClick(row.original.id)}
                     className={cn(
-                      'border-b last:border-0 group transition-all duration-300',
+                      'border-b last:border-0 group transition-all duration-300 cursor-pointer',
                       isDark
                         ? 'border-white/5 hover:bg-white/[0.02]'
                         : 'border-slate-100 hover:bg-slate-50',

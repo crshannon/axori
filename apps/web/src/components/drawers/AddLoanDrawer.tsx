@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Drawer, Input, Select } from '@axori/ui'
+import { Drawer, ErrorCard, Input, Select } from '@axori/ui'
 import { DrawerSectionTitle } from './DrawerSectionTitle'
 import { useProperty } from '@/hooks/api/useProperties'
 import { useCreateLoan, useUpdateLoan } from '@/hooks/api/useLoans'
@@ -52,7 +52,13 @@ export const AddLoanDrawer = ({
         lenderName: existingLoan.lenderName || '',
         originalLoanAmount: existingLoan.originalLoanAmount?.toString() || '',
         interestRate: existingLoan.interestRate
-          ? (Number(existingLoan.interestRate) * 100).toString()
+          ? (() => {
+              // Convert from decimal (0.065) to percentage (6.5) for display
+              const decimalRate = Number(existingLoan.interestRate)
+              // If the rate is < 1, it's already a decimal (0.065), convert to percentage
+              // If the rate is >= 1, it might already be a percentage, but we'll assume decimal for consistency
+              return (decimalRate * 100).toString()
+            })()
           : '',
         termMonths: existingLoan.termMonths?.toString() || '',
         currentBalance: existingLoan.currentBalance?.toString() || '',
@@ -369,13 +375,7 @@ export const AddLoanDrawer = ({
         </section>
 
         {/* Error Message */}
-        {errors.submit && (
-          <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-6">
-            <p className="text-sm font-bold text-red-600 dark:text-red-400">
-              {errors.submit}
-            </p>
-          </div>
-        )}
+        {errors.submit && <ErrorCard message={errors.submit} />}
       </form>
     </Drawer>
   )

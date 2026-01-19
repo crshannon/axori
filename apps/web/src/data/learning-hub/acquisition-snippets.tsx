@@ -5,15 +5,7 @@
  * and related property acquisition features. They're displayed in the Learning Hub drawer.
  */
 
-import type { ReactNode } from 'react'
-
-export interface LearningSnippet {
-  id: string
-  title: string
-  category: string
-  content: string | ReactNode
-  context?: 'debt-logic' | 'acquisition' | 'operating-core' | 'general'
-}
+import type { LearningSnippet } from './types'
 
 /**
  * Current Basis Snippet
@@ -36,7 +28,7 @@ export const equityVelocitySnippet: LearningSnippet = {
   category: 'Acquisition Strategy',
   context: 'acquisition',
   content:
-    'Equity velocity measures how quickly your equity is growing. It combines appreciation and principal paydown. Higher equity velocity means you\'re building wealth faster and may be able to leverage that equity for additional acquisitions.',
+    "Equity velocity measures how quickly your equity is growing. It combines appreciation and principal paydown. Higher equity velocity means you're building wealth faster and may be able to leverage that equity for additional acquisitions.",
 }
 
 /**
@@ -48,7 +40,7 @@ export const closingCostsSnippet: LearningSnippet = {
   category: 'Acquisition Strategy',
   context: 'acquisition',
   content:
-    'Closing costs are part of your basis and reduce your immediate equity, but they\'re typically 2-5% of purchase price. These include lender fees, title insurance, inspections, and escrow fees. Track these to understand your true acquisition cost.',
+    "Closing costs are part of your basis and reduce your immediate equity, but they're typically 2-5% of purchase price. These include lender fees, title insurance, inspections, and escrow fees. Track these to understand your true acquisition cost.",
 }
 
 /**
@@ -109,16 +101,18 @@ export function generateAcquisitionLearning(
             <strong className="text-slate-900 dark:text-white">
               ${currentBasis.toLocaleString()}
             </strong>
-            . This includes your purchase price, closing costs, and any improvements.
+            . This includes your purchase price, closing costs, and any
+            improvements.
           </p>
           <div className="p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
             <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-100 mb-2">
               Why it matters:
             </p>
             <p className="text-sm text-slate-700 dark:text-slate-300 italic">
-              Your basis determines depreciation deductions, capital gains calculations, and your
-              true equity position. Higher basis means more depreciation benefits but less potential
-              for appreciation-based equity growth.
+              Your basis determines depreciation deductions, capital gains
+              calculations, and your true equity position. Higher basis means
+              more depreciation benefits but less potential for
+              appreciation-based equity growth.
             </p>
           </div>
         </div>
@@ -127,7 +121,8 @@ export function generateAcquisitionLearning(
 
     // Enhance unrealized gain snippet if we have both value and basis
     if (currentValue !== null && unrealizedGain !== null) {
-      const gainPercentage = currentBasis > 0 ? (unrealizedGain / currentBasis) * 100 : 0
+      const gainPercentage =
+        currentBasis > 0 ? (unrealizedGain / currentBasis) * 100 : 0
       const enhancedGainSnippet: LearningSnippet = {
         ...unrealizedGainSnippet,
         content: (
@@ -171,4 +166,3 @@ export function generateAcquisitionLearning(
 
   return snippets
 }
-

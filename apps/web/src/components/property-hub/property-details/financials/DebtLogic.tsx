@@ -1,11 +1,4 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  EmptyStateCard,
-  Typography,
-} from '@axori/ui'
+import { Button, Card, EmptyStateCard, Typography } from '@axori/ui'
 import { useNavigate } from '@tanstack/react-router'
 import { LearningHubButton } from './LearningHubButton'
 import { generateDebtLogicLearning } from '@/data/learning-hub/loan-snippets'
@@ -23,12 +16,9 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
     navigate({
       to: '/property-hub/$propertyId/financials',
       params: { propertyId },
-      search: (prev) => ({
-        ...prev,
+      search: {
         drawer: 'add-loan',
-        loanId: undefined,
-        bankAccountId: undefined,
-      }),
+      },
     })
   }
 
@@ -36,12 +26,10 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
     navigate({
       to: '/property-hub/$propertyId/financials',
       params: { propertyId },
-      search: (prev) => ({
-        ...prev,
+      search: {
         drawer: 'add-loan',
         loanId,
-        bankAccountId: undefined,
-      }),
+      },
     })
   }
 
@@ -210,151 +198,110 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
           </div>
         </div>
 
-        <div className="space-y-6">
-          {activeLoans.map((loan) => {
+        <div className="space-y-0">
+          {activeLoans.map((loan, index) => {
             const loanData = formatLoanData(loan)
             const isPrimary = loan.isPrimary
+            const isLast = index === activeLoans.length - 1
 
             return (
-              <Card
-                key={loan.id}
-                variant="rounded"
-                padding="sm"
-                radius="lg"
-                className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 cursor-pointer hover:border-slate-300 dark:hover:border-white/10 transition-all"
-                onClick={() => handleEditLoan(loan.id)}
-              >
-                <CardHeader className="p-3 pb-2">
-                  <div className="flex items-center justify-between">
+              <div key={loan.id}>
+                <div
+                  className="group relative py-4 px-4 rounded-lg border border-transparent hover:rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 hover:border-slate-200 dark:hover:border-white/10 hover:shadow-sm cursor-pointer transition-all"
+                  onClick={() => handleEditLoan(loan.id)}
+                >
+                  <div className="space-y-3">
+                    {/* Header: Lender Name & Badges */}
                     <div className="flex items-center gap-2">
                       <Typography
                         variant="body-sm"
                         weight="bold"
-                        className="text-slate-400 uppercase tracking-widest"
+                        className="text-slate-900 dark:text-white"
                       >
-                        {loan.lenderName} •{' '}
-                        {loanData.loanTerm ?? 'Term not set'}
+                        {loan.lenderName}
                       </Typography>
                       {isPrimary && (
                         <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400">
                           Primary
                         </span>
                       )}
-                    </div>
-                    <div className="px-2 py-0.5 rounded-full bg-slate-200/50 dark:bg-white/5">
                       <Typography
                         variant="caption"
-                        className="text-slate-600 dark:text-slate-400 opacity-100"
+                        className="text-slate-400 uppercase ml-auto"
                       >
                         {loan.loanType}
                       </Typography>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-3 pt-0">
-                  {/* Main Balance */}
-                  <div className="mb-4">
-                    <Typography
-                      variant="h3"
-                      className="tabular-nums text-slate-900 dark:text-white"
-                    >
-                      {loanData.loanBalance !== null
-                        ? `$${loanData.loanBalance.toLocaleString()}`
-                        : 'Not set'}
-                    </Typography>
-                    {loanData.originalLoanAmount && loanData.loanBalance && (
+
+                    {/* Main Balance */}
+                    <div>
                       <Typography
-                        variant="body-sm"
-                        className="text-slate-500 dark:text-slate-400 mt-1"
+                        variant="h3"
+                        className="tabular-nums text-slate-900 dark:text-white tracking-tighter"
                       >
-                        Original: $
-                        {loanData.originalLoanAmount.toLocaleString()} • Paid:{' '}
-                        {loanData.principalPaid !== null
-                          ? `$${loanData.principalPaid.toLocaleString()}`
-                          : '$0'}
+                        {loanData.loanBalance !== null
+                          ? `$${loanData.loanBalance.toLocaleString()}`
+                          : 'Not set'}
                       </Typography>
-                    )}
-                  </div>
-
-                  {/* Details Grid */}
-                  <div className="grid grid-cols-2 gap-3 border-t border-slate-200 dark:border-white/5 pt-3">
-                    {/* Monthly Payment */}
-                    {loanData.totalMonthlyPayment !== null && (
-                      <div>
+                      {loanData.loanTerm && (
                         <Typography
                           variant="caption"
-                          className="text-slate-500 dark:text-slate-400 mb-0.5 opacity-100"
+                          className="text-slate-500 dark:text-slate-400 mt-1"
                         >
-                          Monthly Payment
+                          {loanData.loanTerm}
                         </Typography>
-                        <Typography
-                          variant="h5"
-                          className="tabular-nums text-slate-900 dark:text-white"
-                        >
-                          $
-                          {loanData.totalMonthlyPayment.toLocaleString(
-                            undefined,
-                            {
-                              maximumFractionDigits: 0,
-                            },
-                          )}
-                        </Typography>
-                        {loanData.monthlyPAndI && loanData.monthlyEscrow && (
+                      )}
+                    </div>
+
+                    {/* Payment & Rate Row */}
+                    <div className="flex items-center gap-4 pt-2 border-t border-slate-200/50 dark:border-white/5">
+                      {loanData.totalMonthlyPayment !== null && (
+                        <div>
                           <Typography
-                            variant="overline"
-                            className="text-slate-400 mt-0.5 opacity-100"
+                            variant="caption"
+                            className="text-slate-500 dark:text-slate-400 mb-0.5"
                           >
-                            P&I: $
-                            {loanData.monthlyPAndI.toLocaleString(undefined, {
-                              maximumFractionDigits: 0,
-                            })}{' '}
-                            + Escrow: $
-                            {loanData.monthlyEscrow.toLocaleString(undefined, {
-                              maximumFractionDigits: 0,
-                            })}
+                            Monthly Payment
                           </Typography>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Start Date */}
-                    {loanData.startDate && (
-                      <div>
-                        <Typography
-                          variant="caption"
-                          className="text-slate-500 dark:text-slate-400 mb-0.5 opacity-100"
-                        >
-                          Start Date
-                        </Typography>
-                        <Typography
-                          variant="h5"
-                          className="tabular-nums text-slate-900 dark:text-white"
-                        >
-                          {loanData.startDate}
-                        </Typography>
-                      </div>
-                    )}
-
-                    {/* Maturity Date */}
-                    {loanData.maturityDate && (
-                      <div>
-                        <Typography
-                          variant="caption"
-                          className="text-slate-500 dark:text-slate-400 mb-0.5 opacity-100"
-                        >
-                          Maturity
-                        </Typography>
-                        <Typography
-                          variant="h5"
-                          className="tabular-nums text-slate-900 dark:text-white"
-                        >
-                          {loanData.maturityDate}
-                        </Typography>
-                      </div>
-                    )}
+                          <Typography
+                            variant="body-sm"
+                            weight="bold"
+                            className="tabular-nums text-slate-900 dark:text-white"
+                          >
+                            $
+                            {loanData.totalMonthlyPayment.toLocaleString(
+                              undefined,
+                              {
+                                maximumFractionDigits: 0,
+                              },
+                            )}
+                          </Typography>
+                        </div>
+                      )}
+                      {loanData.interestRate !== null && (
+                        <div>
+                          <Typography
+                            variant="caption"
+                            className="text-slate-500 dark:text-slate-400 mb-0.5"
+                          >
+                            Interest Rate
+                          </Typography>
+                          <Typography
+                            variant="body-sm"
+                            weight="bold"
+                            className="tabular-nums text-slate-900 dark:text-white"
+                          >
+                            {loanData.interestRate.toFixed(2)}%
+                          </Typography>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                {!isLast && activeLoans.length > 1 && (
+                  <div className="h-[1px] bg-gradient-to-r from-transparent via-violet-200 dark:via-violet-500/30 to-transparent my-4" />
+                )}
+              </div>
             )
           })}
         </div>

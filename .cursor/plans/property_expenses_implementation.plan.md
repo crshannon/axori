@@ -453,5 +453,3 @@ Following architect skill naming conventions:
 ## Notes
 
 - Acquisition costs should have `isTaxDeductible: false` (capitalized, not deducted)
-- Recurring expenses can be used to generate future expense projections
-- `source` field enables tracking data provenance for integrations

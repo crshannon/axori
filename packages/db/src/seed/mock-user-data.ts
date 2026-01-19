@@ -65,20 +65,59 @@ export async function seedMockUserData(identifier: string) {
 
     console.log(`✅ Found user: ${user.id} (${user.email})`);
 
+    // Seed user markets first to get market IDs
+    // Look up market IDs by name and collect UUIDs for onboardingData
+    const marketNames = ["Indianapolis", "Memphis", "Cleveland"];
+    const marketIds: string[] = [];
+
+    for (const marketName of marketNames) {
+      // Find market by name
+      const [market] = await db
+        .select()
+        .from(markets)
+        .where(eq(markets.name, marketName))
+        .limit(1);
+
+      if (!market) {
+        console.log(`⚠️  Market "${marketName}" not found, skipping...`);
+        continue;
+      }
+
+      // Collect market ID for onboardingData
+      marketIds.push(market.id);
+
+      // Check if relationship already exists
+      const existing = await db
+        .select()
+        .from(userMarkets)
+        .where(
+          and(
+            eq(userMarkets.userId, user.id),
+            eq(userMarkets.marketId, market.id)
+          )
+        )
+        .limit(1);
+
+      if (existing.length === 0) {
+        await db.insert(userMarkets).values({
+          userId: user.id,
+          marketId: market.id,
+          relationshipType: "target_market" as const,
+        });
+      }
+    }
+
+    console.log(`✅ Seeded user markets`);
+
     // 1. Complete onboarding data
+    // Using correct enum values that match the validation schema
     const onboardingData = {
-      phase: "active_investor",
-      persona: "portfolio_builder",
-      ownership: {
-        currentProperties: 3,
-        yearsExperience: 5,
-      },
+      phase: "Building" as const, // Valid: "Explorer" | "Starting" | "Building" | "Optimizing"
+      persona: "Aggressive Grower" as const, // Valid: "House Hacker" | "Accidental Landlord" | "Aggressive Grower" | "Passive Income Seeker" | "Value-Add Investor"
+      ownership: "Personal" as const, // Valid: "Personal" | "LLC" (not an object)
       freedomNumber: 10000,
-      strategy: {
-        primary: "cash_flow",
-        secondary: "appreciation",
-      },
-      markets: ["indianapolis", "memphis", "cleveland"],
+      strategy: "Hybrid" as const, // Valid: "Cash Flow" | "Appreciation" | "BRRRR" | "Hybrid" (not an object)
+      markets: marketIds, // Array of market UUIDs (max 3)
     };
 
     await db
@@ -121,45 +160,6 @@ export async function seedMockUserData(identifier: string) {
       console.log(`✅ Created portfolio: ${portfolio.id}`);
     }
 
-    // Seed user markets (onboarding markets)
-    // Look up market IDs by name
-    const marketNames = ["Indianapolis", "Memphis", "Cleveland"];
-
-    for (const marketName of marketNames) {
-      // Find market by name
-      const [market] = await db
-        .select()
-        .from(markets)
-        .where(eq(markets.name, marketName))
-        .limit(1);
-
-      if (!market) {
-        console.log(`⚠️  Market "${marketName}" not found, skipping...`);
-        continue;
-      }
-
-      // Check if relationship already exists
-      const existing = await db
-        .select()
-        .from(userMarkets)
-        .where(
-          and(
-            eq(userMarkets.userId, user.id),
-            eq(userMarkets.marketId, market.id)
-          )
-        )
-        .limit(1);
-
-      if (existing.length === 0) {
-        await db.insert(userMarkets).values({
-          userId: user.id,
-          marketId: market.id,
-          relationshipType: "target_market" as const,
-        });
-      }
-    }
-
-    console.log(`✅ Seeded user markets`);
 
     // 2. Create empty state property (address only)
     const [emptyProperty] = await db
@@ -243,6 +243,7 @@ export async function seedMockUserData(identifier: string) {
     console.log(`✅ Added primary loan: ${loan.id}`);
 
     // Add HELOC (second lien) to "456 Oak Avenue"
+    // Reduced balance for realistic cash flow
     const [helocLoan] = await db
       .insert(loans)
       .values({
@@ -251,10 +252,11 @@ export async function seedMockUserData(identifier: string) {
         lenderName: "Community Credit Union",
         servicerName: "Community Credit Union",
         loanNumber: "HELOC-2024-456",
-        originalLoanAmount: "50000", // $50k HELOC
+        originalLoanAmount: "25000", // $25k HELOC (reduced for better cash flow)
         interestRate: "0.085", // 8.5% (typically higher than primary mortgage)
         termMonths: 120, // 10 years draw period
-        currentBalance: "32000", // Current balance drawn
+        currentBalance: "10000", // $10k current balance (interest-only payment ~$71/month)
+        monthlyPrincipalInterest: "71", // Interest-only payment: $10k @ 8.5% / 12
         startDate: "2024-01-15",
         maturityDate: "2034-01-15",
         status: "active" as const,

@@ -32,7 +32,7 @@ export function generateSampleTransactions(
       propertyId,
       type: "income",
       transactionDate: new Date(monthYear, monthMonth, 1).toISOString().split("T")[0],
-      amount: "1850",
+      amount: "1850", // Updated to match property seed data
       category: "rent",
       payer: "Tenant - John Doe",
       description: "Monthly rent payment",
@@ -45,15 +45,17 @@ export function generateSampleTransactions(
       createdBy: userId,
     });
 
-    // Parking income (15th of each month)
+    // Pet rent income (1st of each month)
     transactions.push({
       propertyId,
       type: "income",
-      transactionDate: new Date(monthYear, monthMonth, 15).toISOString().split("T")[0],
-      amount: "75",
-      category: "parking",
+      transactionDate: new Date(monthYear, monthMonth, 1).toISOString().split("T")[0],
+      amount: "50",
+      category: "other",
       payer: "Tenant - John Doe",
-      description: "Parking spot rental",
+      description: "Pet rent",
+      isRecurring: true,
+      recurrenceFrequency: "monthly",
       source: "manual",
       reviewStatus: "approved",
       isExcluded: false,
@@ -61,77 +63,65 @@ export function generateSampleTransactions(
       createdBy: userId,
     });
 
-    // Monthly maintenance expense (10th of each month)
+    // Note: Lawn care, pest control, and other expenses are NOT included as transactions
+    // because they're already in the structured propertyOperatingExpenses data
+    // and would cause duplicates. These are tracked in the structured data as recurring expenses.
+
+    // Primary loan payment (P&I) - 1st of each month
+    // Using "other" category since "loan_payment" is not in the enum
     transactions.push({
       propertyId,
       type: "expense",
-      transactionDate: new Date(monthYear, monthMonth, 10).toISOString().split("T")[0],
-      amount: "150",
-      category: "maintenance",
-      vendor: "Green Thumb Lawn Care",
-      description: "Monthly lawn maintenance",
+      transactionDate: new Date(monthYear, monthMonth, 1).toISOString().split("T")[0],
+      amount: "1295", // Updated to match loan seed data
+      category: "other",
+      subcategory: "loan_payment",
+      vendor: "First National Bank",
+      description: "Primary mortgage payment (P&I)",
       isRecurring: true,
       recurrenceFrequency: "monthly",
-      isTaxDeductible: true,
-      taxCategory: "Maintenance",
+      isTaxDeductible: false, // P&I not tax deductible, only interest portion
       source: "plaid",
       reviewStatus: "approved",
       isExcluded: false,
       createdBy: userId,
     });
 
-    // Monthly management fee (15th of each month)
+    // Note: Property tax and insurance are NOT included as transactions here
+    // because they're already in the structured propertyOperatingExpenses data
+    // and would cause duplicates. In reality, these are typically paid
+    // annually/quarterly from escrow, not monthly.
+
+    // HELOC payment (interest-only) - 1st of each month
     transactions.push({
       propertyId,
       type: "expense",
-      transactionDate: new Date(monthYear, monthMonth, 15).toISOString().split("T")[0],
-      amount: "185",
-      category: "management",
-      vendor: "ABC Property Management",
-      description: "Management fee (10%)",
+      transactionDate: new Date(monthYear, monthMonth, 1).toISOString().split("T")[0],
+      amount: "71", // Interest-only: $10k @ 8.5% / 12 = ~$71/month
+      category: "other",
+      subcategory: "loan_payment",
+      vendor: "Community Credit Union",
+      description: "HELOC interest payment",
       isRecurring: true,
       recurrenceFrequency: "monthly",
-      isTaxDeductible: true,
-      taxCategory: "Management",
-      source: "appfolio",
+      isTaxDeductible: false, // Interest portion would be deductible, but keeping simple
+      source: "plaid",
       reviewStatus: "approved",
       isExcluded: false,
       createdBy: userId,
     });
 
-    // Quarterly property tax (only in Jan, Apr, Jul, Oct - every 3 months)
-    const quarter = Math.floor(monthMonth / 3);
-    const monthsInQuarter = [0, 3, 6, 9]; // Jan, Apr, Jul, Oct
-    if (monthsInQuarter.includes(monthMonth)) {
-      transactions.push({
-        propertyId,
-        type: "expense",
-        transactionDate: new Date(monthYear, monthMonth, 20).toISOString().split("T")[0],
-        amount: "1050", // Quarterly payment = 350 * 3
-        category: "property_tax",
-        vendor: "Shelby County Tax Assessor",
-        description: "Quarterly property tax payment",
-        isRecurring: true,
-        recurrenceFrequency: "quarterly",
-        isTaxDeductible: true,
-        taxCategory: "Property Tax",
-        source: "plaid",
-        reviewStatus: "approved",
-        isExcluded: false,
-        createdBy: userId,
-      });
-    }
 
-    // Occasional repairs (randomly in some months)
-    if (monthOffset % 3 === 0) {
+    // Occasional repairs (randomly in some months - not every month)
+    if (monthOffset % 4 === 0) {
       transactions.push({
         propertyId,
         type: "expense",
         transactionDate: new Date(monthYear, monthMonth, 5).toISOString().split("T")[0],
-        amount: "350",
+        amount: "250",
         category: "repairs",
         vendor: "ABC Plumbing",
-        description: "Repair and maintenance",
+        description: "Minor repair and maintenance",
         isTaxDeductible: true,
         taxCategory: "Repairs",
         source: "document_ai",
@@ -140,23 +130,6 @@ export function generateSampleTransactions(
         createdBy: userId,
       });
     }
-
-    // Bank fees (end of month)
-    transactions.push({
-      propertyId,
-      type: "expense",
-      transactionDate: new Date(monthYear, monthMonth + 1, 0).toISOString().split("T")[0], // Last day of month
-      amount: "50",
-      category: "bank_fees",
-      vendor: "First National Bank",
-      description: "Account maintenance fee",
-      isTaxDeductible: true,
-      taxCategory: "Bank Fees",
-      source: "plaid",
-      reviewStatus: "approved",
-      isExcluded: false,
-      createdBy: userId,
-    });
   }
 
   // Add one-time Capex expense 2 months ago

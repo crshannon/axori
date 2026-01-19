@@ -29,8 +29,6 @@ export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
       params: { propertyId },
       search: {
         drawer: 'acquisition',
-        loanId: undefined,
-        bankAccountId: undefined,
       },
     })
   }

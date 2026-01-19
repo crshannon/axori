@@ -41,8 +41,6 @@ export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
       params: { propertyId },
       search: {
         drawer: 'operating-expenses',
-        loanId: undefined,
-        bankAccountId: undefined,
       },
     })
   }

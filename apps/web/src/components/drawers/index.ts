@@ -1,4 +1,5 @@
 export { AddLoanDrawer } from './AddLoanDrawer'
+export { AddTransactionDrawer } from './AddTransactionDrawer'
 export { BankAccountConnectionDrawer } from './BankAccountConnectionDrawer'
 export { DrawerSectionTitle } from './DrawerSectionTitle'
 export { LearningHubDrawer } from './LearningHubDrawer'
