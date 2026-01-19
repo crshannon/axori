@@ -1,0 +1,2 @@
+Title,Description,Priority,Status,Labels,Estimate,Project,Requirements,Acceptance Criteria
+"Test: Newline Handling","Testing that newlines are properly converted","Medium","Todo","Feature",3,"f31911f8-fcd3-45a4-86c4-a8afbc6eb186","* First requirement\n* Second requirement\n* Third requirement","* First criteria\n* Second criteria\n* Third criteria"

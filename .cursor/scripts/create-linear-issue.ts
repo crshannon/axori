@@ -1,19 +1,19 @@
 #!/usr/bin/env tsx
 /**
  * Create Linear Issue Script
- * 
+ *
  * Creates a Linear issue from the command line or Cursor context.
- * 
+ *
  * Prerequisites:
  * - Linear API key set in LINEAR_API_KEY environment variable
  * - Linear team ID set in LINEAR_TEAM_ID environment variable (optional, will prompt)
- * 
+ *
  * Usage:
  *   LINEAR_API_KEY=xxx tsx .cursor/scripts/create-linear-issue.ts
- * 
+ *
  * Or with interactive prompts:
  *   LINEAR_API_KEY=xxx tsx .cursor/scripts/create-linear-issue.ts --interactive
- * 
+ *
  * Or with arguments:
  *   LINEAR_API_KEY=xxx tsx .cursor/scripts/create-linear-issue.ts --title "Fix bug" --description "Description here" --priority high
  */
@@ -30,6 +30,8 @@ interface CreateIssueOptions {
   labels?: string[]
   assigneeId?: string
   stateId?: string
+  parentId?: string
+  dueDate?: string // ISO date string (YYYY-MM-DD)
 }
 
 interface LinearIssueResponse {
@@ -122,10 +124,10 @@ async function createLinearIssue(
     input.projectId = projectId
   }
 
-  if (labels.length > 0) {
-    // First, we need to get label IDs - for now, we'll skip labels
-    // Linear requires label IDs, not names, so we'd need a separate query
-    console.warn('Warning: Label support requires fetching label IDs first. Skipping labels for now.')
+  if (labels && labels.length > 0) {
+    // Labels should be label IDs, not names
+    // Linear expects labelIds as an array of strings
+    input.labelIds = labels.filter((id) => id && typeof id === 'string')
   }
 
   if (assigneeId) {
@@ -134,6 +136,15 @@ async function createLinearIssue(
 
   if (stateId) {
     input.stateId = stateId
+  }
+
+  if (options.parentId) {
+    input.parentId = options.parentId
+  }
+
+  if (options.dueDate) {
+    // Linear expects due date as ISO date string
+    input.dueDate = options.dueDate
   }
 
   try {
@@ -152,9 +163,14 @@ async function createLinearIssue(
     const result: LinearIssueResponse = await response.json()
 
     if (result.errors && result.errors.length > 0) {
+      const errorMessages = result.errors.map((e) => {
+        const message = e.message || 'Unknown error'
+        const code = e.extensions?.code || ''
+        return code ? `${message} (${code})` : message
+      })
       return {
         success: false,
-        error: result.errors.map((e) => e.message).join(', '),
+        error: errorMessages.join(', '),
       }
     }
 
@@ -330,8 +346,13 @@ async function main() {
   }
 
   console.log('🚀 Creating Linear issue...')
+  if (!options.title) {
+    console.error('❌ Title is required')
+    process.exit(1)
+  }
   const result = await createLinearIssue(apiKey, {
     ...options,
+    title: options.title,
     teamId: finalTeamId,
   })
 
