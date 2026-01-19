@@ -11,6 +11,7 @@ import {
   loans,
   propertyTransactions,
   users,
+  userPortfolios,
   eq,
   and,
   desc,
@@ -1378,15 +1379,31 @@ propertiesRouter.get("/:id/transactions", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  // Security: Verify user owns property
+  // Security: Verify user has access to property via portfolio membership
   const [property] = await db
     .select()
     .from(properties)
-    .where(and(eq(properties.id, id), eq(properties.userId, user.id)))
+    .where(eq(properties.id, id))
     .limit(1);
 
   if (!property) {
     return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Check if user has access to the property's portfolio
+  const [userPortfolioAccess] = await db
+    .select()
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, user.id),
+        eq(userPortfolios.portfolioId, property.portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!userPortfolioAccess) {
+    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
   }
 
   // Get query parameters for filtering
@@ -1473,15 +1490,31 @@ propertiesRouter.get("/:id/transactions/:transactionId", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  // Security: Verify user owns property
+  // Security: Verify user has access to property via portfolio membership
   const [property] = await db
     .select()
     .from(properties)
-    .where(and(eq(properties.id, id), eq(properties.userId, user.id)))
+    .where(eq(properties.id, id))
     .limit(1);
 
   if (!property) {
     return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Check if user has access to the property's portfolio
+  const [userPortfolioAccess] = await db
+    .select()
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, user.id),
+        eq(userPortfolios.portfolioId, property.portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!userPortfolioAccess) {
+    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
   }
 
   // Get transaction and verify it belongs to the property
@@ -1526,15 +1559,31 @@ propertiesRouter.post("/:id/transactions", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  // Security: Verify user owns property
+  // Security: Verify user has access to property via portfolio membership
   const [property] = await db
     .select()
     .from(properties)
-    .where(and(eq(properties.id, id), eq(properties.userId, user.id)))
+    .where(eq(properties.id, id))
     .limit(1);
 
   if (!property) {
     return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Check if user has access to the property's portfolio
+  const [userPortfolioAccess] = await db
+    .select()
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, user.id),
+        eq(userPortfolios.portfolioId, property.portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!userPortfolioAccess) {
+    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
   }
 
   // Parse and validate request body
@@ -1607,15 +1656,31 @@ propertiesRouter.put("/:id/transactions/:transactionId", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  // Security: Verify user owns property
+  // Security: Verify user has access to property via portfolio membership
   const [property] = await db
     .select()
     .from(properties)
-    .where(and(eq(properties.id, id), eq(properties.userId, user.id)))
+    .where(eq(properties.id, id))
     .limit(1);
 
   if (!property) {
     return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Check if user has access to the property's portfolio
+  const [userPortfolioAccess] = await db
+    .select()
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, user.id),
+        eq(userPortfolios.portfolioId, property.portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!userPortfolioAccess) {
+    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
   }
 
   // Verify transaction belongs to property
@@ -1710,15 +1775,31 @@ propertiesRouter.delete("/:id/transactions/:transactionId", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  // Security: Verify user owns property
+  // Security: Verify user has access to property via portfolio membership
   const [property] = await db
     .select()
     .from(properties)
-    .where(and(eq(properties.id, id), eq(properties.userId, user.id)))
+    .where(eq(properties.id, id))
     .limit(1);
 
   if (!property) {
     return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Check if user has access to the property's portfolio
+  const [userPortfolioAccess] = await db
+    .select()
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, user.id),
+        eq(userPortfolios.portfolioId, property.portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!userPortfolioAccess) {
+    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
   }
 
   // Verify transaction belongs to property
