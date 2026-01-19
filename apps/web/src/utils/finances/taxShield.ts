@@ -268,8 +268,11 @@ export function generateDepreciationSchedule(
   }
 
   const schedule: DepreciationScheduleItem[] = []
-  const totalYearsInt = Math.ceil(depreciationYears)
+  // For 27.5 years, we need 28 years (partial first + full middle + partial last)
+  // For 39 years, we need 40 years
+  const totalYearsInt = Math.ceil(depreciationYears) + 1
   let accumulatedDepreciation = 0
+  const annualDepreciation = calculateAnnualDepreciation(depreciableBasis, depreciationYears)
 
   // Determine placed in service month (default to January)
   let placedInServiceMonth = 1
@@ -283,18 +286,33 @@ export function generateDepreciationSchedule(
     startYear = date.getFullYear()
   }
 
+  const firstYearFraction = getMidMonthFraction(placedInServiceMonth)
+  const lastYearFraction = 1 - firstYearFraction
+
   for (let i = 1; i <= totalYearsInt; i++) {
-    const yearDepreciation = calculateYearDepreciation(
-      depreciableBasis,
-      depreciationYears,
-      i,
-      placedInServiceMonth,
-      accumulatedDepreciation,
-    )
+    const remainingBasisBefore = depreciableBasis - accumulatedDepreciation
+    
+    // Stop if nothing left to depreciate
+    if (remainingBasisBefore <= 0.01) break
+
+    let yearDepreciation: number
+
+    if (i === 1) {
+      // First year: apply mid-month convention
+      yearDepreciation = annualDepreciation * firstYearFraction
+    } else if (i === totalYearsInt) {
+      // Last year: get the remaining fraction
+      yearDepreciation = Math.min(annualDepreciation * lastYearFraction, remainingBasisBefore)
+    } else {
+      // Middle years: full depreciation
+      yearDepreciation = Math.min(annualDepreciation, remainingBasisBefore)
+    }
+
+    // Ensure we don't exceed remaining basis
+    yearDepreciation = Math.min(yearDepreciation, remainingBasisBefore)
 
     if (yearDepreciation <= 0) break
 
-    const beginningBasis = depreciableBasis - accumulatedDepreciation
     accumulatedDepreciation += yearDepreciation
 
     // Calculate months depreciated for this year
@@ -304,13 +322,14 @@ export function generateDepreciationSchedule(
       monthsDepreciated = 13 - placedInServiceMonth // e.g., January = 12, December = 1
     } else if (i === totalYearsInt) {
       // Last year: remaining months
-      monthsDepreciated = 12 - (13 - placedInServiceMonth) + 1 // Complement of first year
+      monthsDepreciated = placedInServiceMonth - 1 // Complement of first year
+      if (monthsDepreciated === 0) monthsDepreciated = 1 // At least 1 month
     }
 
     schedule.push({
       year: startYear + i - 1,
       monthsDepreciated: Math.round(monthsDepreciated),
-      beginningBasis: Math.round(beginningBasis * 100) / 100,
+      beginningBasis: Math.round(remainingBasisBefore * 100) / 100,
       depreciation: Math.round(yearDepreciation * 100) / 100,
       accumulatedDepreciation: Math.round(accumulatedDepreciation * 100) / 100,
       remainingBasis: Math.round((depreciableBasis - accumulatedDepreciation) * 100) / 100,
