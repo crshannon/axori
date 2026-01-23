@@ -50,6 +50,13 @@
       "when": 1737667200000,
       "tag": "0006_portfolio_invitation_access",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1737753600000,
+      "tag": "0007_backfill_portfolio_owners",
+      "breakpoints": true
     }
   ]
 }
