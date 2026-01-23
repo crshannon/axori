@@ -57,6 +57,13 @@
       "when": 1737753600000,
       "tag": "0007_backfill_portfolio_owners",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1737840000000,
+      "tag": "0008_invitation_tokens",
+      "breakpoints": true
     }
   ]
 }
