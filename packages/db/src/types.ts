@@ -21,6 +21,9 @@ import {
   annualDepreciationRecords,
 } from './schema'
 
+// Re-export property access types for external use
+export type { PropertyAccess, PropertyAccessPermission } from './schema'
+
 /**
  * User profile type inferred from Drizzle schema (for read operations)
  */
