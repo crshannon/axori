@@ -12,6 +12,7 @@ import {
   AcquisitionMetadata,
   AssetConfiguration,
   AssetDnaCalibration,
+  BillingSection,
   CalculationPresumptions,
   CloudConnect,
   NotificationEngine,
@@ -125,7 +126,10 @@ function RouteComponent() {
           </div>
         </div>
 
-        {/* Danger Zone */}
+        {/* Billing Section - Owner Only */}
+        <BillingSection propertyId={propertyId} />
+
+        {/* Danger Zone - Admin/Owner Only */}
         <SystemSovereignty propertyId={propertyId} />
       </div>
 
