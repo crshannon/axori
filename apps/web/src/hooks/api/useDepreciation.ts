@@ -1,18 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUser } from '@clerk/clerk-react'
-import { apiFetch } from '@/lib/api/client'
 import type {
+  AnnualDepreciationRecord,
+  CostSegregationStudy,
   PropertyDepreciation,
   PropertyImprovement,
-  CostSegregationStudy,
-  AnnualDepreciationRecord,
 } from '@axori/db'
+import { apiFetch } from '@/lib/api/client'
 
 export interface DepreciationData {
   depreciation: PropertyDepreciation | null
-  improvements: PropertyImprovement[]
-  costSegStudies: CostSegregationStudy[]
-  depreciationRecords: AnnualDepreciationRecord[]
+  improvements: Array<PropertyImprovement>
+  costSegStudies: Array<CostSegregationStudy>
+  depreciationRecords: Array<AnnualDepreciationRecord>
 }
 
 // Input types
@@ -141,7 +141,7 @@ export function useImprovements(propertyId: string | null | undefined) {
         throw new Error('User not authenticated or property ID missing')
       }
 
-      const result = await apiFetch<{ improvements: PropertyImprovement[] }>(
+      const result = await apiFetch<{ improvements: Array<PropertyImprovement> }>(
         `/api/properties/${propertyId}/improvements`,
         {
           clerkId: user.id,
@@ -200,7 +200,7 @@ export function useCostSegStudies(propertyId: string | null | undefined) {
         throw new Error('User not authenticated or property ID missing')
       }
 
-      const result = await apiFetch<{ costSegStudies: CostSegregationStudy[] }>(
+      const result = await apiFetch<{ costSegStudies: Array<CostSegregationStudy> }>(
         `/api/properties/${propertyId}/cost-segregation`,
         {
           clerkId: user.id,
@@ -259,7 +259,7 @@ export function useDepreciationRecords(propertyId: string | null | undefined) {
         throw new Error('User not authenticated or property ID missing')
       }
 
-      const result = await apiFetch<{ depreciationRecords: AnnualDepreciationRecord[] }>(
+      const result = await apiFetch<{ depreciationRecords: Array<AnnualDepreciationRecord> }>(
         `/api/properties/${propertyId}/depreciation-records`,
         {
           clerkId: user.id,

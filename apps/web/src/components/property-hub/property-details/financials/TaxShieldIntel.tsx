@@ -3,12 +3,12 @@ import { LearningHubButton } from './LearningHubButton'
 import { useProperty } from '@/hooks/api/useProperties'
 import { generateTaxShieldLearning } from '@/data/learning-hub/tax-shield-snippets'
 import {
-  calculateCostSegPotential,
+  DEFAULT_MARGINAL_TAX_RATE,
   calculateCostBasis,
+  calculateCostSegPotential,
   calculateDepreciationSummary,
   calculateTaxShield,
   getDepreciationSchedule,
-  DEFAULT_MARGINAL_TAX_RATE,
 } from '@/utils/finances'
 
 interface TaxShieldIntelProps {

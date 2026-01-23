@@ -27,15 +27,15 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useUser } from '@clerk/clerk-react'
-import { apiFetch } from '@/lib/api/client'
-import type { PortfolioRole, PropertyAccess } from '@axori/permissions'
 import {
-  canView,
-  canEdit,
   canAdmin,
+  canEdit,
   canManageBilling,
+  canView,
   canViewProperty,
 } from '@axori/permissions'
+import type { PortfolioRole, PropertyAccess } from '@axori/permissions'
+import { apiFetch } from '@/lib/api/client'
 
 /**
  * Permission context returned from the API
@@ -53,7 +53,7 @@ interface PermissionContextResponse {
     canManageBilling: boolean
     [key: string]: boolean
   }
-  allowedActions: string[]
+  allowedActions: Array<string>
 }
 
 /**
@@ -137,7 +137,7 @@ export function usePermissions(portfolioId: string | null): UsePermissionsResult
     canManageBilling: role ? canManageBilling(role) : false,
     hasPropertyAccess,
     isLoading: portfolioId ? isLoading : false,
-    error: error as Error | null,
+    error: error,
     refetch: () => { refetch() },
   }
 }
