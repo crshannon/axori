@@ -48,13 +48,9 @@ import {
   withPermission,
   requireAuth,
   getAuthenticatedUserId,
-  getUserFromRequest,
 } from "../middleware/permissions";
 import {
   getAccessiblePropertyIdsForUser,
-  canViewProperty,
-  canEditProperty,
-  canDeleteProperty,
   getUserPortfolioMembership,
 } from "@axori/permissions";
 
@@ -1176,7 +1172,6 @@ propertiesRouter.put(
     try {
       const id = c.req.param("id");
       const loanId = c.req.param("loanId");
-      const userId = getAuthenticatedUserId(c);
       const body = await c.req.json();
 
       // Verify property exists

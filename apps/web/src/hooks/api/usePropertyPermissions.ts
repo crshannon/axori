@@ -23,7 +23,8 @@
  */
 
 import { useProperty } from './useProperties'
-import { usePermissions, type UsePermissionsResult } from './usePermissions'
+import {  usePermissions } from './usePermissions'
+import type {UsePermissionsResult} from './usePermissions';
 
 /**
  * Return type for the usePropertyPermissions hook
