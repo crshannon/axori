@@ -135,10 +135,10 @@ export const MonthlyComparisonChart = ({
   const CustomTooltip = ({ active, payload }: any) => {
     if (!active || !payload || payload.length === 0) return null
 
-    const data = payload[0].payload
-    const projected = data.projected ?? null
-    const actual = data.actual ?? null
-    const variance = data.variance ?? null
+    const tooltipData = payload[0].payload
+    const projected = tooltipData.projected ?? null
+    const actual = tooltipData.actual ?? null
+    const variance = tooltipData.variance ?? null
 
     // Format date for tooltip
     const formatTooltipDate = (dateStr: string) => {
@@ -165,7 +165,7 @@ export const MonthlyComparisonChart = ({
           variant="caption"
           className="text-slate-500 dark:text-slate-400 mb-2 block"
         >
-          {formatTooltipDate(data.dateFull)}
+          {formatTooltipDate(tooltipData.dateFull)}
         </Typography>
         {projected !== null && (
           <div className="mb-1">
@@ -207,8 +207,8 @@ export const MonthlyComparisonChart = ({
               <span className="font-bold">
                 {variance >= 0 ? '+' : ''}
                 {Math.round(variance).toLocaleString()} (
-                {data.variancePercent !== null
-                  ? `${variance >= 0 ? '+' : ''}${data.variancePercent.toFixed(1)}%`
+                {tooltipData.variancePercent !== null
+                  ? `${variance >= 0 ? '+' : ''}${tooltipData.variancePercent.toFixed(1)}%`
                   : 'N/A'}
                 )
               </span>

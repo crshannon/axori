@@ -1,6 +1,6 @@
 ---
 description: "Database schema alignment patterns using drizzle-zod to maintain single source of truth between Drizzle schemas and Zod validation"
-globs: ["packages/db/**", "packages/shared/src/validation/**"]
+globs: ["packages/db/**", "packages/shared/src/validation/**", "apps/web/src/components/drawers/**", "apps/web/src/hooks/api/**", "apps/web/src/components/**/*Form*.tsx", "apps/web/src/components/**/*form*.tsx"]
 alwaysApply: false
 ---
 

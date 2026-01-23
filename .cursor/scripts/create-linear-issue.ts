@@ -1,19 +1,19 @@
 #!/usr/bin/env tsx
 /**
  * Create Linear Issue Script
- * 
+ *
  * Creates a Linear issue from the command line or Cursor context.
- * 
+ *
  * Prerequisites:
  * - Linear API key set in LINEAR_API_KEY environment variable
  * - Linear team ID set in LINEAR_TEAM_ID environment variable (optional, will prompt)
- * 
+ *
  * Usage:
  *   LINEAR_API_KEY=xxx tsx .cursor/scripts/create-linear-issue.ts
- * 
+ *
  * Or with interactive prompts:
  *   LINEAR_API_KEY=xxx tsx .cursor/scripts/create-linear-issue.ts --interactive
- * 
+ *
  * Or with arguments:
  *   LINEAR_API_KEY=xxx tsx .cursor/scripts/create-linear-issue.ts --title "Fix bug" --description "Description here" --priority high
  */
@@ -256,7 +256,12 @@ function parseArgs(): {
         break
       case '--labels':
       case '-l':
-        options.labels = args[++i].split(',').map((s) => s.trim())
+        const labelsValue = args[++i]
+        if (labelsValue === undefined) {
+          console.error('❌ Error: --labels requires a value (comma-separated list)')
+          process.exit(1)
+        }
+        options.labels = labelsValue.split(',').map((s) => s.trim())
         break
       case '--assignee-id':
         options.assigneeId = args[++i]
@@ -301,6 +306,12 @@ async function main() {
     }
   }
 
+  // Validate required fields
+  if (!options.title) {
+    console.error('❌ Title is required. Use --title "Issue Title"')
+    process.exit(1)
+  }
+
   // If from context, try to read current file/selection
   if (options.fromContext) {
     // This would be enhanced to read from Cursor context
@@ -331,8 +342,14 @@ async function main() {
 
   console.log('🚀 Creating Linear issue...')
   const result = await createLinearIssue(apiKey, {
-    ...options,
+    title: options.title,
+    description: options.description,
+    priority: options.priority,
     teamId: finalTeamId,
+    projectId: options.projectId,
+    labels: options.labels,
+    assigneeId: options.assigneeId,
+    stateId: options.stateId,
   })
 
   if (result.success) {

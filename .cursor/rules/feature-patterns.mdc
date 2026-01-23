@@ -1,0 +1,548 @@
+---
+description: "UI patterns for feature development, including drawer-based editing and when to use different interaction patterns"
+globs: ["apps/web/src/routes/**", "apps/web/src/components/drawers/**"]
+alwaysApply: true
+---
+
+# Feature Patterns
+
+This rule defines UI patterns for feature development in Axori, focusing on consistent user experience across property hub pages and settings.
+
+## UI Pattern: Drawer-Based Editing
+
+The drawer-based editing pattern is the **standard approach** for settings and configuration pages in Axori.
+
+### Pattern Overview
+
+- **Read-only cards** display data on the page
+- **Edit buttons** open drawers for editing
+- **URL-based state** manages drawer open/close via search params
+- **Consistent UX** across all property hub pages
+
+### When to Use Drawers vs In-Page Forms
+
+#### Use Drawers For:
+
+- ✅ Settings/configuration pages
+- ✅ Complex forms with multiple sections
+- ✅ Editing existing data
+- ✅ Maintaining page context while editing
+- ✅ Forms that require validation before saving
+- ✅ Multi-step workflows
+
+#### Use In-Page Forms For:
+
+- ✅ Simple, single-field inputs
+- ✅ Real-time updates (e.g., toggles)
+- ✅ Creating new items in lists
+- ✅ Quick actions that don't require context
+- ✅ Search/filter inputs
+
+### Implementation Pattern
+
+#### 1. Define Search Schema
+
+```typescript
+import { z } from 'zod'
+
+const settingsSearchSchema = z.object({
+  drawer: z.enum(['asset-config', 'acquisition', 'presumptions', 'notifications']).optional(),
+})
+```
+
+#### 2. Configure Route with Search Validation
+
+```typescript
+export const Route = createFileRoute(
+  '/_authed/property-hub/$propertyId/settings',
+)({
+  component: SettingsPage,
+  validateSearch: (search: Record<string, unknown>) => {
+    const parsed = settingsSearchSchema.safeParse(search)
+    if (!parsed.success) {
+      return { drawer: undefined }
+    }
+    return parsed.data
+  },
+})
+```
+
+#### 3. Read Drawer State from URL
+
+```typescript
+function SettingsPage() {
+  const navigate = useNavigate({ from: Route.fullPath })
+  const search = Route.useSearch()
+
+  const isAssetConfigDrawerOpen = search.drawer === 'asset-config'
+  const isAcquisitionDrawerOpen = search.drawer === 'acquisition'
+
+  const handleCloseDrawer = () => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        drawer: undefined,
+      }),
+      replace: true,
+    })
+  }
+
+  const handleOpenDrawer = (drawerKey: string) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        drawer: drawerKey,
+      }),
+      replace: true,
+    })
+  }
+}
+```
+
+#### 4. Create Drawer Components
+
+Drawer components should:
+- Accept `isOpen` and `onClose` props
+- Handle their own form state
+- Save data independently
+- Close on successful save
+
+```typescript
+interface AssetConfigurationDrawerProps {
+  isOpen: boolean
+  onClose: () => void
+  propertyId: string
+}
+
+export const AssetConfigurationDrawer = ({
+  isOpen,
+  onClose,
+  propertyId,
+}: AssetConfigurationDrawerProps) => {
+  // Form state and handlers
+  // Save logic
+  // Close on success
+}
+```
+
+#### 5. Display Read-Only Cards with Edit Buttons
+
+```tsx
+<div className={cardClass}>
+  <div className="flex justify-between items-center mb-10">
+    <h3 className="text-2xl font-black uppercase">Card Title</h3>
+    <div className="flex items-center gap-3">
+      <LearningHubButton ... />
+      <Button onClick={() => handleOpenDrawer('drawer-key')}>
+        Edit
+      </Button>
+    </div>
+  </div>
+  {/* Read-only content display */}
+  <div>
+    <p>Property Type: {propertyType}</p>
+    <p>Address: {address}</p>
+  </div>
+</div>
+```
+
+#### 6. Render Drawers
+
+```tsx
+<AssetConfigurationDrawer
+  isOpen={isAssetConfigDrawerOpen}
+  onClose={handleCloseDrawer}
+  propertyId={propertyId}
+/>
+```
+
+### Card Structure Pattern
+
+Each settings card should follow this structure:
+
+```tsx
+<div className={cardClass}>
+  {/* Header with title, Learning Hub button, and Edit button */}
+  <div className="flex justify-between items-center mb-10">
+    <h3 className="text-2xl font-black uppercase tracking-tighter">
+      Card Title
+    </h3>
+    <div className="flex items-center gap-3">
+      <LearningHubButton
+        snippets={learningSnippets}
+        title="Card Title Learning Hub"
+        subtitle="Educational content about this section"
+        componentKey="card-key"
+      />
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => handleOpenDrawer('drawer-key')}
+      >
+        Edit
+      </Button>
+    </div>
+  </div>
+
+  {/* Read-only content */}
+  <div className="space-y-4">
+    {/* Display formatted data */}
+  </div>
+</div>
+```
+
+### Drawer Component Pattern
+
+Drawer components should:
+
+1. **Use the Drawer component** from `@axori/ui`
+2. **Manage form state internally** or use shared hooks
+3. **Handle validation** before saving
+4. **Show loading states** during save
+5. **Close on success** and optionally refresh parent data
+6. **Show error messages** if save fails
+
+```typescript
+export const AssetConfigurationDrawer = ({
+  isOpen,
+  onClose,
+  propertyId,
+}: AssetConfigurationDrawerProps) => {
+  const { formData, updateField, saveSettings, isSaving } = usePropertySettings(propertyId)
+
+  const handleSave = async () => {
+    try {
+      await saveSettings()
+      onClose() // Close on success
+    } catch (error) {
+      // Handle error
+    }
+  }
+
+  return (
+    <Drawer isOpen={isOpen} onClose={onClose} title="Asset Configuration">
+      {/* Form fields */}
+      <Button onClick={handleSave} disabled={isSaving}>
+        {isSaving ? 'Saving...' : 'Save Changes'}
+      </Button>
+    </Drawer>
+  )
+}
+```
+
+## Component Isolation Pattern
+
+**Always extract page cards into isolated components** rather than building large monolithic pages.
+
+### Pattern Overview
+
+- **Each card/section** becomes its own component
+- **Components live in** `apps/web/src/components/property-hub/property-details/[page-name]/`
+- **Page files** import and compose components
+- **Better maintainability** and testability
+- **Reusability** across different contexts
+
+### When to Extract Components
+
+Extract a component when:
+- ✅ A card/section has its own distinct purpose
+- ✅ It has its own data fetching or state
+- ✅ It's a logical unit that could be reused
+- ✅ It makes the page file cleaner and more readable
+
+**Examples:**
+- Financial metrics cards → `FinancialPulse.tsx`, `Liquidity.tsx`
+- Settings cards → `AssetConfiguration.tsx`, `AcquisitionMetadata.tsx`
+- Complex sections → `DebtLogic.tsx`, `OperatingCore.tsx`
+
+### Component Structure
+
+Each component should:
+
+1. **Accept `propertyId` as prop** (or relevant identifier)
+2. **Handle its own data fetching** using hooks
+3. **Be self-contained** with loading and error states
+4. **Use Card component** from `@axori/ui` for consistent styling
+5. **Include Learning Hub integration** where appropriate
+6. **Handle drawer navigation** internally if needed
+
+```typescript
+interface AssetConfigurationProps {
+  propertyId: string
+}
+
+export const AssetConfiguration = ({ propertyId }: AssetConfigurationProps) => {
+  const navigate = useNavigate()
+  const { formData, isLoading } = usePropertySettings(propertyId)
+
+  const handleOpenDrawer = () => {
+    navigate({
+      to: '/property-hub/$propertyId/settings',
+      params: { propertyId },
+      search: { drawer: 'asset-config' },
+    })
+  }
+
+  if (isLoading) {
+    return <Card>Loading...</Card>
+  }
+
+  return (
+    <Card variant="rounded" padding="lg" radius="xl">
+      {/* Component content */}
+    </Card>
+  )
+}
+```
+
+### Page Composition Pattern
+
+Pages should be thin composition layers:
+
+```typescript
+function SettingsPage() {
+  const { propertyId } = Route.useParams()
+  const search = Route.useSearch()
+
+  // Only handle page-level concerns:
+  // - Drawer state management
+  // - Error boundaries
+  // - Layout structure
+
+  return (
+    <>
+      <div className="grid grid-cols-12 gap-8">
+        <div className="lg:col-span-8 space-y-8">
+          <AssetConfiguration propertyId={propertyId} />
+          <AcquisitionMetadata propertyId={propertyId} />
+        </div>
+        <div className="lg:col-span-4 space-y-8">
+          <NotificationEngine propertyId={propertyId} />
+          <CalculationPresumptions propertyId={propertyId} />
+        </div>
+      </div>
+
+      {/* Drawers */}
+      <AssetConfigurationDrawer ... />
+    </>
+  )
+}
+```
+
+### Directory Structure
+
+```
+apps/web/src/components/property-hub/property-details/
+  ├── financials/
+  │   ├── FinancialPulse.tsx
+  │   ├── OperatingCore.tsx
+  │   ├── DebtLogic.tsx
+  │   └── index.ts
+  ├── settings/
+  │   ├── AssetConfiguration.tsx
+  │   ├── AcquisitionMetadata.tsx
+  │   ├── NotificationEngine.tsx
+  │   └── index.ts
+  └── shared/
+      └── PropertyDetailsHeader.tsx
+```
+
+### Benefits of Component Isolation
+
+- **Maintainability**: Each component is focused and easier to understand
+- **Testability**: Components can be tested in isolation
+- **Reusability**: Components can be used in different contexts
+- **Readability**: Page files are cleaner and show high-level structure
+- **Collaboration**: Multiple developers can work on different components
+- **Performance**: Components can be optimized individually
+
+## Benefits of Drawer Pattern
+
+- **Consistency**: All settings use the same interaction pattern
+- **Cleaner UI**: Page isn't cluttered with forms
+- **Better UX**: Users can see context while editing
+- **URL State**: Drawer state is shareable via URL
+- **Maintainability**: Clear separation of concerns
+
+## Examples
+
+See existing implementations:
+
+- `apps/web/src/routes/_authed/property-hub.$propertyId/financials.tsx` - Page composition with isolated components
+- `apps/web/src/routes/_authed/property-hub.$propertyId/settings.tsx` - Settings page with isolated components
+- `apps/web/src/components/property-hub/property-details/financials/OperatingCore.tsx` - Isolated component example
+- `apps/web/src/components/property-hub/property-details/settings/AssetConfiguration.tsx` - Settings component example
+- `apps/web/src/components/drawers/AddLoanDrawer.tsx` - Drawer component pattern
+
+## Checklist
+
+When implementing drawer-based editing:
+
+- [ ] Define search schema with `drawer` param
+- [ ] Configure route with `validateSearch`
+- [ ] Create drawer state handlers (open/close)
+- [ ] Create drawer component with `isOpen` and `onClose` props
+- [ ] Convert inline forms to read-only display cards
+- [ ] Add edit buttons to card headers
+- [ ] Add Learning Hub buttons to card headers
+- [ ] Test drawer opens/closes via URL
+- [ ] Test save functionality
+- [ ] Test error handling
+- [ ] Remove old inline form code
+
+When building page features:
+
+- [ ] Extract each card/section into its own component
+- [ ] Place components in `apps/web/src/components/property-hub/property-details/[page-name]/`
+- [ ] Export components from `index.ts`
+- [ ] Keep page files thin - only handle layout and drawer state
+- [ ] Each component handles its own data fetching and loading states
+- [ ] Use Card component from `@axori/ui` for consistent styling
+- [ ] Include Learning Hub integration where appropriate
+- [ ] Follow design system patterns for buttons, typography, spacing
+
+## Form Development Best Practices
+
+When working on forms (drawers, form components, form hooks), ensure you're following:
+
+- ✅ **Schema Alignment** (`.cursor/rules/schema-alignment.mdc`) - Use drizzle-zod workflow
+- ✅ **Zod Validation** (`.cursor/rules/zod-validation.mdc`) - Proper validation patterns
+- ✅ **Type Safety** (`.cursor/rules/type-safety.mdc`) - Use inferred types from schemas
+- ✅ **Centralized Constants** (below) - Use shared constants for options/mappings
+- ✅ **Feature Patterns** (this file) - Drawer-based editing, component isolation
+
+These rules automatically trigger when working on:
+- `apps/web/src/components/drawers/**` - All drawer components
+- `apps/web/src/hooks/api/**` - Form state hooks
+- `apps/web/src/components/**/*Form*.tsx` - Form components
+
+## Centralized Constants Pattern
+
+**Always centralize shared constants, options, and mappings** rather than duplicating them across components.
+
+### Pattern Overview
+
+- **Shared constants** live in `packages/shared/src/constants/`
+- **Single source of truth** for select options, mappings, and formatting functions
+- **Type-safe** with TypeScript interfaces
+- **Reusable** across web and mobile apps
+
+### When to Create Centralized Constants
+
+Create centralized constants when:
+- ✅ Select dropdown options are used in multiple places
+- ✅ Value-to-label mappings are duplicated
+- ✅ Formatting/transformation functions are repeated
+- ✅ Constants represent business logic or domain values
+- ✅ Values need to be consistent across the application
+
+**Examples:**
+- Property type options → `PROPERTY_TYPE_OPTIONS`
+- Currency options → `CURRENCY_OPTIONS`
+- Status mappings → `STATUS_LABELS`
+- Formatting functions → `formatPropertyType()`
+
+### Implementation Pattern
+
+#### 1. Create Constants File
+
+```typescript
+// packages/shared/src/constants/property-constants.ts
+
+/**
+ * Property type option for select dropdowns
+ */
+export interface PropertyTypeOption {
+  value: string
+  label: string
+}
+
+/**
+ * Available property types for selection
+ */
+export const PROPERTY_TYPE_OPTIONS: PropertyTypeOption[] = [
+  { value: 'single-family', label: 'Single Family Residential' },
+  { value: 'multi-family', label: 'Multi-Family Duplex' },
+  // ...
+]
+
+/**
+ * Property type value to display label mapping
+ */
+export const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  'single-family': 'Single Family Residential',
+  // ...
+}
+
+/**
+ * Format property type value to display label
+ */
+export function formatPropertyType(value: string | null | undefined): string {
+  if (!value) return '—'
+  return PROPERTY_TYPE_LABELS[value] || value
+}
+```
+
+#### 2. Export from Shared Package
+
+```typescript
+// packages/shared/src/index.ts
+export * from "./constants/property-constants";
+```
+
+#### 3. Use in Components
+
+```typescript
+// ✅ CORRECT - Import from @axori/shared
+import { PROPERTY_TYPE_OPTIONS, formatPropertyType } from '@axori/shared'
+
+// Use in component
+const propertyTypes = PROPERTY_TYPE_OPTIONS
+const displayLabel = formatPropertyType(formData.propertyType)
+
+// ❌ INCORRECT - Don't define locally
+const propertyTypes = [
+  { value: 'single-family', label: 'Single Family Residential' },
+  // ...
+]
+```
+
+### Directory Structure
+
+```
+packages/shared/src/constants/
+  ├── property-constants.ts    # Property-related constants
+  ├── loan-constants.ts        # Loan-related constants
+  ├── transaction-constants.ts # Transaction-related constants
+  └── index.ts                 # Re-export all constants
+```
+
+### Benefits of Centralized Constants
+
+- **Single Source of Truth**: Update once, applies everywhere
+- **Type Safety**: TypeScript interfaces ensure consistency
+- **Maintainability**: Easy to update values across the app
+- **Reusability**: Share constants between web and mobile
+- **Consistency**: Prevents drift between components
+- **Documentation**: Constants file serves as documentation
+
+### Checklist
+
+When creating new constants:
+
+- [ ] Check if constants already exist in `packages/shared/src/constants/`
+- [ ] Create new constants file if needed (e.g., `property-constants.ts`)
+- [ ] Define TypeScript interfaces for option types
+- [ ] Export constants and helper functions
+- [ ] Add to `packages/shared/src/index.ts` exports
+- [ ] Update all components to use centralized constants
+- [ ] Remove duplicate local definitions
+- [ ] Add JSDoc comments explaining usage
+
+## Examples
+
+See existing implementations:
+
+- `packages/shared/src/constants/property-constants.ts` - Property type and currency constants
+- `apps/web/src/components/drawers/AssetConfigurationDrawer.tsx` - Uses `PROPERTY_TYPE_OPTIONS`
+- `apps/web/src/components/property-hub/property-details/settings/AssetConfiguration.tsx` - Uses `formatPropertyType()`

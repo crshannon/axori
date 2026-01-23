@@ -146,18 +146,12 @@ export function handleError(
  * }, { operation: "getProperty" }));
  * ```
  */
-export function withErrorHandling<T = unknown>(
+export function withErrorHandling(
   handler: (c: Context) => Promise<Response> | Response,
   context?: Omit<ErrorContext, "route" | "method">
 ) {
   return async (c: Context): Promise<Response> => {
     try {
-      const errorContext: ErrorContext = {
-        ...context,
-        route: c.req.path,
-        method: c.req.method,
-      };
-
       return await handler(c);
     } catch (error) {
       const errorContext: ErrorContext = {
@@ -168,13 +162,24 @@ export function withErrorHandling<T = unknown>(
 
       const handled = handleError(error, errorContext);
 
+      const responseBody: {
+        error: string
+        details?: z.ZodIssue[]
+        message?: string
+      } = {
+        error: handled.error,
+      }
+
+      if ('details' in handled) {
+        responseBody.details = handled.details
+      }
+      if ('message' in handled) {
+        responseBody.message = handled.message
+      }
+
       return c.json(
-        {
-          error: handled.error,
-          ...(handled.details && { details: handled.details }),
-          ...(handled.message && { message: handled.message }),
-        },
-        handled.statusCode
+        responseBody,
+        handled.statusCode as 400 | 409 | 500
       );
     }
   };
@@ -196,13 +201,6 @@ export async function validateRequest<T>(
 ): Promise<T> {
   try {
     const body = await c.req.json();
-    const errorContext: ErrorContext = {
-      ...context,
-      route: c.req.path,
-      method: c.req.method,
-      data: body,
-    };
-
     return schema.parse(body);
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -24,7 +24,7 @@ export const StatusBadge = ({
   return (
     <span
       className={cn(
-        'px-3 py-1.5 rounded-full border-2',
+        'rounded-full border-2 px-3 py-1.5',
         variantClasses[variant],
         className,
       )}

@@ -131,8 +131,14 @@ export const Drawer = ({
         >
           <div
             className={cn(
-              "flex h-full flex-col bg-white dark:bg-[#1A1A1A] shadow-xl",
-              "border-l border-slate-200 dark:border-white/10",
+              `
+                flex h-full flex-col bg-white shadow-xl
+                dark:bg-[#1A1A1A]
+              `,
+              `
+                border-l border-slate-200
+                dark:border-white/10
+              `,
               className
             )}
             onClick={(e) => e.stopPropagation()}
@@ -140,13 +146,16 @@ export const Drawer = ({
           >
             {/* Header */}
             {(title || subtitle || showCloseButton) && (
-              <div className="flex items-start justify-between px-6 py-6">
+              <div className="flex items-start justify-between p-6">
                 <div className="flex-1">
                   {title && (
                     <Heading
                       id="drawer-title"
                       level={4}
-                      className="text-2xl font-black uppercase tracking-tighter dark:text-white"
+                      className="
+                        text-2xl font-black tracking-tighter uppercase
+                        dark:text-white
+                      "
                     >
                       {title}
                     </Heading>
@@ -156,7 +165,10 @@ export const Drawer = ({
                     <Heading
                       id="drawer-title"
                       level={6}
-                      className="text-lg font-black uppercase tracking-tighter dark:text-slate-400"
+                      className="
+                        text-lg font-black tracking-tighter uppercase
+                        dark:text-slate-400
+                      "
                     >
                       {subtitle}
                     </Heading>
@@ -179,11 +191,14 @@ export const Drawer = ({
             )}
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-6">{children}</div>
+            <div className="flex-1 overflow-y-auto p-6">{children}</div>
 
             {/* Footer */}
             {footer && (
-              <div className="border-t border-slate-200 dark:border-white/10 px-6 py-4">
+              <div className="
+                border-t border-slate-200 px-6 py-4
+                dark:border-white/10
+              ">
                 {footer}
               </div>
             )}

@@ -28,19 +28,30 @@ export const StatCard = ({
   return (
     <div
       className={cn(
-        'rounded-[2rem] flex items-center gap-6 shadow-sm border transition-all',
+        'flex items-center gap-6 rounded-4xl border shadow-sm transition-all',
         isCompact
-          ? 'p-4 rounded-2xl dark:bg-white/5 bg-slate-50'
-          : 'p-6 hover:shadow-md dark:bg-[#1A1A1A] dark:border-white/5 bg-white border-slate-100',
+          ? `
+            rounded-2xl bg-slate-50 p-4
+            dark:bg-white/5
+          `
+          : `
+            border-slate-100 bg-white p-6
+            hover:shadow-md
+            dark:border-white/5 dark:bg-[#1A1A1A]
+          `,
         className,
       )}
       {...props}
     >
       {icon && (
-        <div className="flex-shrink-0">{icon}</div>
+        <div className="shrink-0">{icon}</div>
       )}
       {!icon && !isCompact && (
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 dark:bg-white/5 dark:text-[#E8FF4D] bg-violet-50 text-violet-600">
+        <div className="
+          flex size-12 shrink-0 items-center justify-center rounded-2xl
+          bg-violet-50 text-violet-600
+          dark:bg-white/5 dark:text-[#E8FF4D]
+        ">
           <svg
             width="24"
             height="24"
@@ -53,12 +64,15 @@ export const StatCard = ({
           </svg>
         </div>
       )}
-      <div className="flex-grow">
+      <div className="grow">
         <Label
           size="sm"
           className={cn(
             isCompact ? 'mb-1.5' : 'mb-1',
-            'dark:text-white/60 text-slate-400',
+            `
+              text-slate-400
+              dark:text-white/60
+            `,
           )}
         >
           {label}
@@ -69,7 +83,10 @@ export const StatCard = ({
             className={cn(
               isCompact && 'tracking-tighter tabular-nums',
               !isCompact && 'text-2xl',
-              'dark:text-white text-slate-900',
+              `
+                text-slate-900
+                dark:text-white
+              `,
             )}
           >
             {value}
@@ -78,7 +95,10 @@ export const StatCard = ({
             <Caption
               className={cn(
                 subColor ||
-                  'dark:text-white/60 text-slate-500',
+                  `
+                    text-slate-500
+                    dark:text-white/60
+                  `,
               )}
             >
               {sub}

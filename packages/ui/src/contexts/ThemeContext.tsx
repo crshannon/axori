@@ -21,23 +21,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
 
   const applyTheme = useCallback((newTheme: Theme) => {
-    console.log("applyTheme called with:", newTheme);
     const html = document.documentElement;
-    console.log("HTML element:", html);
-    console.log("Current classes before:", html.className);
     
     if (newTheme === "dark") {
       html.classList.add("dark");
-      console.log("Added 'dark' class");
     } else {
       html.classList.remove("dark");
-      console.log("Removed 'dark' class");
     }
     
-    console.log("Current classes after:", html.className);
-    console.log("Has dark class?", html.classList.contains("dark"));
     localStorage.setItem("theme", newTheme);
-    console.log("Saved to localStorage:", newTheme);
   }, []);
 
   useEffect(() => {
@@ -60,9 +52,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 
   const toggleTheme = useCallback(() => {
-    console.log("toggleTheme called, current theme:", theme);
     const newTheme = theme === "light" ? "dark" : "light";
-    console.log("Switching to theme:", newTheme);
     setThemeState(newTheme);
     applyTheme(newTheme);
   }, [theme, applyTheme]);

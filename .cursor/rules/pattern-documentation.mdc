@@ -1,0 +1,113 @@
+---
+description: "Reminder to document new patterns and conventions when they are established in the codebase"
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: true
+---
+
+# Pattern Documentation
+
+**This rule always applies to remind about documenting new patterns.**
+
+## Automatic Reminders
+
+The agent will remind you to:
+
+- ✅ Document new patterns when they are established
+- ✅ Update relevant rule files when patterns are created
+- ✅ Create centralized constants for repeated values
+- ✅ Extract reusable patterns into shared utilities
+- ✅ Add examples to rule files for future reference
+
+## When to Document Patterns
+
+Document a pattern when:
+
+- **Repeated 3+ times**: If you find yourself doing the same thing 3 or more times across different files
+- **Shared logic**: When multiple components use the same logic or constants
+- **New convention**: When establishing a new way of doing something
+- **Breaking from existing pattern**: When intentionally deviating from an existing pattern
+- **Complex implementation**: When a pattern requires specific steps or has important nuances
+
+## Pattern Documentation Checklist
+
+When establishing a new pattern:
+
+1. **Identify the pattern**
+   - What problem does it solve?
+   - Where is it used?
+   - What are the key components?
+
+2. **Document the pattern**
+   - Add to appropriate rule file (e.g., `feature-patterns.mdc`, `type-safety.mdc`)
+   - Include code examples
+   - Explain when to use it
+   - List benefits
+
+3. **Create centralized utilities** (if applicable)
+   - Move shared constants to `packages/shared/src/constants/`
+   - Extract helper functions to `packages/shared/src/utils/`
+   - Export from shared package
+
+4. **Update existing code**
+   - Refactor existing code to use the new pattern
+   - Remove duplicate implementations
+   - Ensure consistency
+
+5. **Add to examples**
+   - Reference actual implementation files
+   - Show before/after if refactoring
+
+## Pattern Categories
+
+### UI Patterns
+- **Location**: `.cursor/rules/feature-patterns.mdc`
+- **Examples**: Drawer-based editing, component isolation, centralized constants
+
+### Type Safety Patterns
+- **Location**: `.cursor/rules/type-safety.mdc`
+- **Examples**: Type inference, avoiding type assertions
+
+### Schema Patterns
+- **Location**: `.cursor/rules/schema-alignment.mdc`
+- **Examples**: Drizzle-Zod workflow, enum usage
+
+### Component Patterns
+- **Location**: `.cursor/rules/ui-components.mdc`
+- **Examples**: Design system component usage
+
+## Examples of Pattern Documentation
+
+### Example 1: Centralized Constants
+
+**Pattern Identified**: Property type options duplicated in 3+ components
+
+**Action Taken**:
+1. Created `packages/shared/src/constants/property-constants.ts`
+2. Added section to `feature-patterns.mdc`
+3. Updated all components to use centralized constants
+4. Removed duplicate definitions
+
+### Example 2: Drawer-Based Editing
+
+**Pattern Identified**: Settings pages using inline forms inconsistently
+
+**Action Taken**:
+1. Established drawer-based editing pattern
+2. Documented in `feature-patterns.mdc`
+3. Refactored settings page to use pattern
+4. Added implementation examples
+
+## Reminders
+
+The agent will proactively remind you to:
+
+- **After creating constants**: "Consider documenting this in feature-patterns.mdc if used in multiple places"
+- **After repeating code**: "This logic appears in multiple places. Consider extracting to a shared utility or documenting as a pattern"
+- **After establishing convention**: "This appears to be a new pattern. Should it be documented in a rule file?"
+
+## References
+
+- Feature Patterns: `.cursor/rules/feature-patterns.mdc`
+- Type Safety: `.cursor/rules/type-safety.mdc`
+- Schema Alignment: `.cursor/rules/schema-alignment.mdc`
+- Architecture: `.cursor/rules/architecture.mdc`

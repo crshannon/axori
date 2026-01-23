@@ -38,14 +38,31 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       variant === "rounded"
         ? cn(
             roundedSelectClass,
-            "pr-10 appearance-none",
-            error && "border-red-500 dark:border-red-500",
+            "appearance-none pr-10",
+            error && `
+              border-red-500
+              dark:border-red-500
+            `,
             className
           )
         : cn(
-            "flex h-10 w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 pr-10 text-sm text-black dark:text-white ring-offset-white dark:ring-offset-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-[#E8FF4D] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-50 appearance-none",
+            `
+              flex h-10 w-full appearance-none rounded-md border border-gray-300
+              bg-white px-3 py-2 pr-10 text-sm text-black ring-offset-white
+              focus-visible:ring-2 focus-visible:ring-blue-500
+              focus-visible:ring-offset-2 focus-visible:outline-none
+              disabled:cursor-not-allowed disabled:opacity-50
+              dark:border-white/10 dark:bg-white/5 dark:text-white
+              dark:ring-offset-black
+              dark:focus-visible:ring-[#E8FF4D]
+              dark:focus-visible:ring-offset-black
+            `,
             error &&
-              "border-red-500 dark:border-red-500 focus-visible:ring-red-500",
+              `
+                border-red-500
+                focus-visible:ring-red-500
+                dark:border-red-500
+              `,
             className
           );
 
@@ -55,7 +72,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <FormLabel htmlFor={selectId}>
             {label}
             {required && (
-              <span className="text-[8px] font-mono text-red-500 dark:text-red-400 ml-2 opacity-100">
+              <span className="
+                ml-2 font-mono text-[8px] text-red-500 opacity-100
+                dark:text-red-400
+              ">
                 *
               </span>
             )}
@@ -73,7 +93,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                   <option
                     key={option.value}
                     value={option.value}
-                    className="bg-white dark:bg-[#1A1A1A]"
+                    className="
+                      bg-white
+                      dark:bg-[#1A1A1A]
+                    "
                   >
                     {option.label}
                   </option>
@@ -82,16 +105,28 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           </select>
           <ChevronDown
             className={cn(
-              "absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 pointer-events-none",
+              `
+                pointer-events-none absolute top-1/2 right-3 size-5
+                -translate-y-1/2
+              `,
               variant === "rounded"
-                ? "text-slate-400 dark:text-white/40"
-                : "text-gray-500 dark:text-white/40"
+                ? `
+                  text-slate-400
+                  dark:text-white/40
+                `
+                : `
+                  text-gray-500
+                  dark:text-white/40
+                `
             )}
             aria-hidden="true"
           />
         </div>
         {error && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="
+            mt-1 text-sm text-red-600
+            dark:text-red-400
+          ">{error}</p>
         )}
       </div>
     );

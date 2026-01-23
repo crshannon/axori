@@ -1,6 +1,7 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useSignIn, useUser } from '@clerk/tanstack-react-start'
 import { useEffect, useState } from 'react'
+import { Button } from '@axori/ui'
 import { useOnboardingStatus } from '@/utils/onboarding'
 
 export const Route = createFileRoute('/sign-in')({
@@ -9,8 +10,8 @@ export const Route = createFileRoute('/sign-in')({
 
 function SignInPage() {
   const navigate = useNavigate()
-  const { isSignedIn } = useUser()
-  const { isLoaded, signIn, setActive } = useSignIn()
+  const { isSignedIn, isLoaded: isUserLoaded } = useUser()
+  const { isLoaded: isSignInLoaded, signIn, setActive } = useSignIn()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,12 +21,17 @@ function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [justSignedIn, setJustSignedIn] = useState(false)
 
+  // Wait for Clerk to load before checking onboarding status
   const { completed: onboardingCompleted, isLoading: onboardingLoading } =
     useOnboardingStatus()
 
+  // Combined loaded state - wait for both Clerk and onboarding check
+  const isLoaded = isUserLoaded && isSignInLoaded
+
   // Redirect if already signed in - check onboarding status first
   useEffect(() => {
-    if (isSignedIn && !onboardingLoading && !justSignedIn) {
+    // Only redirect if Clerk is loaded to prevent SSR/client mismatch
+    if (isLoaded && isSignedIn && !onboardingLoading && !justSignedIn) {
       // If onboarding not completed, redirect to onboarding
       if (!onboardingCompleted) {
         navigate({ to: '/onboarding' as any })
@@ -34,6 +40,7 @@ function SignInPage() {
       }
     }
   }, [
+    isLoaded,
     isSignedIn,
     onboardingCompleted,
     onboardingLoading,
@@ -43,7 +50,7 @@ function SignInPage() {
 
   // Check onboarding after successful sign-in
   useEffect(() => {
-    if (justSignedIn && !onboardingLoading) {
+    if (justSignedIn && isLoaded && !onboardingLoading) {
       setJustSignedIn(false)
       if (!onboardingCompleted) {
         navigate({ to: '/onboarding' as any })
@@ -51,14 +58,14 @@ function SignInPage() {
         navigate({ to: '/dashboard' as any })
       }
     }
-  }, [justSignedIn, onboardingCompleted, onboardingLoading, navigate])
+  }, [justSignedIn, isLoaded, onboardingCompleted, onboardingLoading, navigate])
 
   const handleBack = () => {
     navigate({ to: '/' })
   }
 
   const handleOAuth = async (strategy: 'oauth_google' | 'oauth_apple') => {
-    if (!isLoaded) return
+    if (!isSignInLoaded) return
 
     try {
       await signIn.authenticateWithRedirect({
@@ -76,7 +83,7 @@ function SignInPage() {
     setError('')
     setIsLoading(true)
 
-    if (!isLoaded) {
+    if (!isSignInLoaded) {
       return
     }
 
@@ -109,7 +116,7 @@ function SignInPage() {
     setError('')
     setIsLoading(true)
 
-    if (!isLoaded) {
+    if (!isSignInLoaded) {
       return
     }
 
@@ -128,6 +135,22 @@ function SignInPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Don't render until Clerk is loaded to prevent hydration mismatch
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center dark:bg-[#0F1115] bg-slate-50">
+        <div className="text-center">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black italic text-xl dark:bg-white dark:text-black bg-slate-900 text-white mx-auto mb-4">
+            A
+          </div>
+          <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
+            Loading...
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -251,7 +274,7 @@ function SignInPage() {
                 </div>
                 <button
                   type="submit"
-                  disabled={!isLoaded || isLoading}
+                  disabled={isLoading || !isLoaded}
                   className="w-full mt-6 py-5 rounded-3xl font-black text-xs uppercase tracking-widest transition-all shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-[#E8FF4D] dark:text-black dark:shadow-[#E8FF4D]/20 bg-violet-600 text-white shadow-violet-200"
                 >
                   {isLoading ? 'Verifying...' : 'Verify Code'}
@@ -264,7 +287,7 @@ function SignInPage() {
                   <button
                     type="button"
                     onClick={() => handleOAuth('oauth_google')}
-                    disabled={!isLoaded || isLoading}
+                    disabled={isLoading || !isLoaded}
                     className="w-full py-4 px-6 rounded-2xl border flex items-center justify-center gap-4 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed dark:bg-white/5 dark:border-white/5 dark:hover:bg-white/10 dark:text-white bg-slate-50 border-slate-100 hover:bg-white hover:shadow-md text-slate-900"
                   >
                     <svg
@@ -297,7 +320,7 @@ function SignInPage() {
                   <button
                     type="button"
                     onClick={() => handleOAuth('oauth_apple')}
-                    disabled={!isLoaded || isLoading}
+                    disabled={isLoading || !isLoaded}
                     className="w-full py-4 px-6 rounded-2xl border flex items-center justify-center gap-4 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed dark:bg-black dark:border-white/10 dark:hover:bg-white/5 dark:text-white bg-black text-white border-black"
                   >
                     <svg
@@ -362,13 +385,14 @@ function SignInPage() {
                     />
                   </div>
 
-                  <button
+                  <Button
                     type="submit"
-                    disabled={!isLoaded || isLoading}
+                    variant="primary"
                     className="w-full mt-6 py-5 rounded-3xl font-black text-xs uppercase tracking-widest transition-all shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-[#E8FF4D] dark:text-black dark:shadow-[#E8FF4D]/20 bg-violet-600 text-white shadow-violet-200"
+                    disabled={isLoading || !isLoaded}
                   >
                     {isLoading ? 'Signing In...' : 'Access Portfolio'}
-                  </button>
+                  </Button>
                 </form>
               </>
             )}
