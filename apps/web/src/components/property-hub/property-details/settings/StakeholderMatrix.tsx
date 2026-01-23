@@ -1,6 +1,5 @@
 import { Card } from '@axori/ui'
 import { usePropertyPermissions } from '@/hooks/api'
-import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
 
 interface Collaborator {
   name: string
@@ -16,12 +15,25 @@ interface StakeholderMatrixProps {
 /**
  * StakeholderMatrix component - Displays property collaborators and stakeholders
  * Shows: collaborator list with roles and status
+ *
+ * Permission: Only visible to admin and owner roles (canAdmin)
+ * Non-admin/owner users will not see this section at all
  */
 export const StakeholderMatrix = ({
   propertyId,
   collaborators = [],
 }: StakeholderMatrixProps) => {
-  const { canAdmin, isReadOnly } = usePropertyPermissions(propertyId)
+  const { canAdmin, isLoading } = usePropertyPermissions(propertyId)
+
+  // Hide the entire section for non-admin/owner users
+  // Only admin and owner roles can view and manage members
+  if (isLoading) {
+    return null // Don't show loading state, just hide until we know permissions
+  }
+
+  if (!canAdmin) {
+    return null
+  }
 
   return (
     <Card variant="rounded" padding="lg" radius="xl">
@@ -30,14 +42,11 @@ export const StakeholderMatrix = ({
           Stakeholder Matrix
         </h3>
         <div className="flex items-center gap-3">
-          {isReadOnly && <ReadOnlyBanner variant="badge" />}
-          {canAdmin && (
-            <button
-              className={`px-5 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest border-slate-200 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5`}
-            >
-              Invite Collaborator
-            </button>
-          )}
+          <button
+            className={`px-5 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest border-slate-200 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5`}
+          >
+            Invite Collaborator
+          </button>
         </div>
       </div>
       <div className="space-y-4">
@@ -68,21 +77,19 @@ export const StakeholderMatrix = ({
                 >
                   {c.status}
                 </span>
-                {canAdmin && (
-                  <button className="text-slate-400 hover:text-red-500 transition-colors">
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
-                      <path d="M18 6 6 18" />
-                      <path d="m6 6 12 12" />
-                    </svg>
-                  </button>
-                )}
+                <button className="text-slate-400 hover:text-red-500 transition-colors">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+                </button>
               </div>
             </div>
           ))
