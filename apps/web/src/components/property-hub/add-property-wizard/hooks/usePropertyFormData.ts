@@ -247,7 +247,7 @@ export const usePropertyFormData = ({
               }
               cached: boolean
               fetchedAt: string
-            }>(`/api/properties/${propertyId}/rentcast-data`, {
+            }>(`/api/properties/${targetPropertyId}/rentcast-data`, {
               clerkId: userId,
             })
           },

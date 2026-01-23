@@ -53,7 +53,7 @@ export const NotificationSettingsDrawer = ({
     setErrors({})
 
     try {
-      // Update notification settings via hook
+      // Update notification settings via hook (for UI state consistency)
       Object.entries(localNotifications).forEach(([key, value]) => {
         updateNotification(
           key as keyof typeof localNotifications,
@@ -61,8 +61,9 @@ export const NotificationSettingsDrawer = ({
         )
       })
 
-      // Save settings
-      await saveSettings()
+      // Save settings with local notifications to avoid stale closure data
+      // Pass notifications directly to ensure we save the latest values
+      await saveSettings({ notifications: localNotifications })
 
       onClose()
     } catch (error) {

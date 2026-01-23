@@ -81,13 +81,13 @@ export function transformMapboxToAxoriAddress(
   fullAddress: string;
 } {
   return {
-    address: mapboxSuggestion.streetAddress,
+    address: mapboxSuggestion.address,
     city: mapboxSuggestion.city,
     state: mapboxSuggestion.state,
     zipCode: mapboxSuggestion.zipCode,
-    latitude: mapboxSuggestion.latitude,
-    longitude: mapboxSuggestion.longitude,
-    mapboxPlaceId: mapboxSuggestion.placeId,
+    latitude: mapboxSuggestion.latitude ?? 0,
+    longitude: mapboxSuggestion.longitude ?? 0,
+    mapboxPlaceId: mapboxSuggestion.mapboxPlaceId,
     fullAddress: mapboxSuggestion.placeName,
   };
 }

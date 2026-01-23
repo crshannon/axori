@@ -1,4 +1,3 @@
-import { HTMLAttributes, ReactNode } from "react";
 import { cn } from "../utils/cn";
 import { BaseComponentProps } from "../types";
 
@@ -31,7 +30,7 @@ export const Modal = ({
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <h2 className="text-xl font-semibold mb-4">{title}</h2>
+          <h2 className="mb-4 text-xl font-semibold">{title}</h2>
         )}
         {children}
       </div>

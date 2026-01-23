@@ -1,4 +1,4 @@
-import { HTMLAttributes, ReactNode } from "react";
+import { HTMLAttributes } from "react";
 import { cn } from "../utils/cn";
 
 export interface PropertyCardProps extends Omit<HTMLAttributes<HTMLDivElement>, "onClick"> {
@@ -78,11 +78,14 @@ const PropertyScoreGauge = ({
   };
 
   return (
-    <div className="relative inline-flex items-center justify-center transition-all duration-500">
+    <div className="
+      relative inline-flex items-center justify-center transition-all
+      duration-500
+    ">
       <svg
         height={radius * 2}
         width={radius * 2}
-        className="transform -rotate-90"
+        className="-rotate-90 transform"
       >
         <circle
           stroke={theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.1)"}
@@ -119,11 +122,14 @@ const PropertyScoreGauge = ({
           />
         )}
       </svg>
-      <div className="absolute text-center flex flex-col items-center">
+      <div className="absolute flex flex-col items-center text-center">
         <span
           className={cn(
             fontSize,
-            "font-black tabular-nums leading-none tracking-tighter transition-colors",
+            `
+              leading-none font-black tracking-tighter tabular-nums
+              transition-colors
+            `,
             theme === "dark" ? "text-white" : "text-slate-900"
           )}
         >
@@ -133,7 +139,10 @@ const PropertyScoreGauge = ({
           <span
             className={cn(
               subFontSize,
-              "font-black uppercase tracking-[0.3em] mt-3 transition-colors opacity-80",
+              `
+                mt-3 font-black tracking-[0.3em] uppercase opacity-80
+                transition-colors
+              `,
               theme === "dark" ? "text-[#E8FF4D] opacity-60" : "text-violet-600"
             )}
           >
@@ -167,7 +176,11 @@ export const PropertyCard = ({
   const isDark = theme === "dark";
   
   const cardClass = cn(
-    "overflow-hidden group p-0 cursor-pointer flex flex-col hover:shadow-2xl hover:scale-[1.02] transition-all duration-500",
+    `
+      group flex cursor-pointer flex-col overflow-hidden p-0 transition-all
+      duration-500
+      hover:scale-[1.02] hover:shadow-2xl
+    `,
     cardClassName
   );
 
@@ -190,7 +203,10 @@ export const PropertyCard = ({
       <div className="relative h-48 overflow-hidden">
         <img
           src={image}
-          className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 grayscale group-hover:grayscale-0"
+          className="
+            size-full object-cover grayscale transition-transform duration-1000
+            group-hover:scale-110 group-hover:grayscale-0
+          "
           alt={address}
         />
         
@@ -203,7 +219,10 @@ export const PropertyCard = ({
         <div className="absolute bottom-4 left-4">
           <span
             className={cn(
-              "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md shadow-sm",
+              `
+                rounded-full px-4 py-1.5 text-[9px] font-black tracking-widest
+                uppercase shadow-sm backdrop-blur-md
+              `,
               isDark
                 ? "bg-black/50 text-white"
                 : "bg-white/70 text-slate-900"
@@ -215,13 +234,13 @@ export const PropertyCard = ({
       </div>
 
       {/* Content Section */}
-      <div className="p-8 space-y-4">
+      <div className="space-y-4 p-8">
         {/* Property Info */}
         <div>
           {nickname && (
             <h4
               className={cn(
-                "text-xs font-black uppercase tracking-widest mb-1",
+                "mb-1 text-xs font-black tracking-widest uppercase",
                 isDark ? "text-slate-400" : "text-slate-500"
               )}
             >
@@ -230,7 +249,7 @@ export const PropertyCard = ({
           )}
           <h3
             className={cn(
-              "text-xl font-black uppercase tracking-tighter leading-tight line-clamp-1",
+              `line-clamp-1 text-xl/tight font-black tracking-tighter uppercase`,
               isDark ? "text-white" : "text-slate-900"
             )}
           >
@@ -239,11 +258,13 @@ export const PropertyCard = ({
         </div>
 
         {/* Financial Metrics */}
-        <div className="flex justify-between items-end pt-4 border-t border-slate-500/10">
+        <div className="
+          flex items-end justify-between border-t border-slate-500/10 pt-4
+        ">
           <div>
             <p
               className={cn(
-                "text-[9px] font-black uppercase tracking-widest opacity-40",
+                "text-[9px] font-black tracking-widest uppercase opacity-40",
                 isDark ? "text-white/40" : "text-slate-500/40"
               )}
             >
@@ -251,7 +272,7 @@ export const PropertyCard = ({
             </p>
             <p
               className={cn(
-                "text-xl font-black tabular-nums tracking-tighter",
+                "text-xl font-black tracking-tighter tabular-nums",
                 cashFlowColor
               )}
             >
@@ -261,7 +282,7 @@ export const PropertyCard = ({
           <div className="text-right">
             <p
               className={cn(
-                "text-[9px] font-black uppercase tracking-widest opacity-40",
+                "text-[9px] font-black tracking-widest uppercase opacity-40",
                 isDark ? "text-white/40" : "text-slate-500/40"
               )}
             >
@@ -269,7 +290,7 @@ export const PropertyCard = ({
             </p>
             <p
               className={cn(
-                "text-xl font-black tabular-nums tracking-tighter",
+                "text-xl font-black tracking-tighter tabular-nums",
                 isDark ? "text-white" : "text-slate-900"
               )}
             >

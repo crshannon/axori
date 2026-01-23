@@ -112,6 +112,7 @@ These commands can be used in Cursor chat with `/` prefix:
 - `/create-linear-issue` - Create a Linear issue (see `.cursor/commands/create-linear-issue.md`)
 - `/create-commit` - Create a commit with branch management (see `.cursor/commands/create-commit.md`)
 - `/create-pr` - Create a GitHub pull request (see `.cursor/commands/create-pr.md`)
+- `/pre-commit` - Run all quality checks (linting, type checking, tests, build) (see `.cursor/commands/pre-commit.md`)
 
 ## Linear Integration Commands
 
@@ -384,6 +385,11 @@ pnpm test
 
 # Run E2E tests
 pnpm test:e2e
+
+# Or use the pre-commit command for comprehensive checks
+/pre-commit
+# Or with options:
+/pre-commit --skip-build  # Faster, skips build step
 ```
 
 ### Starting Full Development Environment

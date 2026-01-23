@@ -34,10 +34,16 @@ export const ProgressBar = ({
   return (
     <div
       className={cn(
-        'relative w-full rounded-full overflow-hidden',
+        'relative w-full overflow-hidden rounded-full',
         heightClasses[height],
-        variant === 'default' && 'dark:bg-black/20 bg-slate-200 border border-slate-500/10',
-        variant === 'simple' && 'dark:bg-slate-500/10 bg-slate-200',
+        variant === 'default' && `
+          border border-slate-500/10 bg-slate-200
+          dark:bg-black/20
+        `,
+        variant === 'simple' && `
+          bg-slate-200
+          dark:bg-slate-500/10
+        `,
         className,
       )}
       {...props}
@@ -45,13 +51,25 @@ export const ProgressBar = ({
       {/* Progress Fill */}
       <div
         className={cn(
-          'absolute inset-y-0 left-0 transition-all duration-1000 ease-out flex items-center',
+          `
+            absolute inset-y-0 left-0 flex items-center transition-all
+            duration-1000 ease-out
+          `,
           variant === 'default' &&
-            'dark:bg-[#E8FF4D] bg-violet-600 rounded-full',
+            `
+              rounded-full bg-violet-600
+              dark:bg-[#E8FF4D]
+            `,
           variant === 'gradient' &&
-            'dark:bg-gradient-to-r dark:from-emerald-900 dark:to-[#E8FF4D] bg-gradient-to-r from-violet-200 to-violet-600 rounded-full',
+            `
+              rounded-full bg-linear-to-r from-violet-200 to-violet-600
+              dark:bg-linear-to-r dark:from-emerald-900 dark:to-[#E8FF4D]
+            `,
           variant === 'simple' &&
-            'dark:bg-white bg-slate-900 rounded-full',
+            `
+              rounded-full bg-slate-900
+              dark:bg-white
+            `,
           showLabel && height === 'lg' && 'justify-end px-4',
         )}
         style={{ width: `${progressValue}%` }}
@@ -59,10 +77,16 @@ export const ProgressBar = ({
         {showLabel && label && height === 'lg' && (
           <Overline
             className={cn(
-              'uppercase tracking-widest text-[8px]',
+              'text-[8px] tracking-widest uppercase',
               variant === 'gradient' || variant === 'default'
-                ? 'dark:text-black text-white'
-                : 'dark:text-white text-slate-900',
+                ? `
+                  text-white
+                  dark:text-black
+                `
+                : `
+                  text-slate-900
+                  dark:text-white
+                `,
             )}
           >
             {label}
@@ -72,8 +96,14 @@ export const ProgressBar = ({
 
       {/* Target Marker */}
       {showTarget && targetLabel && (
-        <div className="absolute inset-y-0 right-0 border-l-2 border-dashed border-slate-400 opacity-20 flex items-center justify-end px-4">
-          <Overline className="uppercase tracking-widest text-[8px] dark:text-white text-slate-900">
+        <div className="
+          absolute inset-y-0 right-0 flex items-center justify-end border-l-2
+          border-dashed border-slate-400 px-4 opacity-20
+        ">
+          <Overline className="
+            text-[8px] tracking-widest text-slate-900 uppercase
+            dark:text-white
+          ">
             {targetLabel}
           </Overline>
         </div>

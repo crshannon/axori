@@ -52,10 +52,12 @@ export class MapboxClient {
         if (errorData.message) {
           errorMessage = `Mapbox API error: ${errorData.message} (${response.status})`;
         }
+        // eslint-disable-next-line no-console
         console.error('Mapbox API error response:', JSON.stringify(errorData, null, 2));
       } catch {
         // If we can't parse the error, use the status text
       }
+      // eslint-disable-next-line no-console
       console.error(`Mapbox API request failed: ${url.substring(0, 100)}...`);
       throw new Error(errorMessage);
     }

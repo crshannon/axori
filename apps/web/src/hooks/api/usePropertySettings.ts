@@ -206,34 +206,43 @@ export function usePropertySettings(propertyId: string | null | undefined) {
   }, [initialFormData])
 
   // Save form data to API
-  const saveSettings = useCallback(async () => {
+  // Accepts optional formData parameter to avoid closure stale data issue
+  // When drawers update fields and immediately save, they can pass the updated data directly
+  const saveSettings = useCallback(async (overrideFormData?: Partial<PropertySettingsFormData>) => {
     if (!propertyId) {
       throw new Error('Property ID is required')
     }
 
+    // Use override data if provided, otherwise fall back to current formData
+    // This allows drawers to pass their local form state directly, avoiding
+    // the React state update batching issue where saveSettings reads stale closure data
+    const dataToSave = overrideFormData
+      ? { ...formData, ...overrideFormData }
+      : formData
+
     // Parse purchase price (remove $ and commas)
-    const purchasePriceRaw = formData.purchasePrice.replace(/[$,]/g, '')
+    const purchasePriceRaw = dataToSave.purchasePrice.replace(/[$,]/g, '')
     const purchasePrice = purchasePriceRaw ? parseFloat(purchasePriceRaw) : undefined
 
     // Build update payload
     const updatePayload: Record<string, unknown> = {
       id: propertyId,
       // Core property fields
-      nickname: formData.nickname,
-      address: formData.address,
-      city: formData.city,
-      state: formData.state,
-      zipCode: formData.zipCode,
+      nickname: dataToSave.nickname,
+      address: dataToSave.address,
+      city: dataToSave.city,
+      state: dataToSave.state,
+      zipCode: dataToSave.zipCode,
     }
 
     // Characteristics
     const characteristics: Record<string, unknown> = {}
-    if (formData.propertyType) {
+    if (dataToSave.propertyType) {
       // Convert type to database format using centralized function
-      characteristics.propertyType = propertyTypeValueToDatabaseFormat(formData.propertyType)
+      characteristics.propertyType = propertyTypeValueToDatabaseFormat(dataToSave.propertyType)
     }
-    if (formData.yearBuilt) {
-      characteristics.yearBuilt = parseInt(formData.yearBuilt, 10)
+    if (dataToSave.yearBuilt) {
+      characteristics.yearBuilt = parseInt(dataToSave.yearBuilt, 10)
     }
     if (Object.keys(characteristics).length > 0) {
       updatePayload.characteristics = characteristics
@@ -244,8 +253,8 @@ export function usePropertySettings(propertyId: string | null | undefined) {
     if (purchasePrice) {
       acquisition.purchasePrice = purchasePrice
     }
-    if (formData.closingDate) {
-      acquisition.purchaseDate = formData.closingDate
+    if (dataToSave.closingDate) {
+      acquisition.purchaseDate = dataToSave.closingDate
     }
     if (Object.keys(acquisition).length > 0) {
       updatePayload.acquisition = acquisition
@@ -253,14 +262,14 @@ export function usePropertySettings(propertyId: string | null | undefined) {
 
     // Operating Expenses (calculation presumptions)
     const operatingExpenses: Record<string, unknown> = {}
-    if (formData.vacancyRate) {
-      operatingExpenses.vacancyRate = formatRateForApi(formData.vacancyRate)
+    if (dataToSave.vacancyRate) {
+      operatingExpenses.vacancyRate = formatRateForApi(dataToSave.vacancyRate)
     }
-    if (formData.maintenanceRate) {
-      operatingExpenses.maintenanceRate = formatRateForApi(formData.maintenanceRate)
+    if (dataToSave.maintenanceRate) {
+      operatingExpenses.maintenanceRate = formatRateForApi(dataToSave.maintenanceRate)
     }
-    if (formData.capexSinking) {
-      operatingExpenses.capexRate = formatRateForApi(formData.capexSinking)
+    if (dataToSave.capexSinking) {
+      operatingExpenses.capexRate = formatRateForApi(dataToSave.capexSinking)
     }
     if (Object.keys(operatingExpenses).length > 0) {
       updatePayload.operatingExpenses = operatingExpenses
@@ -271,8 +280,10 @@ export function usePropertySettings(propertyId: string | null | undefined) {
     // The API expects a partial PropertyInsert with nested characteristics, acquisition, etc.
     await updateMutation.mutateAsync(updatePayload as Partial<PropertyInsert> & { id: string })
 
-    // Reset dirty state after successful save
-    setInitialFormData(formData)
+    // Update form state with saved data
+    const finalFormData = overrideFormData ? dataToSave : formData
+    setFormData(finalFormData)
+    setInitialFormData(finalFormData)
     setIsDirty(false)
   }, [propertyId, formData, updateMutation])
 

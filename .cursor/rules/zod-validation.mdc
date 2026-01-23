@@ -1,6 +1,6 @@
 ---
 description: "Zod validation schema best practices, drizzle-zod workflow, and API-specific validation patterns"
-globs: ["packages/shared/src/validation/**", "apps/api/src/routes/**"]
+globs: ["packages/shared/src/validation/**", "apps/api/src/routes/**", "apps/web/src/components/drawers/**", "apps/web/src/hooks/api/**", "apps/web/src/components/**/*Form*.tsx", "apps/web/src/components/**/*form*.tsx"]
 alwaysApply: false
 ---
 

@@ -400,3 +400,149 @@ When building page features:
 - [ ] Use Card component from `@axori/ui` for consistent styling
 - [ ] Include Learning Hub integration where appropriate
 - [ ] Follow design system patterns for buttons, typography, spacing
+
+## Form Development Best Practices
+
+When working on forms (drawers, form components, form hooks), ensure you're following:
+
+- ✅ **Schema Alignment** (`.cursor/rules/schema-alignment.mdc`) - Use drizzle-zod workflow
+- ✅ **Zod Validation** (`.cursor/rules/zod-validation.mdc`) - Proper validation patterns
+- ✅ **Type Safety** (`.cursor/rules/type-safety.mdc`) - Use inferred types from schemas
+- ✅ **Centralized Constants** (below) - Use shared constants for options/mappings
+- ✅ **Feature Patterns** (this file) - Drawer-based editing, component isolation
+
+These rules automatically trigger when working on:
+- `apps/web/src/components/drawers/**` - All drawer components
+- `apps/web/src/hooks/api/**` - Form state hooks
+- `apps/web/src/components/**/*Form*.tsx` - Form components
+
+## Centralized Constants Pattern
+
+**Always centralize shared constants, options, and mappings** rather than duplicating them across components.
+
+### Pattern Overview
+
+- **Shared constants** live in `packages/shared/src/constants/`
+- **Single source of truth** for select options, mappings, and formatting functions
+- **Type-safe** with TypeScript interfaces
+- **Reusable** across web and mobile apps
+
+### When to Create Centralized Constants
+
+Create centralized constants when:
+- ✅ Select dropdown options are used in multiple places
+- ✅ Value-to-label mappings are duplicated
+- ✅ Formatting/transformation functions are repeated
+- ✅ Constants represent business logic or domain values
+- ✅ Values need to be consistent across the application
+
+**Examples:**
+- Property type options → `PROPERTY_TYPE_OPTIONS`
+- Currency options → `CURRENCY_OPTIONS`
+- Status mappings → `STATUS_LABELS`
+- Formatting functions → `formatPropertyType()`
+
+### Implementation Pattern
+
+#### 1. Create Constants File
+
+```typescript
+// packages/shared/src/constants/property-constants.ts
+
+/**
+ * Property type option for select dropdowns
+ */
+export interface PropertyTypeOption {
+  value: string
+  label: string
+}
+
+/**
+ * Available property types for selection
+ */
+export const PROPERTY_TYPE_OPTIONS: PropertyTypeOption[] = [
+  { value: 'single-family', label: 'Single Family Residential' },
+  { value: 'multi-family', label: 'Multi-Family Duplex' },
+  // ...
+]
+
+/**
+ * Property type value to display label mapping
+ */
+export const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  'single-family': 'Single Family Residential',
+  // ...
+}
+
+/**
+ * Format property type value to display label
+ */
+export function formatPropertyType(value: string | null | undefined): string {
+  if (!value) return '—'
+  return PROPERTY_TYPE_LABELS[value] || value
+}
+```
+
+#### 2. Export from Shared Package
+
+```typescript
+// packages/shared/src/index.ts
+export * from "./constants/property-constants";
+```
+
+#### 3. Use in Components
+
+```typescript
+// ✅ CORRECT - Import from @axori/shared
+import { PROPERTY_TYPE_OPTIONS, formatPropertyType } from '@axori/shared'
+
+// Use in component
+const propertyTypes = PROPERTY_TYPE_OPTIONS
+const displayLabel = formatPropertyType(formData.propertyType)
+
+// ❌ INCORRECT - Don't define locally
+const propertyTypes = [
+  { value: 'single-family', label: 'Single Family Residential' },
+  // ...
+]
+```
+
+### Directory Structure
+
+```
+packages/shared/src/constants/
+  ├── property-constants.ts    # Property-related constants
+  ├── loan-constants.ts        # Loan-related constants
+  ├── transaction-constants.ts # Transaction-related constants
+  └── index.ts                 # Re-export all constants
+```
+
+### Benefits of Centralized Constants
+
+- **Single Source of Truth**: Update once, applies everywhere
+- **Type Safety**: TypeScript interfaces ensure consistency
+- **Maintainability**: Easy to update values across the app
+- **Reusability**: Share constants between web and mobile
+- **Consistency**: Prevents drift between components
+- **Documentation**: Constants file serves as documentation
+
+### Checklist
+
+When creating new constants:
+
+- [ ] Check if constants already exist in `packages/shared/src/constants/`
+- [ ] Create new constants file if needed (e.g., `property-constants.ts`)
+- [ ] Define TypeScript interfaces for option types
+- [ ] Export constants and helper functions
+- [ ] Add to `packages/shared/src/index.ts` exports
+- [ ] Update all components to use centralized constants
+- [ ] Remove duplicate local definitions
+- [ ] Add JSDoc comments explaining usage
+
+## Examples
+
+See existing implementations:
+
+- `packages/shared/src/constants/property-constants.ts` - Property type and currency constants
+- `apps/web/src/components/drawers/AssetConfigurationDrawer.tsx` - Uses `PROPERTY_TYPE_OPTIONS`
+- `apps/web/src/components/property-hub/property-details/settings/AssetConfiguration.tsx` - Uses `formatPropertyType()`

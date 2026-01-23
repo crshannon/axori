@@ -90,8 +90,11 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         className={cn(
           "inline-flex items-center justify-center",
           "cursor-pointer transition-all",
-          "focus:outline-none focus:ring-2 focus:ring-offset-2",
-          "focus:ring-violet-500 dark:focus:ring-[#E8FF4D]",
+          "focus:ring-2 focus:ring-offset-2 focus:outline-none",
+          `
+            focus:ring-violet-500
+            dark:focus:ring-[#E8FF4D]
+          `,
           "disabled:pointer-events-none",
           // Only apply opacity when disabled AND no animation (to preserve animation visibility)
           animation === "none" && "disabled:opacity-50",

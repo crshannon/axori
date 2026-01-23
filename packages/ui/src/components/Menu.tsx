@@ -32,15 +32,29 @@ export const MenuItem = ({
       type="button"
       disabled={disabled}
       className={cn(
-        "cursor-pointer w-full px-4 py-3 text-left text-sm font-bold flex items-center gap-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+        `
+          flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left
+          text-sm font-bold transition-colors
+          disabled:cursor-not-allowed disabled:opacity-50
+        `,
         destructive
-          ? "text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
-          : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5",
+          ? `
+            text-rose-600
+            hover:bg-rose-50
+            dark:text-rose-400
+            dark:hover:bg-rose-900/20
+          `
+          : `
+            text-slate-700
+            hover:bg-slate-50
+            dark:text-slate-300
+            dark:hover:bg-white/5
+          `,
         className
       )}
       {...props}
     >
-      {Icon && <Icon className="w-4 h-4 flex-shrink-0" />}
+      {Icon && <Icon className="size-4 shrink-0" />}
       <Typography variant="body-sm" weight="bold" className="flex-1">
         {label}
       </Typography>
@@ -85,7 +99,11 @@ export const Menu = ({
   return (
     <div
       className={cn(
-        "absolute right-0 top-full mt-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl z-50 overflow-hidden",
+        `
+          absolute top-full right-0 z-50 mt-2 overflow-hidden rounded-2xl border
+          border-slate-200 bg-white shadow-xl
+          dark:border-white/10 dark:bg-slate-900
+        `,
         widthClasses[width],
         className
       )}
@@ -109,7 +127,10 @@ export const MenuDivider = ({
 }: HTMLAttributes<HTMLDivElement>) => {
   return (
     <div
-      className={cn("h-px bg-slate-200 dark:bg-white/10 my-1", className)}
+      className={cn(`
+        my-1 h-px bg-slate-200
+        dark:bg-white/10
+      `, className)}
       role="separator"
       {...props}
     />

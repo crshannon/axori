@@ -54,7 +54,10 @@ export const DeleteConfirmationCard = ({
   return (
     <div
       className={cn(
-        "p-6 rounded-2xl bg-rose-50 dark:bg-rose-900/20 border-2 border-rose-200 dark:border-rose-800 w-full",
+        `
+          w-full rounded-2xl border-2 border-rose-200 bg-rose-50 p-6
+          dark:border-rose-800 dark:bg-rose-900/20
+        `,
         className
       )}
       {...props}
@@ -62,13 +65,19 @@ export const DeleteConfirmationCard = ({
       <Typography
         variant="h5"
         weight="black"
-        className="text-rose-600 dark:text-rose-400 mb-2"
+        className="
+          mb-2 text-rose-600
+          dark:text-rose-400
+        "
       >
         {title}
       </Typography>
       <Typography
         variant="body-sm"
-        className="text-rose-700 dark:text-rose-300 mb-4"
+        className="
+          mb-4 text-rose-700
+          dark:text-rose-300
+        "
       >
         {description}
       </Typography>
@@ -79,7 +88,9 @@ export const DeleteConfirmationCard = ({
           disabled={disabled || isLoading}
           variant="outline"
           size="md"
-          className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest"
+          className="
+            rounded-xl px-4 py-2 text-xs font-black tracking-widest uppercase
+          "
         >
           {cancelText}
         </Button>
@@ -89,7 +100,9 @@ export const DeleteConfirmationCard = ({
           disabled={disabled || isLoading}
           variant="danger"
           size="md"
-          className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest"
+          className="
+            rounded-xl px-4 py-2 text-xs font-black tracking-widest uppercase
+          "
         >
           {isLoading ? "Deleting..." : deleteText}
         </Button>

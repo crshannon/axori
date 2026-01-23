@@ -111,7 +111,7 @@ export const EmptyStateCard = ({
         return (
           <Typography
             variant="body-sm"
-            className="text-slate-500 italic leading-relaxed mb-6"
+            className="mb-6 leading-relaxed text-slate-500 italic"
           >
             {description}
           </Typography>
@@ -147,7 +147,7 @@ export const EmptyStateCard = ({
       return (
         <Typography
           variant="body-sm"
-          className="text-slate-500 italic leading-relaxed mb-6"
+          className="mb-6 leading-relaxed text-slate-500 italic"
         >
           {parts}
         </Typography>
@@ -166,7 +166,10 @@ export const EmptyStateCard = ({
         padding="lg"
         radius="xl"
         className={cn(
-          "flex flex-col md:flex-row items-center gap-8 relative overflow-hidden group py-8",
+          `
+            group relative flex flex-col items-center gap-8 overflow-hidden py-8
+            md:flex-row
+          `,
           styles.card,
           className
         )}
@@ -174,13 +177,13 @@ export const EmptyStateCard = ({
         {/* Gradient Background */}
         <div
           className={cn(
-            "absolute inset-0 bg-gradient-to-r to-transparent pointer-events-none",
+            `pointer-events-none absolute inset-0 bg-linear-to-r to-transparent`,
             styles.gradient
           )}
         />
         {/* Blueprint Hatching Overlay */}
         <div
-          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          className="pointer-events-none absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage:
               "repeating-linear-gradient(45deg, currentColor 0, currentColor 1px, transparent 0, transparent 20px)",
@@ -189,22 +192,28 @@ export const EmptyStateCard = ({
         ></div>
 
         {/* Left: Title and Description */}
-        <div className="flex-grow flex flex-col justify-center relative z-10">
+        <div className="relative z-10 flex grow flex-col justify-center">
           <Typography
             variant="caption"
             weight="black"
             className={cn(
               styles.title,
-              "mb-2 flex items-center gap-2 tracking-[0.2em] opacity-100 text-sm"
+              `
+                mb-2 flex items-center gap-2 text-sm tracking-[0.2em]
+                opacity-100
+              `
             )}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+            <span className="size-1.5 animate-pulse rounded-full bg-current" />
             {title}
           </Typography>
           {description && (
             <Typography
               variant="caption"
-              className="text-slate-500 dark:text-slate-400 mt-2 max-w-md"
+              className="
+                mt-2 max-w-md text-slate-500
+                dark:text-slate-400
+              "
             >
               {typeof description === "string" ? description : description}
             </Typography>
@@ -214,12 +223,12 @@ export const EmptyStateCard = ({
         {/* Right: Button */}
         <div className="relative z-10">
           {showPlaceholders && (
-            <div className="flex items-center gap-4 mb-4">
+            <div className="mb-4 flex items-center gap-4">
               <div
-                className={cn("w-24 h-3 rounded-full", styles.placeholder)}
+                className={cn("h-3 w-24 rounded-full", styles.placeholder)}
               ></div>
               <div
-                className={cn("w-32 h-6 rounded-xl", styles.placeholderLarge)}
+                className={cn("h-6 w-32 rounded-xl", styles.placeholderLarge)}
               ></div>
             </div>
           )}
@@ -227,7 +236,11 @@ export const EmptyStateCard = ({
             onClick={onButtonClick}
             variant="primary"
             className={cn(
-              "py-3 px-6 rounded-xl font-black text-xs uppercase tracking-widest whitespace-nowrap shadow-lg group-hover:scale-[1.02] transition-transform",
+              `
+                rounded-xl px-6 py-3 text-xs font-black tracking-widest
+                whitespace-nowrap uppercase shadow-lg transition-transform
+                group-hover:scale-[1.02]
+              `,
               styles.button,
               styles.focusRing
             )}
@@ -246,15 +259,15 @@ export const EmptyStateCard = ({
       padding="lg"
       radius="xl"
       className={cn(
-        "flex flex-col justify-between group relative overflow-hidden",
+        "group relative flex flex-col justify-between overflow-hidden",
         styles.card,
         className
       )}
     >
-      <div className="h-full flex flex-col justify-between">
+      <div className="flex h-full flex-col justify-between">
         {/* Blueprint Hatching Overlay */}
         <div
-          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          className="pointer-events-none absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage:
               "repeating-linear-gradient(45deg, currentColor 0, currentColor 1px, transparent 0, transparent 20px)",
@@ -263,7 +276,7 @@ export const EmptyStateCard = ({
         ></div>
 
         <div>
-          <div className="flex justify-between items-center mb-6 relative z-10">
+          <div className="relative z-10 mb-6 flex items-center justify-between">
             <Typography variant="h5" className={styles.title}>
               {title}
             </Typography>
@@ -275,19 +288,19 @@ export const EmptyStateCard = ({
               animation="pulse"
               iconSize={14}
               iconStrokeWidth={4}
-              className={cn("w-8 h-8", styles.iconBg, styles.iconColor)}
+              className={cn("size-8", styles.iconBg, styles.iconColor)}
               aria-label="Add icon"
               disabled
             />
           </div>
           {showPlaceholders && (
-            <div className="grid grid-cols-[40%_60%] gap-4 relative z-10">
+            <div className="relative z-10 grid grid-cols-[40%_60%] gap-4">
               <div className="space-y-4 font-mono">
                 <div
-                  className={cn("w-24 h-4 rounded-full", styles.placeholder)}
+                  className={cn("h-4 w-24 rounded-full", styles.placeholder)}
                 ></div>
                 <div
-                  className={cn("w-32 h-8 rounded-xl", styles.placeholderLarge)}
+                  className={cn("h-8 w-32 rounded-xl", styles.placeholderLarge)}
                 ></div>
               </div>
               {statusMessage && (
@@ -297,13 +310,17 @@ export const EmptyStateCard = ({
           )}
         </div>
 
-        <div className="mt-12 relative z-10">
+        <div className="relative z-10 mt-12">
           <Button
             onClick={onButtonClick}
             variant="primary"
             fullWidth
             className={cn(
-              "py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl group-hover:scale-[1.02]",
+              `
+                rounded-2xl py-4 text-[10px] font-black tracking-widest
+                uppercase shadow-xl
+                group-hover:scale-[1.02]
+              `,
               styles.button,
               styles.focusRing
             )}

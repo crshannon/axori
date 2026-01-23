@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { db } from "@axori/db";
 import { users, userMarkets } from "@axori/db/src/schema";
-import { eq, and, inArray } from "@axori/db";
+import { eq, and } from "@axori/db";
 import {
   onboardingUpdateSchema,
   onboardingDataSchema,

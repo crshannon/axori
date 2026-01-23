@@ -42,14 +42,19 @@ export const Card = ({
       className={cn(
         "transition-all duration-500",
         // Default variant
-        variant === "default" && "shadow-sm rounded-lg border border-gray-200 bg-white",
+        variant === "default" && `
+          rounded-lg border border-gray-200 bg-white shadow-sm
+        `,
         // Bento variant with theme support - larger rounded corners
-        isBento && "shadow-sm rounded-2xl",
+        isBento && "rounded-2xl shadow-sm",
         isBento && theme === "dark" && "bg-white text-black",
         isBento && theme === "light" && "bg-slate-900 text-white",
         isBento && !theme && "border border-gray-200 bg-white",
         // Rounded variant - modern card style used throughout the app
-        isRounded && "border shadow-sm bg-white border-slate-200 dark:bg-[#1A1A1A] dark:border-white/5",
+        isRounded && `
+          border border-slate-200 bg-white shadow-sm
+          dark:border-white/5 dark:bg-[#1A1A1A]
+        `,
         isRounded && paddingMap[padding],
         isRounded && radiusMap[radius],
         className
@@ -77,7 +82,7 @@ export interface CardTitleProps extends HTMLAttributes<HTMLHeadingElement> {
 }
 export const CardTitle = ({ className, children }: CardTitleProps) => {
   return (
-    <h3 className={cn("text-2xl font-semibold leading-none tracking-tight", className)}>
+    <h3 className={cn("text-2xl leading-none font-semibold tracking-tight", className)}>
       {children}
     </h3>
   );
