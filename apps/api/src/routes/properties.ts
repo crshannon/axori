@@ -44,72 +44,133 @@ import {
   validateData,
   handleError,
 } from "../utils/errors";
+import {
+  withPermission,
+  requireAuth,
+  getAuthenticatedUserId,
+  getUserFromRequest,
+} from "../middleware/permissions";
+import {
+  getAccessiblePropertyIdsForUser,
+  canViewProperty,
+  canEditProperty,
+  canDeleteProperty,
+  getUserPortfolioMembership,
+} from "@axori/permissions";
 
 const propertiesRouter = new Hono();
 
 // Get all properties (filter by portfolio and/or status if provided)
 // Excludes archived properties by default (soft delete)
-propertiesRouter.get("/", async (c) => {
-  const portfolioId = c.req.query("portfolioId");
-  const status = c.req.query("status");
-  const includeArchived = c.req.query("includeArchived") === "true";
+// Protected: Only returns properties the user has access to
+propertiesRouter.get(
+  "/",
+  requireAuth(),
+  withErrorHandling(async (c) => {
+    const userId = getAuthenticatedUserId(c);
+    const portfolioId = c.req.query("portfolioId");
+    const status = c.req.query("status");
+    const includeArchived = c.req.query("includeArchived") === "true";
 
-  // Get all properties for the portfolio (only filter if portfolioId is provided and valid)
-  // Check if portfolioId is a valid UUID format (basic check: not empty and looks like UUID)
-  const isValidPortfolioId = portfolioId && portfolioId.trim() !== "" && portfolioId.length > 10;
+    // Check if portfolioId is a valid UUID format
+    const isValidPortfolioId = portfolioId && portfolioId.trim() !== "" && portfolioId.length > 10;
 
-  let allProperties;
-  if (isValidPortfolioId) {
-    // Filter by specific portfolio
-    allProperties = await db
-      .select()
-      .from(properties)
-      .where(eq(properties.portfolioId, portfolioId));
-  } else {
-    // Get all properties (no portfolio filter)
-    allProperties = await db.select().from(properties);
-  }
+    if (isValidPortfolioId) {
+      // Get accessible property IDs for this user in this portfolio
+      const accessiblePropertyIds = await getAccessiblePropertyIdsForUser(userId, portfolioId);
 
-  // Filter by status and exclude archived (unless explicitly requested)
-  let filtered = allProperties;
+      if (accessiblePropertyIds.length === 0) {
+        return c.json({ properties: [] });
+      }
 
-  if (status) {
-    filtered = filtered.filter((p) => p.status === status);
-  } else if (!includeArchived) {
-    // Exclude archived by default
-    filtered = filtered.filter((p) => p.status !== "archived");
-  }
+      // Filter by accessible properties
+      const allProperties = await db
+        .select()
+        .from(properties)
+        .where(eq(properties.portfolioId, portfolioId));
 
-  // Sort by most recent first
-  filtered.sort((a, b) => {
-    const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-    const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-    return dateB - dateA;
-  });
+      // Filter to only accessible properties
+      let filtered = allProperties.filter((p) =>
+        accessiblePropertyIds.includes(p.id)
+      );
 
-  return c.json({ properties: filtered });
-});
+      if (status) {
+        filtered = filtered.filter((p) => p.status === status);
+      } else if (!includeArchived) {
+        filtered = filtered.filter((p) => p.status !== "archived");
+      }
+
+      // Sort by most recent first
+      filtered.sort((a, b) => {
+        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return dateB - dateA;
+      });
+
+      return c.json({ properties: filtered });
+    } else {
+      // Get all portfolios user has access to
+      const userPortfoliosList = await db
+        .select({ portfolioId: userPortfolios.portfolioId })
+        .from(userPortfolios)
+        .where(eq(userPortfolios.userId, userId));
+
+      if (userPortfoliosList.length === 0) {
+        return c.json({ properties: [] });
+      }
+
+      const portfolioIds = userPortfoliosList.map((up) => up.portfolioId);
+
+      // Get all properties from these portfolios
+      const allProperties = await db.select().from(properties);
+
+      // Filter to portfolios user has access to
+      let filtered = allProperties.filter((p) =>
+        portfolioIds.includes(p.portfolioId)
+      );
+
+      if (status) {
+        filtered = filtered.filter((p) => p.status === status);
+      } else if (!includeArchived) {
+        filtered = filtered.filter((p) => p.status !== "archived");
+      }
+
+      // Sort by most recent first
+      filtered.sort((a, b) => {
+        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return dateB - dateA;
+      });
+
+      return c.json({ properties: filtered });
+    }
+  }, { operation: "listProperties" })
+);
 
 // Fetch or update Rentcast data for a property
 // GET /api/properties/:id/rentcast-data
 // Checks cache (1 week old) and fetches from Rentcast if needed
 // In local environment (NODE_ENV=local), returns mock data instead of making API calls
 // NOTE: This must come before /:id route to avoid route matching conflicts
-propertiesRouter.get("/:id/rentcast-data", async (c) => {
-  const id = c.req.param("id");
-  const isLocal = process.env.NODE_ENV === "local";
-  const apiKey = process.env.RENTCAST_API_KEY;
+// Protected: Requires view permission on the property
+propertiesRouter.get(
+  "/:id/rentcast-data",
+  withPermission({ propertyPermission: "view", propertyIdParam: "id" }),
+  async (c) => {
+    const id = c.req.param("id");
+    const isLocal = process.env.NODE_ENV === "local";
+    const apiKey = process.env.RENTCAST_API_KEY;
 
-  if (!apiKey) {
-    return c.json({ error: "Rentcast API key not configured" }, 500);
-  }
+    if (!apiKey) {
+      return c.json({ error: "Rentcast API key not configured" }, 500);
+    }
 
-  // Get property
-  const [property] = await db
-    .select()
-    .from(properties)
-    .where(eq(properties.id, id))
-    .limit(1);
+    // Get property
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.id, id))
+      .limit(1);
 
   if (!property) {
     return c.json({ error: "Property not found" }, 404);
@@ -283,29 +344,34 @@ propertiesRouter.get("/:id/rentcast-data", async (c) => {
       500
     );
   }
-});
+  }
+);
 
 // Get single property by ID (with all normalized data joined)
-propertiesRouter.get("/:id", async (c) => {
-  const id = c.req.param("id");
+// Protected: Requires view permission on the property
+propertiesRouter.get(
+  "/:id",
+  withPermission({ propertyPermission: "view", propertyIdParam: "id" }),
+  withErrorHandling(async (c) => {
+    const id = c.req.param("id");
 
-  // Get property
-  const [property] = await db
-    .select()
-    .from(properties)
-    .where(eq(properties.id, id))
-    .limit(1);
+    // Get property
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.id, id))
+      .limit(1);
 
-  if (!property) {
-    return c.json({ error: "Property not found" }, 404);
-  }
+    if (!property) {
+      return c.json({ error: "Property not found" }, 404);
+    }
 
-  // Join all normalized tables
-  const [characteristics] = await db
-    .select()
-    .from(propertyCharacteristics)
-    .where(eq(propertyCharacteristics.propertyId, id))
-    .limit(1);
+    // Join all normalized tables
+    const [characteristics] = await db
+      .select()
+      .from(propertyCharacteristics)
+      .where(eq(propertyCharacteristics.propertyId, id))
+      .limit(1);
 
   const [valuation] = await db
     .select()
@@ -346,26 +412,48 @@ propertiesRouter.get("/:id", async (c) => {
       eq(loans.status, "active")
     ));
 
-  // Return property with all normalized data
-  return c.json({
-    property: {
-      ...property,
-      characteristics: characteristics || null,
-      valuation: valuation || null,
-      acquisition: acquisition || null,
-      rentalIncome: rentalIncome || null,
-      operatingExpenses: operatingExpenses || null,
-      management: management || null,
-      loans: propertyLoans || [], // Return all active loans
-    },
-  });
-});
+    // Return property with all normalized data
+    return c.json({
+      property: {
+        ...property,
+        characteristics: characteristics || null,
+        valuation: valuation || null,
+        acquisition: acquisition || null,
+        rentalIncome: rentalIncome || null,
+        operatingExpenses: operatingExpenses || null,
+        management: management || null,
+        loans: propertyLoans || [], // Return all active loans
+      },
+    });
+  }, { operation: "getProperty" })
+);
 
 // Create new property (draft or active)
+// Protected: Requires add_properties permission on the portfolio
 propertiesRouter.post(
   "/",
+  requireAuth(),
   withErrorHandling(async (c) => {
+    const userId = getAuthenticatedUserId(c);
     const body = await c.req.json();
+
+    // Portfolio ID is required for permission check
+    if (!body.portfolioId) {
+      return c.json({ error: "Portfolio ID is required" }, 400);
+    }
+
+    // Check if user has permission to add properties to this portfolio
+    const membership = await getUserPortfolioMembership(userId, body.portfolioId);
+    if (!membership) {
+      return c.json({ error: "You don't have access to this portfolio" }, 403);
+    }
+
+    // Members and above can add properties
+    const canAdd = ["owner", "admin", "member"].includes(membership.role);
+    if (!canAdd) {
+      return c.json({ error: "You don't have permission to add properties to this portfolio" }, 403);
+    }
+
     // Use validateData wrapper for consistent error logging
     const validated = validateData(body, propertyInsertSchema as { parse: typeof propertyInsertSchema.parse }, {
       operation: "createProperty",
@@ -375,6 +463,8 @@ propertiesRouter.post(
       .insert(properties)
       .values({
         ...validated,
+        userId: userId, // Set the owner to the current user
+        addedBy: userId, // Set addedBy to current user
         status: validated.status || "draft",
       })
       .returning();
@@ -385,38 +475,42 @@ propertiesRouter.post(
 
 // Update existing property (used for draft updates and finalizing)
 // Accepts property core data + optional normalized table data
-propertiesRouter.put("/:id", async (c) => {
-  try {
-    const id = c.req.param("id");
-    const body = await c.req.json();
+// Protected: Requires edit permission on the property
+propertiesRouter.put(
+  "/:id",
+  withPermission({ propertyPermission: "edit", propertyIdParam: "id" }),
+  async (c) => {
+    try {
+      const id = c.req.param("id");
+      const body = await c.req.json();
 
-    // Separate core property data from normalized data
-    const {
-      characteristics,
-      valuation,
-      acquisition,
-      rentalIncome,
-      operatingExpenses,
-      management,
-      loan,
-      ...propertyData
-    } = body;
+      // Separate core property data from normalized data
+      const {
+        characteristics,
+        valuation,
+        acquisition,
+        rentalIncome,
+        operatingExpenses,
+        management,
+        loan,
+        ...propertyData
+      } = body;
 
-    // Validate and update core property data
-    const validated = propertyUpdateSchema.parse({ ...propertyData, id });
+      // Validate and update core property data
+      const validated = propertyUpdateSchema.parse({ ...propertyData, id });
 
-    const [updated] = await db
-      .update(properties)
-      .set({
-        ...validated,
-        updatedAt: new Date(),
-      })
-      .where(eq(properties.id, id))
-      .returning();
+      const [updated] = await db
+        .update(properties)
+        .set({
+          ...validated,
+          updatedAt: new Date(),
+        })
+        .where(eq(properties.id, id))
+        .returning();
 
-    if (!updated) {
-      return c.json({ error: "Property not found" }, 404);
-    }
+      if (!updated) {
+        return c.json({ error: "Property not found" }, 404);
+      }
 
     // Update or insert characteristics
     if (characteristics) {
@@ -951,63 +1045,49 @@ propertiesRouter.put("/:id", async (c) => {
 });
 
 // Create a loan for a property
-propertiesRouter.post("/:id/loans", async (c) => {
-  try {
-    const id = c.req.param("id");
-    const body = await c.req.json();
+// Protected: Requires edit permission on the property
+propertiesRouter.post(
+  "/:id/loans",
+  withPermission({ propertyPermission: "edit", propertyIdParam: "id" }),
+  async (c) => {
+    try {
+      const id = c.req.param("id");
+      const userId = getAuthenticatedUserId(c);
+      const body = await c.req.json();
 
-    // Verify property exists
-    const [property] = await db
-      .select()
-      .from(properties)
-      .where(eq(properties.id, id))
-      .limit(1);
+      // Verify property exists
+      const [property] = await db
+        .select()
+        .from(properties)
+        .where(eq(properties.id, id))
+        .limit(1);
 
-    if (!property) {
-      return c.json({ error: "Property not found" }, 404);
-    }
+      if (!property) {
+        return c.json({ error: "Property not found" }, 404);
+      }
 
-    // Get userId from request header for user isolation
-    const authHeader = c.req.header("Authorization");
-    const clerkId = authHeader?.replace("Bearer ", "");
+      // Calculate maturity date if startDate and termMonths are provided
+      let maturityDate = null;
+      if (body.startDate && body.termMonths) {
+        const start = new Date(body.startDate);
+        start.setMonth(start.getMonth() + Number(body.termMonths));
+        maturityDate = start.toISOString().split('T')[0];
+      }
 
-    if (!clerkId) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
+      // Validate required fields before processing
+      if (!body.lenderName || !body.originalLoanAmount || !body.interestRate || !body.termMonths || !body.currentBalance) {
+        return c.json(
+          { error: "Missing required fields: lenderName, originalLoanAmount, interestRate, termMonths, and currentBalance are required" },
+          400
+        );
+      }
 
-    const { users } = await import("@axori/db/src/schema");
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.clerkId, clerkId))
-      .limit(1);
-
-    if (!user) {
-      return c.json({ error: "User not found" }, 404);
-    }
-
-    // Calculate maturity date if startDate and termMonths are provided
-    let maturityDate = null;
-    if (body.startDate && body.termMonths) {
-      const start = new Date(body.startDate);
-      start.setMonth(start.getMonth() + Number(body.termMonths));
-      maturityDate = start.toISOString().split('T')[0];
-    }
-
-    // Validate required fields before processing
-    if (!body.lenderName || !body.originalLoanAmount || !body.interestRate || !body.termMonths || !body.currentBalance) {
-      return c.json(
-        { error: "Missing required fields: lenderName, originalLoanAmount, interestRate, termMonths, and currentBalance are required" },
-        400
-      );
-    }
-
-    // Prepare loan data for Zod validation
-    // Note: Enhanced schema expects interestRate as percentage (0-100), userId for authorization
-    // Note: Enhanced schema expects termMonths directly (not loanTerm)
-    const loanDataForValidation = {
-      propertyId: id,
-      userId: user.id, // For validation/authorization, but not stored in loans table
+      // Prepare loan data for Zod validation
+      // Note: Enhanced schema expects interestRate as percentage (0-100), userId for authorization
+      // Note: Enhanced schema expects termMonths directly (not loanTerm)
+      const loanDataForValidation = {
+        propertyId: id,
+        userId: userId, // For validation/authorization, but not stored in loans table
       loanType: body.loanType || "conventional",
       lenderName: body.lenderName,
       servicerName: body.servicerName || null,
@@ -1084,27 +1164,33 @@ propertiesRouter.post("/:id/loans", async (c) => {
       message: error instanceof Error ? error.message : "Unknown error"
     }, 500);
   }
-});
+  }
+);
 
 // Update an existing loan
-propertiesRouter.put("/:id/loans/:loanId", async (c) => {
-  try {
-    const id = c.req.param("id");
-    const loanId = c.req.param("loanId");
-    const body = await c.req.json();
+// Protected: Requires edit permission on the property
+propertiesRouter.put(
+  "/:id/loans/:loanId",
+  withPermission({ propertyPermission: "edit", propertyIdParam: "id" }),
+  async (c) => {
+    try {
+      const id = c.req.param("id");
+      const loanId = c.req.param("loanId");
+      const userId = getAuthenticatedUserId(c);
+      const body = await c.req.json();
 
-    // Verify property exists
-    const [property] = await db
-      .select()
-      .from(properties)
-      .where(eq(properties.id, id))
-      .limit(1);
+      // Verify property exists
+      const [property] = await db
+        .select()
+        .from(properties)
+        .where(eq(properties.id, id))
+        .limit(1);
 
-    if (!property) {
-      return c.json({ error: "Property not found" }, 404);
-    }
+      if (!property) {
+        return c.json({ error: "Property not found" }, 404);
+      }
 
-    // Verify loan exists and belongs to this property
+      // Verify loan exists and belongs to this property
     const [existingLoan] = await db
       .select()
       .from(loans)
@@ -1118,24 +1204,7 @@ propertiesRouter.put("/:id/loans/:loanId", async (c) => {
       return c.json({ error: "Loan not found" }, 404);
     }
 
-    // Get userId from request header for user isolation
-    const authHeader = c.req.header("Authorization");
-    const clerkId = authHeader?.replace("Bearer ", "");
-
-    if (!clerkId) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-
-    const { users } = await import("@axori/db/src/schema");
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.clerkId, clerkId))
-      .limit(1);
-
-    if (!user) {
-      return c.json({ error: "User not found" }, 404);
-    }
+    // User is already authenticated via middleware
 
     // Calculate maturity date if startDate and termMonths are provided
     let maturityDate = null;
@@ -1226,11 +1295,15 @@ propertiesRouter.put("/:id/loans/:loanId", async (c) => {
       message: error instanceof Error ? error.message : "Unknown error"
     }, 500);
   }
-});
+  }
+);
 
 // Complete/finalize a draft property (mark as active)
-propertiesRouter.post("/:id/complete", async (c) => {
-  try {
+// Protected: Requires edit permission on the property
+propertiesRouter.post(
+  "/:id/complete",
+  withPermission({ propertyPermission: "edit", propertyIdParam: "id" }),
+  withErrorHandling(async (c) => {
     const id = c.req.param("id");
 
     // Verify property exists and is draft
@@ -1255,15 +1328,15 @@ propertiesRouter.post("/:id/complete", async (c) => {
       .returning();
 
     return c.json({ property: updated });
-  } catch (error) {
-    console.error("Error completing property:", error);
-    return c.json({ error: "Internal server error" }, 500);
-  }
-});
+  }, { operation: "completeProperty" })
+);
 
 // Soft delete a property (mark as archived)
-propertiesRouter.delete("/:id", async (c) => {
-  try {
+// Protected: Requires delete permission on the property
+propertiesRouter.delete(
+  "/:id",
+  withPermission({ propertyPermission: "delete", propertyIdParam: "id" }),
+  withErrorHandling(async (c) => {
     const id = c.req.param("id");
 
     // Verify property exists
@@ -1288,128 +1361,71 @@ propertiesRouter.delete("/:id", async (c) => {
       .returning();
 
     return c.json({ property: updated });
-  } catch (error) {
-    console.error("Error deleting property:", error);
-    return c.json({ error: "Internal server error" }, 500);
-  }
-});
+  }, { operation: "deleteProperty" })
+);
 
 // GET /api/properties/drafts/me - Get current user's most recent draft property
-propertiesRouter.get("/drafts/me", async (c) => {
-  const authHeader = c.req.header("Authorization");
-  const clerkId = authHeader?.replace("Bearer ", "");
+// GET /api/properties/drafts/me - Get current user's most recent draft property
+// Protected: Requires authentication
+propertiesRouter.get(
+  "/drafts/me",
+  requireAuth(),
+  withErrorHandling(async (c) => {
+    const userId = getAuthenticatedUserId(c);
 
-  if (!clerkId) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
+    // Get user's default portfolio
+    const userPortfoliosList = await db
+      .select()
+      .from(userPortfolios)
+      .where(eq(userPortfolios.userId, userId))
+      .limit(1);
 
-  // Get user ID - using direct import to avoid type conflicts
-  const { users, userPortfolios } = await import("@axori/db/src/schema");
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.clerkId, clerkId))
-    .limit(1);
+    if (userPortfoliosList.length === 0) {
+      return c.json({ property: null }); // No portfolio, no drafts
+    }
 
-  if (!user) {
-    return c.json({ error: "User not found" }, 404);
-  }
+    const portfolioId = userPortfoliosList[0].portfolioId;
 
-  // Get user's default portfolio
-  const userPortfoliosList = await db
-    .select()
-    .from(userPortfolios)
-    .where(eq(userPortfolios.userId, user.id))
-    .limit(1);
+    // Get most recent draft property for this portfolio added by this user
+    const allDrafts = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.portfolioId, portfolioId));
 
-  if (userPortfoliosList.length === 0) {
-    return c.json({ property: null }); // No portfolio, no drafts
-  }
+    // Filter in memory for status and addedBy (to avoid type conflicts)
+    const userDrafts = allDrafts
+      .filter(
+        (p) =>
+          p.status === "draft" &&
+          p.addedBy === userId
+      )
+      .sort((a, b) => {
+        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return dateB - dateA; // Most recent first
+      });
 
-  const portfolioId = userPortfoliosList[0].portfolioId;
+    if (userDrafts.length === 0) {
+      return c.json({ property: null });
+    }
 
-  // Get most recent draft property for this portfolio added by this user
-  // Using query params approach to avoid type conflicts
-  const allDrafts = await db
-    .select()
-    .from(properties)
-    .where(eq(properties.portfolioId, portfolioId));
-
-  // Filter in memory for status and addedBy (to avoid type conflicts)
-  const userDrafts = allDrafts
-    .filter(
-      (p) =>
-        p.status === "draft" &&
-        p.addedBy === user.id
-    )
-    .sort((a, b) => {
-      const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-      const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-      return dateB - dateA; // Most recent first
-    });
-
-  if (userDrafts.length === 0) {
-    return c.json({ property: null });
-  }
-
-  return c.json({ property: userDrafts[0] });
-});
+    return c.json({ property: userDrafts[0] });
+  }, { operation: "getUserDrafts" })
+);
 
 // ============================================================================
 // Property Transactions Routes (Unified: Income, Expenses, Capital)
 // ============================================================================
 
 // GET /api/properties/:id/transactions - List transactions for property
-propertiesRouter.get("/:id/transactions", async (c) => {
-  const { id } = c.req.param();
+// Protected: Requires view permission on the property
+propertiesRouter.get(
+  "/:id/transactions",
+  withPermission({ propertyPermission: "view", propertyIdParam: "id" }),
+  withErrorHandling(async (c) => {
+    const { id } = c.req.param();
 
-  // Security: Get user from auth header
-  const authHeader = c.req.header("Authorization");
-  const clerkId = authHeader?.replace("Bearer ", "");
-
-  if (!clerkId) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  // Lookup user by clerkId
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.clerkId, clerkId))
-    .limit(1);
-
-  if (!user) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  // Security: Verify user has access to property via portfolio membership
-  const [property] = await db
-    .select()
-    .from(properties)
-    .where(eq(properties.id, id))
-    .limit(1);
-
-  if (!property) {
-    return c.json({ error: "Property not found" }, 404);
-  }
-
-  // Check if user has access to the property's portfolio
-  const [userPortfolioAccess] = await db
-    .select()
-    .from(userPortfolios)
-    .where(
-      and(
-        eq(userPortfolios.userId, user.id),
-        eq(userPortfolios.portfolioId, property.portfolioId)
-      )
-    )
-    .limit(1);
-
-  if (!userPortfolioAccess) {
-    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
-  }
-
-  // Get query parameters for filtering
+    // Get query parameters for filtering
   const startDate = c.req.query("startDate");
   const endDate = c.req.query("endDate");
   const type = c.req.query("type"); // income, expense, capital
@@ -1459,251 +1475,141 @@ propertiesRouter.get("/:id/transactions", async (c) => {
     .limit(pageSize)
     .offset(offset);
 
-  return c.json({
-    transactions,
-    pagination: {
-      page,
-      pageSize,
-      total,
-      totalPages: Math.ceil(total / pageSize),
-    },
-  });
-});
+    return c.json({
+      transactions,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    });
+  }, { operation: "listTransactions" })
+);
 
 // GET /api/properties/:id/transactions/:transactionId - Get single transaction
-propertiesRouter.get("/:id/transactions/:transactionId", async (c) => {
-  const { id, transactionId } = c.req.param();
+// Protected: Requires view permission on the property
+propertiesRouter.get(
+  "/:id/transactions/:transactionId",
+  withPermission({ propertyPermission: "view", propertyIdParam: "id" }),
+  withErrorHandling(async (c) => {
+    const { id, transactionId } = c.req.param();
 
-  // Security: Get user from auth header
-  const authHeader = c.req.header("Authorization");
-  const clerkId = authHeader?.replace("Bearer ", "");
-
-  if (!clerkId) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  // Lookup user by clerkId
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.clerkId, clerkId))
-    .limit(1);
-
-  if (!user) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  // Security: Verify user has access to property via portfolio membership
-  const [property] = await db
-    .select()
-    .from(properties)
-    .where(eq(properties.id, id))
-    .limit(1);
-
-  if (!property) {
-    return c.json({ error: "Property not found" }, 404);
-  }
-
-  // Check if user has access to the property's portfolio
-  const [userPortfolioAccess] = await db
-    .select()
-    .from(userPortfolios)
-    .where(
-      and(
-        eq(userPortfolios.userId, user.id),
-        eq(userPortfolios.portfolioId, property.portfolioId)
+    // Get transaction and verify it belongs to the property
+    const [transaction] = await db
+      .select()
+      .from(propertyTransactions)
+      .where(
+        and(
+          eq(propertyTransactions.id, transactionId),
+          eq(propertyTransactions.propertyId, id)
+        )
       )
-    )
-    .limit(1);
+      .limit(1);
 
-  if (!userPortfolioAccess) {
-    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
-  }
+    if (!transaction) {
+      return c.json({ error: "Transaction not found" }, 404);
+    }
 
-  // Get transaction and verify it belongs to the property
-  const [transaction] = await db
-    .select()
-    .from(propertyTransactions)
-    .where(
-      and(
-        eq(propertyTransactions.id, transactionId),
-        eq(propertyTransactions.propertyId, id)
-      )
-    )
-    .limit(1);
-
-  if (!transaction) {
-    return c.json({ error: "Transaction not found" }, 404);
-  }
-
-  return c.json({ transaction });
-});
+    return c.json({ transaction });
+  }, { operation: "getTransaction" })
+);
 
 // POST /api/properties/:id/transactions - Create transaction
-propertiesRouter.post("/:id/transactions", async (c) => {
-  const { id } = c.req.param();
+// Protected: Requires edit permission on the property
+propertiesRouter.post(
+  "/:id/transactions",
+  withPermission({ propertyPermission: "edit", propertyIdParam: "id" }),
+  withErrorHandling(async (c) => {
+    const { id } = c.req.param();
+    const userId = getAuthenticatedUserId(c);
 
-  // Security: Get user from auth header
-  const authHeader = c.req.header("Authorization");
-  const clerkId = authHeader?.replace("Bearer ", "");
+    // Verify property exists
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.id, id))
+      .limit(1);
 
-  if (!clerkId) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
+    if (!property) {
+      return c.json({ error: "Property not found" }, 404);
+    }
 
-  // Lookup user by clerkId
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.clerkId, clerkId))
-    .limit(1);
+    // Parse and validate request body
+    const data = propertyTransactionInsertApiSchema.parse(await c.req.json());
 
-  if (!user) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
+    // Convert data types for database (numeric fields need to be strings, dates are already strings from enhanced schema)
+    const transactionDataForDb: Record<string, unknown> = {
+      propertyId: id,
+      createdBy: userId,
+      type: data.type,
+      transactionDate: data.transactionDate,
+      amount: String(data.amount),
+      category: data.category,
+      isRecurring: data.isRecurring ?? false,
+      isTaxDeductible: data.isTaxDeductible ?? true,
+      source: data.source ?? "manual",
+      reviewStatus: data.reviewStatus ?? "pending",
+      isExcluded: data.isExcluded ?? false,
+    };
 
-  // Security: Verify user has access to property via portfolio membership
-  const [property] = await db
-    .select()
-    .from(properties)
-    .where(eq(properties.id, id))
-    .limit(1);
+    // Add type-specific fields
+    if (data.type === "expense" && data.vendor) {
+      transactionDataForDb.vendor = data.vendor;
+    }
+    if (data.type === "income" && data.payer) {
+      transactionDataForDb.payer = data.payer;
+    }
 
-  if (!property) {
-    return c.json({ error: "Property not found" }, 404);
-  }
+    // Add optional fields
+    if (data.subcategory != null) transactionDataForDb.subcategory = data.subcategory;
+    if (data.description != null) transactionDataForDb.description = data.description;
+    if (data.recurrenceFrequency != null) transactionDataForDb.recurrenceFrequency = data.recurrenceFrequency;
+    if (data.recurrenceEndDate != null) {
+      transactionDataForDb.recurrenceEndDate = data.recurrenceEndDate;
+    }
+    if (data.taxCategory != null) transactionDataForDb.taxCategory = data.taxCategory;
+    if (data.documentId != null) transactionDataForDb.documentId = data.documentId;
+    if (data.externalId != null) transactionDataForDb.externalId = data.externalId;
+    if (data.notes != null) transactionDataForDb.notes = data.notes;
 
-  // Check if user has access to the property's portfolio
-  const [userPortfolioAccess] = await db
-    .select()
-    .from(userPortfolios)
-    .where(
-      and(
-        eq(userPortfolios.userId, user.id),
-        eq(userPortfolios.portfolioId, property.portfolioId)
-      )
-    )
-    .limit(1);
+    // Create transaction
+    const transaction = await db
+      .insert(propertyTransactions)
+      .values(transactionDataForDb as typeof propertyTransactions.$inferInsert)
+      .returning();
 
-  if (!userPortfolioAccess) {
-    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
-  }
-
-  // Parse and validate request body
-  const data = propertyTransactionInsertApiSchema.parse(await c.req.json());
-
-  // Convert data types for database (numeric fields need to be strings, dates are already strings from enhanced schema)
-  const transactionDataForDb: Record<string, unknown> = {
-    propertyId: id,
-    createdBy: user.id, // Use user.id (UUID), not clerkId
-    type: data.type,
-    transactionDate: data.transactionDate, // Enhanced schema validates as ISO date string
-    amount: String(data.amount), // numeric column expects string
-    category: data.category,
-    isRecurring: data.isRecurring ?? false,
-    isTaxDeductible: data.isTaxDeductible ?? true,
-    source: data.source ?? "manual",
-    reviewStatus: data.reviewStatus ?? "pending",
-    isExcluded: data.isExcluded ?? false,
-  };
-
-  // Add type-specific fields
-  if (data.type === "expense" && data.vendor) {
-    transactionDataForDb.vendor = data.vendor;
-  }
-  if (data.type === "income" && data.payer) {
-    transactionDataForDb.payer = data.payer;
-  }
-
-  // Add optional fields
-  if (data.subcategory != null) transactionDataForDb.subcategory = data.subcategory;
-  if (data.description != null) transactionDataForDb.description = data.description;
-  if (data.recurrenceFrequency != null) transactionDataForDb.recurrenceFrequency = data.recurrenceFrequency;
-  if (data.recurrenceEndDate != null) {
-    transactionDataForDb.recurrenceEndDate = data.recurrenceEndDate;
-  }
-  if (data.taxCategory != null) transactionDataForDb.taxCategory = data.taxCategory;
-  if (data.documentId != null) transactionDataForDb.documentId = data.documentId;
-  if (data.externalId != null) transactionDataForDb.externalId = data.externalId;
-  if (data.notes != null) transactionDataForDb.notes = data.notes;
-
-  // Create transaction
-  const transaction = await db
-    .insert(propertyTransactions)
-    .values(transactionDataForDb as typeof propertyTransactions.$inferInsert)
-    .returning();
-
-  return c.json({ transaction: transaction[0] });
-});
+    return c.json({ transaction: transaction[0] });
+  }, { operation: "createTransaction" })
+);
 
 // PUT /api/properties/:id/transactions/:transactionId - Update transaction
-propertiesRouter.put("/:id/transactions/:transactionId", async (c) => {
-  const { id, transactionId } = c.req.param();
+// Protected: Requires edit permission on the property
+propertiesRouter.put(
+  "/:id/transactions/:transactionId",
+  withPermission({ propertyPermission: "edit", propertyIdParam: "id" }),
+  withErrorHandling(async (c) => {
+    const { id, transactionId } = c.req.param();
+    const userId = getAuthenticatedUserId(c);
 
-  // Security: Get user from auth header
-  const authHeader = c.req.header("Authorization");
-  const clerkId = authHeader?.replace("Bearer ", "");
-
-  if (!clerkId) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  // Lookup user by clerkId
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.clerkId, clerkId))
-    .limit(1);
-
-  if (!user) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  // Security: Verify user has access to property via portfolio membership
-  const [property] = await db
-    .select()
-    .from(properties)
-    .where(eq(properties.id, id))
-    .limit(1);
-
-  if (!property) {
-    return c.json({ error: "Property not found" }, 404);
-  }
-
-  // Check if user has access to the property's portfolio
-  const [userPortfolioAccess] = await db
-    .select()
-    .from(userPortfolios)
-    .where(
-      and(
-        eq(userPortfolios.userId, user.id),
-        eq(userPortfolios.portfolioId, property.portfolioId)
+    // Verify transaction belongs to property
+    const [existingTransaction] = await db
+      .select()
+      .from(propertyTransactions)
+      .where(
+        and(
+          eq(propertyTransactions.id, transactionId),
+          eq(propertyTransactions.propertyId, id)
+        )
       )
-    )
-    .limit(1);
+      .limit(1);
 
-  if (!userPortfolioAccess) {
-    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
-  }
+    if (!existingTransaction) {
+      return c.json({ error: "Transaction not found" }, 404);
+    }
 
-  // Verify transaction belongs to property
-  const [existingTransaction] = await db
-    .select()
-    .from(propertyTransactions)
-    .where(
-      and(
-        eq(propertyTransactions.id, transactionId),
-        eq(propertyTransactions.propertyId, id)
-      )
-    )
-    .limit(1);
-
-  if (!existingTransaction) {
-    return c.json({ error: "Transaction not found" }, 404);
-  }
-
-  // Parse and validate request body
-  const data = propertyTransactionUpdateApiSchema.parse(await c.req.json());
+    // Parse and validate request body
+    const data = propertyTransactionUpdateApiSchema.parse(await c.req.json());
 
   // Convert data types for database
   const transactionDataForDb: Record<string, unknown> = {
@@ -1739,149 +1645,65 @@ propertiesRouter.put("/:id/transactions/:transactionId", async (c) => {
   if (data.reviewStatus !== undefined) transactionDataForDb.reviewStatus = data.reviewStatus;
   if (data.isExcluded !== undefined) transactionDataForDb.isExcluded = data.isExcluded;
 
-  // Update reviewedBy and reviewedAt if reviewStatus is being set
-  if (data.reviewStatus !== undefined && data.reviewStatus !== "pending") {
-    transactionDataForDb.reviewedBy = user.id;
-    transactionDataForDb.reviewedAt = new Date();
-  }
+    // Update reviewedBy and reviewedAt if reviewStatus is being set
+    if (data.reviewStatus !== undefined && data.reviewStatus !== "pending") {
+      transactionDataForDb.reviewedBy = userId;
+      transactionDataForDb.reviewedAt = new Date();
+    }
 
-  // Update transaction
-  const transaction = await db
-    .update(propertyTransactions)
-    .set(transactionDataForDb as Partial<typeof propertyTransactions.$inferInsert>)
-    .where(eq(propertyTransactions.id, transactionId))
-    .returning();
+    // Update transaction
+    const transaction = await db
+      .update(propertyTransactions)
+      .set(transactionDataForDb as Partial<typeof propertyTransactions.$inferInsert>)
+      .where(eq(propertyTransactions.id, transactionId))
+      .returning();
 
-  return c.json({ transaction: transaction[0] });
-});
+    return c.json({ transaction: transaction[0] });
+  }, { operation: "updateTransaction" })
+);
 
 // DELETE /api/properties/:id/transactions/:transactionId - Delete transaction
-propertiesRouter.delete("/:id/transactions/:transactionId", async (c) => {
-  const { id, transactionId } = c.req.param();
+// Protected: Requires edit permission on the property
+propertiesRouter.delete(
+  "/:id/transactions/:transactionId",
+  withPermission({ propertyPermission: "edit", propertyIdParam: "id" }),
+  withErrorHandling(async (c) => {
+    const { id, transactionId } = c.req.param();
 
-  // Security: Get user from auth header
-  const authHeader = c.req.header("Authorization");
-  const clerkId = authHeader?.replace("Bearer ", "");
-
-  if (!clerkId) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  // Lookup user by clerkId
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.clerkId, clerkId))
-    .limit(1);
-
-  if (!user) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  // Security: Verify user has access to property via portfolio membership
-  const [property] = await db
-    .select()
-    .from(properties)
-    .where(eq(properties.id, id))
-    .limit(1);
-
-  if (!property) {
-    return c.json({ error: "Property not found" }, 404);
-  }
-
-  // Check if user has access to the property's portfolio
-  const [userPortfolioAccess] = await db
-    .select()
-    .from(userPortfolios)
-    .where(
-      and(
-        eq(userPortfolios.userId, user.id),
-        eq(userPortfolios.portfolioId, property.portfolioId)
+    // Verify transaction belongs to property
+    const [existingTransaction] = await db
+      .select()
+      .from(propertyTransactions)
+      .where(
+        and(
+          eq(propertyTransactions.id, transactionId),
+          eq(propertyTransactions.propertyId, id)
+        )
       )
-    )
-    .limit(1);
+      .limit(1);
 
-  if (!userPortfolioAccess) {
-    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
-  }
+    if (!existingTransaction) {
+      return c.json({ error: "Transaction not found" }, 404);
+    }
 
-  // Verify transaction belongs to property
-  const [existingTransaction] = await db
-    .select()
-    .from(propertyTransactions)
-    .where(
-      and(
-        eq(propertyTransactions.id, transactionId),
-        eq(propertyTransactions.propertyId, id)
-      )
-    )
-    .limit(1);
+    // Delete transaction
+    await db.delete(propertyTransactions).where(eq(propertyTransactions.id, transactionId));
 
-  if (!existingTransaction) {
-    return c.json({ error: "Transaction not found" }, 404);
-  }
-
-  // Delete transaction
-  await db.delete(propertyTransactions).where(eq(propertyTransactions.id, transactionId));
-
-  return c.json({ message: "Transaction deleted successfully" });
-});
+    return c.json({ message: "Transaction deleted successfully" });
+  }, { operation: "deleteTransaction" })
+);
 
 // ============================================================================
 // Property Depreciation Routes
 // ============================================================================
 
 // GET /api/properties/:id/depreciation - Get depreciation data for property
+// Protected: Requires view permission on the property
 propertiesRouter.get(
   "/:id/depreciation",
+  withPermission({ propertyPermission: "view", propertyIdParam: "id" }),
   withErrorHandling(async (c) => {
     const { id } = c.req.param();
-
-    // Security: Get user from auth header
-    const authHeader = c.req.header("Authorization");
-    const clerkId = authHeader?.replace("Bearer ", "");
-
-    if (!clerkId) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-
-    // Lookup user by clerkId
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.clerkId, clerkId))
-      .limit(1);
-
-    if (!user) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-
-    // Security: Verify user has access to property via portfolio membership
-    const [property] = await db
-      .select()
-      .from(properties)
-      .where(eq(properties.id, id))
-      .limit(1);
-
-    if (!property) {
-      return c.json({ error: "Property not found" }, 404);
-    }
-
-    // Check if user has access to the property's portfolio
-    const [userPortfolioAccess] = await db
-      .select()
-      .from(userPortfolios)
-      .where(
-        and(
-          eq(userPortfolios.userId, user.id),
-          eq(userPortfolios.portfolioId, property.portfolioId)
-        )
-      )
-      .limit(1);
-
-    if (!userPortfolioAccess) {
-      return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
-    }
 
     // Get depreciation data
     const [depreciation] = await db

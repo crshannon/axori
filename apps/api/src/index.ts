@@ -76,11 +76,13 @@ import onboardingRouter from "./routes/onboarding";
 import usersRouter from "./routes/users";
 import marketsRouter from "./routes/markets";
 import mapboxRouter from "./routes/mapbox";
+import portfoliosRouter from "./routes/portfolios";
 app.route("/api/properties", propertiesRouter);
 app.route("/api/onboarding", onboardingRouter);
 app.route("/api/users", usersRouter);
 app.route("/api/markets", marketsRouter);
 app.route("/api/mapbox", mapboxRouter);
+app.route("/api/portfolios", portfoliosRouter);
 
 const port = Number(process.env.PORT) || 3001;
 
