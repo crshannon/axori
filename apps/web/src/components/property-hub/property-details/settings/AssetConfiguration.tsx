@@ -4,7 +4,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { formatPropertyType } from '@axori/shared'
 import { LearningHubButton } from '../financials/LearningHubButton'
 import { getAssetConfigurationSnippets } from '@/data/learning-hub/settings-snippets'
-import { usePropertySettings, usePropertyPermissions } from '@/hooks/api'
+import { usePropertyPermissions, usePropertySettings } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
 
 interface AssetConfigurationProps {
