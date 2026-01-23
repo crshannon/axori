@@ -76,13 +76,14 @@ export const AcquisitionMetadataDrawer = ({
     }
 
     try {
-      // Update form data via hook
+      // Update form data via hook (for UI state consistency)
       Object.entries(localFormData).forEach(([key, value]) => {
         updateField(key as keyof typeof localFormData, value)
       })
 
-      // Save settings
-      await saveSettings()
+      // Save settings with local form data to avoid stale closure data
+      // Pass localFormData directly to ensure we save the latest values
+      await saveSettings(localFormData)
 
       onClose()
     } catch (error) {

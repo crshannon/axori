@@ -274,7 +274,7 @@ function SignInPage() {
                 </div>
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || !isLoaded}
                   className="w-full mt-6 py-5 rounded-3xl font-black text-xs uppercase tracking-widest transition-all shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-[#E8FF4D] dark:text-black dark:shadow-[#E8FF4D]/20 bg-violet-600 text-white shadow-violet-200"
                 >
                   {isLoading ? 'Verifying...' : 'Verify Code'}
@@ -287,7 +287,7 @@ function SignInPage() {
                   <button
                     type="button"
                     onClick={() => handleOAuth('oauth_google')}
-                    disabled={isLoading}
+                    disabled={isLoading || !isLoaded}
                     className="w-full py-4 px-6 rounded-2xl border flex items-center justify-center gap-4 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed dark:bg-white/5 dark:border-white/5 dark:hover:bg-white/10 dark:text-white bg-slate-50 border-slate-100 hover:bg-white hover:shadow-md text-slate-900"
                   >
                     <svg
@@ -320,7 +320,7 @@ function SignInPage() {
                   <button
                     type="button"
                     onClick={() => handleOAuth('oauth_apple')}
-                    disabled={isLoading}
+                    disabled={isLoading || !isLoaded}
                     className="w-full py-4 px-6 rounded-2xl border flex items-center justify-center gap-4 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed dark:bg-black dark:border-white/10 dark:hover:bg-white/5 dark:text-white bg-black text-white border-black"
                   >
                     <svg
@@ -389,7 +389,7 @@ function SignInPage() {
                     type="submit"
                     variant="primary"
                     className="w-full mt-6 py-5 rounded-3xl font-black text-xs uppercase tracking-widest transition-all shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-[#E8FF4D] dark:text-black dark:shadow-[#E8FF4D]/20 bg-violet-600 text-white shadow-violet-200"
-                    disabled={isLoading}
+                    disabled={isLoading || !isLoaded}
                   >
                     {isLoading ? 'Signing In...' : 'Access Portfolio'}
                   </Button>

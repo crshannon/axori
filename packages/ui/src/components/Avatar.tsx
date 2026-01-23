@@ -35,10 +35,13 @@ export const Avatar = ({
   return (
     <div
       className={cn(
-        'rounded-full flex items-center justify-center font-black shadow-md transition-colors',
+        `
+          flex items-center justify-center rounded-full font-black shadow-md
+          transition-colors
+        `,
         sizeClasses[size],
-        'dark:bg-[#1A1A1A] dark:border dark:border-white/10 dark:text-white',
-        'bg-slate-200 border border-white text-slate-900',
+        'dark:border dark:border-white/10 dark:bg-[#1A1A1A] dark:text-white',
+        'border border-white bg-slate-200 text-slate-900',
         className,
       )}
       {...props}

@@ -14,7 +14,10 @@ export const FormLabel = ({
   <Label
     size="sm"
     className={cn(
-      "mb-2 block ml-2 text-slate-500 dark:text-white/70",
+      `
+        mb-2 ml-2 block text-slate-500
+        dark:text-white/70
+      `,
       className
     )}
     {...props}

@@ -9,14 +9,14 @@ const tokenCache = {
   async getToken(key: string) {
     try {
       return await SecureStore.getItemAsync(key);
-    } catch (err) {
+    } catch {
       return null;
     }
   },
   async saveToken(key: string, value: string) {
     try {
       await SecureStore.setItemAsync(key, value);
-    } catch (err) {
+    } catch {
       return;
     }
   },

@@ -15,7 +15,12 @@ export const NavLink = ({
     return (
       <button
         className={cn(
-          "text-[10px] font-black uppercase tracking-[0.3em] text-red-500/50 hover:text-red-500 transition-colors px-3 py-1 border border-red-500/20 rounded-full",
+          `
+            rounded-full border border-red-500/20 px-3 py-1 text-[10px]
+            font-black tracking-[0.3em] text-red-500/50 uppercase
+            transition-colors
+            hover:text-red-500
+          `,
           className
         )}
         {...props}
@@ -28,7 +33,12 @@ export const NavLink = ({
   return (
     <button
       className={cn(
-        "text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors",
+        `
+          text-xs font-bold tracking-widest text-slate-400 uppercase
+          transition-colors
+          hover:text-slate-900
+          dark:hover:text-white
+        `,
         className
       )}
       {...props}

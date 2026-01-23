@@ -1,7 +1,7 @@
 ---
 description: "TypeScript type inference patterns using Drizzle and Zod to avoid type duplication and ensure type safety"
 globs: ["**/*.ts", "**/*.tsx"]
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Type Safety Patterns

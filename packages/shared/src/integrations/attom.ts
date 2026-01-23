@@ -25,7 +25,7 @@ export class AttomClient {
     return response.json();
   }
 
-  async getPropertyDetails(address: string, city: string, state: string, zipCode: string) {
+  async getPropertyDetails(_address: string, _city: string, _state: string, _zipCode: string) {
     return this.request("/propertyapi/v1.0.0/property/detail", {
       method: "GET",
       // Add query parameters as needed

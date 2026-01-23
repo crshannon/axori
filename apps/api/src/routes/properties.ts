@@ -32,12 +32,11 @@ import {
   propertyTransactionInsertApiSchema,
   propertyTransactionUpdateApiSchema,
 } from "@axori/shared/src/validation";
-import { RentcastClient, type PropertyDetails } from "@axori/shared/src/integrations/rentcast";
+import { RentcastClient } from "@axori/shared/src/integrations/rentcast";
 import { transformRentcastToAxori } from "@axori/shared/src/integrations/data-transformers";
 import { z } from "zod";
 import {
   withErrorHandling,
-  validateRequest,
   validateData,
   handleError,
 } from "../utils/errors";

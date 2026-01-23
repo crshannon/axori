@@ -21,8 +21,8 @@ export function OnboardingCard({
         variant === "default" && "p-16",
         variant === "compact" && "p-10",
         isDark
-          ? "bg-[#1A1A1A] border-white/5"
-          : "bg-white border-black/5 shadow-2xl",
+          ? "border-white/5 bg-[#1A1A1A]"
+          : "border-black/5 bg-white shadow-2xl",
         className
       )}
       {...props}

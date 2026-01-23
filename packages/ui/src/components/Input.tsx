@@ -11,9 +11,19 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 // Shared input class for rounded variant (used in wizards and forms)
 export const roundedInputClass = cn(
-  "w-full px-6 py-4 rounded-2xl text-sm font-bold border outline-none transition-all",
-  "bg-slate-50 border-slate-200 focus:border-violet-300",
-  "dark:bg-white/5 dark:border-white/5 dark:focus:border-[#E8FF4D]/30 dark:text-white dark:placeholder:text-white/30"
+  `
+    w-full rounded-2xl border px-6 py-4 text-sm font-bold transition-all
+    outline-none
+  `,
+  `
+    border-slate-200 bg-slate-50
+    focus:border-violet-300
+  `,
+  `
+    dark:border-white/5 dark:bg-white/5 dark:text-white
+    dark:placeholder:text-white/30
+    dark:focus:border-[#E8FF4D]/30
+  `
 );
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -28,13 +38,33 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       variant === "rounded"
         ? cn(
             roundedInputClass,
-            error && "border-red-500 dark:border-red-500",
+            error && `
+              border-red-500
+              dark:border-red-500
+            `,
             className
           )
         : cn(
-            "flex h-10 w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-sm text-black dark:text-white ring-offset-white dark:ring-offset-black file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-[#E8FF4D] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-50",
+            `
+              flex h-10 w-full rounded-md border border-gray-300 bg-white px-3
+              py-2 text-sm text-black ring-offset-white
+              file:border-0 file:bg-transparent file:text-sm file:font-medium
+              placeholder:text-gray-500
+              focus-visible:ring-2 focus-visible:ring-blue-500
+              focus-visible:ring-offset-2 focus-visible:outline-none
+              disabled:cursor-not-allowed disabled:opacity-50
+              dark:border-white/10 dark:bg-white/5 dark:text-white
+              dark:ring-offset-black
+              dark:placeholder:text-white/40
+              dark:focus-visible:ring-[#E8FF4D]
+              dark:focus-visible:ring-offset-black
+            `,
             error &&
-              "border-red-500 dark:border-red-500 focus-visible:ring-red-500",
+              `
+                border-red-500
+                focus-visible:ring-red-500
+                dark:border-red-500
+              `,
             className
           );
 
@@ -44,7 +74,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <FormLabel htmlFor={inputId}>
             {label}
             {required && (
-              <span className="text-[8px] font-mono text-red-500 dark:text-red-400 ml-2 opacity-100">
+              <span className="
+                ml-2 font-mono text-[8px] text-red-500 opacity-100
+                dark:text-red-400
+              ">
                 *
               </span>
             )}
@@ -52,7 +85,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
         <input ref={ref} id={inputId} className={inputClassName} {...props} />
         {error && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="
+            mt-1 text-sm text-red-600
+            dark:text-red-400
+          ">{error}</p>
         )}
       </div>
     );

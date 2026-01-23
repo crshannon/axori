@@ -42,10 +42,13 @@ export const ErrorCard = ({
   return (
     <div
       className={cn(
-        "p-4 rounded-2xl border",
+        "rounded-2xl border p-4",
         isDanger
-          ? "bg-red-500/10 border-red-500/20"
-          : "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800",
+          ? "border-red-500/20 bg-red-500/10"
+          : `
+            border-rose-200 bg-rose-50
+            dark:border-rose-800 dark:bg-rose-900/20
+          `,
         className
       )}
       {...props}
@@ -57,8 +60,14 @@ export const ErrorCard = ({
           className={cn(
             "mb-2",
             isDanger
-              ? "text-red-600 dark:text-red-400"
-              : "text-rose-600 dark:text-rose-400"
+              ? `
+                text-red-600
+                dark:text-red-400
+              `
+              : `
+                text-rose-600
+                dark:text-rose-400
+              `
           )}
         >
           {title}
@@ -69,8 +78,14 @@ export const ErrorCard = ({
         weight="bold"
         className={cn(
           isDanger
-            ? "text-red-600 dark:text-red-400"
-            : "text-rose-600 dark:text-rose-400"
+            ? `
+              text-red-600
+              dark:text-red-400
+            `
+            : `
+              text-rose-600
+              dark:text-rose-400
+            `
         )}
       >
         {message}

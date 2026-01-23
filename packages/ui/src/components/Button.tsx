@@ -48,7 +48,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type="button"
         className={cn(
-          "inline-flex items-center justify-center rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 dark:focus:ring-[#E8FF4D] cursor-pointer disabled:opacity-50 disabled:pointer-events-none",
+          `
+            inline-flex cursor-pointer items-center justify-center rounded-md
+            font-medium transition-all
+            focus:ring-2 focus:ring-violet-500 focus:ring-offset-2
+            focus:outline-none
+            disabled:pointer-events-none disabled:opacity-50
+            dark:focus:ring-[#E8FF4D]
+          `,
           buttonVariants[variant],
           buttonSizes[size],
           fullWidth && "w-full",
@@ -60,7 +67,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {isLoading ? (
           <>
             <svg
-              className="animate-spin -ml-1 mr-2 h-4 w-4"
+              className="mr-2 -ml-1 size-4 animate-spin"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
