@@ -1,0 +1,106 @@
+# Linear Sub-Issues Workflow
+
+**This rule applies when working on Linear issues assigned via the Linear integration.**
+
+## Check for Sub-Issues First
+
+When assigned a Linear issue, ALWAYS check if it has sub-issues before starting implementation:
+
+1. **Query for sub-issues** using the Linear API or check the issue description for references to child tickets
+2. **Look for patterns** like "AXO-XXX" references in the description or comments
+3. **Check the project** for related tickets with similar naming or tagging
+
+## Workflow for Issues with Sub-Issues
+
+### 1. Read Everything First
+
+Before writing ANY code:
+
+- [ ] Understand the parent issue's goal and success criteria
+- [ ] Read ALL sub-issues completely
+- [ ] Identify what's shared across sub-issues (types, schemas, utilities, components)
+- [ ] Note any dependencies mentioned in sub-issue descriptions
+
+### 2. Analyze & Plan
+
+Create a mental (or written) map:
+
+- [ ] Map dependencies between sub-issues (which must complete before others)
+- [ ] Identify shared infrastructure that multiple sub-issues need:
+  - Database schema changes
+  - Shared types and interfaces
+  - Utility functions
+  - API middleware or helpers
+  - UI components
+- [ ] Determine optimal implementation order (dependencies first)
+- [ ] List all files that will be created or modified
+
+### 3. Implement Efficiently
+
+Build in this order:
+
+1. **Schema/Database first** - Batch all migrations together
+2. **Shared utilities** - Types, helpers, constants that multiple features need
+3. **Core infrastructure** - Middleware, base components, hooks
+4. **Features in dependency order** - Implement sub-issues based on what depends on what
+5. **Integration points** - Wire everything together
+
+Key principles:
+- Build shared pieces ONCE, reuse across sub-issues
+- Don't duplicate code between sub-issues
+- Batch database migrations into single migration files when possible
+- Keep related changes together
+
+### 4. Deliver as One
+
+- **Single feature branch** - All sub-issues in one branch
+- **Atomic commits** - Each commit should reference the relevant sub-issue ID
+  - Example: `feat(api): implement permission middleware - AXO-118-6`
+- **One PR** - Single pull request that completes the entire parent issue
+- **Reference all sub-issues** in PR description
+
+## Commit Message Format for Sub-Issues
+
+```
+feat(scope): description
+
+Implements sub-issue requirements:
+- Requirement 1
+- Requirement 2
+
+AXO-XXX (parent issue)
+Sub-issues: AXO-XXX-1, AXO-XXX-2, etc.
+```
+
+## Example: RBAC Implementation
+
+For a parent issue "API Middleware" with sub-issues:
+1. Create withPermission middleware
+2. Add permission checks to property routes
+3. Add permission checks to user routes
+4. Create portfolio members API
+
+**Correct approach:**
+1. Read all 4 sub-issues first
+2. Identify shared needs: middleware file, permission utilities, audit logging
+3. Build order: middleware → property routes → user routes → portfolio routes
+4. Single branch, commits reference each sub-issue, one PR
+
+**Incorrect approach:**
+- Start coding sub-issue 1 immediately
+- Realize sub-issue 2 needs same utilities, duplicate code
+- Create separate PRs for each sub-issue
+
+## Checklist Before Starting
+
+- [ ] Have I checked for sub-issues?
+- [ ] Have I read ALL related issues?
+- [ ] Do I understand the shared infrastructure needed?
+- [ ] Have I planned the implementation order?
+- [ ] Am I building shared pieces first?
+
+## References
+
+- Linear Integration: `.cursor/rules/linear-integration.mdc`
+- Project Structure: `.cursor/rules/project-structure.mdc`
+- Architecture: `.cursor/rules/architecture.mdc`
