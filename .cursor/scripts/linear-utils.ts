@@ -619,15 +619,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-
-export {
-  getIssue,
-  getSubIssues,
-  getWorkflowStates,
-  findStateByName,
-  updateIssueStatus,
-  updateIssueStatusByName,
-  startWork,
-  completeWork,
-  updateSubIssueStatus,
-};
