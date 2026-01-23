@@ -934,6 +934,63 @@ export const permissionAuditLog = pgTable("permission_audit_log", {
   changedAtIdx: index("idx_permission_audit_log_changed_at").on(table.changedAt),
 }));
 
+// Invitation token status enum
+export const invitationTokenStatusEnum = pgEnum("invitation_token_status", [
+  "pending", // Token created, not yet used
+  "accepted", // Token was used to join portfolio
+  "expired", // Token expired without being used
+  "revoked", // Token was manually revoked by admin/owner
+]);
+
+// Invitation Tokens - Secure, single-use tokens for portfolio invitations
+export const invitationTokens = pgTable("invitation_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  
+  // The secure token (URL-safe, cryptographically random)
+  token: text("token").notNull().unique(),
+  
+  // Portfolio being invited to
+  portfolioId: uuid("portfolio_id")
+    .references(() => portfolios.id, { onDelete: "cascade" })
+    .notNull(),
+  
+  // Invitee details
+  email: text("email").notNull(), // Email of the person being invited
+  role: portfolioRoleEnum("role").notNull().default("member"), // Role to assign upon acceptance
+  
+  // Optional: Property-level access restrictions (JSON)
+  // null = full access based on role
+  propertyAccess: jsonb("property_access").$type<PropertyAccess>(),
+  
+  // Token status
+  status: invitationTokenStatusEnum("status").notNull().default("pending"),
+  
+  // Invitation metadata
+  invitedBy: uuid("invited_by")
+    .references(() => users.id, { onDelete: "set null" })
+    .notNull(), // User who created the invitation
+  
+  // Timestamps
+  expiresAt: timestamp("expires_at").notNull(), // When the token expires (default: 7 days from creation)
+  usedAt: timestamp("used_at"), // When the token was used (null if pending/expired/revoked)
+  usedBy: uuid("used_by")
+    .references(() => users.id, { onDelete: "set null" }), // User who used the token (may differ from email if user registered with different email)
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  // Index for quick token lookups
+  tokenIdx: index("idx_invitation_tokens_token").on(table.token),
+  // Index for looking up invitations by portfolio
+  portfolioIdIdx: index("idx_invitation_tokens_portfolio_id").on(table.portfolioId),
+  // Index for looking up invitations by email
+  emailIdx: index("idx_invitation_tokens_email").on(table.email),
+  // Index for looking up invitations by status
+  statusIdx: index("idx_invitation_tokens_status").on(table.status),
+  // Index for finding expired tokens (for cleanup jobs)
+  expiresAtIdx: index("idx_invitation_tokens_expires_at").on(table.expiresAt),
+}));
+
 // Relations
 export const marketsRelations = relations(markets, ({ many }) => ({
   userMarkets: many(userMarkets),
@@ -963,6 +1020,14 @@ export const usersRelations = relations(users, ({ many }) => ({
   permissionAuditLogsChangedBy: many(permissionAuditLog, {
     relationName: "permissionAuditLogChangedBy",
   }),
+  // Invitation tokens created by this user
+  createdInvitationTokens: many(invitationTokens, {
+    relationName: "invitationTokenCreator",
+  }),
+  // Invitation tokens used by this user
+  usedInvitationTokens: many(invitationTokens, {
+    relationName: "invitationTokenUser",
+  }),
 }));
 
 export const portfoliosRelations = relations(portfolios, ({ one, many }) => ({
@@ -975,6 +1040,8 @@ export const portfoliosRelations = relations(portfolios, ({ one, many }) => ({
   properties: many(properties),
   // Permission audit logs for this portfolio
   permissionAuditLogs: many(permissionAuditLog),
+  // Invitation tokens for this portfolio
+  invitationTokens: many(invitationTokens),
 }));
 
 export const userPortfoliosRelations = relations(userPortfolios, ({ one }) => ({
@@ -1200,5 +1267,26 @@ export const permissionAuditLogRelations = relations(permissionAuditLog, ({ one 
     fields: [permissionAuditLog.changedBy],
     references: [users.id],
     relationName: "permissionAuditLogChangedBy",
+  }),
+}));
+
+// Invitation Token Relations
+export const invitationTokensRelations = relations(invitationTokens, ({ one }) => ({
+  // The portfolio this invitation is for
+  portfolio: one(portfolios, {
+    fields: [invitationTokens.portfolioId],
+    references: [portfolios.id],
+  }),
+  // The user who created this invitation
+  inviter: one(users, {
+    fields: [invitationTokens.invitedBy],
+    references: [users.id],
+    relationName: "invitationTokenCreator",
+  }),
+  // The user who used this invitation (if accepted)
+  acceptedByUser: one(users, {
+    fields: [invitationTokens.usedBy],
+    references: [users.id],
+    relationName: "invitationTokenUser",
   }),
 }));

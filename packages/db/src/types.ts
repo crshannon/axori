@@ -20,6 +20,7 @@ import {
   costSegregationStudies,
   annualDepreciationRecords,
   permissionAuditLog,
+  invitationTokens,
 } from './schema'
 
 // Re-export property access types for external use
@@ -320,3 +321,19 @@ export type PermissionAuditLog = InferSelectModel<typeof permissionAuditLog>
  * Used when recording new permission change events
  */
 export type PermissionAuditLogInsert = InferInsertModel<typeof permissionAuditLog>
+
+// ============================================================================
+// Invitation Tokens (Secure, single-use tokens for portfolio invitations)
+// ============================================================================
+
+/**
+ * Invitation Token type inferred from Drizzle schema (for read operations)
+ * Represents a secure, single-use token for inviting users to portfolios
+ */
+export type InvitationToken = InferSelectModel<typeof invitationTokens>
+
+/**
+ * Invitation Token insert type inferred from Drizzle schema (for insert operations)
+ * Used when creating new invitation tokens
+ */
+export type InvitationTokenInsert = InferInsertModel<typeof invitationTokens>

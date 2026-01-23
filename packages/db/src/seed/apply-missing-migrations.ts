@@ -35,6 +35,10 @@ async function applyMigrations() {
       join(process.cwd(), "drizzle", "0007_backfill_portfolio_owners.sql"),
       "utf-8"
     );
+    const migration8 = readFileSync(
+      join(process.cwd(), "drizzle", "0008_invitation_tokens.sql"),
+      "utf-8"
+    );
 
     console.log("📋 Applying migration 0006_portfolio_invitation_access.sql...");
     await sql.unsafe(migration6);
@@ -43,6 +47,10 @@ async function applyMigrations() {
     console.log("📋 Applying migration 0007_backfill_portfolio_owners.sql...");
     await sql.unsafe(migration7);
     console.log("✅ Migration 0007 applied\n");
+
+    console.log("📋 Applying migration 0008_invitation_tokens.sql...");
+    await sql.unsafe(migration8);
+    console.log("✅ Migration 0008 applied\n");
 
     console.log("✅ All migrations applied successfully!");
   } catch (error) {
