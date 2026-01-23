@@ -41,8 +41,19 @@ import {
  * Permission context returned from the API
  */
 interface PermissionContextResponse {
+  portfolioId: string
   role: PortfolioRole
+  roleLabel: string
+  roleDescription: string
   propertyAccess: PropertyAccess
+  permissions: {
+    canView: boolean
+    canEdit: boolean
+    canAdmin: boolean
+    canManageBilling: boolean
+    [key: string]: boolean
+  }
+  allowedActions: string[]
 }
 
 /**
@@ -96,7 +107,7 @@ export function usePermissions(portfolioId: string | null): UsePermissionsResult
       }
 
       return await apiFetch<PermissionContextResponse>(
-        `/api/portfolios/${portfolioId}/permissions`,
+        `/api/permissions/${portfolioId}`,
         {
           clerkId: user.id,
         }
