@@ -6,9 +6,30 @@
 
 When assigned a Linear issue, ALWAYS check if it has sub-issues before starting implementation:
 
-1. **Query for sub-issues** using the Linear API or check the issue description for references to child tickets
+1. **Query for sub-issues** using the Linear utilities:
+   ```bash
+   tsx .cursor/scripts/linear-utils.ts get-sub-issues AXO-XXX
+   ```
 2. **Look for patterns** like "AXO-XXX" references in the description or comments
 3. **Check the project** for related tickets with similar naming or tagging
+
+## Linear Status Management
+
+Use the Linear utilities to manage issue statuses:
+
+```bash
+# Start work - sets parent + all sub-issues to "In Progress"
+tsx .cursor/scripts/linear-utils.ts start-work AXO-XXX
+
+# Update a single issue's status
+tsx .cursor/scripts/linear-utils.ts update-status AXO-XXX-1 "In Progress"
+
+# Complete work - sets parent + all sub-issues to "Done"
+tsx .cursor/scripts/linear-utils.ts complete AXO-XXX
+
+# List available workflow states
+tsx .cursor/scripts/linear-utils.ts list-states
+```
 
 ## Workflow for Issues with Sub-Issues
 
@@ -99,8 +120,44 @@ For a parent issue "API Middleware" with sub-issues:
 - [ ] Have I planned the implementation order?
 - [ ] Am I building shared pieces first?
 
+## Status Update Workflow
+
+When working on issues with sub-issues, update statuses at key points:
+
+### Starting Work
+```bash
+# When you begin implementing, mark everything as in progress
+tsx .cursor/scripts/linear-utils.ts start-work AXO-XXX
+```
+
+### During Implementation
+```bash
+# As you complete individual sub-issues, update them
+tsx .cursor/scripts/linear-utils.ts update-status AXO-XXX-1 "Done"
+tsx .cursor/scripts/linear-utils.ts update-status AXO-XXX-2 "Done"
+```
+
+### Completing Work
+```bash
+# When all work is done and PR is ready
+tsx .cursor/scripts/linear-utils.ts complete AXO-XXX
+```
+
+## Available Utilities
+
+**File**: `.cursor/scripts/linear-utils.ts`
+
+| Command | Description |
+|---------|-------------|
+| `get-sub-issues <id>` | List all sub-issues of a parent |
+| `list-states` | Show available workflow states |
+| `update-status <id> <state>` | Update a single issue's status |
+| `start-work <id>` | Set parent + sub-issues to "In Progress" |
+| `complete <id>` | Set parent + sub-issues to "Done" |
+
 ## References
 
+- Linear Utilities: `.cursor/scripts/linear-utils.ts`
 - Linear Integration: `.cursor/rules/linear-integration.mdc`
 - Project Structure: `.cursor/rules/project-structure.mdc`
 - Architecture: `.cursor/rules/architecture.mdc`
