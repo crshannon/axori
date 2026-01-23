@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, numeric, pgEnum, unique, serial, integer, date, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, boolean, numeric, pgEnum, unique, serial, integer, date, index, jsonb } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
 // Portfolio role enum for user-portfolio relationships
@@ -809,6 +809,12 @@ export const portfolios = pgTable("portfolios", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Property access JSONB type for property-level restrictions
+// Example: { "property-uuid-1": ["view", "edit"], "property-uuid-2": ["view"] }
+// null means full access to all properties in the portfolio
+export type PropertyAccessPermission = "view" | "edit" | "manage" | "delete";
+export type PropertyAccess = Record<string, PropertyAccessPermission[]> | null;
+
 // User-Portfolio junction table (many-to-many)
 // Allows multiple users to access the same portfolio with different roles
 export const userPortfolios = pgTable("user_portfolios", {
@@ -820,6 +826,18 @@ export const userPortfolios = pgTable("user_portfolios", {
     .references(() => portfolios.id, { onDelete: "cascade" })
     .notNull(),
   role: portfolioRoleEnum("role").notNull().default("member"), // User's role in this portfolio
+
+  // Invitation tracking
+  invitedBy: uuid("invited_by")
+    .references(() => users.id, { onDelete: "set null" }), // User who sent the invitation (null for portfolio creator/owner)
+  invitedAt: timestamp("invited_at"), // When the invitation was sent (null for portfolio creator/owner)
+  acceptedAt: timestamp("accepted_at"), // When the invitation was accepted (null if pending or for owner)
+
+  // Property-level access restrictions (JSONB)
+  // null = full access to all properties based on role
+  // { "property-id": ["view", "edit"] } = restricted access to specific properties
+  propertyAccess: jsonb("property_access").$type<PropertyAccess>(),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => ({
@@ -828,6 +846,11 @@ export const userPortfolios = pgTable("user_portfolios", {
     table.userId,
     table.portfolioId,
   ),
+  // Indexes for efficient permission lookups
+  userIdIdx: index("idx_user_portfolios_user_id").on(table.userId),
+  portfolioIdIdx: index("idx_user_portfolios_portfolio_id").on(table.portfolioId),
+  roleIdx: index("idx_user_portfolios_role").on(table.role),
+  invitedByIdx: index("idx_user_portfolios_invited_by").on(table.invitedBy),
 }));
 
 export const markets = pgTable("markets", {
@@ -870,6 +893,10 @@ export const marketsRelations = relations(markets, ({ many }) => ({
 export const usersRelations = relations(users, ({ many }) => ({
   userMarkets: many(userMarkets),
   userPortfolios: many(userPortfolios),
+  // Portfolios where this user has invited others
+  invitedUserPortfolios: many(userPortfolios, {
+    relationName: "portfolioInviter",
+  }),
   createdPortfolios: many(portfolios, {
     relationName: "portfolioCreator",
   }),
@@ -899,6 +926,12 @@ export const userPortfoliosRelations = relations(userPortfolios, ({ one }) => ({
   portfolio: one(portfolios, {
     fields: [userPortfolios.portfolioId],
     references: [portfolios.id],
+  }),
+  // User who sent the invitation
+  inviter: one(users, {
+    fields: [userPortfolios.invitedBy],
+    references: [users.id],
+    relationName: "portfolioInviter",
   }),
 }));
 
