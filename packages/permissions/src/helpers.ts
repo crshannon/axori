@@ -5,9 +5,13 @@
  * at both the portfolio and property levels. These functions should be
  * used in both API routes and UI components to ensure consistent
  * permission enforcement.
+ *
+ * Database-aware functions (checkPermission, getUserRole, etc.) query
+ * the database directly using Drizzle ORM patterns.
  */
 
-import type { PropertyAccess, PropertyAccessPermission } from "@axori/db";
+import type { PropertyAccess } from "@axori/db";
+import { db, userPortfolios, properties, eq, and } from "@axori/db";
 import {
   PortfolioRole,
   PropertyPermission,
@@ -452,4 +456,322 @@ export function isValidPropertyAccess(propertyAccess: unknown): propertyAccess i
   }
 
   return true;
+}
+
+// ============================================================================
+// Database-Aware Permission Checking Utilities
+// ============================================================================
+
+/**
+ * User portfolio membership record returned from database queries.
+ */
+export interface UserPortfolioRecord {
+  id: string;
+  userId: string;
+  portfolioId: string;
+  role: PortfolioRole;
+  propertyAccess: PropertyAccess;
+  invitedBy: string | null;
+  invitedAt: Date | null;
+  acceptedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Get the user's role in a portfolio.
+ * Queries the userPortfolios table to find the user's membership.
+ *
+ * @param userId - The user's UUID
+ * @param portfolioId - The portfolio's UUID
+ * @returns The user's role in the portfolio, or null if not a member
+ *
+ * @example
+ * ```typescript
+ * const role = await getUserRole(userId, portfolioId);
+ * if (role === null) {
+ *   // User is not a member of this portfolio
+ * }
+ * ```
+ */
+export async function getUserRole(
+  userId: string,
+  portfolioId: string
+): Promise<PortfolioRole | null> {
+  const [membership] = await db
+    .select({
+      role: userPortfolios.role,
+    })
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, userId),
+        eq(userPortfolios.portfolioId, portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!membership) {
+    return null;
+  }
+
+  // Validate the role is a valid PortfolioRole
+  if (!isValidRole(membership.role)) {
+    return null;
+  }
+
+  return membership.role as PortfolioRole;
+}
+
+/**
+ * Check if a user has at least the required role in a portfolio.
+ * Uses role hierarchy to determine if the user's role meets the requirement.
+ *
+ * @param userId - The user's UUID
+ * @param portfolioId - The portfolio's UUID
+ * @param requiredRole - The minimum role required
+ * @returns True if the user has the required role or higher
+ *
+ * @example
+ * ```typescript
+ * // Check if user is at least a member
+ * const canEdit = await checkPermission(userId, portfolioId, "member");
+ *
+ * // Check if user is an admin or owner
+ * const canManageMembers = await checkPermission(userId, portfolioId, "admin");
+ * ```
+ */
+export async function checkPermission(
+  userId: string,
+  portfolioId: string,
+  requiredRole: PortfolioRole
+): Promise<boolean> {
+  const userRole = await getUserRole(userId, portfolioId);
+
+  if (userRole === null) {
+    return false;
+  }
+
+  return isRoleAtLeast(userRole, requiredRole);
+}
+
+/**
+ * Get the user's full portfolio membership record.
+ * Useful when you need both role and propertyAccess.
+ *
+ * @param userId - The user's UUID
+ * @param portfolioId - The portfolio's UUID
+ * @returns The full membership record, or null if not a member
+ */
+export async function getUserPortfolioMembership(
+  userId: string,
+  portfolioId: string
+): Promise<UserPortfolioRecord | null> {
+  const [membership] = await db
+    .select()
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, userId),
+        eq(userPortfolios.portfolioId, portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!membership) {
+    return null;
+  }
+
+  // Cast to our expected type (role should be valid from DB)
+  return membership as unknown as UserPortfolioRecord;
+}
+
+/**
+ * Get all property IDs that a user can access in a portfolio.
+ * Takes into account both role-based access and property-level restrictions.
+ *
+ * @param userId - The user's UUID
+ * @param portfolioId - The portfolio's UUID
+ * @returns Array of property IDs the user can access. Empty array if user has
+ *          no access or is not a member. Returns all portfolio properties if
+ *          user has full access (no property restrictions).
+ *
+ * @example
+ * ```typescript
+ * const propertyIds = await getAccessiblePropertyIdsForUser(userId, portfolioId);
+ * // Filter queries to only these properties
+ * ```
+ */
+export async function getAccessiblePropertyIdsForUser(
+  userId: string,
+  portfolioId: string
+): Promise<string[]> {
+  const membership = await getUserPortfolioMembership(userId, portfolioId);
+
+  if (!membership) {
+    return [];
+  }
+
+  // If propertyAccess is null, user has full access - get all portfolio properties
+  if (membership.propertyAccess === null) {
+    const portfolioProperties = await db
+      .select({
+        id: properties.id,
+      })
+      .from(properties)
+      .where(eq(properties.portfolioId, portfolioId));
+
+    return portfolioProperties.map((p) => p.id);
+  }
+
+  // Otherwise, return only the properties listed in propertyAccess
+  // (these are the properties the user has been granted access to)
+  return Object.keys(membership.propertyAccess);
+}
+
+/**
+ * Check if a user has access to a specific property in a portfolio.
+ * Verifies both portfolio membership and property-level access.
+ *
+ * @param userId - The user's UUID
+ * @param portfolioId - The portfolio's UUID
+ * @param propertyId - The property's UUID
+ * @returns True if the user can access the property
+ *
+ * @example
+ * ```typescript
+ * const canAccess = await hasPropertyAccessForUser(userId, portfolioId, propertyId);
+ * if (!canAccess) {
+ *   return c.json({ error: "Unauthorized" }, 403);
+ * }
+ * ```
+ */
+export async function hasPropertyAccessForUser(
+  userId: string,
+  portfolioId: string,
+  propertyId: string
+): Promise<boolean> {
+  const membership = await getUserPortfolioMembership(userId, portfolioId);
+
+  if (!membership) {
+    return false;
+  }
+
+  // Verify the property belongs to this portfolio
+  const [property] = await db
+    .select({
+      id: properties.id,
+      portfolioId: properties.portfolioId,
+    })
+    .from(properties)
+    .where(
+      and(
+        eq(properties.id, propertyId),
+        eq(properties.portfolioId, portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!property) {
+    return false;
+  }
+
+  // If propertyAccess is null, user has full access to all portfolio properties
+  if (membership.propertyAccess === null) {
+    return true;
+  }
+
+  // Check if the property is in the user's propertyAccess list
+  return propertyId in membership.propertyAccess;
+}
+
+/**
+ * Check if a user has a specific permission on a property.
+ * Combines role-based permissions with property-level access restrictions.
+ *
+ * @param userId - The user's UUID
+ * @param portfolioId - The portfolio's UUID
+ * @param propertyId - The property's UUID
+ * @param permission - The permission to check (view, edit, manage, delete)
+ * @returns True if the user has the specified permission on the property
+ *
+ * @example
+ * ```typescript
+ * const canEdit = await checkPropertyPermission(userId, portfolioId, propertyId, "edit");
+ * if (!canEdit) {
+ *   return c.json({ error: "Cannot edit this property" }, 403);
+ * }
+ * ```
+ */
+export async function checkPropertyPermission(
+  userId: string,
+  portfolioId: string,
+  propertyId: string,
+  permission: PropertyPermission
+): Promise<boolean> {
+  const membership = await getUserPortfolioMembership(userId, portfolioId);
+
+  if (!membership) {
+    return false;
+  }
+
+  // Verify the property belongs to this portfolio
+  const [property] = await db
+    .select({
+      id: properties.id,
+    })
+    .from(properties)
+    .where(
+      and(
+        eq(properties.id, propertyId),
+        eq(properties.portfolioId, portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!property) {
+    return false;
+  }
+
+  // Use the in-memory helper with the membership data
+  return hasPropertyPermission(
+    membership.role as PortfolioRole,
+    propertyId,
+    permission,
+    membership.propertyAccess
+  );
+}
+
+/**
+ * Build a permission context from database for a user in a portfolio.
+ * Useful for passing to UI components or caching permission state.
+ *
+ * @param userId - The user's UUID
+ * @param portfolioId - The portfolio's UUID
+ * @returns Permission context or null if user is not a member
+ *
+ * @example
+ * ```typescript
+ * const context = await buildPermissionContextFromDb(userId, portfolioId);
+ * if (context) {
+ *   const permissions = buildPermissionCheckResult(context);
+ * }
+ * ```
+ */
+export async function buildPermissionContextFromDb(
+  userId: string,
+  portfolioId: string
+): Promise<PermissionContext | null> {
+  const membership = await getUserPortfolioMembership(userId, portfolioId);
+
+  if (!membership) {
+    return null;
+  }
+
+  return {
+    userId,
+    portfolioId,
+    role: membership.role as PortfolioRole,
+    propertyAccess: membership.propertyAccess,
+  };
 }

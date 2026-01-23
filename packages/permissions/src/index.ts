@@ -67,6 +67,7 @@ export {
   type PermissionContext,
   type PermissionCheckResult,
   type PropertyPermissionCheckResult,
+  type UserPortfolioRecord,
   // Role hierarchy helpers
   getRoleRank,
   isRoleHigherThan,
@@ -87,7 +88,7 @@ export {
   canView,
   canEdit,
   canAdmin,
-  // Property permission helpers
+  // Property permission helpers (in-memory)
   getPropertyPermissions,
   hasPropertyPermission,
   canViewProperty,
@@ -104,4 +105,12 @@ export {
   parseRole,
   isValidPropertyPermission,
   isValidPropertyAccess,
+  // Database-aware permission checking utilities (API)
+  getUserRole,
+  checkPermission,
+  getUserPortfolioMembership,
+  getAccessiblePropertyIdsForUser,
+  hasPropertyAccessForUser,
+  checkPropertyPermission,
+  buildPermissionContextFromDb,
 } from "./helpers";
