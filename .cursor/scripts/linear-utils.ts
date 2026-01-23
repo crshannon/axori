@@ -1,170 +1,49 @@
 #!/usr/bin/env tsx
 /**
- * Linear Utilities for Issue Management
+ * Linear Utilities Script
  *
- * Provides utilities for managing Linear issues, including:
- * - Fetching sub-issues of a parent issue
- * - Getting workflow states
- * - Updating issue status (In Progress, Done, etc.)
- * - Batch status updates for sub-issues
- *
- * Prerequisites:
- * - Linear API key set in LINEAR_API_KEY environment variable
- *   OR in .env.local file at workspace root
+ * Utility script for common Linear operations like getting sub-issues and starting work.
  *
  * Usage:
- *   # Get sub-issues
- *   pnpm exec tsx .cursor/scripts/linear-utils.ts get-sub-issues AXO-118
- *
- *   # List workflow states
- *   pnpm exec tsx .cursor/scripts/linear-utils.ts list-states
- *
- *   # Update issue status
- *   pnpm exec tsx .cursor/scripts/linear-utils.ts update-status AXO-118 "In Progress"
- *
- *   # Start work on parent + all sub-issues
- *   pnpm exec tsx .cursor/scripts/linear-utils.ts start-work AXO-118
- *
- *   # Complete parent + all sub-issues
- *   pnpm exec tsx .cursor/scripts/linear-utils.ts complete AXO-118
+ *   LINEAR_API_KEY=xxx tsx .cursor/scripts/linear-utils.ts get-sub-issues AXO-118
+ *   LINEAR_API_KEY=xxx tsx .cursor/scripts/linear-utils.ts start-work AXO-118
  */
 
-import * as fs from "fs";
-import * as path from "path";
-
-// Load environment variables from .env.local if present
-function loadEnvFile() {
-  const envPaths = [
-    path.resolve(process.cwd(), ".env.local"),
-    path.resolve(process.cwd(), ".env"),
-    path.resolve(__dirname, "../../.env.local"),
-    path.resolve(__dirname, "../../.env"),
-  ];
-
-  for (const envPath of envPaths) {
-    if (fs.existsSync(envPath)) {
-      const content = fs.readFileSync(envPath, "utf-8");
-      const lines = content.split("\n");
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed && !trimmed.startsWith("#")) {
-          const [key, ...valueParts] = trimmed.split("=");
-          const value = valueParts.join("=").replace(/^["']|["']$/g, "");
-          if (key && value && !process.env[key]) {
-            process.env[key] = value;
-          }
-        }
-      }
-      break;
-    }
-  }
-}
-
-// Load env file before anything else
-loadEnvFile();
-
-import { resolve } from "path";
-import { existsSync, readFileSync } from "fs";
-
-// Load .env from repo root
-function loadEnv(): void {
-  const cwd = process.cwd();
-  for (const f of [".env.local", ".env"]) {
-    const p = resolve(cwd, f);
-    if (existsSync(p)) {
-      const buf = readFileSync(p, "utf-8");
-      for (const line of buf.split("\n")) {
-        const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line);
-        if (m && !process.env[m[1]]) {
-          const v = m[2].replace(/^["']|["']$/g, "").trim();
-          process.env[m[1]] = v;
-        }
-      }
-      break;
-    }
-  }
-}
-
-loadEnv();
-
-const LINEAR_API_URL = "https://api.linear.app/graphql";
-
-// ============================================================================
-// Types
-// ============================================================================
+const LINEAR_API_URL = 'https://api.linear.app/graphql'
 
 interface LinearIssue {
-  id: string;
-  identifier: string;
-  title: string;
-  url: string;
+  id: string
+  identifier: string
+  title: string
+  url: string
   state: {
-    id: string;
-    name: string;
-    type: string;
-  };
-  parent?: {
-    id: string;
-    identifier: string;
-  };
-  children?: {
-    nodes: LinearIssue[];
-  };
+    id: string
+    name: string
+    type: string
+  }
+  assignee?: {
+    id: string
+    name: string
+    email: string
+  }
+  priority: number
+  description?: string
 }
 
-interface WorkflowState {
-  id: string;
-  name: string;
-  type: string; // "backlog" | "unstarted" | "started" | "completed" | "canceled"
-  position: number;
-}
-
-interface LinearApiResponse<T> {
-  data?: T;
+interface LinearResponse<T> {
+  data?: T
   errors?: Array<{
-    message: string;
-    extensions?: { code?: string };
-  }>;
-}
-
-// ============================================================================
-// API Functions
-// ============================================================================
-
-/**
- * Execute a GraphQL query against the Linear API
- */
-async function linearQuery<T>(
-  apiKey: string,
-  query: string,
-  variables?: Record<string, unknown>
-): Promise<T> {
-  const response = await fetch(LINEAR_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: apiKey,
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-
-  const result: LinearApiResponse<T> = await response.json();
-
-  if (result.errors && result.errors.length > 0) {
-    throw new Error(result.errors.map((e) => e.message).join(", "));
-  }
-
-  if (!result.data) {
-    throw new Error("No data returned from Linear API");
-  }
-
-  return result.data;
+    message: string
+    extensions?: {
+      code?: string
+    }
+  }>
 }
 
 /**
- * Get an issue by its identifier (e.g., "AXO-118")
+ * Get an issue by identifier (e.g., "AXO-118")
  */
-export async function getIssue(
+async function getIssueByIdentifier(
   apiKey: string,
   identifier: string
 ): Promise<LinearIssue | null> {
@@ -180,10 +59,57 @@ export async function getIssue(
           name
           type
         }
-        parent {
+        assignee {
           id
-          identifier
+          name
+          email
         }
+        priority
+        description
+      }
+    }
+  `
+
+  try {
+    const response = await fetch(LINEAR_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: apiKey,
+      },
+      body: JSON.stringify({
+        query,
+        variables: { identifier },
+      }),
+    })
+
+    const result: LinearResponse<{ issue: LinearIssue | null }> = await response.json()
+
+    if (result.errors && result.errors.length > 0) {
+      console.error('❌ API Error:', result.errors[0].message)
+      return null
+    }
+
+    return result.data?.issue || null
+  } catch (error) {
+    console.error('❌ Error fetching issue:', error instanceof Error ? error.message : error)
+    return null
+  }
+}
+
+/**
+ * Get sub-issues (child issues) for a given issue
+ */
+async function getSubIssues(
+  apiKey: string,
+  issueId: string
+): Promise<LinearIssue[]> {
+  const query = `
+    query GetSubIssues($issueId: String!) {
+      issue(id: $issueId) {
+        id
+        identifier
+        title
         children {
           nodes {
             id
@@ -195,462 +121,289 @@ export async function getIssue(
               name
               type
             }
-          }
-        }
-      }
-    }
-  `;
-
-  try {
-    const data = await linearQuery<{ issue: LinearIssue }>(apiKey, query, {
-      identifier,
-    });
-    return data.issue;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Get all sub-issues (children) of a parent issue
- */
-export async function getSubIssues(
-  apiKey: string,
-  parentIdentifier: string
-): Promise<LinearIssue[]> {
-  const issue = await getIssue(apiKey, parentIdentifier);
-  if (!issue) {
-    throw new Error(`Issue ${parentIdentifier} not found`);
-  }
-  return issue.children?.nodes || [];
-}
-
-/**
- * Get workflow states for a team
- */
-export async function getWorkflowStates(
-  apiKey: string,
-  teamId?: string
-): Promise<WorkflowState[]> {
-  const query = teamId
-    ? `
-    query GetStates($teamId: String!) {
-      team(id: $teamId) {
-        states {
-          nodes {
-            id
-            name
-            type
-            position
+            assignee {
+              id
+              name
+              email
+            }
+            priority
+            description
           }
         }
       }
     }
   `
-    : `
-    query GetStates {
-      teams {
-        nodes {
+
+  try {
+    const response = await fetch(LINEAR_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: apiKey,
+      },
+      body: JSON.stringify({
+        query,
+        variables: { issueId },
+      }),
+    })
+
+    const result: LinearResponse<{
+      issue: {
+        id: string
+        identifier: string
+        title: string
+        children: {
+          nodes: LinearIssue[]
+        }
+      }
+    }> = await response.json()
+
+    if (result.errors && result.errors.length > 0) {
+      console.error('❌ API Error:', result.errors[0].message)
+      return []
+    }
+
+    return result.data?.issue?.children?.nodes || []
+  } catch (error) {
+    console.error('❌ Error fetching sub-issues:', error instanceof Error ? error.message : error)
+    return []
+  }
+}
+
+/**
+ * Start work on an issue (update state to "In Progress" or similar)
+ */
+async function startWork(apiKey: string, issueId: string): Promise<boolean> {
+  // First, get available workflow states
+  const statesQuery = `
+    query GetWorkflowStates($issueId: String!) {
+      issue(id: $issueId) {
+        team {
           states {
             nodes {
               id
               name
               type
-              position
             }
           }
         }
       }
     }
-  `;
+  `
 
-  const data = await linearQuery<{
-    team?: { states: { nodes: WorkflowState[] } };
-    teams?: { nodes: Array<{ states: { nodes: WorkflowState[] } }> };
-  }>(apiKey, query, teamId ? { teamId } : undefined);
+  try {
+    const statesResponse = await fetch(LINEAR_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: apiKey,
+      },
+      body: JSON.stringify({
+        query: statesQuery,
+        variables: { issueId },
+      }),
+    })
 
-  if (data.team) {
-    return data.team.states.nodes;
-  }
-
-  if (data.teams?.nodes?.[0]) {
-    return data.teams.nodes[0].states.nodes;
-  }
-
-  return [];
-}
-
-/**
- * Find a workflow state by name (case-insensitive, partial match)
- */
-export async function findStateByName(
-  apiKey: string,
-  stateName: string,
-  teamId?: string
-): Promise<WorkflowState | null> {
-  const states = await getWorkflowStates(apiKey, teamId);
-  const lowerName = stateName.toLowerCase();
-
-  // Try exact match first
-  let state = states.find((s) => s.name.toLowerCase() === lowerName);
-  if (state) return state;
-
-  // Try partial match
-  state = states.find((s) => s.name.toLowerCase().includes(lowerName));
-  if (state) return state;
-
-  // Try type match (started = in progress, completed = done)
-  if (lowerName.includes("progress") || lowerName === "started") {
-    state = states.find((s) => s.type === "started");
-  } else if (lowerName.includes("done") || lowerName.includes("complete")) {
-    state = states.find((s) => s.type === "completed");
-  } else if (lowerName.includes("backlog")) {
-    state = states.find((s) => s.type === "backlog");
-  } else if (lowerName.includes("todo") || lowerName.includes("unstarted")) {
-    state = states.find((s) => s.type === "unstarted");
-  } else if (lowerName.includes("cancel")) {
-    state = states.find((s) => s.type === "canceled");
-  }
-
-  return state || null;
-}
-
-/**
- * Update an issue's status
- */
-export async function updateIssueStatus(
-  apiKey: string,
-  issueId: string,
-  stateId: string
-): Promise<boolean> {
-  const mutation = `
-    mutation UpdateIssue($issueId: String!, $stateId: String!) {
-      issueUpdate(id: $issueId, input: { stateId: $stateId }) {
-        success
-        issue {
-          id
-          identifier
-          state {
-            name
+    const statesResult: LinearResponse<{
+      issue: {
+        team: {
+          states: {
+            nodes: Array<{ id: string; name: string; type: string }>
           }
         }
       }
-    }
-  `;
+    }> = await statesResponse.json()
 
-  try {
-    const data = await linearQuery<{
+    if (statesResult.errors || !statesResult.data?.issue?.team?.states?.nodes) {
+      console.error('❌ Error fetching workflow states')
+      return false
+    }
+
+    // Find "In Progress" or "Started" state
+    const states = statesResult.data.issue.team.states.nodes
+    const inProgressState = states.find(
+      (s) =>
+        s.type === 'started' ||
+        s.name.toLowerCase().includes('in progress') ||
+        s.name.toLowerCase().includes('started')
+    )
+
+    if (!inProgressState) {
+      console.error('❌ Could not find "In Progress" state')
+      console.log('Available states:')
+      states.forEach((s) => {
+        console.log(`  - ${s.name} (${s.type})`)
+      })
+      return false
+    }
+
+    // Update issue state
+    const updateMutation = `
+      mutation UpdateIssueState($issueId: String!, $stateId: String!) {
+        issueUpdate(id: $issueId, input: { stateId: $stateId }) {
+          success
+          issue {
+            id
+            identifier
+            title
+            state {
+              id
+              name
+            }
+          }
+        }
+      }
+    `
+
+    const updateResponse = await fetch(LINEAR_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: apiKey,
+      },
+      body: JSON.stringify({
+        query: updateMutation,
+        variables: {
+          issueId,
+          stateId: inProgressState.id,
+        },
+      }),
+    })
+
+    const updateResult: LinearResponse<{
       issueUpdate: {
-        success: boolean;
-        issue: { id: string; identifier: string; state: { name: string } };
-      };
-    }>(apiKey, mutation, { issueId, stateId });
-    return data.issueUpdate.success;
+        success: boolean
+        issue: {
+          id: string
+          identifier: string
+          title: string
+          state: {
+            id: string
+            name: string
+          }
+        }
+      }
+    }> = await updateResponse.json()
+
+    if (updateResult.errors && updateResult.errors.length > 0) {
+      console.error('❌ Error updating issue:', updateResult.errors[0].message)
+      return false
+    }
+
+    if (updateResult.data?.issueUpdate.success) {
+      console.log(`✅ Started work on ${updateResult.data.issueUpdate.issue.identifier}`)
+      console.log(`   State: ${updateResult.data.issueUpdate.issue.state.name}`)
+      return true
+    }
+
+    return false
   } catch (error) {
-    console.error(`Failed to update issue: ${error}`);
-    return false;
+    console.error('❌ Error starting work:', error instanceof Error ? error.message : error)
+    return false
   }
 }
 
 /**
- * Update status by issue identifier (e.g., "AXO-118") and state name
+ * Main CLI handler
  */
-export async function updateIssueStatusByName(
-  apiKey: string,
-  identifier: string,
-  stateName: string
-): Promise<boolean> {
-  const issue = await getIssue(apiKey, identifier);
-  if (!issue) {
-    console.error(`Issue ${identifier} not found`);
-    return false;
-  }
-
-  const state = await findStateByName(apiKey, stateName);
-  if (!state) {
-    console.error(`State "${stateName}" not found`);
-    return false;
-  }
-
-  return updateIssueStatus(apiKey, issue.id, state.id);
-}
-
-/**
- * Start work on an issue and all its sub-issues
- * Sets status to "In Progress" or equivalent
- */
-export async function startWork(
-  apiKey: string,
-  parentIdentifier: string
-): Promise<{ success: number; failed: number; issues: string[] }> {
-  const issue = await getIssue(apiKey, parentIdentifier);
-  if (!issue) {
-    throw new Error(`Issue ${parentIdentifier} not found`);
-  }
-
-  const inProgressState = await findStateByName(apiKey, "in progress");
-  if (!inProgressState) {
-    throw new Error('Could not find "In Progress" state');
-  }
-
-  const results = { success: 0, failed: 0, issues: [] as string[] };
-
-  // Update parent issue
-  const parentSuccess = await updateIssueStatus(
-    apiKey,
-    issue.id,
-    inProgressState.id
-  );
-  if (parentSuccess) {
-    results.success++;
-    results.issues.push(issue.identifier);
-  } else {
-    results.failed++;
-  }
-
-  // Update sub-issues
-  const subIssues = issue.children?.nodes || [];
-  for (const subIssue of subIssues) {
-    // Only update if not already completed or canceled
-    if (
-      subIssue.state.type !== "completed" &&
-      subIssue.state.type !== "canceled"
-    ) {
-      const success = await updateIssueStatus(
-        apiKey,
-        subIssue.id,
-        inProgressState.id
-      );
-      if (success) {
-        results.success++;
-        results.issues.push(subIssue.identifier);
-      } else {
-        results.failed++;
-      }
-    }
-  }
-
-  return results;
-}
-
-/**
- * Complete an issue and all its sub-issues
- * Sets status to "Done" or equivalent
- */
-export async function completeWork(
-  apiKey: string,
-  parentIdentifier: string
-): Promise<{ success: number; failed: number; issues: string[] }> {
-  const issue = await getIssue(apiKey, parentIdentifier);
-  if (!issue) {
-    throw new Error(`Issue ${parentIdentifier} not found`);
-  }
-
-  const doneState = await findStateByName(apiKey, "done");
-  if (!doneState) {
-    throw new Error('Could not find "Done" state');
-  }
-
-  const results = { success: 0, failed: 0, issues: [] as string[] };
-
-  // Update sub-issues first
-  const subIssues = issue.children?.nodes || [];
-  for (const subIssue of subIssues) {
-    if (subIssue.state.type !== "canceled") {
-      const success = await updateIssueStatus(apiKey, subIssue.id, doneState.id);
-      if (success) {
-        results.success++;
-        results.issues.push(subIssue.identifier);
-      } else {
-        results.failed++;
-      }
-    }
-  }
-
-  // Update parent issue
-  const parentSuccess = await updateIssueStatus(apiKey, issue.id, doneState.id);
-  if (parentSuccess) {
-    results.success++;
-    results.issues.push(issue.identifier);
-  } else {
-    results.failed++;
-  }
-
-  return results;
-}
-
-/**
- * Update a specific sub-issue's status
- */
-export async function updateSubIssueStatus(
-  apiKey: string,
-  parentIdentifier: string,
-  subIssueIndex: number,
-  stateName: string
-): Promise<boolean> {
-  const subIssues = await getSubIssues(apiKey, parentIdentifier);
-  if (subIssueIndex < 0 || subIssueIndex >= subIssues.length) {
-    console.error(
-      `Invalid sub-issue index. Parent has ${subIssues.length} sub-issues.`
-    );
-    return false;
-  }
-
-  const subIssue = subIssues[subIssueIndex];
-  return updateIssueStatusByName(apiKey, subIssue.identifier, stateName);
-}
-
-// ============================================================================
-// CLI
-// ============================================================================
-
 async function main() {
-  const apiKey = process.env.LINEAR_API_KEY;
+  const apiKey = process.env.LINEAR_API_KEY
   if (!apiKey) {
-    console.error("❌ LINEAR_API_KEY environment variable is required");
-    process.exit(1);
+    console.error('❌ LINEAR_API_KEY environment variable is required')
+    console.error('   Get your API key from: https://linear.app/settings/api')
+    process.exit(1)
   }
 
-  const [command, ...args] = process.argv.slice(2);
+  const command = process.argv[2]
+  const identifier = process.argv[3]
 
-  switch (command) {
-    case "get-sub-issues": {
-      const identifier = args[0];
-      if (!identifier) {
-        console.error("Usage: linear-utils.ts get-sub-issues <issue-id>");
-        process.exit(1);
-      }
+  if (!command) {
+    console.error('❌ Command is required')
+    console.error('\nAvailable commands:')
+    console.error('  get-sub-issues <identifier>  - Get all sub-issues for an issue')
+    console.error('  start-work <identifier>       - Start work on an issue')
+    process.exit(1)
+  }
 
-      console.log(`📋 Fetching sub-issues for ${identifier}...\n`);
-      const issue = await getIssue(apiKey, identifier);
+  if (!identifier) {
+    console.error('❌ Issue identifier is required (e.g., AXO-118)')
+    process.exit(1)
+  }
 
-      if (!issue) {
-        console.error(`❌ Issue ${identifier} not found`);
-        process.exit(1);
-      }
+  if (command === 'get-sub-issues') {
+    console.log(`📋 Fetching sub-issues for ${identifier}...\n`)
 
-      console.log(`Parent: ${issue.identifier} - ${issue.title}`);
-      console.log(`Status: ${issue.state.name}\n`);
-
-      const subIssues = issue.children?.nodes || [];
-      if (subIssues.length === 0) {
-        console.log("No sub-issues found.");
-      } else {
-        console.log(`Sub-issues (${subIssues.length}):`);
-        subIssues.forEach((sub, i) => {
-          console.log(
-            `  ${i + 1}. ${sub.identifier} - ${sub.title} [${sub.state.name}]`
-          );
-        });
-      }
-      break;
+    // First, get the issue to get its ID
+    const issue = await getIssueByIdentifier(apiKey, identifier)
+    if (!issue) {
+      console.error(`❌ Issue ${identifier} not found`)
+      process.exit(1)
     }
 
-    case "list-states": {
-      console.log("📋 Fetching workflow states...\n");
-      const states = await getWorkflowStates(apiKey);
+    console.log(`📌 Parent Issue: ${issue.identifier} - ${issue.title}`)
+    console.log(`   State: ${issue.state.name}\n`)
 
-      if (states.length === 0) {
-        console.log("No states found.");
-      } else {
-        console.log("Workflow States:");
-        states
-          .sort((a, b) => a.position - b.position)
-          .forEach((state) => {
-            console.log(`  - ${state.name} (${state.type})`);
-            console.log(`    ID: ${state.id}`);
-          });
-      }
-      break;
+    // Get sub-issues
+    const subIssues = await getSubIssues(apiKey, issue.id)
+
+    if (subIssues.length === 0) {
+      console.log('No sub-issues found.')
+      process.exit(0)
     }
 
-    case "update-status": {
-      const [identifier, stateName] = args;
-      if (!identifier || !stateName) {
-        console.error(
-          'Usage: linear-utils.ts update-status <issue-id> "<state-name>"'
-        );
-        process.exit(1);
-      }
+    console.log(`Found ${subIssues.length} sub-issue(s):\n`)
 
-      console.log(`🔄 Updating ${identifier} to "${stateName}"...`);
-      const success = await updateIssueStatusByName(apiKey, identifier, stateName);
-
-      if (success) {
-        console.log(`✅ Successfully updated ${identifier} to "${stateName}"`);
-      } else {
-        console.error(`❌ Failed to update ${identifier}`);
-        process.exit(1);
+    subIssues.forEach((subIssue, index) => {
+      const priorityLabels: Record<number, string> = {
+        1: '🔴 Urgent',
+        2: '🟠 High',
+        3: '🟡 Medium',
+        4: '🟢 Low',
       }
-      break;
+      const priorityLabel = priorityLabels[subIssue.priority] || '⚪ No Priority'
+
+      console.log(`${index + 1}. ${subIssue.identifier} - ${subIssue.title}`)
+      console.log(`   State: ${subIssue.state.name} (${subIssue.state.type})`)
+      console.log(`   Priority: ${priorityLabel}`)
+      if (subIssue.assignee) {
+        console.log(`   Assignee: ${subIssue.assignee.name}`)
+      }
+      console.log(`   URL: ${subIssue.url}`)
+      console.log('')
+    })
+
+    // Output as JSON for programmatic use
+    if (process.argv.includes('--json')) {
+      console.log(JSON.stringify(subIssues, null, 2))
+    }
+  } else if (command === 'start-work') {
+    console.log(`🚀 Starting work on ${identifier}...\n`)
+
+    const issue = await getIssueByIdentifier(apiKey, identifier)
+    if (!issue) {
+      console.error(`❌ Issue ${identifier} not found`)
+      process.exit(1)
     }
 
-    case "start-work": {
-      const identifier = args[0];
-      if (!identifier) {
-        console.error("Usage: linear-utils.ts start-work <parent-issue-id>");
-        process.exit(1);
-      }
-
-      console.log(`🚀 Starting work on ${identifier} and sub-issues...\n`);
-      const results = await startWork(apiKey, identifier);
-
-      console.log(
-        `✅ Updated ${results.success} issue(s) to "In Progress":`
-      );
-      results.issues.forEach((id) => console.log(`   - ${id}`));
-
-      if (results.failed > 0) {
-        console.log(`\n⚠️  ${results.failed} issue(s) failed to update`);
-      }
-      break;
+    const success = await startWork(apiKey, issue.id)
+    if (!success) {
+      process.exit(1)
     }
-
-    case "complete": {
-      const identifier = args[0];
-      if (!identifier) {
-        console.error("Usage: linear-utils.ts complete <parent-issue-id>");
-        process.exit(1);
-      }
-
-      console.log(`✅ Completing ${identifier} and sub-issues...\n`);
-      const results = await completeWork(apiKey, identifier);
-
-      console.log(`✅ Updated ${results.success} issue(s) to "Done":`);
-      results.issues.forEach((id) => console.log(`   - ${id}`));
-
-      if (results.failed > 0) {
-        console.log(`\n⚠️  ${results.failed} issue(s) failed to update`);
-      }
-      break;
-    }
-
-    case "help":
-    default:
-      console.log(`
-Linear Utilities - Manage Linear issues from the command line
-
-Commands:
-  get-sub-issues <issue-id>           Get all sub-issues of a parent issue
-  list-states                         List all workflow states
-  update-status <issue-id> <state>    Update an issue's status
-  start-work <parent-issue-id>        Set parent + sub-issues to "In Progress"
-  complete <parent-issue-id>          Set parent + sub-issues to "Done"
-
-Examples:
-  tsx .cursor/scripts/linear-utils.ts get-sub-issues AXO-118
-  tsx .cursor/scripts/linear-utils.ts start-work AXO-118
-  tsx .cursor/scripts/linear-utils.ts update-status AXO-118-1 "In Progress"
-  tsx .cursor/scripts/linear-utils.ts complete AXO-118
-      `);
-      break;
+  } else {
+    console.error(`❌ Unknown command: ${command}`)
+    console.error('\nAvailable commands:')
+    console.error('  get-sub-issues <identifier>  - Get all sub-issues for an issue')
+    console.error('  start-work <identifier>       - Start work on an issue')
+    process.exit(1)
   }
 }
 
 // Run if called directly
 if (require.main === module) {
   main().catch((error) => {
-    console.error("❌ Error:", error.message || error);
-    process.exit(1);
-  });
+    console.error('❌ Error:', error)
+    process.exit(1)
+  })
 }
+
+export { getIssueByIdentifier, getSubIssues, startWork }
