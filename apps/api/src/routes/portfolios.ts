@@ -19,24 +19,16 @@ import {
 } from "@axori/db";
 import {
   PortfolioRole,
-  PORTFOLIO_ROLES,
   canManageRole,
   getAssignableRoles,
-  isValidRole,
-  canInviteMembers,
-  canRemoveMembers,
-  canEditPortfolio,
-  canDeletePortfolio,
 } from "@axori/permissions";
 import {
   withPermission,
   requireAuth,
   getAuthenticatedUserId,
-  getPortfolioId,
   getUserRole,
-  getUserFromRequest,
 } from "../middleware/permissions";
-import { withErrorHandling, handleError, ApiError } from "../utils/errors";
+import { withErrorHandling } from "../utils/errors";
 
 const portfoliosRouter = new Hono();
 
@@ -143,7 +135,6 @@ portfoliosRouter.get(
   withPermission({ minimumRole: "viewer" }),
   withErrorHandling(async (c) => {
     const portfolioId = c.req.param("portfolioId");
-    const userId = getAuthenticatedUserId(c);
 
     // Get portfolio details
     const [portfolio] = await db

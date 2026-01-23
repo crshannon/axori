@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => {
     ssr: {
       // Externalize @axori/db for SSR (it uses Node.js modules like path, fs)
       noExternal: [],
-      external: ['@axori/db'],
+      external: ['@axori/db', 'path', 'fs', 'dotenv'],
     },
     define: {
       'process.env': {},
@@ -61,6 +61,21 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [
+      // Plugin to prevent Vite from trying to resolve Node.js modules in @axori/db
+      {
+        name: 'ignore-node-modules-in-db',
+        resolveId(id, importer) {
+          // If importing Node.js built-ins from @axori/db, mark as external
+          // This prevents Vite from trying to bundle them
+          if (
+            (id === 'path' || id === 'fs' || id === 'dotenv' || id === 'node:path' || id === 'node:fs') &&
+            importer?.includes('@axori/db')
+          ) {
+            return { id, external: true };
+          }
+          return null;
+        },
+      },
       // Node.js polyfills (minimal - only what we need)
       nodePolyfills({
         // Only enable Buffer polyfill (what we actually need)

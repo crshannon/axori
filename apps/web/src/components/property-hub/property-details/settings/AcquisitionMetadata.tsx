@@ -3,7 +3,7 @@ import { Pencil } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { LearningHubButton } from '../financials/LearningHubButton'
 import { getAcquisitionMetadataSnippets } from '@/data/learning-hub/settings-snippets'
-import { usePropertySettings, usePropertyPermissions } from '@/hooks/api'
+import { usePropertyPermissions, usePropertySettings } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
 
 interface AcquisitionMetadataProps {

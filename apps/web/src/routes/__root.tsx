@@ -16,6 +16,7 @@ import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 
 import { ThemeProvider } from '../utils/providers/theme-provider'
 import { getThemeServerFn, resolveAppTheme } from '../lib/theme'
+import { ErrorPage } from '../components/errors/ErrorPage'
 
 import appCss from '../styles.css?url'
 
@@ -60,6 +61,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
   shellComponent: RootDocument,
   notFoundComponent: () => <div>Not Found</div>,
+  errorComponent: ({ error }) => (
+    <ErrorPage error={error} isDevelopment={import.meta.env.DEV} />
+  ),
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
