@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { Card, EmptyStateCard } from '@axori/ui'
 import { useProperty } from '@/hooks/api/useProperties'
+import { usePropertyPermissions } from '@/hooks/api'
 
 interface LiquidityProps {
   propertyId: string
@@ -13,6 +14,7 @@ interface LiquidityProps {
 export const Liquidity = ({ propertyId }: LiquidityProps) => {
   const navigate = useNavigate({ from: '/property-hub/$propertyId/financials' })
   const { isLoading } = useProperty(propertyId)
+  const { canEdit } = usePropertyPermissions(propertyId)
 
   // TODO: Replace with actual bank account hook when schema is ready
   // const { data: bankAccount } = usePropertyBankAccount(propertyId)
@@ -42,9 +44,13 @@ export const Liquidity = ({ propertyId }: LiquidityProps) => {
   return (
     <EmptyStateCard
       title="Liquidity"
-      description="Connect a bank account to track liquidity and enable automatic transaction syncing."
-      buttonText="Connect Bank Account"
-      onButtonClick={handleConnectBankAccount}
+      description={
+        canEdit
+          ? 'Connect a bank account to track liquidity and enable automatic transaction syncing.'
+          : 'No bank account has been connected to this property yet.'
+      }
+      buttonText={canEdit ? 'Connect Bank Account' : undefined}
+      onButtonClick={canEdit ? handleConnectBankAccount : undefined}
       variant="violet"
       size="condensed"
       className="h-full"

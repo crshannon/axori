@@ -14,8 +14,10 @@ import type {
   SortingState,
 } from '@tanstack/react-table'
 import { usePropertyTransactions } from '@/hooks/api/useTransactions'
+import { usePropertyPermissions } from '@/hooks/api'
 import { useTheme } from '@/utils/providers/theme-provider'
 import { cn } from '@/utils/helpers/cn'
+import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
 
 interface PropertyTransactionsProps {
   propertyId: string
@@ -44,6 +46,7 @@ export const PropertyTransactions = ({
   const { appTheme } = useTheme()
   const isDark = appTheme === 'dark'
   const navigate = useNavigate()
+  const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   const [searchQuery, setSearchQuery] = useState('')
   const [sorting, setSorting] = useState<SortingState>([
@@ -354,16 +357,19 @@ export const PropertyTransactions = ({
       className="lg:col-span-12 flex flex-col gap-12"
     >
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-        <div>
-          <Typography
-            variant="h3"
-            className="text-3xl font-black uppercase tracking-tighter"
-          >
-            Historical P&L Registry
-          </Typography>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-2 italic">
-            Institutional Transcript — Audit Proof
-          </p>
+        <div className="flex items-center gap-4">
+          <div>
+            <Typography
+              variant="h3"
+              className="text-3xl font-black uppercase tracking-tighter"
+            >
+              Historical P&L Registry
+            </Typography>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-2 italic">
+              Institutional Transcript — Audit Proof
+            </p>
+          </div>
+          {isReadOnly && <ReadOnlyBanner variant="badge" />}
         </div>
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <div className="relative flex-grow">
@@ -397,14 +403,16 @@ export const PropertyTransactions = ({
             >
               {isLoading ? 'Refreshing...' : 'Refresh'}
             </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleAddTransaction}
-              className="px-8 py-4 rounded-3xl font-black text-[10px] uppercase tracking-widest shadow-xl"
-            >
-              Add Transaction
-            </Button>
+            {canEdit && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleAddTransaction}
+                className="px-8 py-4 rounded-3xl font-black text-[10px] uppercase tracking-widest shadow-xl"
+              >
+                Add Transaction
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"

@@ -5,6 +5,8 @@ import type { Loan } from '@axori/shared'
 import { generateDebtLogicLearning } from '@/data/learning-hub/loan-snippets'
 import { useProperty } from '@/hooks/api/useProperties'
 import { useLoanSummary } from '@/hooks/useLoanSummary'
+import { usePropertyPermissions } from '@/hooks/api'
+import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
 
 interface DebtLogicProps {
   propertyId: string
@@ -13,6 +15,7 @@ interface DebtLogicProps {
 export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
   const navigate = useNavigate()
   const { data: property, isLoading } = useProperty(propertyId)
+  const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   const handleAddLoan = () => {
     navigate({
@@ -158,9 +161,13 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
       <EmptyStateCard
         title="Debt Logic"
         statusMessage="No Active Loans"
-        description="Add your first loan to track debt architecture and refinancing opportunities."
-        buttonText="Add Loan"
-        onButtonClick={handleAddLoan}
+        description={
+          canEdit
+            ? 'Add your first loan to track debt architecture and refinancing opportunities.'
+            : 'No loan data has been added to this property yet.'
+        }
+        buttonText={canEdit ? 'Add Loan' : undefined}
+        onButtonClick={canEdit ? handleAddLoan : undefined}
         variant="slate"
       />
     )
@@ -184,6 +191,7 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
               subtitle="Strategic insights for loan management"
               componentKey="debt-logic"
             />
+            {isReadOnly && <ReadOnlyBanner variant="badge" />}
             {primaryLoanData !== null &&
               primaryLoanData.interestRate !== null &&
               primaryLoanData.interestRate < marketAverageRate && (
@@ -397,15 +405,17 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
         </div>
       </div>
 
-      {/* Manage Loan Button */}
-      <Button
-        variant="outline"
-        size="lg"
-        className="w-full py-4 mt-10 rounded-2xl bg-slate-900 text-white dark:bg-white/5 dark:border dark:border-white/10 dark:text-white dark:hover:bg-white/10 font-black text-[10px] uppercase tracking-widest transition-all"
-        onClick={handleAddLoan}
-      >
-        Manage Loan Data
-      </Button>
+      {/* Manage Loan Button - only show for users with edit permission */}
+      {canEdit && (
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full py-4 mt-10 rounded-2xl bg-slate-900 text-white dark:bg-white/5 dark:border dark:border-white/10 dark:text-white dark:hover:bg-white/10 font-black text-[10px] uppercase tracking-widest transition-all"
+          onClick={handleAddLoan}
+        >
+          Manage Loan Data
+        </Button>
+      )}
     </Card>
   )
 }

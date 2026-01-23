@@ -1,4 +1,5 @@
 import { Card } from '@axori/ui'
+import { usePropertyPermissions } from '@/hooks/api'
 
 interface CloudConnectProps {
   propertyId: string
@@ -9,6 +10,8 @@ interface CloudConnectProps {
  * Shows: connected services and API actions
  */
 export const CloudConnect = ({ propertyId }: CloudConnectProps) => {
+  const { canAdmin, canView } = usePropertyPermissions(propertyId)
+
   return (
     <Card
       variant="rounded"
@@ -26,12 +29,16 @@ export const CloudConnect = ({ propertyId }: CloudConnectProps) => {
         </span>
       </div>
       <div className="space-y-4">
-        <button className="w-full py-4 rounded-2xl bg-white/5 text-white/40 border border-white/5 text-[9px] font-black uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all">
-          Rotate Intelligence Keys
-        </button>
-        <button className="w-full py-4 rounded-2xl bg-white/5 text-white/40 border border-white/5 text-[9px] font-black uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all">
-          Download Asset JSON
-        </button>
+        {canAdmin && (
+          <button className="w-full py-4 rounded-2xl bg-white/5 text-white/40 border border-white/5 text-[9px] font-black uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all">
+            Rotate Intelligence Keys
+          </button>
+        )}
+        {canView && (
+          <button className="w-full py-4 rounded-2xl bg-white/5 text-white/40 border border-white/5 text-[9px] font-black uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all">
+            Download Asset JSON
+          </button>
+        )}
       </div>
     </Card>
   )

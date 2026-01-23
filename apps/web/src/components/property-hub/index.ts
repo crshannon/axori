@@ -4,4 +4,4 @@ export { PropertyDetailsHeaderNav } from './property-details/shared/PropertyDeta
 export { PropertyHero } from './property-details/overview/PropertyHero'
 export { PropertyMetrics } from './property-details/overview/PropertyMetrics'
 export { PropertyScoreGauge } from './PropertyScoreGauge'
-
+export { ReadOnlyBanner } from './ReadOnlyBanner'

@@ -1,4 +1,5 @@
 import { Card, cn } from '@axori/ui'
+import { usePropertyPermissions } from '@/hooks/api'
 
 interface SystemSovereigntyProps {
   propertyId: string
@@ -9,6 +10,13 @@ interface SystemSovereigntyProps {
  * Shows: Archive Asset, Purge Fiscal Logs, Self-Destruct options
  */
 export const SystemSovereignty = ({ propertyId }: SystemSovereigntyProps) => {
+  const { canAdmin } = usePropertyPermissions(propertyId)
+
+  // Only show this section to users with admin permission
+  if (!canAdmin) {
+    return null
+  }
+
   const cardClass = cn(
     'p-10 rounded-[3.5rem] border transition-all duration-500',
     'bg-white border-slate-200 shadow-sm',

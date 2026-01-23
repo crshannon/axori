@@ -4,6 +4,8 @@ import { LearningHubButton } from './LearningHubButton'
 import { generateAcquisitionLearning } from '@/data/learning-hub/acquisition-snippets'
 import { useAcquisitionIntel } from '@/hooks/computed/useAcquisitionIntel'
 import { useProperty } from '@/hooks/api/useProperties'
+import { usePropertyPermissions } from '@/hooks/api'
+import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
 
 interface AcquisitionIntelProps {
   propertyId: string
@@ -13,6 +15,7 @@ export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
   const navigate = useNavigate()
   const { data: property, isLoading } = useProperty(propertyId)
   const metrics = useAcquisitionIntel(propertyId)
+  const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   // Generate learning snippets based on acquisition data
   const learningSnippets = metrics.hasAcquisitionData
@@ -51,10 +54,14 @@ export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
       <EmptyStateCard
         title="Acquisition Intel"
         statusMessage="Data Required"
-        description="Initialize acquisition data to track Equity Velocity and Tax Basis."
-        highlightedTerms={['Equity Velocity', 'Tax Basis']}
-        buttonText="Initialize Basis"
-        onButtonClick={handleManageAcquisition}
+        description={
+          canEdit
+            ? 'Initialize acquisition data to track Equity Velocity and Tax Basis.'
+            : 'No acquisition data has been added to this property yet.'
+        }
+        highlightedTerms={canEdit ? ['Equity Velocity', 'Tax Basis'] : []}
+        buttonText={canEdit ? 'Initialize Basis' : undefined}
+        onButtonClick={canEdit ? handleManageAcquisition : undefined}
         variant="violet"
       />
     )
@@ -78,6 +85,7 @@ export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
               subtitle="Strategic insights for property acquisition"
               componentKey="acquisition-intel"
             />
+            {isReadOnly && <ReadOnlyBanner variant="badge" />}
           </div>
         </div>
 
@@ -181,18 +189,20 @@ export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
         )}
       </div>
 
-      {/* Manage Button */}
-      <Button
-        variant="outline"
-        size="lg"
-        className="w-full py-4 mt-8 rounded-2xl bg-slate-900 text-white dark:bg-white/5 dark:border dark:border-white/10 dark:text-white dark:hover:bg-white/10 font-black text-[10px] uppercase tracking-widest transition-all group-hover:bg-violet-600"
-        onClick={(e) => {
-          e.stopPropagation()
-          handleManageAcquisition()
-        }}
-      >
-        Manage Purchase Data
-      </Button>
+      {/* Manage Button - only show for users with edit permission */}
+      {canEdit && (
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full py-4 mt-8 rounded-2xl bg-slate-900 text-white dark:bg-white/5 dark:border dark:border-white/10 dark:text-white dark:hover:bg-white/10 font-black text-[10px] uppercase tracking-widest transition-all group-hover:bg-violet-600"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleManageAcquisition()
+          }}
+        >
+          Manage Purchase Data
+        </Button>
+      )}
     </Card>
   )
 }

@@ -1,5 +1,6 @@
 import { cn } from '@axori/ui'
 import { createFileRoute } from '@tanstack/react-router'
+import { usePropertyPermissions } from '@/hooks/api'
 
 export const Route = createFileRoute('/_authed/property-hub/$propertyId/legal')(
   {
@@ -8,6 +9,9 @@ export const Route = createFileRoute('/_authed/property-hub/$propertyId/legal')(
 )
 
 function RouteComponent() {
+  const { propertyId } = Route.useParams()
+  const { canEdit } = usePropertyPermissions(propertyId)
+
   const cardClass = cn(
     'p-10 rounded-[3.5rem] border transition-all duration-500',
     'bg-white border-slate-200 shadow-sm',
@@ -226,9 +230,11 @@ function RouteComponent() {
               </div>
             ))}
           </div>
-          <button className="w-full mt-8 py-4 rounded-2xl bg-indigo-500 text-white font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-indigo-500/20">
-            Run Compliance Audit
-          </button>
+          {canEdit && (
+            <button className="w-full mt-8 py-4 rounded-2xl bg-indigo-500 text-white font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-indigo-500/20">
+              Run Compliance Audit
+            </button>
+          )}
         </div>
       </div>
     </div>

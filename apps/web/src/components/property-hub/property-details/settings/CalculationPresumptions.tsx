@@ -3,7 +3,8 @@ import { Pencil } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { LearningHubButton } from '../financials/LearningHubButton'
 import { getCalculationPresumptionsSnippets } from '@/data/learning-hub/settings-snippets'
-import { usePropertySettings } from '@/hooks/api'
+import { usePropertySettings, usePropertyPermissions } from '@/hooks/api'
+import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
 
 interface CalculationPresumptionsProps {
   propertyId: string
@@ -18,6 +19,7 @@ export const CalculationPresumptions = ({
 }: CalculationPresumptionsProps) => {
   const navigate = useNavigate()
   const { formData, isLoading } = usePropertySettings(propertyId)
+  const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   const handleOpenDrawer = () => {
     navigate({
@@ -53,14 +55,17 @@ export const CalculationPresumptions = ({
             subtitle="Financial assumptions and reserves"
             componentKey="calculation-presumptions"
           />
-          <IconButton
-            icon={Pencil}
-            size="sm"
-            variant="ghost"
-            shape="rounded"
-            onClick={handleOpenDrawer}
-            aria-label="Edit calculation presumptions"
-          />
+          {isReadOnly && <ReadOnlyBanner variant="badge" />}
+          {canEdit && (
+            <IconButton
+              icon={Pencil}
+              size="sm"
+              variant="ghost"
+              shape="rounded"
+              onClick={handleOpenDrawer}
+              aria-label="Edit calculation presumptions"
+            />
+          )}
         </div>
       </div>
       <div className="space-y-6">

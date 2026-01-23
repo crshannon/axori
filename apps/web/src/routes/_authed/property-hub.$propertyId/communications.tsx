@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Card } from '@axori/ui'
+import { usePropertyPermissions } from '@/hooks/api'
 
 export const Route = createFileRoute(
   '/_authed/property-hub/$propertyId/communications',
@@ -11,6 +12,7 @@ export const Route = createFileRoute(
 function CommunicationsPage() {
   const [copied, setCopied] = useState(false)
   const { propertyId } = Route.useParams()
+  const { canEdit } = usePropertyPermissions(propertyId)
   const prop = {
     emailAddress: `prop-${propertyId}@axori.com`,
   }
@@ -121,11 +123,13 @@ function CommunicationsPage() {
                 Extracted from communications
               </p>
             </div>
-            <button
-              className={`px-6 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest border-slate-200 hover:bg-slate-50 shadow-xs dark:border-white/10 dark:hover:bg-white/5 dark:shadow-none`}
-            >
-              Add Manual Task
-            </button>
+            {canEdit && (
+              <button
+                className={`px-6 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest border-slate-200 hover:bg-slate-50 shadow-xs dark:border-white/10 dark:hover:bg-white/5 dark:shadow-none`}
+              >
+                Add Manual Task
+              </button>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -189,9 +193,11 @@ function CommunicationsPage() {
                     </p>
                   </div>
                 </div>
-                <button className="text-[10px] font-black uppercase tracking-widest opacity-20 hover:opacity-100 transition-opacity">
-                  Edit
-                </button>
+                {canEdit && (
+                  <button className="text-[10px] font-black uppercase tracking-widest opacity-20 hover:opacity-100 transition-opacity">
+                    Edit
+                  </button>
+                )}
               </div>
             ))}
           </div>
