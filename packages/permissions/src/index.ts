@@ -82,6 +82,11 @@ export {
   canEditPortfolio,
   canAddProperties,
   canViewAuditLog,
+  canManageBilling,
+  // High-level permission checks (convenience functions)
+  canView,
+  canEdit,
+  canAdmin,
   // Property permission helpers
   getPropertyPermissions,
   hasPropertyPermission,
