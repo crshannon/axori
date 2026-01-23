@@ -22,7 +22,7 @@ export const BankAccountConnectionDrawer = ({
   const [isConnecting, setIsConnecting] = useState(false)
 
   // TODO: Implement Plaid Link integration
-  const handleConnectPlaid = async () => {
+  const handleConnectPlaid = () => {
     setIsConnecting(true)
     try {
       // TODO: Initialize Plaid Link

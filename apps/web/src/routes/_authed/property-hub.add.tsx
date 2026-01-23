@@ -70,9 +70,9 @@ function AddPropertyPage() {
     navigate({ to: '/property-hub' })
   }
 
-  const handleComplete = (propertyId?: string) => {
-    if (propertyId) {
-      navigate({ to: '/property-hub/$propertyId', params: { propertyId } })
+  const handleComplete = (completedPropertyId?: string) => {
+    if (completedPropertyId) {
+      navigate({ to: '/property-hub/$propertyId', params: { propertyId: completedPropertyId } })
     } else {
       navigate({ to: '/property-hub' })
     }

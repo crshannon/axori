@@ -226,12 +226,12 @@ export const usePropertyFormData = ({
 
   // Fetch Rentcast data after Step 1
   const fetchRentcastData = useCallback(
-    async (propertyId: string) => {
+    async (targetPropertyId: string) => {
       if (!userId) return null
 
       try {
         const rentcastResponse = await queryClient.fetchQuery({
-          queryKey: ['properties', propertyId, 'rentcast'],
+          queryKey: ['properties', targetPropertyId, 'rentcast'],
           queryFn: async () => {
             return apiFetch<{
               data: any

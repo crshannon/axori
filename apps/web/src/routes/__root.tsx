@@ -68,11 +68,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const bodyBgClass = appTheme === 'dark' ? 'bg-[#0F1115]' : 'bg-slate-50'
 
   return (
-    <html lang="en" className={themeClasses} suppressHydrationWarning>
+    <html lang="en" className={themeClasses}>
       <head>
         <HeadContent />
       </head>
-      <body className={bodyBgClass}>
+      {/* suppressHydrationWarning on body is legitimate - browser extensions (e.g., Grammarly)
+          inject attributes into <body> after React hydrates, which we cannot control */}
+      <body className={bodyBgClass} suppressHydrationWarning>
         <ThemeProvider initialTheme={userTheme}>
           <ClerkProvider>
             {children}
