@@ -357,6 +357,9 @@ importers:
       '@axori/db':
         specifier: workspace:*
         version: link:../db
+      '@axori/permissions':
+        specifier: workspace:*
+        version: link:../permissions
       '@react-email/components':
         specifier: ^0.0.15
         version: 0.0.15(react-email@5.1.1)(react@18.2.0)

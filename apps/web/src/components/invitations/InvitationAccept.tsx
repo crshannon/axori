@@ -2,31 +2,17 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { useUser } from '@clerk/tanstack-react-start'
 import { useState } from 'react'
 import { Button } from '@axori/ui'
+import {
+  PORTFOLIO_ROLE_DESCRIPTIONS,
+  PORTFOLIO_ROLE_LABELS
+
+} from '@axori/permissions'
+import type {PortfolioRole} from '@axori/permissions';
 import type { InvitationValidationResult } from '@/hooks/api/useInvitations'
 import {
   useAcceptInvitation,
   useValidateInvitation,
 } from '@/hooks/api/useInvitations'
-
-/**
- * Role display labels
- */
-const ROLE_LABELS: Record<string, string> = {
-  owner: 'Owner',
-  admin: 'Administrator',
-  member: 'Member',
-  viewer: 'Viewer',
-}
-
-/**
- * Role descriptions for user understanding
- */
-const ROLE_DESCRIPTIONS: Record<string, string> = {
-  owner: 'Full control over the portfolio and all properties',
-  admin: 'Can manage properties, members, and settings',
-  member: 'Can view and edit properties',
-  viewer: 'Can only view portfolio data',
-}
 
 interface InvitationAcceptProps {
   token: string | null
@@ -201,7 +187,9 @@ export function InvitationAccept({ token }: InvitationAcceptProps) {
               Your Role
             </p>
             <p className="text-3xl font-black tabular-nums tracking-tighter dark:text-[#059669] text-[#E8FF4D]">
-              {invitation?.role ? ROLE_LABELS[invitation.role] : 'Loading...'}
+              {invitation?.role
+                ? PORTFOLIO_ROLE_LABELS[invitation.role as PortfolioRole]
+                : 'Loading...'}
             </p>
           </div>
         </div>
@@ -258,11 +246,14 @@ export function InvitationAccept({ token }: InvitationAcceptProps) {
                   Your Role
                 </p>
                 <p className="text-lg font-bold dark:text-white text-slate-900">
-                  {invitation?.role ? ROLE_LABELS[invitation.role] : 'Unknown'}
+                  {invitation?.role
+                    ? PORTFOLIO_ROLE_LABELS[invitation.role as PortfolioRole]
+                    : 'Unknown'}
                 </p>
-                {invitation?.role && ROLE_DESCRIPTIONS[invitation.role] && (
+                {invitation?.role &&
+                  PORTFOLIO_ROLE_DESCRIPTIONS[invitation.role as PortfolioRole] && (
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {ROLE_DESCRIPTIONS[invitation.role]}
+                    {PORTFOLIO_ROLE_DESCRIPTIONS[invitation.role as PortfolioRole]}
                   </p>
                 )}
               </div>
