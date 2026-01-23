@@ -20,6 +20,7 @@ import {
 import {
   useDefaultPortfolio,
   useDeleteProperty,
+  usePermissions,
   useProperties,
 } from '@/hooks/api'
 import { PageHeader } from '@/components/layouts/PageHeader'
@@ -138,10 +139,17 @@ function RouteComponent() {
   const { data: portfolio } = useDefaultPortfolio()
   const { data: properties = [] } = useProperties(portfolio?.id || null)
   const deleteProperty = useDeleteProperty()
+  
+  // Get permissions for property-level access filtering
+  const { hasPropertyAccess, isLoading: permissionsLoading } = usePermissions(portfolio?.id || null)
 
-  // Separate active and draft properties
-  const activeProperties = properties.filter((p) => p.status === 'active')
-  const draftProperties = properties.filter((p) => p.status === 'draft')
+  // Filter properties to only show those the user has access to (defense in depth)
+  // The API already filters, but we add client-side filtering for added security
+  const accessibleProperties = properties.filter((p) => hasPropertyAccess(p.id))
+  
+  // Separate active and draft properties from accessible properties
+  const activeProperties = accessibleProperties.filter((p) => p.status === 'active')
+  const draftProperties = accessibleProperties.filter((p) => p.status === 'draft')
 
   // Check if we're on a property detail route by checking if pathname matches pattern
   const isPropertyDetailRoute =
@@ -155,8 +163,8 @@ function RouteComponent() {
     }
   }, [isLoaded, isSignedIn, onboardingLoading, onboardingCompleted, navigate])
 
-  // Show loading while checking onboarding status
-  if (!isLoaded || onboardingLoading) {
+  // Show loading while checking onboarding status or permissions
+  if (!isLoaded || onboardingLoading || permissionsLoading) {
     return <div className="p-8">Loading...</div>
   }
 
