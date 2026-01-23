@@ -1,6 +1,3 @@
-export default function WealthJourneyPage() {
-
-
 import React, { useState } from 'react';
 
 interface WealthJourneyPageProps {
@@ -24,7 +21,7 @@ interface WealthMission {
   icon: string;
   color: string;
   education: string;
-  steps: string[];
+  steps: Array<string>;
 }
 
 const WealthJourneyPage: React.FC<WealthJourneyPageProps> = ({
@@ -42,7 +39,7 @@ const WealthJourneyPage: React.FC<WealthJourneyPageProps> = ({
   const [freedomGoal, setFreedomGoal] = useState(12000);
   const [currentNet, setCurrentNet] = useState(2450);
   const [riskProfile, setRiskProfile] = useState<'Conservative' | 'Moderate' | 'Aggressive'>('Moderate');
-  const [selectedPriorities, setSelectedPriorities] = useState<DriverId[]>(['paydown', 'rent_reset', 'utility_recovery']);
+  const [selectedPriorities, setSelectedPriorities] = useState<Array<DriverId>>(['paydown', 'rent_reset', 'utility_recovery']);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isCalcOpen, setIsCalcOpen] = useState(false);
 
@@ -54,7 +51,7 @@ const WealthJourneyPage: React.FC<WealthJourneyPageProps> = ({
     growth: 2000
   });
 
-  const missions: WealthMission[] = [
+  const missions: Array<WealthMission> = [
     {
       id: 'paydown',
       title: 'High-Rate Mortgage Paydown',

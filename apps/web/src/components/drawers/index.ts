@@ -1,8 +1,12 @@
 export { AddLoanDrawer } from './AddLoanDrawer'
 export { AddTransactionDrawer } from './AddTransactionDrawer'
+export { AssetConfigurationDrawer } from './AssetConfigurationDrawer'
+export { AcquisitionMetadataDrawer } from './AcquisitionMetadataDrawer'
 export { BankAccountConnectionDrawer } from './BankAccountConnectionDrawer'
+export { CalculationPresumptionsDrawer } from './CalculationPresumptionsDrawer'
 export { DrawerSectionTitle } from './DrawerSectionTitle'
 export { LearningHubDrawer } from './LearningHubDrawer'
+export { NotificationSettingsDrawer } from './NotificationSettingsDrawer'
 export { OperatingExpensesDrawer } from './OperatingExpensesDrawer'
 export { PropertyAcquisitionDrawer } from './PropertyAcqusitionDrawer'
 

@@ -48,9 +48,9 @@ export const AddLoanDrawer = ({
   useEffect(() => {
     if (existingLoan && isOpen) {
       setFormData({
-        loanType: existingLoan.loanType || 'conventional',
+        loanType: existingLoan.loanType,
         lenderName: existingLoan.lenderName || '',
-        originalLoanAmount: existingLoan.originalLoanAmount?.toString() || '',
+        originalLoanAmount: existingLoan.originalLoanAmount.toString(),
         interestRate: existingLoan.interestRate
           ? (() => {
               // Convert from decimal (0.065) to percentage (6.5) for display
@@ -60,8 +60,8 @@ export const AddLoanDrawer = ({
               return (decimalRate * 100).toString()
             })()
           : '',
-        termMonths: existingLoan.termMonths?.toString() || '',
-        currentBalance: existingLoan.currentBalance?.toString() || '',
+        termMonths: existingLoan.termMonths.toString(),
+        currentBalance: existingLoan.currentBalance.toString(),
         startDate: existingLoan.startDate || '',
         loanNumber: existingLoan.loanNumber || '',
         servicerName: existingLoan.servicerName || '',

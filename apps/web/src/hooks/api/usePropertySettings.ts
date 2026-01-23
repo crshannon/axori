@@ -1,9 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
+import { propertyTypeValueToDatabaseFormat } from '@axori/shared'
 import { useProperty, useUpdateProperty } from './useProperties'
+import type { PropertyInsert } from '@axori/shared'
 
 /**
  * Property Settings form state interface
- * Matches the Asset Configuration form fields
+ *
+ * NOTE: This is a form-specific interface that combines data from multiple
+ * database tables (properties, propertyCharacteristics, propertyAcquisition,
+ * propertyOperatingExpenses) and includes display formatting. This manual
+ * interface is acceptable because:
+ * 1. It combines data from multiple sources
+ * 2. It includes display formatting (e.g., formatted currency strings)
+ * 3. It includes UI-only fields (e.g., notifications)
+ *
+ * For database types, always use inferred types from @axori/db.
  */
 export interface PropertySettingsFormData {
   // Basic Info
@@ -61,20 +72,12 @@ const DEFAULT_FORM_DATA: PropertySettingsFormData = {
   vacancyRate: '5.0',
   maintenanceRate: '8.0',
   expenseInflation: '3.0',
-  capexSinking: '2500',
+  capexSinking: '5.0',
   notifications: {
     email: true,
     sms: false,
     push: true,
   },
-}
-
-/**
- * Parse numeric string from API (handles null/undefined)
- */
-function parseNumericString(value: string | null | undefined, defaultValue = ''): string {
-  if (value === null || value === undefined) return defaultValue
-  return value
 }
 
 /**
@@ -141,7 +144,7 @@ export function usePropertySettings(propertyId: string | null | undefined) {
 
         // Acquisition Metadata
         purchasePrice: property.acquisition?.purchasePrice
-          ? `$${Number(property.acquisition.purchasePrice).toLocaleString()}`
+          ? `$${Number(property.acquisition.purchasePrice).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
           : '',
         closingDate: property.acquisition?.purchaseDate || '',
         yearBuilt: property.characteristics?.yearBuilt?.toString() || '',
@@ -153,7 +156,7 @@ export function usePropertySettings(propertyId: string | null | undefined) {
         vacancyRate: parseRate(property.operatingExpenses?.vacancyRate, '5.0'),
         maintenanceRate: parseRate(property.operatingExpenses?.maintenanceRate, '8.0'),
         expenseInflation: '3.0', // Not in current schema
-        capexSinking: parseNumericString(property.operatingExpenses?.capexRate, '2500'),
+        capexSinking: parseRate(property.operatingExpenses?.capexRate, '5.0'),
 
         // Notifications (not in current schema, using defaults)
         notifications: {
@@ -216,6 +219,7 @@ export function usePropertySettings(propertyId: string | null | undefined) {
     const updatePayload: Record<string, unknown> = {
       id: propertyId,
       // Core property fields
+      nickname: formData.nickname,
       address: formData.address,
       city: formData.city,
       state: formData.state,
@@ -225,14 +229,8 @@ export function usePropertySettings(propertyId: string | null | undefined) {
     // Characteristics
     const characteristics: Record<string, unknown> = {}
     if (formData.propertyType) {
-      // Convert type back to display format
-      const typeMap: Record<string, string> = {
-        'single-family': 'Single Family',
-        'multi-family': 'Multi-Family',
-        'commercial-retail': 'Commercial - Retail',
-        'industrial-flex': 'Industrial Flex',
-      }
-      characteristics.propertyType = typeMap[formData.propertyType] || formData.propertyType
+      // Convert type to database format using centralized function
+      characteristics.propertyType = propertyTypeValueToDatabaseFormat(formData.propertyType)
     }
     if (formData.yearBuilt) {
       characteristics.yearBuilt = parseInt(formData.yearBuilt, 10)
@@ -262,14 +260,16 @@ export function usePropertySettings(propertyId: string | null | undefined) {
       operatingExpenses.maintenanceRate = formatRateForApi(formData.maintenanceRate)
     }
     if (formData.capexSinking) {
-      operatingExpenses.capexRate = formData.capexSinking
+      operatingExpenses.capexRate = formatRateForApi(formData.capexSinking)
     }
     if (Object.keys(operatingExpenses).length > 0) {
       updatePayload.operatingExpenses = operatingExpenses
     }
 
     // Execute update
-    await updateMutation.mutateAsync(updatePayload as { id: string })
+    // Note: updatePayload is typed as Record<string, unknown> to allow nested objects
+    // The API expects a partial PropertyInsert with nested characteristics, acquisition, etc.
+    await updateMutation.mutateAsync(updatePayload as Partial<PropertyInsert> & { id: string })
 
     // Reset dirty state after successful save
     setInitialFormData(formData)
@@ -286,7 +286,7 @@ export function usePropertySettings(propertyId: string | null | undefined) {
     // Data
     formData,
     property,
-    
+
     // State
     isLoading,
     isSaving,
@@ -294,7 +294,7 @@ export function usePropertySettings(propertyId: string | null | undefined) {
     hasError,
     propertyError,
     saveError,
-    
+
     // Actions
     updateField,
     updateNotification,
