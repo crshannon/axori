@@ -19,6 +19,7 @@ import {
   propertyImprovements,
   costSegregationStudies,
   annualDepreciationRecords,
+  permissionAuditLog,
 } from './schema'
 
 // Re-export property access types for external use
@@ -304,3 +305,18 @@ export type AnnualDepreciationRecord = InferSelectModel<typeof annualDepreciatio
  */
 export type AnnualDepreciationRecordInsert = InferInsertModel<typeof annualDepreciationRecords>
 
+// ============================================================================
+// Permission Audit Log (Security & Compliance)
+// ============================================================================
+
+/**
+ * Permission Audit Log type inferred from Drizzle schema (for read operations)
+ * Used to track all permission changes for security and compliance auditing
+ */
+export type PermissionAuditLog = InferSelectModel<typeof permissionAuditLog>
+
+/**
+ * Permission Audit Log insert type inferred from Drizzle schema (for insert operations)
+ * Used when recording new permission change events
+ */
+export type PermissionAuditLogInsert = InferInsertModel<typeof permissionAuditLog>

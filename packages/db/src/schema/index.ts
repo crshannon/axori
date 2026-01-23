@@ -873,6 +873,14 @@ export const relationshipTypeEnum = pgEnum("relationship_type", [
   "target_market",
 ]);
 
+// Permission audit action enum - tracks permission changes for security compliance
+export const permissionAuditActionEnum = pgEnum("permission_audit_action", [
+  "role_change", // User's role in portfolio was changed
+  "invitation_sent", // User was invited to portfolio
+  "invitation_accepted", // User accepted portfolio invitation
+  "access_revoked", // User's access was removed from portfolio
+]);
+
 export const userMarkets = pgTable("user_markets", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id")
@@ -884,6 +892,47 @@ export const userMarkets = pgTable("user_markets", {
   relationshipType: relationshipTypeEnum("relationship_type").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Permission Audit Log - Tracks all permission changes for security and compliance
+export const permissionAuditLog = pgTable("permission_audit_log", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  
+  // The user whose permissions were changed
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "set null" }), // Set null to preserve audit trail even if user is deleted
+  
+  // The portfolio where the permission change occurred
+  portfolioId: uuid("portfolio_id")
+    .references(() => portfolios.id, { onDelete: "set null" }) // Set null to preserve audit trail even if portfolio is deleted
+    .notNull(),
+  
+  // The type of permission action
+  action: permissionAuditActionEnum("action").notNull(),
+  
+  // Previous value (JSON string for flexibility - e.g., role name, property access config)
+  oldValue: text("old_value"),
+  
+  // New value (JSON string for flexibility - e.g., role name, property access config)
+  newValue: text("new_value"),
+  
+  // The user who made the change (null if system-initiated)
+  changedBy: uuid("changed_by")
+    .references(() => users.id, { onDelete: "set null" }),
+  
+  // When the change occurred
+  changedAt: timestamp("changed_at").defaultNow().notNull(),
+}, (table) => ({
+  // Index for looking up audit logs by user
+  userIdIdx: index("idx_permission_audit_log_user_id").on(table.userId),
+  // Index for looking up audit logs by portfolio
+  portfolioIdIdx: index("idx_permission_audit_log_portfolio_id").on(table.portfolioId),
+  // Index for looking up audit logs by action type
+  actionIdx: index("idx_permission_audit_log_action").on(table.action),
+  // Index for looking up audit logs by who made the change
+  changedByIdx: index("idx_permission_audit_log_changed_by").on(table.changedBy),
+  // Index for time-based queries
+  changedAtIdx: index("idx_permission_audit_log_changed_at").on(table.changedAt),
+}));
 
 // Relations
 export const marketsRelations = relations(markets, ({ many }) => ({
@@ -906,6 +955,14 @@ export const usersRelations = relations(users, ({ many }) => ({
   reviewedTransactions: many(propertyTransactions, {
     relationName: "transactionReviewer",
   }),
+  // Permission audit logs where this user's permissions were changed
+  permissionAuditLogs: many(permissionAuditLog, {
+    relationName: "permissionAuditLogUser",
+  }),
+  // Permission audit logs where this user made the change
+  permissionAuditLogsChangedBy: many(permissionAuditLog, {
+    relationName: "permissionAuditLogChangedBy",
+  }),
 }));
 
 export const portfoliosRelations = relations(portfolios, ({ one, many }) => ({
@@ -916,6 +973,8 @@ export const portfoliosRelations = relations(portfolios, ({ one, many }) => ({
   }),
   userPortfolios: many(userPortfolios),
   properties: many(properties),
+  // Permission audit logs for this portfolio
+  permissionAuditLogs: many(permissionAuditLog),
 }));
 
 export const userPortfoliosRelations = relations(userPortfolios, ({ one }) => ({
@@ -1123,5 +1182,23 @@ export const userMarketsRelations = relations(userMarkets, ({ one }) => ({
   }),
 }));
 
-
-
+// Permission Audit Log Relations
+export const permissionAuditLogRelations = relations(permissionAuditLog, ({ one }) => ({
+  // The user whose permissions were changed
+  user: one(users, {
+    fields: [permissionAuditLog.userId],
+    references: [users.id],
+    relationName: "permissionAuditLogUser",
+  }),
+  // The portfolio where the permission change occurred
+  portfolio: one(portfolios, {
+    fields: [permissionAuditLog.portfolioId],
+    references: [portfolios.id],
+  }),
+  // The user who made the change
+  changedByUser: one(users, {
+    fields: [permissionAuditLog.changedBy],
+    references: [users.id],
+    relationName: "permissionAuditLogChangedBy",
+  }),
+}));
