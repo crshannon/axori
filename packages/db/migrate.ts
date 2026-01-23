@@ -94,6 +94,22 @@ async function verifyDatabaseState(sql: postgres.Sql): Promise<boolean> {
       `,
       expected: true,
     },
+    {
+      name: "portfolio creators have user_portfolios entries",
+      query: async () =>
+        await sql`
+        SELECT COUNT(*) as missing_entries
+        FROM portfolios p
+        WHERE p.created_by IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1
+          FROM user_portfolios up
+          WHERE up.user_id = p.created_by
+          AND up.portfolio_id = p.id
+        )
+      `,
+      expected: false, // Expected count should be 0 (no missing entries)
+    },
     // Add more verification checks here for future migrations
   ];
 
@@ -103,13 +119,27 @@ async function verifyDatabaseState(sql: postgres.Sql): Promise<boolean> {
   for (const check of checks) {
     try {
       const result = await check.query();
-      const exists = (result[0] as { exists: boolean })?.exists === check.expected;
+      
+      // Handle different result types
+      let passed = false;
+      if (check.name.includes("missing_entries") || check.name.includes("count")) {
+        // For count queries, check if count is 0 when expected is false
+        // PostgreSQL returns bigint as string, so handle both string and number
+        const rawValue = (result[0] as { missing_entries?: number | string; count?: number | string })?.missing_entries ?? 
+                        (result[0] as { missing_entries?: number | string; count?: number | string })?.count ?? 0;
+        const count = typeof rawValue === 'string' ? parseInt(rawValue, 10) : Number(rawValue);
+        passed = check.expected === false ? count === 0 : count > 0;
+      } else {
+        // For EXISTS queries
+        const exists = (result[0] as { exists: boolean })?.exists === check.expected;
+        passed = exists;
+      }
 
-      if (exists) {
+      if (passed) {
         console.log(`  ✅ ${check.name}`);
       } else {
         console.log(
-          `  ❌ ${check.name} - Expected: ${check.expected}, Got: ${(result[0] as { exists: boolean })?.exists}`
+          `  ❌ ${check.name} - Expected: ${check.expected}, Got: ${JSON.stringify(result[0])}`
         );
         allPassed = false;
       }
