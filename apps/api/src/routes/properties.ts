@@ -10,6 +10,10 @@ import {
   propertyManagement,
   loans,
   propertyTransactions,
+  propertyDepreciation,
+  propertyImprovements,
+  costSegregationStudies,
+  annualDepreciationRecords,
   users,
   userPortfolios,
   eq,
@@ -1822,5 +1826,710 @@ propertiesRouter.delete("/:id/transactions/:transactionId", async (c) => {
 
   return c.json({ message: "Transaction deleted successfully" });
 });
+
+// ============================================================================
+// Property Depreciation Routes
+// ============================================================================
+
+// GET /api/properties/:id/depreciation - Get depreciation data for property
+propertiesRouter.get(
+  "/:id/depreciation",
+  withErrorHandling(async (c) => {
+    const { id } = c.req.param();
+
+    // Security: Get user from auth header
+    const authHeader = c.req.header("Authorization");
+    const clerkId = authHeader?.replace("Bearer ", "");
+
+    if (!clerkId) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    // Lookup user by clerkId
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, clerkId))
+      .limit(1);
+
+    if (!user) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    // Security: Verify user has access to property via portfolio membership
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.id, id))
+      .limit(1);
+
+    if (!property) {
+      return c.json({ error: "Property not found" }, 404);
+    }
+
+    // Check if user has access to the property's portfolio
+    const [userPortfolioAccess] = await db
+      .select()
+      .from(userPortfolios)
+      .where(
+        and(
+          eq(userPortfolios.userId, user.id),
+          eq(userPortfolios.portfolioId, property.portfolioId)
+        )
+      )
+      .limit(1);
+
+    if (!userPortfolioAccess) {
+      return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
+    }
+
+    // Get depreciation data
+    const [depreciation] = await db
+      .select()
+      .from(propertyDepreciation)
+      .where(eq(propertyDepreciation.propertyId, id))
+      .limit(1);
+
+    // Get improvements
+    const improvements = await db
+      .select()
+      .from(propertyImprovements)
+      .where(eq(propertyImprovements.propertyId, id))
+      .orderBy(desc(propertyImprovements.completedDate));
+
+    // Get cost segregation studies
+    const costSegStudies = await db
+      .select()
+      .from(costSegregationStudies)
+      .where(eq(costSegregationStudies.propertyId, id))
+      .orderBy(desc(costSegregationStudies.studyDate));
+
+    // Get annual depreciation records
+    const depreciationRecords = await db
+      .select()
+      .from(annualDepreciationRecords)
+      .where(eq(annualDepreciationRecords.propertyId, id))
+      .orderBy(desc(annualDepreciationRecords.taxYear));
+
+    return c.json({
+      depreciation: depreciation || null,
+      improvements,
+      costSegStudies,
+      depreciationRecords,
+    });
+  }, { operation: "getDepreciation" })
+);
+
+// PUT /api/properties/:id/depreciation - Update/create depreciation settings
+propertiesRouter.put(
+  "/:id/depreciation",
+  withErrorHandling(async (c) => {
+  const { id } = c.req.param();
+
+  // Security: Get user from auth header
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Lookup user by clerkId
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Security: Verify user has access to property via portfolio membership
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(eq(properties.id, id))
+    .limit(1);
+
+  if (!property) {
+    return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Check if user has access to the property's portfolio
+  const [userPortfolioAccess] = await db
+    .select()
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, user.id),
+        eq(userPortfolios.portfolioId, property.portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!userPortfolioAccess) {
+    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
+  }
+
+  const body = await c.req.json();
+
+  // Prepare data for database
+  const depreciationData: Record<string, unknown> = {
+    propertyId: id,
+    updatedAt: new Date(),
+  };
+
+  // Map fields from request body
+  if (body.depreciationType !== undefined) {
+    depreciationData.depreciationType = body.depreciationType;
+  }
+  if (body.placedInServiceDate !== undefined) {
+    depreciationData.placedInServiceDate = body.placedInServiceDate;
+  }
+  if (body.purchasePrice !== undefined) {
+    depreciationData.purchasePrice = String(body.purchasePrice);
+  }
+  if (body.closingCosts !== undefined) {
+    depreciationData.closingCosts = String(body.closingCosts);
+  }
+  if (body.initialImprovements !== undefined) {
+    depreciationData.initialImprovements = String(body.initialImprovements);
+  }
+  if (body.landValue !== undefined) {
+    depreciationData.landValue = String(body.landValue);
+  }
+  if (body.landValueSource !== undefined) {
+    depreciationData.landValueSource = body.landValueSource;
+  }
+  if (body.landValueRatio !== undefined) {
+    depreciationData.landValueRatio = String(body.landValueRatio);
+  }
+  if (body.marginalTaxRate !== undefined) {
+    depreciationData.marginalTaxRate = String(body.marginalTaxRate);
+  }
+  if (body.accumulatedDepreciation !== undefined) {
+    depreciationData.accumulatedDepreciation = String(body.accumulatedDepreciation);
+  }
+  if (body.lastDepreciationYear !== undefined) {
+    depreciationData.lastDepreciationYear = body.lastDepreciationYear;
+  }
+  if (body.notes !== undefined) {
+    depreciationData.notes = body.notes;
+  }
+
+  // Check if record exists
+  const [existing] = await db
+    .select()
+    .from(propertyDepreciation)
+    .where(eq(propertyDepreciation.propertyId, id))
+    .limit(1);
+
+  let depreciation;
+  if (existing) {
+    [depreciation] = await db
+      .update(propertyDepreciation)
+      .set(depreciationData)
+      .where(eq(propertyDepreciation.propertyId, id))
+      .returning();
+  } else {
+    [depreciation] = await db
+      .insert(propertyDepreciation)
+      .values(depreciationData as typeof propertyDepreciation.$inferInsert)
+      .returning();
+  }
+
+  return c.json({ depreciation });
+  }, { operation: "updateDepreciation" })
+);
+
+// POST /api/properties/:id/improvements - Add a capital improvement
+propertiesRouter.post(
+  "/:id/improvements",
+  withErrorHandling(async (c) => {
+  const { id } = c.req.param();
+
+  // Security: Get user from auth header
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Lookup user by clerkId
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Security: Verify user has access to property via portfolio membership
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(eq(properties.id, id))
+    .limit(1);
+
+  if (!property) {
+    return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Check if user has access to the property's portfolio
+  const [userPortfolioAccess] = await db
+    .select()
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, user.id),
+        eq(userPortfolios.portfolioId, property.portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!userPortfolioAccess) {
+    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
+  }
+
+  const body = await c.req.json();
+
+  // Validate required fields
+  if (!body.description || !body.amount || !body.completedDate) {
+    return c.json(
+      { error: "Missing required fields: description, amount, and completedDate are required" },
+      400
+    );
+  }
+
+  // Prepare data for database
+  const improvementData: Record<string, unknown> = {
+    propertyId: id,
+    description: body.description,
+    amount: String(body.amount),
+    completedDate: body.completedDate,
+  };
+
+  if (body.placedInServiceDate !== undefined) {
+    improvementData.placedInServiceDate = body.placedInServiceDate;
+  }
+  if (body.depreciationClass !== undefined) {
+    improvementData.depreciationClass = body.depreciationClass;
+  }
+  if (body.accumulatedDepreciation !== undefined) {
+    improvementData.accumulatedDepreciation = String(body.accumulatedDepreciation);
+  }
+  if (body.documentId !== undefined) {
+    improvementData.documentId = body.documentId;
+  }
+  if (body.notes !== undefined) {
+    improvementData.notes = body.notes;
+  }
+
+  const [improvement] = await db
+    .insert(propertyImprovements)
+    .values(improvementData as typeof propertyImprovements.$inferInsert)
+    .returning();
+
+  return c.json({ improvement }, 201);
+  }, { operation: "addImprovement" })
+);
+
+// GET /api/properties/:id/improvements - Get all improvements
+propertiesRouter.get(
+  "/:id/improvements",
+  withErrorHandling(async (c) => {
+  const { id } = c.req.param();
+
+  // Security: Get user from auth header
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Lookup user by clerkId
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Security: Verify user has access to property via portfolio membership
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(eq(properties.id, id))
+    .limit(1);
+
+  if (!property) {
+    return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Check if user has access to the property's portfolio
+  const [userPortfolioAccess] = await db
+    .select()
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, user.id),
+        eq(userPortfolios.portfolioId, property.portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!userPortfolioAccess) {
+    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
+  }
+
+  const improvements = await db
+    .select()
+    .from(propertyImprovements)
+    .where(eq(propertyImprovements.propertyId, id))
+    .orderBy(desc(propertyImprovements.completedDate));
+
+  return c.json({ improvements });
+  }, { operation: "getImprovements" })
+);
+
+// POST /api/properties/:id/cost-segregation - Add cost segregation study
+propertiesRouter.post(
+  "/:id/cost-segregation",
+  withErrorHandling(async (c) => {
+  const { id } = c.req.param();
+
+  // Security: Get user from auth header
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Lookup user by clerkId
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Security: Verify user has access to property via portfolio membership
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(eq(properties.id, id))
+    .limit(1);
+
+  if (!property) {
+    return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Check if user has access to the property's portfolio
+  const [userPortfolioAccess] = await db
+    .select()
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, user.id),
+        eq(userPortfolios.portfolioId, property.portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!userPortfolioAccess) {
+    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
+  }
+
+  const body = await c.req.json();
+
+  // Validate required fields
+  if (!body.studyDate || !body.originalBasis || !body.amountRemaining) {
+    return c.json(
+      { error: "Missing required fields: studyDate, originalBasis, and amountRemaining are required" },
+      400
+    );
+  }
+
+  // Prepare data for database
+  const costSegData: Record<string, unknown> = {
+    propertyId: id,
+    studyDate: body.studyDate,
+    originalBasis: String(body.originalBasis),
+    amountRemaining: String(body.amountRemaining),
+  };
+
+  if (body.studyProvider !== undefined) {
+    costSegData.studyProvider = body.studyProvider;
+  }
+  if (body.studyCost !== undefined) {
+    costSegData.studyCost = String(body.studyCost);
+  }
+  if (body.amount5Year !== undefined) {
+    costSegData.amount5Year = String(body.amount5Year);
+  }
+  if (body.amount7Year !== undefined) {
+    costSegData.amount7Year = String(body.amount7Year);
+  }
+  if (body.amount15Year !== undefined) {
+    costSegData.amount15Year = String(body.amount15Year);
+  }
+  if (body.bonusDepreciationPercent !== undefined) {
+    costSegData.bonusDepreciationPercent = String(body.bonusDepreciationPercent);
+  }
+  if (body.bonusDepreciationAmount !== undefined) {
+    costSegData.bonusDepreciationAmount = String(body.bonusDepreciationAmount);
+  }
+  if (body.taxYearApplied !== undefined) {
+    costSegData.taxYearApplied = body.taxYearApplied;
+  }
+  if (body.documentId !== undefined) {
+    costSegData.documentId = body.documentId;
+  }
+  if (body.notes !== undefined) {
+    costSegData.notes = body.notes;
+  }
+
+  const [costSeg] = await db
+    .insert(costSegregationStudies)
+    .values(costSegData as typeof costSegregationStudies.$inferInsert)
+    .returning();
+
+  return c.json({ costSegStudy: costSeg }, 201);
+  }, { operation: "addCostSegStudy" })
+);
+
+// GET /api/properties/:id/cost-segregation - Get cost segregation studies
+propertiesRouter.get(
+  "/:id/cost-segregation",
+  withErrorHandling(async (c) => {
+  const { id } = c.req.param();
+
+  // Security: Get user from auth header
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Lookup user by clerkId
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Security: Verify user has access to property via portfolio membership
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(eq(properties.id, id))
+    .limit(1);
+
+  if (!property) {
+    return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Check if user has access to the property's portfolio
+  const [userPortfolioAccess] = await db
+    .select()
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, user.id),
+        eq(userPortfolios.portfolioId, property.portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!userPortfolioAccess) {
+    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
+  }
+
+  const costSegStudies = await db
+    .select()
+    .from(costSegregationStudies)
+    .where(eq(costSegregationStudies.propertyId, id))
+    .orderBy(desc(costSegregationStudies.studyDate));
+
+  return c.json({ costSegStudies });
+  }, { operation: "getCostSegStudies" })
+);
+
+// POST /api/properties/:id/depreciation-records - Add annual depreciation record
+propertiesRouter.post(
+  "/:id/depreciation-records",
+  withErrorHandling(async (c) => {
+  const { id } = c.req.param();
+
+  // Security: Get user from auth header
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Lookup user by clerkId
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Security: Verify user has access to property via portfolio membership
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(eq(properties.id, id))
+    .limit(1);
+
+  if (!property) {
+    return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Check if user has access to the property's portfolio
+  const [userPortfolioAccess] = await db
+    .select()
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, user.id),
+        eq(userPortfolios.portfolioId, property.portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!userPortfolioAccess) {
+    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
+  }
+
+  const body = await c.req.json();
+
+  // Validate required fields
+  if (!body.taxYear || !body.regularDepreciation || !body.totalDepreciation) {
+    return c.json(
+      { error: "Missing required fields: taxYear, regularDepreciation, and totalDepreciation are required" },
+      400
+    );
+  }
+
+  // Prepare data for database
+  const recordData: Record<string, unknown> = {
+    propertyId: id,
+    taxYear: body.taxYear,
+    regularDepreciation: String(body.regularDepreciation),
+    totalDepreciation: String(body.totalDepreciation),
+  };
+
+  if (body.bonusDepreciation !== undefined) {
+    recordData.bonusDepreciation = String(body.bonusDepreciation);
+  }
+  if (body.improvementDepreciation !== undefined) {
+    recordData.improvementDepreciation = String(body.improvementDepreciation);
+  }
+  if (body.monthsDepreciated !== undefined) {
+    recordData.monthsDepreciated = body.monthsDepreciated;
+  }
+  if (body.verifiedByCpa !== undefined) {
+    recordData.verifiedByCpa = body.verifiedByCpa;
+  }
+  if (body.verifiedDate !== undefined) {
+    recordData.verifiedDate = body.verifiedDate;
+  }
+  if (body.notes !== undefined) {
+    recordData.notes = body.notes;
+  }
+
+  const [record] = await db
+    .insert(annualDepreciationRecords)
+    .values(recordData as typeof annualDepreciationRecords.$inferInsert)
+    .returning();
+
+  return c.json({ depreciationRecord: record }, 201);
+  }, { operation: "addDepreciationRecord" })
+);
+
+// GET /api/properties/:id/depreciation-records - Get annual depreciation records
+propertiesRouter.get(
+  "/:id/depreciation-records",
+  withErrorHandling(async (c) => {
+  const { id } = c.req.param();
+
+  // Security: Get user from auth header
+  const authHeader = c.req.header("Authorization");
+  const clerkId = authHeader?.replace("Bearer ", "");
+
+  if (!clerkId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Lookup user by clerkId
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  // Security: Verify user has access to property via portfolio membership
+  const [property] = await db
+    .select()
+    .from(properties)
+    .where(eq(properties.id, id))
+    .limit(1);
+
+  if (!property) {
+    return c.json({ error: "Property not found" }, 404);
+  }
+
+  // Check if user has access to the property's portfolio
+  const [userPortfolioAccess] = await db
+    .select()
+    .from(userPortfolios)
+    .where(
+      and(
+        eq(userPortfolios.userId, user.id),
+        eq(userPortfolios.portfolioId, property.portfolioId)
+      )
+    )
+    .limit(1);
+
+  if (!userPortfolioAccess) {
+    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
+  }
+
+  const depreciationRecords = await db
+    .select()
+    .from(annualDepreciationRecords)
+    .where(eq(annualDepreciationRecords.propertyId, id))
+    .orderBy(desc(annualDepreciationRecords.taxYear));
+
+  return c.json({ depreciationRecords });
+  }, { operation: "getDepreciationRecords" })
+);
 
 export default propertiesRouter;
