@@ -124,6 +124,42 @@ export function canViewAuditLog(role: PortfolioRole): boolean {
   return canPerformPortfolioAction(role, "view_audit_log");
 }
 
+/**
+ * Check if a user can manage billing for the portfolio.
+ * Only owners can manage billing settings.
+ */
+export function canManageBilling(role: PortfolioRole): boolean {
+  return canPerformPortfolioAction(role, "manage_billing");
+}
+
+// ============================================================================
+// High-Level Permission Checks (Convenience Functions)
+// ============================================================================
+
+/**
+ * Check if a user has viewing permission based on their role.
+ * All roles can view (viewer is the minimum role).
+ */
+export function canView(role: PortfolioRole): boolean {
+  return isRoleAtLeast(role, "viewer");
+}
+
+/**
+ * Check if a user has editing permission based on their role.
+ * Members and above can edit.
+ */
+export function canEdit(role: PortfolioRole): boolean {
+  return isRoleAtLeast(role, "member");
+}
+
+/**
+ * Check if a user has admin-level permission based on their role.
+ * Admins and owners have admin permissions.
+ */
+export function canAdmin(role: PortfolioRole): boolean {
+  return isRoleAtLeast(role, "admin");
+}
+
 // ============================================================================
 // Property Permission Helpers
 // ============================================================================
@@ -275,6 +311,12 @@ export interface PermissionCheckResult {
   canChangeRoles: boolean;
   canAddProperties: boolean;
   canViewAuditLog: boolean;
+  canManageBilling: boolean;
+
+  // High-level role-based permissions
+  canView: boolean;
+  canEdit: boolean;
+  canAdmin: boolean;
 
   // Role hierarchy
   assignableRoles: PortfolioRole[];
@@ -301,6 +343,12 @@ export function buildPermissionCheckResult(context: PermissionContext): Permissi
     canChangeRoles: canPerformPortfolioAction(role, "change_member_roles"),
     canAddProperties: canPerformPortfolioAction(role, "add_properties"),
     canViewAuditLog: canPerformPortfolioAction(role, "view_audit_log"),
+    canManageBilling: canPerformPortfolioAction(role, "manage_billing"),
+
+    // High-level role-based permissions
+    canView: canView(role),
+    canEdit: canEdit(role),
+    canAdmin: canAdmin(role),
 
     // Role hierarchy
     assignableRoles: getAssignableRoles(role),

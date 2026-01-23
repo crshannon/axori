@@ -130,7 +130,8 @@ export type PortfolioAction =
   | "remove_members"
   | "change_member_roles"
   | "add_properties"
-  | "view_audit_log";
+  | "view_audit_log"
+  | "manage_billing";
 
 /**
  * Portfolio actions allowed for each role.
@@ -145,6 +146,7 @@ export const PORTFOLIO_ROLE_ACTIONS: Record<PortfolioRole, PortfolioAction[]> = 
     "change_member_roles",
     "add_properties",
     "view_audit_log",
+    "manage_billing",
   ],
   admin: [
     "view_portfolio",
@@ -176,6 +178,7 @@ export const PORTFOLIO_ACTION_LABELS: Record<PortfolioAction, string> = {
   change_member_roles: "Change Member Roles",
   add_properties: "Add Properties",
   view_audit_log: "View Audit Log",
+  manage_billing: "Manage Billing",
 } as const;
 
 // ============================================================================
