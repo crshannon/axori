@@ -10,23 +10,58 @@
  *
  * Prerequisites:
  * - Linear API key set in LINEAR_API_KEY environment variable
+ *   OR in .env.local file at workspace root
  *
  * Usage:
  *   # Get sub-issues
- *   tsx .cursor/scripts/linear-utils.ts get-sub-issues AXO-118
+ *   pnpm exec tsx .cursor/scripts/linear-utils.ts get-sub-issues AXO-118
  *
  *   # List workflow states
- *   tsx .cursor/scripts/linear-utils.ts list-states
+ *   pnpm exec tsx .cursor/scripts/linear-utils.ts list-states
  *
  *   # Update issue status
- *   tsx .cursor/scripts/linear-utils.ts update-status AXO-118 "In Progress"
+ *   pnpm exec tsx .cursor/scripts/linear-utils.ts update-status AXO-118 "In Progress"
  *
  *   # Start work on parent + all sub-issues
- *   tsx .cursor/scripts/linear-utils.ts start-work AXO-118
+ *   pnpm exec tsx .cursor/scripts/linear-utils.ts start-work AXO-118
  *
  *   # Complete parent + all sub-issues
- *   tsx .cursor/scripts/linear-utils.ts complete AXO-118
+ *   pnpm exec tsx .cursor/scripts/linear-utils.ts complete AXO-118
  */
+
+import * as fs from "fs";
+import * as path from "path";
+
+// Load environment variables from .env.local if present
+function loadEnvFile() {
+  const envPaths = [
+    path.resolve(process.cwd(), ".env.local"),
+    path.resolve(process.cwd(), ".env"),
+    path.resolve(__dirname, "../../.env.local"),
+    path.resolve(__dirname, "../../.env"),
+  ];
+
+  for (const envPath of envPaths) {
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, "utf-8");
+      const lines = content.split("\n");
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith("#")) {
+          const [key, ...valueParts] = trimmed.split("=");
+          const value = valueParts.join("=").replace(/^["']|["']$/g, "");
+          if (key && value && !process.env[key]) {
+            process.env[key] = value;
+          }
+        }
+      }
+      break;
+    }
+  }
+}
+
+// Load env file before anything else
+loadEnvFile();
 
 import { resolve } from "path";
 import { existsSync, readFileSync } from "fs";
