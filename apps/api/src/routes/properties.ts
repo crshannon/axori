@@ -1832,93 +1832,98 @@ propertiesRouter.delete("/:id/transactions/:transactionId", async (c) => {
 // ============================================================================
 
 // GET /api/properties/:id/depreciation - Get depreciation data for property
-propertiesRouter.get("/:id/depreciation", async (c) => {
-  const { id } = c.req.param();
+propertiesRouter.get(
+  "/:id/depreciation",
+  withErrorHandling(async (c) => {
+    const { id } = c.req.param();
 
-  // Security: Get user from auth header
-  const authHeader = c.req.header("Authorization");
-  const clerkId = authHeader?.replace("Bearer ", "");
+    // Security: Get user from auth header
+    const authHeader = c.req.header("Authorization");
+    const clerkId = authHeader?.replace("Bearer ", "");
 
-  if (!clerkId) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
+    if (!clerkId) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
 
-  // Lookup user by clerkId
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.clerkId, clerkId))
-    .limit(1);
+    // Lookup user by clerkId
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, clerkId))
+      .limit(1);
 
-  if (!user) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
+    if (!user) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
 
-  // Security: Verify user has access to property via portfolio membership
-  const [property] = await db
-    .select()
-    .from(properties)
-    .where(eq(properties.id, id))
-    .limit(1);
+    // Security: Verify user has access to property via portfolio membership
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.id, id))
+      .limit(1);
 
-  if (!property) {
-    return c.json({ error: "Property not found" }, 404);
-  }
+    if (!property) {
+      return c.json({ error: "Property not found" }, 404);
+    }
 
-  // Check if user has access to the property's portfolio
-  const [userPortfolioAccess] = await db
-    .select()
-    .from(userPortfolios)
-    .where(
-      and(
-        eq(userPortfolios.userId, user.id),
-        eq(userPortfolios.portfolioId, property.portfolioId)
+    // Check if user has access to the property's portfolio
+    const [userPortfolioAccess] = await db
+      .select()
+      .from(userPortfolios)
+      .where(
+        and(
+          eq(userPortfolios.userId, user.id),
+          eq(userPortfolios.portfolioId, property.portfolioId)
+        )
       )
-    )
-    .limit(1);
+      .limit(1);
 
-  if (!userPortfolioAccess) {
-    return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
-  }
+    if (!userPortfolioAccess) {
+      return c.json({ error: "Unauthorized: You don't have access to this property" }, 403);
+    }
 
-  // Get depreciation data
-  const [depreciation] = await db
-    .select()
-    .from(propertyDepreciation)
-    .where(eq(propertyDepreciation.propertyId, id))
-    .limit(1);
+    // Get depreciation data
+    const [depreciation] = await db
+      .select()
+      .from(propertyDepreciation)
+      .where(eq(propertyDepreciation.propertyId, id))
+      .limit(1);
 
-  // Get improvements
-  const improvements = await db
-    .select()
-    .from(propertyImprovements)
-    .where(eq(propertyImprovements.propertyId, id))
-    .orderBy(desc(propertyImprovements.completedDate));
+    // Get improvements
+    const improvements = await db
+      .select()
+      .from(propertyImprovements)
+      .where(eq(propertyImprovements.propertyId, id))
+      .orderBy(desc(propertyImprovements.completedDate));
 
-  // Get cost segregation studies
-  const costSegStudies = await db
-    .select()
-    .from(costSegregationStudies)
-    .where(eq(costSegregationStudies.propertyId, id))
-    .orderBy(desc(costSegregationStudies.studyDate));
+    // Get cost segregation studies
+    const costSegStudies = await db
+      .select()
+      .from(costSegregationStudies)
+      .where(eq(costSegregationStudies.propertyId, id))
+      .orderBy(desc(costSegregationStudies.studyDate));
 
-  // Get annual depreciation records
-  const depreciationRecords = await db
-    .select()
-    .from(annualDepreciationRecords)
-    .where(eq(annualDepreciationRecords.propertyId, id))
-    .orderBy(desc(annualDepreciationRecords.taxYear));
+    // Get annual depreciation records
+    const depreciationRecords = await db
+      .select()
+      .from(annualDepreciationRecords)
+      .where(eq(annualDepreciationRecords.propertyId, id))
+      .orderBy(desc(annualDepreciationRecords.taxYear));
 
-  return c.json({
-    depreciation: depreciation || null,
-    improvements,
-    costSegStudies,
-    depreciationRecords,
-  });
-});
+    return c.json({
+      depreciation: depreciation || null,
+      improvements,
+      costSegStudies,
+      depreciationRecords,
+    });
+  }, { operation: "getDepreciation" })
+);
 
 // PUT /api/properties/:id/depreciation - Update/create depreciation settings
-propertiesRouter.put("/:id/depreciation", async (c) => {
+propertiesRouter.put(
+  "/:id/depreciation",
+  withErrorHandling(async (c) => {
   const { id } = c.req.param();
 
   // Security: Get user from auth header
@@ -2035,10 +2040,13 @@ propertiesRouter.put("/:id/depreciation", async (c) => {
   }
 
   return c.json({ depreciation });
-});
+  }, { operation: "updateDepreciation" })
+);
 
 // POST /api/properties/:id/improvements - Add a capital improvement
-propertiesRouter.post("/:id/improvements", async (c) => {
+propertiesRouter.post(
+  "/:id/improvements",
+  withErrorHandling(async (c) => {
   const { id } = c.req.param();
 
   // Security: Get user from auth header
@@ -2127,10 +2135,13 @@ propertiesRouter.post("/:id/improvements", async (c) => {
     .returning();
 
   return c.json({ improvement }, 201);
-});
+  }, { operation: "addImprovement" })
+);
 
 // GET /api/properties/:id/improvements - Get all improvements
-propertiesRouter.get("/:id/improvements", async (c) => {
+propertiesRouter.get(
+  "/:id/improvements",
+  withErrorHandling(async (c) => {
   const { id } = c.req.param();
 
   // Security: Get user from auth header
@@ -2186,10 +2197,13 @@ propertiesRouter.get("/:id/improvements", async (c) => {
     .orderBy(desc(propertyImprovements.completedDate));
 
   return c.json({ improvements });
-});
+  }, { operation: "getImprovements" })
+);
 
 // POST /api/properties/:id/cost-segregation - Add cost segregation study
-propertiesRouter.post("/:id/cost-segregation", async (c) => {
+propertiesRouter.post(
+  "/:id/cost-segregation",
+  withErrorHandling(async (c) => {
   const { id } = c.req.param();
 
   // Security: Get user from auth header
@@ -2293,10 +2307,13 @@ propertiesRouter.post("/:id/cost-segregation", async (c) => {
     .returning();
 
   return c.json({ costSegStudy: costSeg }, 201);
-});
+  }, { operation: "addCostSegStudy" })
+);
 
 // GET /api/properties/:id/cost-segregation - Get cost segregation studies
-propertiesRouter.get("/:id/cost-segregation", async (c) => {
+propertiesRouter.get(
+  "/:id/cost-segregation",
+  withErrorHandling(async (c) => {
   const { id } = c.req.param();
 
   // Security: Get user from auth header
@@ -2352,10 +2369,13 @@ propertiesRouter.get("/:id/cost-segregation", async (c) => {
     .orderBy(desc(costSegregationStudies.studyDate));
 
   return c.json({ costSegStudies });
-});
+  }, { operation: "getCostSegStudies" })
+);
 
 // POST /api/properties/:id/depreciation-records - Add annual depreciation record
-propertiesRouter.post("/:id/depreciation-records", async (c) => {
+propertiesRouter.post(
+  "/:id/depreciation-records",
+  withErrorHandling(async (c) => {
   const { id } = c.req.param();
 
   // Security: Get user from auth header
@@ -2447,10 +2467,13 @@ propertiesRouter.post("/:id/depreciation-records", async (c) => {
     .returning();
 
   return c.json({ depreciationRecord: record }, 201);
-});
+  }, { operation: "addDepreciationRecord" })
+);
 
 // GET /api/properties/:id/depreciation-records - Get annual depreciation records
-propertiesRouter.get("/:id/depreciation-records", async (c) => {
+propertiesRouter.get(
+  "/:id/depreciation-records",
+  withErrorHandling(async (c) => {
   const { id } = c.req.param();
 
   // Security: Get user from auth header
@@ -2506,6 +2529,7 @@ propertiesRouter.get("/:id/depreciation-records", async (c) => {
     .orderBy(desc(annualDepreciationRecords.taxYear));
 
   return c.json({ depreciationRecords });
-});
+  }, { operation: "getDepreciationRecords" })
+);
 
 export default propertiesRouter;

@@ -1,76 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUser } from '@clerk/clerk-react'
 import { apiFetch } from '@/lib/api/client'
-
-// Types for depreciation data
-export interface PropertyDepreciation {
-  propertyId: string
-  depreciationType: 'residential' | 'commercial'
-  placedInServiceDate?: string | null
-  purchasePrice?: string | null
-  closingCosts?: string | null
-  initialImprovements?: string | null
-  landValue?: string | null
-  landValueSource?: string | null
-  landValueRatio?: string | null
-  marginalTaxRate?: string | null
-  accumulatedDepreciation?: string | null
-  lastDepreciationYear?: number | null
-  notes?: string | null
-  createdAt: Date
-  updatedAt: Date
-}
-
-export interface PropertyImprovement {
-  id: string
-  propertyId: string
-  description: string
-  amount: string
-  completedDate: string
-  placedInServiceDate?: string | null
-  depreciationClass?: '5_year' | '7_year' | '15_year' | '27_5_year' | '39_year' | null
-  accumulatedDepreciation?: string | null
-  documentId?: string | null
-  notes?: string | null
-  createdAt: Date
-  updatedAt: Date
-}
-
-export interface CostSegregationStudy {
-  id: string
-  propertyId: string
-  studyDate: string
-  studyProvider?: string | null
-  studyCost?: string | null
-  originalBasis: string
-  amount5Year?: string | null
-  amount7Year?: string | null
-  amount15Year?: string | null
-  amountRemaining: string
-  bonusDepreciationPercent?: string | null
-  bonusDepreciationAmount?: string | null
-  taxYearApplied?: number | null
-  documentId?: string | null
-  notes?: string | null
-  createdAt: Date
-  updatedAt: Date
-}
-
-export interface AnnualDepreciationRecord {
-  id: string
-  propertyId: string
-  taxYear: number
-  regularDepreciation: string
-  bonusDepreciation?: string | null
-  improvementDepreciation?: string | null
-  totalDepreciation: string
-  monthsDepreciated: number
-  verifiedByCpa?: boolean | null
-  verifiedDate?: string | null
-  notes?: string | null
-  createdAt: Date
-  updatedAt: Date
-}
+import type {
+  PropertyDepreciation,
+  PropertyImprovement,
+  CostSegregationStudy,
+  AnnualDepreciationRecord,
+} from '@axori/db'
 
 export interface DepreciationData {
   depreciation: PropertyDepreciation | null
