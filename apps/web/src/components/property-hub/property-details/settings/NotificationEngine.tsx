@@ -3,7 +3,8 @@ import { Pencil } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { LearningHubButton } from '../financials/LearningHubButton'
 import { getNotificationSettingsSnippets } from '@/data/learning-hub/settings-snippets'
-import { usePropertySettings } from '@/hooks/api'
+import { usePropertySettings, usePropertyPermissions } from '@/hooks/api'
+import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
 
 interface NotificationEngineProps {
   propertyId: string
@@ -16,6 +17,7 @@ interface NotificationEngineProps {
 export const NotificationEngine = ({ propertyId }: NotificationEngineProps) => {
   const navigate = useNavigate()
   const { formData, isLoading } = usePropertySettings(propertyId)
+  const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   const handleOpenDrawer = () => {
     navigate({
@@ -51,14 +53,17 @@ export const NotificationEngine = ({ propertyId }: NotificationEngineProps) => {
             subtitle="Alert preferences and strategies"
             componentKey="notification-engine"
           />
-          <IconButton
-            icon={Pencil}
-            size="sm"
-            variant="ghost"
-            shape="rounded"
-            onClick={handleOpenDrawer}
-            aria-label="Edit notification settings"
-          />
+          {isReadOnly && <ReadOnlyBanner variant="badge" />}
+          {canEdit && (
+            <IconButton
+              icon={Pencil}
+              size="sm"
+              variant="ghost"
+              shape="rounded"
+              onClick={handleOpenDrawer}
+              aria-label="Edit notification settings"
+            />
+          )}
         </div>
       </div>
       <div className="space-y-6">

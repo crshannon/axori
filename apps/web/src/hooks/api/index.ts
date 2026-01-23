@@ -10,4 +10,4 @@ export * from './useLoans'
 export * from './useTransactions'
 export * from './useDepreciation'
 export * from './usePermissions'
-
+export * from './usePropertyPermissions'

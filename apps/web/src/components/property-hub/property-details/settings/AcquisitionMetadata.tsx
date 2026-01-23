@@ -3,7 +3,8 @@ import { Pencil } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { LearningHubButton } from '../financials/LearningHubButton'
 import { getAcquisitionMetadataSnippets } from '@/data/learning-hub/settings-snippets'
-import { usePropertySettings } from '@/hooks/api'
+import { usePropertySettings, usePropertyPermissions } from '@/hooks/api'
+import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
 
 interface AcquisitionMetadataProps {
   propertyId: string
@@ -16,6 +17,7 @@ interface AcquisitionMetadataProps {
 export const AcquisitionMetadata = ({ propertyId }: AcquisitionMetadataProps) => {
   const navigate = useNavigate()
   const { formData, isLoading } = usePropertySettings(propertyId)
+  const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   const handleOpenDrawer = () => {
     navigate({
@@ -51,14 +53,17 @@ export const AcquisitionMetadata = ({ propertyId }: AcquisitionMetadataProps) =>
             subtitle="Purchase information and details"
             componentKey="acquisition-metadata"
           />
-          <IconButton
-            icon={Pencil}
-            size="sm"
-            variant="ghost"
-            shape="rounded"
-            onClick={handleOpenDrawer}
-            aria-label="Edit acquisition metadata"
-          />
+          {isReadOnly && <ReadOnlyBanner variant="badge" />}
+          {canEdit && (
+            <IconButton
+              icon={Pencil}
+              size="sm"
+              variant="ghost"
+              shape="rounded"
+              onClick={handleOpenDrawer}
+              aria-label="Edit acquisition metadata"
+            />
+          )}
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

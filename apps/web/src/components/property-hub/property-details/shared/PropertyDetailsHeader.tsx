@@ -3,6 +3,8 @@ import { cn } from '@axori/ui'
 import { PropertyDetailsHeaderActions } from './PropertyDetailsHeaderActions'
 import { PropertyDetailsHeaderNav } from './PropertyDetailsHeaderNav'
 import { useProperty } from '@/hooks/api/useProperties'
+import { usePropertyPermissions } from '@/hooks/api'
+import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
 
 interface PropertyDetailsHeaderProps {
   propertyId: string
@@ -25,6 +27,7 @@ export const PropertyDetailsHeader = ({
   onNavigate,
 }: PropertyDetailsHeaderProps) => {
   const { data: property } = useProperty(propertyId)
+  const { isReadOnly, canEdit, role } = usePropertyPermissions(propertyId)
 
   if (!property) {
     return null
@@ -52,15 +55,18 @@ export const PropertyDetailsHeader = ({
             <ArrowLeft size={20} strokeWidth={3} />
           </button>
           <div>
-            <h1 className="text-xl font-black uppercase tracking-tighter leading-none">
-              Property Details
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-black uppercase tracking-tighter leading-none">
+                Property Details
+              </h1>
+              {isReadOnly && <ReadOnlyBanner variant="badge" />}
+            </div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/70 mt-1">
               {property.address}
             </p>
           </div>
         </div>
-        <PropertyDetailsHeaderActions />
+        <PropertyDetailsHeaderActions canEdit={canEdit} role={role} />
       </div>
 
       {/* Navigation Tabs */}

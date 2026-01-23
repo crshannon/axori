@@ -2,6 +2,7 @@ import { cn } from '@axori/ui'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { PropertyScoreGauge } from '@/components/property-hub'
+import { usePropertyPermissions } from '@/hooks/api'
 
 export const Route = createFileRoute(
   '/_authed/property-hub/$propertyId/management',
@@ -10,6 +11,8 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
+  const { propertyId } = Route.useParams()
+  const { canEdit } = usePropertyPermissions(propertyId)
   const [mgmtToggle, setMgmtToggle] = useState<'Self' | 'PM'>('Self')
 
   const prop = {
@@ -46,16 +49,18 @@ function RouteComponent() {
             </div>
           </div>
         </div>
-        <div className="flex gap-4">
-          <button className="px-6 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest border-slate-200 hover:bg-slate-50 shadow-xs dark:border-white/10 dark:hover:bg-white/5">
-            {mgmtToggle === 'Self' ? 'Bulk Lease Send' : 'PM Performance Audit'}
-          </button>
-          <button className="px-6 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest bg-violet-600 text-white shadow-xl hover:scale-105 shadow-violet-200 dark:bg-[#E8FF4D] dark:text-black dark:shadow-none">
-            {mgmtToggle === 'Self'
-              ? 'Open Maintenance CRM'
-              : 'Reconcile PM Statement'}
-          </button>
-        </div>
+        {canEdit && (
+          <div className="flex gap-4">
+            <button className="px-6 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest border-slate-200 hover:bg-slate-50 shadow-xs dark:border-white/10 dark:hover:bg-white/5">
+              {mgmtToggle === 'Self' ? 'Bulk Lease Send' : 'PM Performance Audit'}
+            </button>
+            <button className="px-6 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest bg-violet-600 text-white shadow-xl hover:scale-105 shadow-violet-200 dark:bg-[#E8FF4D] dark:text-black dark:shadow-none">
+              {mgmtToggle === 'Self'
+                ? 'Open Maintenance CRM'
+                : 'Reconcile PM Statement'}
+            </button>
+          </div>
+        )}
       </div>
 
       {mgmtToggle === 'Self' ? (
@@ -160,14 +165,16 @@ function RouteComponent() {
               ))}
             </div>
 
-            <div className="mt-auto grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button className="py-6 rounded-3xl border-2 border-dashed font-black text-[10px] uppercase tracking-widest transition-all border-slate-200 hover:border-slate-400 text-slate-400 hover:text-slate-600 dark:border-white/10 dark:hover:border-white/30 dark:text-white/40 dark:hover:text-white">
-                + Deploy New Lease
-              </button>
-              <button className="py-6 rounded-3xl border-2 border-dashed font-black text-[10px] uppercase tracking-widest transition-all border-slate-200 hover:border-slate-400 text-slate-400 hover:text-slate-600 dark:border-white/10 dark:hover:border-white/30 dark:text-white/40 dark:hover:text-white">
-                Invite Unit to Axori Pay
-              </button>
-            </div>
+            {canEdit && (
+              <div className="mt-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button className="py-6 rounded-3xl border-2 border-dashed font-black text-[10px] uppercase tracking-widest transition-all border-slate-200 hover:border-slate-400 text-slate-400 hover:text-slate-600 dark:border-white/10 dark:hover:border-white/30 dark:text-white/40 dark:hover:text-white">
+                  + Deploy New Lease
+                </button>
+                <button className="py-6 rounded-3xl border-2 border-dashed font-black text-[10px] uppercase tracking-widest transition-all border-slate-200 hover:border-slate-400 text-slate-400 hover:text-slate-600 dark:border-white/10 dark:hover:border-white/30 dark:text-white/40 dark:hover:text-white">
+                  Invite Unit to Axori Pay
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="lg:col-span-4 space-y-8">
@@ -186,26 +193,28 @@ function RouteComponent() {
                   <h4 className="text-sm font-black uppercase tracking-tight mb-4 leading-tight">
                     HVAC Compressor Malfunction
                   </h4>
-                  <div className="flex gap-2">
-                    <button className="flex-grow py-3 rounded-xl bg-red-500 text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-red-500/20">
-                      Dispatch Pro
-                    </button>
-                    <button className="px-4 rounded-xl border border-red-500/20 bg-white dark:bg-white/5">
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        className="text-red-500"
-                      >
-                        <path d="M15 3h6v6" />
-                        <path d="M10 14L21 3" />
-                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      </svg>
-                    </button>
-                  </div>
+                  {canEdit && (
+                    <div className="flex gap-2">
+                      <button className="flex-grow py-3 rounded-xl bg-red-500 text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-red-500/20">
+                        Dispatch Pro
+                      </button>
+                      <button className="px-4 rounded-xl border border-red-500/20 bg-white dark:bg-white/5">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          className="text-red-500"
+                        >
+                          <path d="M15 3h6v6" />
+                          <path d="M10 14L21 3" />
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="p-6 rounded-[2rem] border bg-slate-50 border-slate-100 opacity-50 dark:bg-white/5 dark:border-white/5">
                   <p className="text-[9px] font-black uppercase mb-1">
@@ -230,9 +239,11 @@ function RouteComponent() {
                   Unit B renewal in May. Axori auto-notifier is queued.
                 </p>
               </div>
-              <button className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all">
-                Enable Auto-Renew Logic
-              </button>
+              {canEdit && (
+                <button className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all">
+                  Enable Auto-Renew Logic
+                </button>
+              )}
             </div>
           </div>
         </div>

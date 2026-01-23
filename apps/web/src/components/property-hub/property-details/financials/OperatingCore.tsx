@@ -5,6 +5,8 @@ import { generateOperatingCoreLearning } from '@/data/learning-hub/operating-cor
 import { useFinancialPulse } from '@/hooks/computed/useFinancialPulse'
 import { useOperatingCore } from '@/hooks/computed/useOperatingCore'
 import { useProperty } from '@/hooks/api/useProperties'
+import { usePropertyPermissions } from '@/hooks/api'
+import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
 
 interface OperatingCoreProps {
   propertyId: string
@@ -19,6 +21,7 @@ export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
   const { data: property, isLoading } = useProperty(propertyId)
   const metrics = useFinancialPulse(propertyId)
   const operatingMetrics = useOperatingCore(propertyId)
+  const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   // Get current property value for learning context
   const currentValue =
@@ -80,6 +83,7 @@ export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
             subtitle="Strategic insights for property operations"
             componentKey="operating-core"
           />
+          {isReadOnly && <ReadOnlyBanner variant="badge" />}
         </div>
       </div>
 
@@ -213,18 +217,20 @@ export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
           </div>
         </div>
 
-        {/* Manage Button */}
-        <Button
-          variant="outline"
-          size="lg"
-          className="w-full py-4 mt-8 rounded-2xl bg-slate-900 text-white dark:bg-white/5 dark:border dark:border-white/10 dark:text-white dark:hover:bg-white/10 font-black text-[10px] uppercase tracking-widest transition-all hover:bg-violet-600 dark:hover:bg-[#E8FF4D] dark:hover:text-black"
-          onClick={(e) => {
-            e.stopPropagation()
-            handleManageExpenses()
-          }}
-        >
-          Configure Operating Expenses
-        </Button>
+        {/* Manage Button - only show for users with edit permission */}
+        {canEdit && (
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full py-4 mt-8 rounded-2xl bg-slate-900 text-white dark:bg-white/5 dark:border dark:border-white/10 dark:text-white dark:hover:bg-white/10 font-black text-[10px] uppercase tracking-widest transition-all hover:bg-violet-600 dark:hover:bg-[#E8FF4D] dark:hover:text-black"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleManageExpenses()
+            }}
+          >
+            Configure Operating Expenses
+          </Button>
+        )}
       </div>
     </Card>
   )
