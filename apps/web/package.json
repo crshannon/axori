@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@axori/db": "workspace:*",
+    "@axori/permissions": "workspace:*",
     "@axori/shared": "workspace:*",
     "@axori/ui": "workspace:*",
     "@clerk/clerk-react": "^5.49.0",

@@ -2,11 +2,11 @@ import { Card, Typography } from '@axori/ui'
 import { LearningHubButton } from './LearningHubButton'
 import { useProperty } from '@/hooks/api/useProperties'
 import {
-  calculateCostSegPotential,
-  calculateCostSegFirstYearBenefit,
-  calculateCostBasis,
-  getDepreciationSchedule,
   DEFAULT_MARGINAL_TAX_RATE,
+  calculateCostBasis,
+  calculateCostSegFirstYearBenefit,
+  calculateCostSegPotential,
+  getDepreciationSchedule,
 } from '@/utils/finances'
 
 interface CostSegregationPanelProps {

@@ -191,10 +191,10 @@ export function useOperatingCore(propertyId: string): OperatingCoreMetrics {
           t.isRecurring &&
           t.recurrenceFrequency === 'monthly' &&
           // Exclude management transactions if we already have structured management
-          !(hasManagementExpense && t.category?.toLowerCase() === 'management') &&
+          !(hasManagementExpense && t.category.toLowerCase() === 'management') &&
           // Exclude loan payments (financing costs, not operating expenses)
           !(
-            t.category?.toLowerCase() === 'other' &&
+            t.category.toLowerCase() === 'other' &&
             (t.subcategory?.toLowerCase() === 'loan_payment' ||
               t.description?.toLowerCase().includes('loan') ||
               t.description?.toLowerCase().includes('mortgage') ||
@@ -207,7 +207,7 @@ export function useOperatingCore(propertyId: string): OperatingCoreMetrics {
           ),
       )
       .forEach((t) => {
-        const category = t.category || 'Other'
+        const category = t.category
         const currentAmount = transactionExpensesMap.get(category) || 0
         // Sum amounts for the same category (in case there are multiple transactions)
         transactionExpensesMap.set(

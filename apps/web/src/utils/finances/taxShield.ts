@@ -262,12 +262,12 @@ export function generateDepreciationSchedule(
   depreciableBasis: number,
   depreciationYears: number = RESIDENTIAL_DEPRECIATION_YEARS,
   placedInServiceDate: Date | string | null = null,
-): DepreciationScheduleItem[] {
+): Array<DepreciationScheduleItem> {
   if (depreciableBasis <= 0) {
     return []
   }
 
-  const schedule: DepreciationScheduleItem[] = []
+  const schedule: Array<DepreciationScheduleItem> = []
   // For 27.5 years, we need 28 years (partial first + full middle + partial last)
   // For 39 years, we need 40 years
   const totalYearsInt = Math.ceil(depreciationYears) + 1
@@ -598,7 +598,7 @@ export interface DepreciationExportData {
   depreciationYears: number
   placedInServiceDate: string
   costBasis: CostBasisComponents
-  schedule: DepreciationScheduleItem[]
+  schedule: Array<DepreciationScheduleItem>
   summary: DepreciationSummary | null
   taxYearCurrent: number
   currentYearDepreciation: number
@@ -679,7 +679,7 @@ export function generateDepreciationExportData(
  * @returns CSV string
  */
 export function convertDepreciationToCSV(data: DepreciationExportData): string {
-  const lines: string[] = []
+  const lines: Array<string> = []
 
   // Header information
   lines.push('DEPRECIATION SCHEDULE')

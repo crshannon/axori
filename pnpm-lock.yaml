@@ -141,6 +141,9 @@ importers:
       '@axori/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@axori/permissions':
+        specifier: workspace:*
+        version: link:../../packages/permissions
       '@axori/shared':
         specifier: workspace:*
         version: link:../../packages/shared

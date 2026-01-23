@@ -6,23 +6,23 @@
  * commercial (39 year) properties.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-  getDepreciationSchedule,
-  calculateCostBasis,
-  calculateAnnualDepreciation,
-  calculateMonthlyDepreciation,
-  getMidMonthFraction,
-  calculateYearDepreciation,
-  generateDepreciationSchedule,
-  calculateDepreciationSummary,
-  calculateTaxShield,
-  calculatePaperLossComparison,
-  calculateCostSegPotential,
-  calculateCostSegFirstYearBenefit,
-  RESIDENTIAL_DEPRECIATION_YEARS,
   COMMERCIAL_DEPRECIATION_YEARS,
   DEFAULT_MARGINAL_TAX_RATE,
+  RESIDENTIAL_DEPRECIATION_YEARS,
+  calculateAnnualDepreciation,
+  calculateCostBasis,
+  calculateCostSegFirstYearBenefit,
+  calculateCostSegPotential,
+  calculateDepreciationSummary,
+  calculateMonthlyDepreciation,
+  calculatePaperLossComparison,
+  calculateTaxShield,
+  calculateYearDepreciation,
+  generateDepreciationSchedule,
+  getDepreciationSchedule,
+  getMidMonthFraction,
 } from '../taxShield'
 
 describe('getDepreciationSchedule', () => {

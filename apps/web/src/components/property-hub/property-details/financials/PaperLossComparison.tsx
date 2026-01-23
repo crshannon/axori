@@ -2,13 +2,13 @@ import { Card, Typography } from '@axori/ui'
 import { LearningHubButton } from './LearningHubButton'
 import { useProperty } from '@/hooks/api/useProperties'
 import {
-  calculatePaperLossComparison,
-  calculateCostBasis,
-  calculateAnnualDepreciation,
-  getDepreciationSchedule,
   DEFAULT_MARGINAL_TAX_RATE,
+  calculateAnnualDepreciation,
+  calculateCostBasis,
+  calculatePaperLossComparison,
+  getDepreciationSchedule,
 } from '@/utils/finances'
-import { calculateNOI, calculateCapExReserve } from '@/utils/finances/noi'
+import { calculateCapExReserve, calculateNOI } from '@/utils/finances/noi'
 import { calculateTotalDebtService } from '@/utils/finances/debt'
 
 interface PaperLossComparisonProps {

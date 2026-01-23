@@ -651,6 +651,44 @@ portfoliosRouter.delete(
 );
 
 /**
+ * GET /api/portfolios/:portfolioId/permissions
+ * Get current user's permissions for this portfolio
+ * Used by the usePermissions hook on the frontend
+ */
+portfoliosRouter.get(
+  "/:portfolioId/permissions",
+  withPermission({ minimumRole: "viewer" }),
+  withErrorHandling(async (c) => {
+    const portfolioId = c.req.param("portfolioId");
+    const userId = getAuthenticatedUserId(c);
+
+    // Get user's full membership record
+    const [membership] = await db
+      .select({
+        role: userPortfolios.role,
+        propertyAccess: userPortfolios.propertyAccess,
+      })
+      .from(userPortfolios)
+      .where(
+        and(
+          eq(userPortfolios.userId, userId),
+          eq(userPortfolios.portfolioId, portfolioId)
+        )
+      )
+      .limit(1);
+
+    if (!membership) {
+      return c.json({ error: "Not a member of this portfolio" }, 403);
+    }
+
+    return c.json({
+      role: membership.role,
+      propertyAccess: membership.propertyAccess,
+    });
+  }, { operation: "getPermissions" })
+);
+
+/**
  * POST /api/portfolios/:portfolioId/leave
  * Leave a portfolio (non-owners only)
  */

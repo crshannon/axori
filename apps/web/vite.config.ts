@@ -28,7 +28,10 @@ export default defineConfig(({ mode }) => {
     // Tell Vite to also look for .env files in the root directory
     envDir: resolve(__dirname, '../..'),
     optimizeDeps: {
-      include: ['use-sync-external-store/shim/index.js'],
+      include: [
+        'use-sync-external-store/shim/index.js',
+        '@axori/permissions',
+      ],
       // Exclude @axori/db from client-side bundling (it uses Node.js modules)
       exclude: ['@axori/db'],
     },

@@ -1,20 +1,21 @@
 import { useState } from 'react'
 import { Button, Card, Typography } from '@axori/ui'
 import { LearningHubButton } from './LearningHubButton'
+import type {DepreciationScheduleItem, DepreciationSummary} from '@/utils/finances';
 import { useProperty } from '@/hooks/api/useProperties'
 import {
-  generateDepreciationSchedule,
-  calculateDepreciationSummary,
+  DEFAULT_MARGINAL_TAX_RATE,
+  
+  
+  RESIDENTIAL_DEPRECIATION_YEARS,
   calculateCostBasis,
-  calculateTaxShield,
+  calculateDepreciationSummary,
   calculatePaperLossComparison,
-  getDepreciationSchedule,
+  calculateTaxShield,
   convertDepreciationToCSV,
   generateDepreciationExportData,
-  RESIDENTIAL_DEPRECIATION_YEARS,
-  DEFAULT_MARGINAL_TAX_RATE,
-  type DepreciationScheduleItem,
-  type DepreciationSummary,
+  generateDepreciationSchedule,
+  getDepreciationSchedule
 } from '@/utils/finances'
 
 interface DepreciationScheduleProps {
