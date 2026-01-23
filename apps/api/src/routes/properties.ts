@@ -44,51 +44,108 @@ import {
   validateData,
   handleError,
 } from "../utils/errors";
+import {
+  withPermission,
+  requireAuth,
+  getAuthenticatedUserId,
+  getUserFromRequest,
+} from "../middleware/permissions";
+import {
+  getAccessiblePropertyIdsForUser,
+  canViewProperty,
+  canEditProperty,
+  canDeleteProperty,
+  getUserPortfolioMembership,
+} from "@axori/permissions";
 
 const propertiesRouter = new Hono();
 
 // Get all properties (filter by portfolio and/or status if provided)
 // Excludes archived properties by default (soft delete)
-propertiesRouter.get("/", async (c) => {
-  const portfolioId = c.req.query("portfolioId");
-  const status = c.req.query("status");
-  const includeArchived = c.req.query("includeArchived") === "true";
+// Protected: Only returns properties the user has access to
+propertiesRouter.get(
+  "/",
+  requireAuth(),
+  withErrorHandling(async (c) => {
+    const userId = getAuthenticatedUserId(c);
+    const portfolioId = c.req.query("portfolioId");
+    const status = c.req.query("status");
+    const includeArchived = c.req.query("includeArchived") === "true";
 
-  // Get all properties for the portfolio (only filter if portfolioId is provided and valid)
-  // Check if portfolioId is a valid UUID format (basic check: not empty and looks like UUID)
-  const isValidPortfolioId = portfolioId && portfolioId.trim() !== "" && portfolioId.length > 10;
+    // Check if portfolioId is a valid UUID format
+    const isValidPortfolioId = portfolioId && portfolioId.trim() !== "" && portfolioId.length > 10;
 
-  let allProperties;
-  if (isValidPortfolioId) {
-    // Filter by specific portfolio
-    allProperties = await db
-      .select()
-      .from(properties)
-      .where(eq(properties.portfolioId, portfolioId));
-  } else {
-    // Get all properties (no portfolio filter)
-    allProperties = await db.select().from(properties);
-  }
+    if (isValidPortfolioId) {
+      // Get accessible property IDs for this user in this portfolio
+      const accessiblePropertyIds = await getAccessiblePropertyIdsForUser(userId, portfolioId);
 
-  // Filter by status and exclude archived (unless explicitly requested)
-  let filtered = allProperties;
+      if (accessiblePropertyIds.length === 0) {
+        return c.json({ properties: [] });
+      }
 
-  if (status) {
-    filtered = filtered.filter((p) => p.status === status);
-  } else if (!includeArchived) {
-    // Exclude archived by default
-    filtered = filtered.filter((p) => p.status !== "archived");
-  }
+      // Filter by accessible properties
+      const allProperties = await db
+        .select()
+        .from(properties)
+        .where(eq(properties.portfolioId, portfolioId));
 
-  // Sort by most recent first
-  filtered.sort((a, b) => {
-    const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-    const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-    return dateB - dateA;
-  });
+      // Filter to only accessible properties
+      let filtered = allProperties.filter((p) =>
+        accessiblePropertyIds.includes(p.id)
+      );
 
-  return c.json({ properties: filtered });
-});
+      if (status) {
+        filtered = filtered.filter((p) => p.status === status);
+      } else if (!includeArchived) {
+        filtered = filtered.filter((p) => p.status !== "archived");
+      }
+
+      // Sort by most recent first
+      filtered.sort((a, b) => {
+        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return dateB - dateA;
+      });
+
+      return c.json({ properties: filtered });
+    } else {
+      // Get all portfolios user has access to
+      const userPortfoliosList = await db
+        .select({ portfolioId: userPortfolios.portfolioId })
+        .from(userPortfolios)
+        .where(eq(userPortfolios.userId, userId));
+
+      if (userPortfoliosList.length === 0) {
+        return c.json({ properties: [] });
+      }
+
+      const portfolioIds = userPortfoliosList.map((up) => up.portfolioId);
+
+      // Get all properties from these portfolios
+      const allProperties = await db.select().from(properties);
+
+      // Filter to portfolios user has access to
+      let filtered = allProperties.filter((p) =>
+        portfolioIds.includes(p.portfolioId)
+      );
+
+      if (status) {
+        filtered = filtered.filter((p) => p.status === status);
+      } else if (!includeArchived) {
+        filtered = filtered.filter((p) => p.status !== "archived");
+      }
+
+      // Sort by most recent first
+      filtered.sort((a, b) => {
+        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return dateB - dateA;
+      });
+
+      return c.json({ properties: filtered });
+    }
+  }, { operation: "listProperties" })
+);
 
 // Fetch or update Rentcast data for a property
 // GET /api/properties/:id/rentcast-data
@@ -286,26 +343,30 @@ propertiesRouter.get("/:id/rentcast-data", async (c) => {
 });
 
 // Get single property by ID (with all normalized data joined)
-propertiesRouter.get("/:id", async (c) => {
-  const id = c.req.param("id");
+// Protected: Requires view permission on the property
+propertiesRouter.get(
+  "/:id",
+  withPermission({ propertyPermission: "view", propertyIdParam: "id" }),
+  withErrorHandling(async (c) => {
+    const id = c.req.param("id");
 
-  // Get property
-  const [property] = await db
-    .select()
-    .from(properties)
-    .where(eq(properties.id, id))
-    .limit(1);
+    // Get property
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.id, id))
+      .limit(1);
 
-  if (!property) {
-    return c.json({ error: "Property not found" }, 404);
-  }
+    if (!property) {
+      return c.json({ error: "Property not found" }, 404);
+    }
 
-  // Join all normalized tables
-  const [characteristics] = await db
-    .select()
-    .from(propertyCharacteristics)
-    .where(eq(propertyCharacteristics.propertyId, id))
-    .limit(1);
+    // Join all normalized tables
+    const [characteristics] = await db
+      .select()
+      .from(propertyCharacteristics)
+      .where(eq(propertyCharacteristics.propertyId, id))
+      .limit(1);
 
   const [valuation] = await db
     .select()
@@ -346,26 +407,48 @@ propertiesRouter.get("/:id", async (c) => {
       eq(loans.status, "active")
     ));
 
-  // Return property with all normalized data
-  return c.json({
-    property: {
-      ...property,
-      characteristics: characteristics || null,
-      valuation: valuation || null,
-      acquisition: acquisition || null,
-      rentalIncome: rentalIncome || null,
-      operatingExpenses: operatingExpenses || null,
-      management: management || null,
-      loans: propertyLoans || [], // Return all active loans
-    },
-  });
-});
+    // Return property with all normalized data
+    return c.json({
+      property: {
+        ...property,
+        characteristics: characteristics || null,
+        valuation: valuation || null,
+        acquisition: acquisition || null,
+        rentalIncome: rentalIncome || null,
+        operatingExpenses: operatingExpenses || null,
+        management: management || null,
+        loans: propertyLoans || [], // Return all active loans
+      },
+    });
+  }, { operation: "getProperty" })
+);
 
 // Create new property (draft or active)
+// Protected: Requires add_properties permission on the portfolio
 propertiesRouter.post(
   "/",
+  requireAuth(),
   withErrorHandling(async (c) => {
+    const userId = getAuthenticatedUserId(c);
     const body = await c.req.json();
+
+    // Portfolio ID is required for permission check
+    if (!body.portfolioId) {
+      return c.json({ error: "Portfolio ID is required" }, 400);
+    }
+
+    // Check if user has permission to add properties to this portfolio
+    const membership = await getUserPortfolioMembership(userId, body.portfolioId);
+    if (!membership) {
+      return c.json({ error: "You don't have access to this portfolio" }, 403);
+    }
+
+    // Members and above can add properties
+    const canAdd = ["owner", "admin", "member"].includes(membership.role);
+    if (!canAdd) {
+      return c.json({ error: "You don't have permission to add properties to this portfolio" }, 403);
+    }
+
     // Use validateData wrapper for consistent error logging
     const validated = validateData(body, propertyInsertSchema as { parse: typeof propertyInsertSchema.parse }, {
       operation: "createProperty",
@@ -375,6 +458,8 @@ propertiesRouter.post(
       .insert(properties)
       .values({
         ...validated,
+        userId: userId, // Set the owner to the current user
+        addedBy: userId, // Set addedBy to current user
         status: validated.status || "draft",
       })
       .returning();
@@ -385,38 +470,42 @@ propertiesRouter.post(
 
 // Update existing property (used for draft updates and finalizing)
 // Accepts property core data + optional normalized table data
-propertiesRouter.put("/:id", async (c) => {
-  try {
-    const id = c.req.param("id");
-    const body = await c.req.json();
+// Protected: Requires edit permission on the property
+propertiesRouter.put(
+  "/:id",
+  withPermission({ propertyPermission: "edit", propertyIdParam: "id" }),
+  async (c) => {
+    try {
+      const id = c.req.param("id");
+      const body = await c.req.json();
 
-    // Separate core property data from normalized data
-    const {
-      characteristics,
-      valuation,
-      acquisition,
-      rentalIncome,
-      operatingExpenses,
-      management,
-      loan,
-      ...propertyData
-    } = body;
+      // Separate core property data from normalized data
+      const {
+        characteristics,
+        valuation,
+        acquisition,
+        rentalIncome,
+        operatingExpenses,
+        management,
+        loan,
+        ...propertyData
+      } = body;
 
-    // Validate and update core property data
-    const validated = propertyUpdateSchema.parse({ ...propertyData, id });
+      // Validate and update core property data
+      const validated = propertyUpdateSchema.parse({ ...propertyData, id });
 
-    const [updated] = await db
-      .update(properties)
-      .set({
-        ...validated,
-        updatedAt: new Date(),
-      })
-      .where(eq(properties.id, id))
-      .returning();
+      const [updated] = await db
+        .update(properties)
+        .set({
+          ...validated,
+          updatedAt: new Date(),
+        })
+        .where(eq(properties.id, id))
+        .returning();
 
-    if (!updated) {
-      return c.json({ error: "Property not found" }, 404);
-    }
+      if (!updated) {
+        return c.json({ error: "Property not found" }, 404);
+      }
 
     // Update or insert characteristics
     if (characteristics) {
@@ -1262,8 +1351,11 @@ propertiesRouter.post("/:id/complete", async (c) => {
 });
 
 // Soft delete a property (mark as archived)
-propertiesRouter.delete("/:id", async (c) => {
-  try {
+// Protected: Requires delete permission on the property
+propertiesRouter.delete(
+  "/:id",
+  withPermission({ propertyPermission: "delete", propertyIdParam: "id" }),
+  withErrorHandling(async (c) => {
     const id = c.req.param("id");
 
     // Verify property exists
@@ -1288,11 +1380,8 @@ propertiesRouter.delete("/:id", async (c) => {
       .returning();
 
     return c.json({ property: updated });
-  } catch (error) {
-    console.error("Error deleting property:", error);
-    return c.json({ error: "Internal server error" }, 500);
-  }
-});
+  }, { operation: "deleteProperty" })
+);
 
 // GET /api/properties/drafts/me - Get current user's most recent draft property
 propertiesRouter.get("/drafts/me", async (c) => {
