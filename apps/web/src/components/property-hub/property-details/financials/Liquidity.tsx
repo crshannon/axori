@@ -1,7 +1,7 @@
-import { useNavigate } from '@tanstack/react-router'
 import { Card, EmptyStateCard } from '@axori/ui'
 import { useProperty } from '@/hooks/api/useProperties'
 import { usePropertyPermissions } from '@/hooks/api'
+import { useDrawer, DRAWERS } from '@/lib/drawer'
 
 interface LiquidityProps {
   propertyId: string
@@ -10,9 +10,11 @@ interface LiquidityProps {
 /**
  * Liquidity component - Displays property bank account balance
  * Shows: Current balance when connected, EmptyStateCard when not connected
+ *
+ * @see AXO-93 - Uses drawer factory for opening connect drawer
  */
 export const Liquidity = ({ propertyId }: LiquidityProps) => {
-  const navigate = useNavigate({ from: '/property-hub/$propertyId/financials' })
+  const { openDrawer } = useDrawer()
   const { isLoading } = useProperty(propertyId)
   const { canEdit } = usePropertyPermissions(propertyId)
 
@@ -21,11 +23,7 @@ export const Liquidity = ({ propertyId }: LiquidityProps) => {
   // const hasBankAccount = !!bankAccount
 
   const handleConnectBankAccount = () => {
-    navigate({
-      to: '/property-hub/$propertyId/financials',
-      params: { propertyId },
-      search: (prev) => ({ ...prev, drawer: 'connect-bank-account' }),
-    })
+    openDrawer(DRAWERS.CONNECT_BANK_ACCOUNT, { propertyId })
   }
 
   if (isLoading) {

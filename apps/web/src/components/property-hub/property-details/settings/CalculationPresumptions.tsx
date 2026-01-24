@@ -1,10 +1,10 @@
 import { Card, IconButton } from '@axori/ui'
 import { Pencil } from 'lucide-react'
-import { useNavigate } from '@tanstack/react-router'
 import { LearningHubButton } from '../financials/LearningHubButton'
 import { getCalculationPresumptionsSnippets } from '@/data/learning-hub/settings-snippets'
 import { usePropertyPermissions, usePropertySettings } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
+import { useDrawer, DRAWERS } from '@/lib/drawer'
 
 interface CalculationPresumptionsProps {
   propertyId: string
@@ -13,22 +13,18 @@ interface CalculationPresumptionsProps {
 /**
  * CalculationPresumptions component - Displays financial calculation assumptions
  * Shows: vacancy rate, maintenance rate, expense inflation, CapEx sinking
+ *
+ * @see AXO-93 - Uses drawer factory for opening edit drawer
  */
 export const CalculationPresumptions = ({
   propertyId,
 }: CalculationPresumptionsProps) => {
-  const navigate = useNavigate()
+  const { openDrawer } = useDrawer()
   const { formData, isLoading } = usePropertySettings(propertyId)
   const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   const handleOpenDrawer = () => {
-    navigate({
-      to: '/property-hub/$propertyId/settings',
-      params: { propertyId },
-      search: {
-        drawer: 'presumptions',
-      },
-    })
+    openDrawer(DRAWERS.PRESUMPTIONS, { propertyId })
   }
 
   if (isLoading) {

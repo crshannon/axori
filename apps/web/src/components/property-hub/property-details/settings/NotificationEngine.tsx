@@ -1,10 +1,10 @@
 import { Card, IconButton } from '@axori/ui'
 import { Pencil } from 'lucide-react'
-import { useNavigate } from '@tanstack/react-router'
 import { LearningHubButton } from '../financials/LearningHubButton'
 import { getNotificationSettingsSnippets } from '@/data/learning-hub/settings-snippets'
 import { usePropertyPermissions, usePropertySettings } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
+import { useDrawer, DRAWERS } from '@/lib/drawer'
 
 interface NotificationEngineProps {
   propertyId: string
@@ -13,20 +13,16 @@ interface NotificationEngineProps {
 /**
  * NotificationEngine component - Displays notification preferences
  * Shows: email, SMS, push notification toggles
+ *
+ * @see AXO-93 - Uses drawer factory for opening edit drawer
  */
 export const NotificationEngine = ({ propertyId }: NotificationEngineProps) => {
-  const navigate = useNavigate()
+  const { openDrawer } = useDrawer()
   const { formData, isLoading } = usePropertySettings(propertyId)
   const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   const handleOpenDrawer = () => {
-    navigate({
-      to: '/property-hub/$propertyId/settings',
-      params: { propertyId },
-      search: {
-        drawer: 'notifications',
-      },
-    })
+    openDrawer(DRAWERS.NOTIFICATIONS, { propertyId })
   }
 
   if (isLoading) {

@@ -1,18 +1,23 @@
 import { Button, Card, EmptyStateCard, Typography } from '@axori/ui'
-import { useNavigate } from '@tanstack/react-router'
 import { LearningHubButton } from './LearningHubButton'
 import { generateAcquisitionLearning } from '@/data/learning-hub/acquisition-snippets'
 import { useAcquisitionIntel } from '@/hooks/computed/useAcquisitionIntel'
 import { useProperty } from '@/hooks/api/useProperties'
 import { usePropertyPermissions } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
+import { useDrawer, DRAWERS } from '@/lib/drawer'
 
 interface AcquisitionIntelProps {
   propertyId: string
 }
 
+/**
+ * AcquisitionIntel component - Displays acquisition and equity metrics
+ *
+ * @see AXO-93 - Uses drawer factory for opening edit drawer
+ */
 export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
-  const navigate = useNavigate()
+  const { openDrawer } = useDrawer()
   const { data: property, isLoading } = useProperty(propertyId)
   const metrics = useAcquisitionIntel(propertyId)
   const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
@@ -28,13 +33,7 @@ export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
     : []
 
   const handleManageAcquisition = () => {
-    navigate({
-      to: '/property-hub/$propertyId/financials',
-      params: { propertyId },
-      search: {
-        drawer: 'acquisition',
-      },
-    })
+    openDrawer(DRAWERS.ACQUISITION, { propertyId })
   }
 
   if (isLoading || !property) {

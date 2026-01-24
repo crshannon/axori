@@ -7,7 +7,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { useNavigate } from '@tanstack/react-router'
 import type {
   ColumnDef,
   ColumnFiltersState,
@@ -18,6 +17,7 @@ import { usePropertyPermissions } from '@/hooks/api'
 import { useTheme } from '@/utils/providers/theme-provider'
 import { cn } from '@/utils/helpers/cn'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
+import { useDrawer, DRAWERS } from '@/lib/drawer'
 
 interface PropertyTransactionsProps {
   propertyId: string
@@ -40,12 +40,17 @@ type TransactionRow = {
   taxCategory: string | null
 }
 
+/**
+ * PropertyTransactions component - Displays transaction history
+ *
+ * @see AXO-93 - Uses drawer factory for opening add/edit transaction drawer
+ */
 export const PropertyTransactions = ({
   propertyId,
 }: PropertyTransactionsProps) => {
   const { appTheme } = useTheme()
   const isDark = appTheme === 'dark'
-  const navigate = useNavigate()
+  const { openDrawer } = useDrawer()
   const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -328,25 +333,11 @@ export const PropertyTransactions = ({
   }
 
   const handleAddTransaction = () => {
-    navigate({
-      search: (prev: any) => ({
-        ...prev,
-        drawer: 'add-transaction',
-        transactionId: undefined,
-      }),
-      replace: true,
-    })
+    openDrawer(DRAWERS.ADD_TRANSACTION, { propertyId })
   }
 
   const handleRowClick = (transactionId: string) => {
-    navigate({
-      search: (prev: any) => ({
-        ...prev,
-        drawer: 'add-transaction',
-        transactionId,
-      }),
-      replace: true,
-    })
+    openDrawer(DRAWERS.ADD_TRANSACTION, { propertyId, transactionId })
   }
 
   return (
