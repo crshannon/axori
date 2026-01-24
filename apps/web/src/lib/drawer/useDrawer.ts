@@ -5,6 +5,9 @@
  * via URL search params. Updates are reflected in the URL for
  * deep linking and state persistence.
  *
+ * Includes pre-emptive permission checking to prevent URL flashing
+ * when access is denied.
+ *
  * @see AXO-93 - URL-Based Drawer Factory
  *
  * @example
@@ -24,8 +27,12 @@
 
 import { useCallback, useMemo } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
-import type { DrawerName, DrawerParams } from './registry'
-import { isValidDrawerName, validateDrawerParams } from './registry'
+import { useQueryClient } from '@tanstack/react-query'
+import { canEdit, canView, canAdmin } from '@axori/permissions'
+import type { PortfolioRole } from '@axori/permissions'
+import type { DrawerName, DrawerParams, DrawerPermission } from './registry'
+import { isValidDrawerName, validateDrawerParams, getDrawerEntry } from './registry'
+import { toast } from '@/lib/toast'
 
 /**
  * Options for opening a drawer
@@ -33,6 +40,8 @@ import { isValidDrawerName, validateDrawerParams } from './registry'
 export interface OpenDrawerOptions {
   /** Whether to replace the current history entry (default: true) */
   replace?: boolean
+  /** Skip permission check (use when you've already verified permissions) */
+  skipPermissionCheck?: boolean
 }
 
 /**
@@ -67,6 +76,38 @@ interface DrawerSearchParams {
 }
 
 /**
+ * Check if the user has the required permission level
+ */
+function hasRequiredPermission(
+  userRole: PortfolioRole | null,
+  required: DrawerPermission
+): boolean {
+  // 'none' means any authenticated user can access
+  if (required === 'none') {
+    return true
+  }
+
+  // No role means no access
+  if (!userRole) {
+    return false
+  }
+
+  // Check permission based on required level
+  switch (required) {
+    case 'viewer':
+      return canView(userRole)
+    case 'member':
+      return canEdit(userRole)
+    case 'admin':
+      return canAdmin(userRole)
+    case 'owner':
+      return userRole === 'owner'
+    default:
+      return false
+  }
+}
+
+/**
  * Hook for programmatic drawer control via URL params
  *
  * Uses TanStack Router's search params for URL state management.
@@ -74,10 +115,14 @@ interface DrawerSearchParams {
  * - Deep linking to specific drawers
  * - Browser back/forward navigation
  * - State persistence across refreshes
+ *
+ * Includes pre-emptive permission checking using cached query data
+ * to prevent URL flashing when access is denied.
  */
 export function useDrawer(): UseDrawerResult {
   const navigate = useNavigate()
   const routerState = useRouterState()
+  const queryClient = useQueryClient()
 
   // Get current search params safely
   const currentSearch = useMemo(() => {
@@ -103,7 +148,51 @@ export function useDrawer(): UseDrawerResult {
   const isOpen = currentDrawer !== null
 
   /**
+   * Check permissions using cached React Query data
+   * Returns true if access is allowed, false if denied
+   */
+  const checkPermissionFromCache = useCallback(
+    (drawerName: DrawerName, propertyId: string | undefined): boolean => {
+      const entry = getDrawerEntry(drawerName)
+      if (!entry) {
+        return false
+      }
+
+      // If no property ID is required, allow access
+      if (!propertyId) {
+        return true
+      }
+
+      // Try to get cached property data
+      const propertyData = queryClient.getQueryData<{ portfolioId?: string }>(
+        ['properties', propertyId]
+      )
+
+      if (!propertyData?.portfolioId) {
+        // No cached data - let DrawerProvider handle it
+        // This allows the drawer to open and check permissions there
+        return true
+      }
+
+      // Try to get cached permission data
+      const permissionData = queryClient.getQueryData<{ role?: PortfolioRole }>(
+        ['permissions', propertyData.portfolioId]
+      )
+
+      if (!permissionData?.role) {
+        // No cached permission data - let DrawerProvider handle it
+        return true
+      }
+
+      // Check if user has required permission
+      return hasRequiredPermission(permissionData.role, entry.permission)
+    },
+    [queryClient]
+  )
+
+  /**
    * Open a drawer by updating URL search params
+   * Checks permissions before updating URL to prevent flashing
    */
   const openDrawer = useCallback(
     <T extends DrawerName>(
@@ -111,13 +200,29 @@ export function useDrawer(): UseDrawerResult {
       params: DrawerParams<T>,
       options: OpenDrawerOptions = {}
     ): void => {
-      const { replace = true } = options
+      const { replace = true, skipPermissionCheck = false } = options
 
       // Validate params before opening
       const validatedParams = validateDrawerParams(name, params)
       if (!validatedParams) {
         console.error(`[useDrawer] Invalid params for drawer "${name}"`)
         return
+      }
+
+      // Check permissions from cache before updating URL
+      if (!skipPermissionCheck) {
+        const propertyId = (validatedParams as { propertyId?: string }).propertyId
+        const hasPermission = checkPermissionFromCache(name, propertyId)
+
+        if (!hasPermission) {
+          const entry = getDrawerEntry(name)
+          console.warn(
+            `[useDrawer] Access denied to drawer "${name}". ` +
+              `Required: ${entry?.permission}`
+          )
+          toast.warning(`You don't have permission to access ${entry?.displayName || name}`)
+          return
+        }
       }
 
       navigate({
@@ -129,7 +234,7 @@ export function useDrawer(): UseDrawerResult {
         replace,
       })
     },
-    [navigate]
+    [navigate, checkPermissionFromCache]
   )
 
   /**
