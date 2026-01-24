@@ -28,11 +28,56 @@
 import { useCallback, useMemo } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { canEdit, canView, canAdmin } from '@axori/permissions'
-import type { PortfolioRole } from '@axori/permissions'
 import type { DrawerName, DrawerParams, DrawerPermission } from './registry'
 import { isValidDrawerName, validateDrawerParams, getDrawerEntry } from './registry'
 import { toast } from '@/lib/toast'
+
+// =============================================================================
+// PERMISSION HELPERS (inlined to avoid @axori/permissions -> @axori/db chain)
+// =============================================================================
+
+/**
+ * Portfolio roles from least to most privileged
+ */
+type PortfolioRole = 'viewer' | 'member' | 'admin' | 'owner'
+
+const PORTFOLIO_ROLES: readonly PortfolioRole[] = ['owner', 'admin', 'member', 'viewer'] as const
+
+/**
+ * Get the numeric rank of a role (higher = more privileged)
+ */
+function getRoleRank(role: PortfolioRole): number {
+  const index = PORTFOLIO_ROLES.indexOf(role)
+  return PORTFOLIO_ROLES.length - 1 - index
+}
+
+/**
+ * Check if role is at least the minimum required role
+ */
+function isRoleAtLeast(role: PortfolioRole, minimumRole: PortfolioRole): boolean {
+  return getRoleRank(role) >= getRoleRank(minimumRole)
+}
+
+/**
+ * Check if user can view (viewer+)
+ */
+function canView(role: PortfolioRole): boolean {
+  return isRoleAtLeast(role, 'viewer')
+}
+
+/**
+ * Check if user can edit (member+)
+ */
+function canEdit(role: PortfolioRole): boolean {
+  return isRoleAtLeast(role, 'member')
+}
+
+/**
+ * Check if user is admin (admin+)
+ */
+function canAdmin(role: PortfolioRole): boolean {
+  return isRoleAtLeast(role, 'admin')
+}
 
 /**
  * Options for opening a drawer
