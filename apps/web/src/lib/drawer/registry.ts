@@ -42,6 +42,35 @@ export interface DrawerRegistryEntry<TParams extends z.ZodTypeAny = z.ZodTypeAny
 }
 
 // =============================================================================
+// DRAWER NAME CONSTANTS
+// =============================================================================
+
+/**
+ * Drawer name constants for type-safe usage throughout the app.
+ * Use these instead of string literals for better autocomplete and refactoring.
+ *
+ * @example
+ * import { DRAWERS, useDrawer } from '@/lib/drawer'
+ * const { openDrawer } = useDrawer()
+ * openDrawer(DRAWERS.ADD_LOAN, { propertyId })
+ */
+export const DRAWERS = {
+  // Settings Drawers
+  ASSET_CONFIG: 'asset-config',
+  ACQUISITION: 'acquisition',
+  PRESUMPTIONS: 'presumptions',
+  NOTIFICATIONS: 'notifications',
+  // Financials Drawers
+  ADD_LOAN: 'add-loan',
+  ADD_TRANSACTION: 'add-transaction',
+  OPERATING_EXPENSES: 'operating-expenses',
+  RENTAL_INCOME: 'rental-income',
+  CONNECT_BANK_ACCOUNT: 'connect-bank-account',
+  PROPERTY_ACQUISITION: 'property-acquisition',
+  VALUATION: 'valuation',
+} as const
+
+// =============================================================================
 // PARAM SCHEMAS
 // =============================================================================
 

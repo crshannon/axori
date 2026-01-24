@@ -38,7 +38,7 @@ import {
   PropertyViewControls,
   StrategicAlerts,
 } from '@/components/property-hub/property-hub'
-import { useDrawer } from '@/lib/drawer'
+import { useDrawer, DRAWERS } from '@/lib/drawer'
 
 /**
  * Search schema for property hub
@@ -79,11 +79,11 @@ function RouteComponent() {
 
   // Drawer handlers using the drawer factory
   const handleOpenRentalIncomeDrawer = (propertyId: string) => {
-    openDrawer('rental-income', { propertyId })
+    openDrawer(DRAWERS.RENTAL_INCOME, { propertyId })
   }
 
   const handleOpenValuationDrawer = (propertyId: string) => {
-    openDrawer('valuation', { propertyId })
+    openDrawer(DRAWERS.VALUATION, { propertyId })
   }
 
   // Fetch real properties from API

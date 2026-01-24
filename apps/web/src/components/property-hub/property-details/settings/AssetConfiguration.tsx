@@ -5,7 +5,7 @@ import { LearningHubButton } from '../financials/LearningHubButton'
 import { getAssetConfigurationSnippets } from '@/data/learning-hub/settings-snippets'
 import { usePropertyPermissions, usePropertySettings } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
-import { useDrawer } from '@/lib/drawer'
+import { useDrawer, DRAWERS } from '@/lib/drawer'
 
 interface AssetConfigurationProps {
   propertyId: string
@@ -23,7 +23,7 @@ export const AssetConfiguration = ({ propertyId }: AssetConfigurationProps) => {
   const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   const handleOpenDrawer = () => {
-    openDrawer('asset-config', { propertyId })
+    openDrawer(DRAWERS.ASSET_CONFIG, { propertyId })
   }
 
   // Use centralized formatPropertyType function from @axori/shared

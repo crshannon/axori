@@ -11,6 +11,7 @@ export {
   // Registry
   DRAWER_REGISTRY,
   DRAWER_NAMES,
+  DRAWERS,
   // Schemas
   propertyDrawerParamsSchema,
   loanDrawerParamsSchema,

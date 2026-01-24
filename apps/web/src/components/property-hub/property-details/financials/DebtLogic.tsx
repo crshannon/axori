@@ -7,7 +7,7 @@ import { useProperty } from '@/hooks/api/useProperties'
 import { useLoanSummary } from '@/hooks/useLoanSummary'
 import { usePropertyPermissions } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
-import { useDrawer } from '@/lib/drawer'
+import { useDrawer, DRAWERS } from '@/lib/drawer'
 
 interface DebtLogicProps {
   propertyId: string
@@ -38,11 +38,11 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
   }, [property?.loans])
 
   const handleAddLoan = () => {
-    openDrawer('add-loan', { propertyId })
+    openDrawer(DRAWERS.ADD_LOAN, { propertyId })
   }
 
   const handleEditLoan = (loanId: string) => {
-    openDrawer('add-loan', { propertyId, loanId })
+    openDrawer(DRAWERS.ADD_LOAN, { propertyId, loanId })
   }
 
   if (isLoading || !property) {
