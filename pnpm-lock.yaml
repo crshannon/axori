@@ -317,6 +317,9 @@ importers:
         specifier: ^3.4.3
         version: 3.4.7
     devDependencies:
+      '@axori/permissions':
+        specifier: workspace:*
+        version: link:../permissions
       '@types/node':
         specifier: ^20.11.0
         version: 20.19.27

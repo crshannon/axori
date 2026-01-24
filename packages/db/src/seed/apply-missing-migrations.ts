@@ -21,7 +21,7 @@ if (!DATABASE_URL) {
 }
 
 async function applyMigrations() {
-  const sql = postgres(DATABASE_URL, { max: 1 });
+  const sql = postgres(DATABASE_URL!, { max: 1 });
 
   try {
     console.log("🔄 Applying missing migrations...\n");

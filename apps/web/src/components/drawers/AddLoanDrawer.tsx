@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { Drawer, ErrorCard, Input, Select } from '@axori/ui'
 import { LOAN_TYPE_OPTIONS } from '@axori/shared'
 import { DrawerSectionTitle } from './DrawerSectionTitle'
+import type { LoanInsertApi } from '@axori/shared'
 import { useProperty } from '@/hooks/api/useProperties'
 import { useCreateLoan, useUpdateLoan } from '@/hooks/api/useLoans'
-import type { LoanInsertApi } from '@axori/shared'
 
 interface AddLoanDrawerProps {
   isOpen: boolean

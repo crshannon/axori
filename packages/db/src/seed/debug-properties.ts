@@ -6,8 +6,7 @@
 
 import { db } from "../client";
 import { users, portfolios, userPortfolios, properties } from "../schema";
-import { eq, and } from "drizzle-orm";
-import { getAccessiblePropertyIdsForUser } from "@axori/permissions";
+import { eq } from "drizzle-orm";
 
 async function debugProperties() {
   console.log("🔍 Debugging properties access...\n");
@@ -45,8 +44,8 @@ async function debugProperties() {
       );
     });
 
-    // For each user, check what they can access
-    console.log(`\n🔍 Checking access for each user:\n`);
+    // For each user, check their portfolio relationships
+    console.log(`\n🔍 Checking user-portfolio relationships:\n`);
     for (const user of allUsers) {
       console.log(`👤 User: ${user.email} (${user.id})`);
       
@@ -58,15 +57,17 @@ async function debugProperties() {
       
       console.log(`   Portfolios: ${userPorts.length}`);
       for (const up of userPorts) {
-        const accessibleIds = await getAccessiblePropertyIdsForUser(
-          user.id,
-          up.portfolioId
-        );
+        // Get properties in this portfolio
+        const portfolioProperties = await db
+          .select()
+          .from(properties)
+          .where(eq(properties.portfolioId, up.portfolioId));
+        
         console.log(
-          `   - Portfolio ${up.portfolioId}: ${accessibleIds.length} accessible properties`
+          `   - Portfolio ${up.portfolioId} (Role: ${up.role}): ${portfolioProperties.length} properties`
         );
-        if (accessibleIds.length > 0) {
-          console.log(`     Property IDs: ${accessibleIds.join(", ")}`);
+        if (portfolioProperties.length > 0) {
+          console.log(`     Property IDs: ${portfolioProperties.map(p => p.id).join(", ")}`);
         }
       }
       console.log();
