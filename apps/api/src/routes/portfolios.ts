@@ -13,10 +13,15 @@ import {
   userPortfolios,
   users,
   properties,
-  permissionAuditLog,
   eq,
   and,
 } from "@axori/db";
+import {
+  logInvitationSent,
+  logRoleChange,
+  logAccessRevoked,
+  logPermissionChangeBatch,
+} from "../utils/audit";
 import {
   PortfolioRole,
   canManageRole,
@@ -442,17 +447,15 @@ portfoliosRouter.post(
       .returning();
 
     // Log the invitation in audit log
-    await db.insert(permissionAuditLog).values({
-      userId: invitedUser.id,
+    await logInvitationSent(
       portfolioId,
-      action: "invitation_sent",
-      oldValue: null,
-      newValue: JSON.stringify({
-        role: validated.role,
-        propertyAccess: validated.propertyAccess,
-      }),
-      changedBy: userId,
-    });
+      invitedUser.email,
+      validated.role,
+      userId,
+      newMembership.id, // Using membership ID as token ID for direct invites
+      validated.propertyAccess || undefined,
+      invitedUser.id
+    );
 
     return c.json(
       {
@@ -550,22 +553,19 @@ portfoliosRouter.put(
       .returning();
 
     // Log the role change in audit log
-    await db.insert(permissionAuditLog).values({
-      userId: membership.userId,
+    await logRoleChange(
+      membership.userId,
       portfolioId,
-      action: "role_change",
-      oldValue: JSON.stringify({
-        role: membership.role,
-        propertyAccess: membership.propertyAccess,
-      }),
-      newValue: JSON.stringify({
-        role: validated.role || membership.role,
-        propertyAccess: validated.propertyAccess !== undefined
+      membership.role,
+      validated.role || membership.role,
+      userId,
+      {
+        old: membership.propertyAccess,
+        new: validated.propertyAccess !== undefined
           ? validated.propertyAccess
           : membership.propertyAccess,
-      }),
-      changedBy: userId,
-    });
+      }
+    );
 
     return c.json({ member: updated });
   }, { operation: "updateMemberRole" })
@@ -625,17 +625,13 @@ portfoliosRouter.delete(
     await db.delete(userPortfolios).where(eq(userPortfolios.id, memberId));
 
     // Log the removal in audit log
-    await db.insert(permissionAuditLog).values({
-      userId: membership.userId,
+    await logAccessRevoked(
+      membership.userId,
       portfolioId,
-      action: "access_revoked",
-      oldValue: JSON.stringify({
-        role: membership.role,
-        propertyAccess: membership.propertyAccess,
-      }),
-      newValue: null,
-      changedBy: userId,
-    });
+      membership.role,
+      userId,
+      { propertyAccess: membership.propertyAccess }
+    );
 
     return c.json({ message: "Member removed successfully" });
   }, { operation: "removeMember" })
@@ -711,15 +707,13 @@ portfoliosRouter.post(
         )
       );
 
-    // Log the leave in audit log
-    await db.insert(permissionAuditLog).values({
+    // Log the leave in audit log (self-initiated)
+    await logAccessRevoked(
       userId,
       portfolioId,
-      action: "access_revoked",
-      oldValue: JSON.stringify({ role: currentRole }),
-      newValue: null,
-      changedBy: userId, // Self-initiated
-    });
+      currentRole as string,
+      userId // Self-initiated
+    );
 
     return c.json({ message: "Successfully left the portfolio" });
   }, { operation: "leavePortfolio" })
@@ -781,21 +775,21 @@ portfoliosRouter.post(
       .where(eq(portfolios.id, portfolioId));
 
     // Log both changes in audit log
-    await db.insert(permissionAuditLog).values([
+    await logPermissionChangeBatch([
       {
+        action: "role_change",
         userId,
         portfolioId,
-        action: "role_change",
-        oldValue: JSON.stringify({ role: "owner" }),
-        newValue: JSON.stringify({ role: "admin" }),
+        oldValue: { role: "owner" },
+        newValue: { role: "admin" },
         changedBy: userId,
       },
       {
+        action: "role_change",
         userId: newOwnerId,
         portfolioId,
-        action: "role_change",
-        oldValue: JSON.stringify({ role: newOwnerMembership.role }),
-        newValue: JSON.stringify({ role: "owner" }),
+        oldValue: { role: newOwnerMembership.role },
+        newValue: { role: "owner" },
         changedBy: userId,
       },
     ]);

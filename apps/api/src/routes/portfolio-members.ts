@@ -14,10 +14,14 @@ import {
   portfolios,
   userPortfolios,
   users,
-  permissionAuditLog,
   eq,
   and,
 } from "@axori/db";
+import {
+  logInvitationSent,
+  logInvitationAccepted,
+  logAccessRevoked,
+} from "../utils/audit";
 import {
   canManageRole,
   getAssignableRoles,
@@ -202,19 +206,15 @@ portfolioMembersRouter.post(
       });
 
       // Log the invitation in audit log
-      await db.insert(permissionAuditLog).values({
-        userId: existingUser?.id ?? null,
+      await logInvitationSent(
         portfolioId,
-        action: "invitation_sent",
-        oldValue: null,
-        newValue: JSON.stringify({
-          email: validated.email,
-          role: validated.role,
-          propertyAccess: validated.propertyAccess,
-          tokenId: invitation.id,
-        }),
-        changedBy: userId,
-      });
+        validated.email,
+        validated.role,
+        userId,
+        invitation.id,
+        validated.propertyAccess ?? undefined,
+        existingUser?.id ?? null
+      );
 
       return c.json(
         {
@@ -320,18 +320,16 @@ portfolioMembersRouter.delete(
       }
 
       // Log the revocation in audit log
-      await db.insert(permissionAuditLog).values({
-        userId: null,
+      await logAccessRevoked(
+        null, // No user ID for pending invitations
         portfolioId,
-        action: "access_revoked",
-        oldValue: JSON.stringify({
+        invitation.role,
+        userId,
+        {
           email: invitation.email,
-          role: invitation.role,
           tokenId: invitation.id,
-        }),
-        newValue: null,
-        changedBy: userId,
-      });
+        }
+      );
 
       return c.json({ message: "Invitation revoked successfully" });
     },
@@ -421,18 +419,13 @@ portfolioMembersRouter.post(
       await expireInvitationToken(token, userId);
 
       // Log the acceptance in audit log
-      await db.insert(permissionAuditLog).values({
+      await logInvitationAccepted(
         userId,
-        portfolioId: invitation.portfolioId,
-        action: "invitation_accepted",
-        oldValue: null,
-        newValue: JSON.stringify({
-          role: invitation.role,
-          propertyAccess: invitation.propertyAccess,
-          tokenId: invitation.id,
-        }),
-        changedBy: userId,
-      });
+        invitation.portfolioId,
+        invitation.role,
+        invitation.id,
+        invitation.propertyAccess
+      );
 
       // Get portfolio details for the response
       const [portfolio] = await db
