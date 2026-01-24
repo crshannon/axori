@@ -15,6 +15,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PublicRouteImport } from './routes/_public'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as InvitationAcceptRouteImport } from './routes/invitation/accept'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as DemoDrizzleRouteImport } from './routes/demo/drizzle'
@@ -75,6 +76,11 @@ const AuthedRoute = AuthedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvitationAcceptRoute = InvitationAcceptRouteImport.update({
+  id: '/invitation/accept',
+  path: '/invitation/accept',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
@@ -270,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/invitation/accept': typeof InvitationAcceptRoute
   '/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdRouteWithChildren
   '/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -309,6 +316,7 @@ export interface FileRoutesByTo {
   '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/invitation/accept': typeof InvitationAcceptRoute
   '/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
@@ -350,6 +358,7 @@ export interface FileRoutesById {
   '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/invitation/accept': typeof InvitationAcceptRoute
   '/_authed/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdRouteWithChildren
   '/_authed/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -391,6 +400,7 @@ export interface FileRouteTypes {
     | '/demo/drizzle'
     | '/demo/store'
     | '/demo/tanstack-query'
+    | '/invitation/accept'
     | '/property-hub/$propertyId'
     | '/property-hub/add'
     | '/demo/api/names'
@@ -430,6 +440,7 @@ export interface FileRouteTypes {
     | '/demo/drizzle'
     | '/demo/store'
     | '/demo/tanstack-query'
+    | '/invitation/accept'
     | '/property-hub/add'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
@@ -470,6 +481,7 @@ export interface FileRouteTypes {
     | '/demo/drizzle'
     | '/demo/store'
     | '/demo/tanstack-query'
+    | '/invitation/accept'
     | '/_authed/property-hub/$propertyId'
     | '/_authed/property-hub/add'
     | '/demo/api/names'
@@ -504,6 +516,7 @@ export interface RootRouteChildren {
   DemoDrizzleRoute: typeof DemoDrizzleRoute
   DemoStoreRoute: typeof DemoStoreRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
+  InvitationAcceptRoute: typeof InvitationAcceptRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoApiTqTodosRoute: typeof DemoApiTqTodosRoute
   DemoFormAddressRoute: typeof DemoFormAddressRoute
@@ -558,6 +571,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invitation/accept': {
+      id: '/invitation/accept'
+      path: '/invitation/accept'
+      fullPath: '/invitation/accept'
+      preLoaderRoute: typeof InvitationAcceptRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/tanstack-query': {
@@ -892,6 +912,7 @@ const rootRouteChildren: RootRouteChildren = {
   DemoDrizzleRoute: DemoDrizzleRoute,
   DemoStoreRoute: DemoStoreRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
+  InvitationAcceptRoute: InvitationAcceptRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoApiTqTodosRoute: DemoApiTqTodosRoute,
   DemoFormAddressRoute: DemoFormAddressRoute,

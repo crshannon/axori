@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Drawer, ErrorCard, Input, Select } from '@axori/ui'
+import { LOAN_TYPE_OPTIONS } from '@axori/shared'
 import { DrawerSectionTitle } from './DrawerSectionTitle'
 import { useProperty } from '@/hooks/api/useProperties'
 import { useCreateLoan, useUpdateLoan } from '@/hooks/api/useLoans'
+import type { LoanInsertApi } from '@axori/shared'
 
 interface AddLoanDrawerProps {
   isOpen: boolean
@@ -32,7 +34,18 @@ export const AddLoanDrawer = ({
     : null
 
   // Form state - essential fields for now
-  const [formData, setFormData] = useState({
+  // Using string for form inputs, will convert to proper types on submit
+  const [formData, setFormData] = useState<{
+    loanType: LoanInsertApi['loanType'] | ''
+    lenderName: string
+    originalLoanAmount: string
+    interestRate: string
+    termMonths: string
+    currentBalance: string
+    startDate: string
+    loanNumber: string
+    servicerName: string
+  }>({
     loanType: 'conventional',
     lenderName: '',
     originalLoanAmount: '',
@@ -125,9 +138,9 @@ export const AddLoanDrawer = ({
     }
 
     try {
-      const loanData = {
+      const loanData: Omit<LoanInsertApi, 'userId'> = {
         propertyId,
-        loanType: formData.loanType,
+        loanType: formData.loanType || 'conventional',
         lenderName: formData.lenderName.trim(),
         servicerName: formData.servicerName.trim() || undefined,
         loanNumber: formData.loanNumber.trim() || undefined,
@@ -174,20 +187,6 @@ export const AddLoanDrawer = ({
       })
     }
   }
-
-  const loanTypes = [
-    { value: 'conventional', label: 'Conventional' },
-    { value: 'fha', label: 'FHA' },
-    { value: 'va', label: 'VA' },
-    { value: 'usda', label: 'USDA' },
-    { value: 'portfolio', label: 'Portfolio' },
-    { value: 'hard_money', label: 'Hard Money' },
-    { value: 'bridge', label: 'Bridge' },
-    { value: 'heloc', label: 'HELOC' },
-    { value: 'construction', label: 'Construction' },
-    { value: 'owner_financed', label: 'Owner Financed' },
-    { value: 'other', label: 'Other' },
-  ]
 
   return (
     <Drawer
@@ -236,7 +235,7 @@ export const AddLoanDrawer = ({
                 onChange={(e) => handleChange('loanType', e.target.value)}
                 error={errors.loanType}
               >
-                {loanTypes.map((type) => (
+                {LOAN_TYPE_OPTIONS.map((type) => (
                   <option key={type.value} value={type.value}>
                     {type.label}
                   </option>

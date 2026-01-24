@@ -13,6 +13,11 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import {
+  PORTFOLIO_ROLE_LABELS,
+  PORTFOLIO_ROLE_DESCRIPTIONS,
+  type PortfolioRole,
+} from "@axori/permissions";
 
 // ============================================================================
 // Shared Styles
@@ -125,7 +130,7 @@ export interface PortfolioInvitationEmailProps {
   /** Name of the portfolio they're being invited to */
   portfolioName: string;
   /** Role they're being invited as */
-  role: "admin" | "member" | "viewer";
+  role: PortfolioRole;
   /** Full URL with token for accepting the invitation */
   invitationUrl: string;
   /** When the invitation expires */
@@ -133,22 +138,29 @@ export interface PortfolioInvitationEmailProps {
 }
 
 /**
- * Human-readable role labels for display in emails
+ * Get role label for display in emails
+ * Uses centralized constants from @axori/permissions
  */
-const roleLabels: Record<string, string> = {
-  admin: "Administrator",
-  member: "Member",
-  viewer: "Viewer",
-};
+function getRoleLabel(role: string): string {
+  return PORTFOLIO_ROLE_LABELS[role as PortfolioRole] || role;
+}
 
 /**
- * Role descriptions for the invitation email
+ * Get role description for display in emails
+ * Uses centralized constants from @axori/permissions
+ * Formats the description to be more action-oriented for email context
  */
-const roleDescriptions: Record<string, string> = {
-  admin: "manage team members, edit properties, and view all portfolio data",
-  member: "edit properties and view all portfolio data",
-  viewer: "view portfolio data and property information",
-};
+function getRoleDescription(role: string): string {
+  const description = PORTFOLIO_ROLE_DESCRIPTIONS[role as PortfolioRole];
+  if (!description) return "access the portfolio";
+
+  // Format description to be more action-oriented for emails
+  // Convert "Can X" to "X" and make it lowercase for natural flow
+  return description
+    .replace(/^Can /i, "")
+    .replace(/\.$/, "")
+    .toLowerCase();
+}
 
 /**
  * Portfolio Invitation Email Template
@@ -183,8 +195,8 @@ export function PortfolioInvitationEmail({
   expiresAt,
 }: PortfolioInvitationEmailProps) {
   const greeting = recipientName ? `Hi ${recipientName}` : "Hi";
-  const roleLabel = roleLabels[role] || role;
-  const roleDescription = roleDescriptions[role] || "access the portfolio";
+  const roleLabel = getRoleLabel(role);
+  const roleDescription = getRoleDescription(role);
 
   // Format expiration date
   const formattedExpiresAt = expiresAt.toLocaleDateString("en-US", {
