@@ -114,3 +114,26 @@ export {
   checkPropertyPermission,
   buildPermissionContextFromDb,
 } from "./helpers";
+
+// Export security validation functions
+export {
+  // Types
+  type SecurityValidationResult,
+  type SecurityErrorCode,
+  type RoleChangeValidationOptions,
+  type MemberRemovalValidationOptions,
+  type InvitationValidationOptions,
+  // Individual validation functions
+  validateNoSelfPromotion,
+  validateOwnerProtection,
+  validateOnlyOwnerCanChangeRoles,
+  validateCanInviteMembers,
+  validateRoleAssignment,
+  validatePropertyAccessWithinRole,
+  validateNoPrivilegeEscalation,
+  // Comprehensive validation functions
+  validateRoleChange,
+  validateMemberRemoval,
+  validateInvitation,
+  validatePropertyAccessUpdate,
+} from "./security-validations";

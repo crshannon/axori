@@ -26,6 +26,10 @@ import {
   PortfolioRole,
   canManageRole,
   getAssignableRoles,
+  validateRoleChange,
+  validateMemberRemoval,
+  validateInvitation,
+  validatePropertyAccessUpdate,
 } from "@axori/permissions";
 import {
   withPermission,
@@ -378,6 +382,11 @@ portfoliosRouter.get(
 /**
  * POST /api/portfolios/:portfolioId/members
  * Invite a new member to the portfolio
+ *
+ * Security Validations (AXO-115):
+ * - Only admin/owner can invite members
+ * - Cannot assign owner role through invitation
+ * - Property-level access cannot exceed role's default permissions
  */
 portfoliosRouter.post(
   "/:portfolioId/members",
@@ -390,14 +399,17 @@ portfoliosRouter.post(
 
     const validated = inviteMemberSchema.parse(body);
 
-    // Check if user can assign the requested role
-    if (currentRole && !canManageRole(currentRole, validated.role)) {
-      return c.json(
-        {
-          error: `You cannot assign the ${validated.role} role. You can only assign: ${getAssignableRoles(currentRole).join(", ")}`,
-        },
-        403
-      );
+    // Use comprehensive invitation validation
+    if (currentRole) {
+      const validationResult = validateInvitation({
+        actorRole: currentRole,
+        invitedRole: validated.role,
+        propertyAccess: validated.propertyAccess ?? undefined,
+      });
+
+      if (!validationResult.allowed) {
+        return c.json({ error: validationResult.error }, 403);
+      }
     }
 
     // Find the user by email
@@ -477,10 +489,16 @@ portfoliosRouter.post(
 /**
  * PUT /api/portfolios/:portfolioId/members/:memberId
  * Update a member's role or property access
+ *
+ * Security Validations (AXO-115):
+ * - Only owner can change member roles
+ * - Owner cannot be modified (use transfer-ownership)
+ * - Users cannot modify their own role
+ * - Property-level access cannot exceed portfolio-level access
  */
 portfoliosRouter.put(
   "/:portfolioId/members/:memberId",
-  withPermission({ portfolioAction: "change_member_roles" }),
+  withPermission({ minimumRole: "owner" }), // Only owner can change roles
   withErrorHandling(async (c) => {
     const portfolioId = c.req.param("portfolioId");
     const memberId = c.req.param("memberId");
@@ -506,32 +524,37 @@ portfoliosRouter.put(
       return c.json({ error: "Member not found" }, 404);
     }
 
-    // Cannot modify owner's role
-    if (membership.role === "owner") {
-      return c.json({ error: "Cannot modify owner's role" }, 403);
+    // Determine the effective new role
+    const effectiveNewRole = validated.role || membership.role as PortfolioRole;
+    const isRoleChange = validated.role && validated.role !== membership.role;
+
+    // If changing role, use comprehensive role change validation
+    if (isRoleChange && currentRole) {
+      const validationResult = validateRoleChange({
+        actorUserId: userId,
+        targetUserId: membership.userId,
+        actorRole: currentRole,
+        targetCurrentRole: membership.role as PortfolioRole,
+        newRole: validated.role!,
+        propertyAccess: validated.propertyAccess,
+      });
+
+      if (!validationResult.allowed) {
+        return c.json({ error: validationResult.error }, 403);
+      }
     }
 
-    // Cannot modify your own role
-    if (membership.userId === userId) {
-      return c.json({ error: "Cannot modify your own role" }, 403);
-    }
-
-    // Check if user can manage the current role
-    if (currentRole && !canManageRole(currentRole, membership.role as PortfolioRole)) {
-      return c.json(
-        { error: `You cannot modify users with the ${membership.role} role` },
-        403
+    // If only updating property access (not role), validate that separately
+    if (!isRoleChange && validated.propertyAccess !== undefined && currentRole) {
+      const propertyAccessValidation = validatePropertyAccessUpdate(
+        currentRole,
+        membership.role as PortfolioRole,
+        validated.propertyAccess
       );
-    }
 
-    // Check if user can assign the new role
-    if (currentRole && validated.role && !canManageRole(currentRole, validated.role)) {
-      return c.json(
-        {
-          error: `You cannot assign the ${validated.role} role. You can only assign: ${getAssignableRoles(currentRole).join(", ")}`,
-        },
-        403
-      );
+      if (!propertyAccessValidation.allowed) {
+        return c.json({ error: propertyAccessValidation.error }, 403);
+      }
     }
 
     // Update the membership
@@ -574,6 +597,11 @@ portfoliosRouter.put(
 /**
  * DELETE /api/portfolios/:portfolioId/members/:memberId
  * Remove a member from the portfolio
+ *
+ * Security Validations (AXO-115):
+ * - Owner cannot be removed
+ * - Users cannot remove themselves (use leave endpoint)
+ * - Can only remove members with lower roles
  */
 portfoliosRouter.delete(
   "/:portfolioId/members/:memberId",
@@ -600,25 +628,18 @@ portfoliosRouter.delete(
       return c.json({ error: "Member not found" }, 404);
     }
 
-    // Cannot remove owner
-    if (membership.role === "owner") {
-      return c.json({ error: "Cannot remove the portfolio owner" }, 403);
-    }
+    // Use comprehensive member removal validation
+    if (currentRole) {
+      const validationResult = validateMemberRemoval({
+        actorUserId: userId,
+        targetUserId: membership.userId,
+        actorRole: currentRole,
+        targetRole: membership.role as PortfolioRole,
+      });
 
-    // Cannot remove yourself (use leave endpoint instead)
-    if (membership.userId === userId) {
-      return c.json(
-        { error: "Cannot remove yourself. Use the leave endpoint instead." },
-        403
-      );
-    }
-
-    // Check if user can manage this role
-    if (currentRole && !canManageRole(currentRole, membership.role as PortfolioRole)) {
-      return c.json(
-        { error: `You cannot remove users with the ${membership.role} role` },
-        403
-      );
+      if (!validationResult.allowed) {
+        return c.json({ error: validationResult.error }, 403);
+      }
     }
 
     // Delete the membership

@@ -25,6 +25,9 @@ import {
 import {
   canManageRole,
   getAssignableRoles,
+  validateInvitation,
+  validatePropertyAccessWithinRole,
+  PortfolioRole,
 } from "@axori/permissions";
 import {
   withPermission,
@@ -79,6 +82,11 @@ const acceptInvitationSchema = z.object({
  * 3. Generates a secure invitation token
  * 4. Sends an invitation email with a link to accept
  * 5. Logs the invitation in the audit log
+ *
+ * Security Validations (AXO-115):
+ * - Only admin/owner can invite members
+ * - Cannot assign owner role through invitation
+ * - Property-level access cannot exceed role's default permissions
  */
 portfolioMembersRouter.post(
   "/:portfolioId/invitations",
@@ -92,14 +100,17 @@ portfolioMembersRouter.post(
 
       const validated = sendInvitationSchema.parse(body);
 
-      // Check if user can assign the requested role
-      if (currentRole && !canManageRole(currentRole, validated.role)) {
-        return c.json(
-          {
-            error: `You cannot assign the ${validated.role} role. You can only assign: ${getAssignableRoles(currentRole).join(", ")}`,
-          },
-          403
-        );
+      // Use comprehensive invitation validation (AXO-115)
+      if (currentRole) {
+        const validationResult = validateInvitation({
+          actorRole: currentRole as PortfolioRole,
+          invitedRole: validated.role,
+          propertyAccess: validated.propertyAccess ?? undefined,
+        });
+
+        if (!validationResult.allowed) {
+          return c.json({ error: validationResult.error }, 403);
+        }
       }
 
       // Check if user already exists and is a member
