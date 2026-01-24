@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUser } from '@clerk/clerk-react'
+import type { PortfolioRole } from '@axori/permissions'
 import { API_BASE_URL, apiFetch } from '@/lib/api/client'
 
 /**
@@ -10,7 +11,7 @@ export interface InvitationValidationResult {
   error?: string
   invitation?: {
     email: string
-    role: 'owner' | 'admin' | 'member' | 'viewer'
+    role: PortfolioRole
     expiresAt: string
     createdAt: string
   }

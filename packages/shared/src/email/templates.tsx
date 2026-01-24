@@ -130,7 +130,7 @@ export interface PortfolioInvitationEmailProps {
   /** Name of the portfolio they're being invited to */
   portfolioName: string;
   /** Role they're being invited as */
-  role: "admin" | "member" | "viewer";
+  role: PortfolioRole;
   /** Full URL with token for accepting the invitation */
   invitationUrl: string;
   /** When the invitation expires */

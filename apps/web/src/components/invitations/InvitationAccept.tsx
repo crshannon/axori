@@ -54,10 +54,11 @@ export function InvitationAccept({ token }: InvitationAcceptProps) {
       setSuccess(true)
       // Redirect to dashboard after a short delay
       setTimeout(() => {
-        navigate({ to: '/dashboard' as any })
+        navigate({ to: '/dashboard' })
       }, 2000)
-    } catch (err: any) {
-      setError(err.message || 'Failed to accept invitation')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to accept invitation'
+      setError(message)
     }
   }
 
