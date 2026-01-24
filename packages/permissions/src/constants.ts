@@ -135,6 +135,12 @@ export type PortfolioAction =
 
 /**
  * Portfolio actions allowed for each role.
+ *
+ * Security Notes:
+ * - change_member_roles: Only owner can change member roles (AXO-115)
+ * - invite_members/remove_members: Admin and owner can invite/remove members
+ * - delete_portfolio: Only owner can delete the portfolio
+ * - manage_billing: Only owner can manage billing
  */
 export const PORTFOLIO_ROLE_ACTIONS: Record<PortfolioRole, PortfolioAction[]> = {
   owner: [
@@ -143,7 +149,7 @@ export const PORTFOLIO_ROLE_ACTIONS: Record<PortfolioRole, PortfolioAction[]> = 
     "delete_portfolio",
     "invite_members",
     "remove_members",
-    "change_member_roles",
+    "change_member_roles", // Only owner has this permission
     "add_properties",
     "view_audit_log",
     "manage_billing",
@@ -153,7 +159,7 @@ export const PORTFOLIO_ROLE_ACTIONS: Record<PortfolioRole, PortfolioAction[]> = 
     "edit_portfolio",
     "invite_members",
     "remove_members",
-    "change_member_roles",
+    // Note: Admin can invite/remove but NOT change existing member roles
     "add_properties",
     "view_audit_log",
   ],
