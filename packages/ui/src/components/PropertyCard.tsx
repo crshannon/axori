@@ -46,6 +46,22 @@ export interface PropertyCardProps extends Omit<HTMLAttributes<HTMLDivElement>, 
    * Additional card class name
    */
   cardClassName?: string;
+  /**
+   * Whether rental income data is missing
+   */
+  missingRentalIncome?: boolean;
+  /**
+   * Whether current value data is missing
+   */
+  missingCurrentValue?: boolean;
+  /**
+   * Click handler for missing rental income (opens drawer)
+   */
+  onAddRentalIncome?: (propertyId: string) => void;
+  /**
+   * Click handler for missing current value (opens drawer)
+   */
+  onAddCurrentValue?: (propertyId: string) => void;
 }
 
 /**
@@ -171,9 +187,16 @@ export const PropertyCard = ({
   theme = "light",
   cardClassName,
   className,
+  missingRentalIncome = false,
+  missingCurrentValue = false,
+  onAddRentalIncome,
+  onAddCurrentValue,
   ...props
 }: PropertyCardProps) => {
   const isDark = theme === "dark";
+  
+  // Determine if card should show missing data styling
+  const hasMissingData = missingRentalIncome || missingCurrentValue;
   
   const cardClass = cn(
     `
@@ -181,6 +204,14 @@ export const PropertyCard = ({
       duration-500
       hover:scale-[1.02] hover:shadow-2xl
     `,
+    hasMissingData && `
+      border-2 border-dashed
+    `,
+    hasMissingData && isDark
+      ? "border-amber-500/30 bg-amber-500/5"
+      : hasMissingData
+        ? "border-amber-300 bg-amber-50/50"
+        : "",
     cardClassName
   );
 
@@ -261,41 +292,121 @@ export const PropertyCard = ({
         <div className="
           flex items-end justify-between border-t border-slate-500/10 pt-4
         ">
-          <div>
-            <p
-              className={cn(
-                "text-[9px] font-black tracking-widest uppercase opacity-40",
-                isDark ? "text-white/40" : "text-slate-500/40"
+          <div
+            className={cn(
+              "flex-1",
+              missingRentalIncome && "cursor-pointer"
+            )}
+            onClick={(e) => {
+              if (missingRentalIncome && onAddRentalIncome) {
+                e.stopPropagation();
+                onAddRentalIncome(id);
+              }
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <p
+                className={cn(
+                  "text-[9px] font-black tracking-widest uppercase opacity-40",
+                  isDark ? "text-white/40" : "text-slate-500/40"
+                )}
+              >
+                Cash Flow
+              </p>
+              {missingRentalIncome && (
+                <span
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    isDark ? "bg-amber-400" : "bg-amber-500"
+                  )}
+                  title="Rental income missing"
+                />
               )}
-            >
-              Cash Flow
-            </p>
-            <p
-              className={cn(
-                "text-xl font-black tracking-tighter tabular-nums",
-                cashFlowColor
-              )}
-            >
-              {cashFlow}
-            </p>
+            </div>
+            {missingRentalIncome ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddRentalIncome?.(id);
+                }}
+                className={cn(
+                  "text-sm font-black tracking-tight uppercase mt-1 transition-colors",
+                  isDark
+                    ? "text-amber-400 hover:text-amber-300"
+                    : "text-amber-600 hover:text-amber-700"
+                )}
+              >
+                Add Rent
+              </button>
+            ) : (
+              <p
+                className={cn(
+                  "text-xl font-black tracking-tighter tabular-nums",
+                  cashFlowColor
+                )}
+              >
+                {cashFlow}
+              </p>
+            )}
           </div>
-          <div className="text-right">
-            <p
-              className={cn(
-                "text-[9px] font-black tracking-widest uppercase opacity-40",
-                isDark ? "text-white/40" : "text-slate-500/40"
+          <div
+            className={cn(
+              "text-right flex-1",
+              missingCurrentValue && "cursor-pointer"
+            )}
+            onClick={(e) => {
+              if (missingCurrentValue && onAddCurrentValue) {
+                e.stopPropagation();
+                onAddCurrentValue(id);
+              }
+            }}
+          >
+            <div className="flex items-center justify-end gap-2">
+              <p
+                className={cn(
+                  "text-[9px] font-black tracking-widest uppercase opacity-40",
+                  isDark ? "text-white/40" : "text-slate-500/40"
+                )}
+              >
+                Current Value
+              </p>
+              {missingCurrentValue && (
+                <span
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    isDark ? "bg-amber-400" : "bg-amber-500"
+                  )}
+                  title="Current value missing"
+                />
               )}
-            >
-              Current Value
-            </p>
-            <p
-              className={cn(
-                "text-xl font-black tracking-tighter tabular-nums",
-                isDark ? "text-white" : "text-slate-900"
-              )}
-            >
-              {currentValue}
-            </p>
+            </div>
+            {missingCurrentValue ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddCurrentValue?.(id);
+                }}
+                className={cn(
+                  "text-sm font-black tracking-tight uppercase mt-1 transition-colors",
+                  isDark
+                    ? "text-amber-400 hover:text-amber-300"
+                    : "text-amber-600 hover:text-amber-700"
+                )}
+              >
+                Add Value
+              </button>
+            ) : (
+              <p
+                className={cn(
+                  "text-xl font-black tracking-tighter tabular-nums",
+                  isDark ? "text-white" : "text-slate-900"
+                )}
+              >
+                {currentValue}
+              </p>
+            )}
           </div>
         </div>
       </div>

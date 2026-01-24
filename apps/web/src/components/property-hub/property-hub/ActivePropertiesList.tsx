@@ -5,12 +5,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { Body, Caption, Card, Overline, Typography } from '@axori/ui'
-import {
-  formatCashFlow,
-  formatPropertyValue,
-  getPropertyCashFlow,
-  getPropertyScore,
-} from './utils'
+import { formatCashFlow, formatPropertyValue } from './utils'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import type { Property } from '@/hooks/api/useProperties'
 import { useTheme } from '@/utils/providers/theme-provider'
@@ -19,6 +14,8 @@ import { cn } from '@/utils/helpers'
 interface ActivePropertiesListProps {
   properties: Array<Property>
   onPropertyClick: (propertyId: string) => void
+  onAddRentalIncome?: (propertyId: string) => void
+  onAddCurrentValue?: (propertyId: string) => void
 }
 
 type PropertyRow = {
@@ -31,11 +28,16 @@ type PropertyRow = {
   score: number
   cashFlow: number
   currentValue: string
+  missingRentalIncome: boolean
+  missingCurrentValue: boolean
+  property: Property
 }
 
 export const ActivePropertiesList = ({
   properties,
   onPropertyClick,
+  onAddRentalIncome,
+  onAddCurrentValue,
 }: ActivePropertiesListProps) => {
   const { appTheme } = useTheme()
   const isDark = appTheme === 'dark'
@@ -44,20 +46,69 @@ export const ActivePropertiesList = ({
   ])
 
   // Transform properties to PropertyRow[]
+  // Calculate metrics inline (can't use hooks in map, so we duplicate the logic)
   const propertyRows = useMemo<Array<PropertyRow>>(() => {
-    return properties.map((p) => ({
-      id: p.id,
-      address: p.address,
-      city: p.city,
-      state: p.state,
-      strategy: p.strategy?.investmentStrategy || null,
-      status: p.status.charAt(0).toUpperCase() + p.status.slice(1),
-      score: getPropertyScore(p),
-      cashFlow: getPropertyCashFlow(p),
-      currentValue: formatPropertyValue(
+    return properties.map((p) => {
+      // Calculate completeness score
+      const checks = [
         p.valuation?.currentValue || p.acquisition?.currentValue,
-      ),
-    }))
+        p.rentalIncome?.monthlyRent,
+        p.operatingExpenses,
+        p.acquisition?.purchaseDate,
+        p.characteristics?.propertyType,
+        p.loans?.some((l) => l.status === 'active'),
+      ]
+      const filled = checks.filter(Boolean).length
+      const score = Math.round((filled / checks.length) * 100)
+
+      // Get current value
+      const rawCurrentValue =
+        p.valuation?.currentValue ?? p.acquisition?.currentValue
+      const currentValue =
+        rawCurrentValue !== null && rawCurrentValue !== undefined
+          ? (typeof rawCurrentValue === 'string'
+              ? parseFloat(rawCurrentValue)
+              : Number(rawCurrentValue)) || null
+          : null
+
+      const currentValueNum =
+        currentValue !== null &&
+        !isNaN(currentValue) &&
+        isFinite(currentValue) &&
+        currentValue > 0
+          ? currentValue
+          : null
+
+      // Calculate cash flow (simple version)
+      const monthlyRent = Number(p.rentalIncome?.monthlyRent || 0)
+      const monthlyExpenses = 0
+      const activeLoan = p.loans?.find(
+        (l) => l.status === 'active' && l.isPrimary,
+      )
+      const monthlyLoanPayment = activeLoan?.monthlyPrincipalInterest
+        ? Number(activeLoan.monthlyPrincipalInterest)
+        : 0
+      const cashFlow = monthlyRent - monthlyExpenses - monthlyLoanPayment
+
+      // Check data completeness
+      const hasRentalIncome = monthlyRent > 0
+      const hasCurrentValue = currentValueNum !== null && currentValueNum > 0
+
+      return {
+        id: p.id,
+        address: p.address,
+        city: p.city,
+        state: p.state,
+        strategy: p.strategy?.investmentStrategy || null,
+        status: p.status.charAt(0).toUpperCase() + p.status.slice(1),
+        score,
+        cashFlow,
+        currentValue: formatPropertyValue(currentValueNum),
+        missingRentalIncome: !hasRentalIncome,
+        missingCurrentValue: !hasCurrentValue,
+        property: p,
+      }
+    })
   }, [properties])
 
   // Define columns for TanStack Table
@@ -156,6 +207,34 @@ export const ActivePropertiesList = ({
         cell: ({ row }) => {
           const cashFlow = row.original.cashFlow
           const formatted = formatCashFlow(cashFlow)
+          const isMissing = row.original.missingRentalIncome
+
+          if (isMissing && onAddRentalIncome) {
+            return (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onAddRentalIncome(row.original.id)
+                }}
+                className={cn(
+                  'text-sm font-black tracking-tight uppercase transition-colors flex items-center gap-2',
+                  isDark
+                    ? 'text-amber-400 hover:text-amber-300'
+                    : 'text-amber-600 hover:text-amber-700',
+                )}
+              >
+                <span
+                  className={cn(
+                    'w-1.5 h-1.5 rounded-full',
+                    isDark ? 'bg-amber-400' : 'bg-amber-500',
+                  )}
+                />
+                Add Rent
+              </button>
+            )
+          }
+
           return (
             <Typography
               variant="h3"
@@ -172,17 +251,49 @@ export const ActivePropertiesList = ({
       {
         accessorKey: 'currentValue',
         header: 'Value',
-        cell: ({ row }) => (
-          <Typography
-            variant="h3"
-            className={cn(
-              'text-xl font-black tabular-nums tracking-tighter text-right',
-              isDark ? 'text-white' : 'text-slate-900',
-            )}
-          >
-            {row.original.currentValue}
-          </Typography>
-        ),
+        cell: ({ row }) => {
+          const isMissing = row.original.missingCurrentValue
+
+          if (isMissing && onAddCurrentValue) {
+            return (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onAddCurrentValue(row.original.id)
+                  }}
+                  className={cn(
+                    'text-sm font-black tracking-tight uppercase transition-colors flex items-center gap-2 ml-auto',
+                    isDark
+                      ? 'text-amber-400 hover:text-amber-300'
+                      : 'text-amber-600 hover:text-amber-700',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'w-1.5 h-1.5 rounded-full',
+                      isDark ? 'bg-amber-400' : 'bg-amber-500',
+                    )}
+                  />
+                  Add Value
+                </button>
+              </div>
+            )
+          }
+
+          return (
+            <Typography
+              variant="h3"
+              className={cn(
+                'text-xl font-black tabular-nums tracking-tighter text-right',
+                isDark ? 'text-white' : 'text-slate-900',
+              )}
+            >
+              {row.original.currentValue}
+            </Typography>
+          )
+        },
       },
     ],
     [isDark],

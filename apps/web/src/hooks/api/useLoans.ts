@@ -32,9 +32,15 @@ export function useCreateLoan() {
       )
     },
     onSuccess: (data, variables) => {
-      // Invalidate the property query to refetch with new loan data
-      queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId] })
-      queryClient.invalidateQueries({ queryKey: ['properties'] })
+      // Invalidate and immediately refetch the property query to get new loan data
+      queryClient.invalidateQueries({ 
+        queryKey: ['properties', variables.propertyId],
+        refetchType: 'active', // Immediately refetch active queries
+      })
+      queryClient.invalidateQueries({ 
+        queryKey: ['properties'],
+        refetchType: 'active',
+      })
     },
   })
 }
@@ -59,7 +65,12 @@ export function useUpdateLoan() {
         throw new Error('User not authenticated')
       }
 
-      return await apiFetch<{ loan: Loan }>(
+      console.log('[useUpdateLoan] Sending update request:', {
+        propertyId,
+        loanId,
+        loanData,
+      })
+      const response = await apiFetch<{ loan: Loan }>(
         `/api/properties/${propertyId}/loans/${loanId}`,
         {
           method: 'PUT',
@@ -67,11 +78,31 @@ export function useUpdateLoan() {
           body: JSON.stringify(loanData),
         },
       )
+      console.log('[useUpdateLoan] Received response:', response)
+      return response
     },
-    onSuccess: (data, variables) => {
-      // Invalidate the property query to refetch with updated loan data
-      queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId] })
-      queryClient.invalidateQueries({ queryKey: ['properties'] })
+    onSuccess: async (data, variables) => {
+      console.log('[useUpdateLoan] onSuccess - invalidating queries for property:', variables.propertyId)
+      console.log('[useUpdateLoan] Updated loan data:', {
+        monthlyPrincipalInterest: data.loan.monthlyPrincipalInterest,
+        totalMonthlyPayment: data.loan.totalMonthlyPayment,
+      })
+      
+      // Invalidate and immediately refetch the property query to get updated loan data
+      await queryClient.invalidateQueries({ 
+        queryKey: ['properties', variables.propertyId],
+        refetchType: 'active', // Immediately refetch active queries
+      })
+      await queryClient.invalidateQueries({ 
+        queryKey: ['properties'],
+        refetchType: 'active',
+      })
+      
+      // Force a refetch to ensure fresh data
+      const refetchResult = await queryClient.refetchQueries({ 
+        queryKey: ['properties', variables.propertyId],
+      })
+      console.log('[useUpdateLoan] Refetch result:', refetchResult)
     },
   })
 }

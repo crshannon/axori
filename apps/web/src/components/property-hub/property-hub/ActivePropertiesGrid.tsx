@@ -8,12 +8,16 @@ import { cn } from '@/utils/helpers'
 interface ActivePropertiesGridProps {
   properties: Array<Property>
   onPropertyClick: (propertyId: string) => void
+  onAddRentalIncome?: (propertyId: string) => void
+  onAddCurrentValue?: (propertyId: string) => void
 }
 
 interface PropertyCardWrapperProps {
   property: Property
   onPropertyClick: (propertyId: string) => void
   isDark: boolean
+  onAddRentalIncome?: (propertyId: string) => void
+  onAddCurrentValue?: (propertyId: string) => void
 }
 
 /**
@@ -24,6 +28,8 @@ const PropertyCardWrapper = ({
   property,
   onPropertyClick,
   isDark,
+  onAddRentalIncome,
+  onAddCurrentValue,
 }: PropertyCardWrapperProps) => {
   const metrics = usePropertyGridMetrics(property)
 
@@ -40,6 +46,10 @@ const PropertyCardWrapper = ({
       currentValue={formatPropertyValue(metrics.currentValue)}
       theme={isDark ? 'dark' : 'light'}
       onClick={onPropertyClick}
+      missingRentalIncome={!metrics.dataCompleteness.hasRentalIncome}
+      missingCurrentValue={!metrics.dataCompleteness.hasCurrentValue}
+      onAddRentalIncome={onAddRentalIncome}
+      onAddCurrentValue={onAddCurrentValue}
       cardClassName={cn(
         'rounded-[3rem] border',
         isDark
@@ -54,6 +64,8 @@ const PropertyCardWrapper = ({
 export const ActivePropertiesGrid = ({
   properties,
   onPropertyClick,
+  onAddRentalIncome,
+  onAddCurrentValue,
 }: ActivePropertiesGridProps) => {
   const { appTheme } = useTheme()
   const isDark = appTheme === 'dark'
@@ -66,6 +78,8 @@ export const ActivePropertiesGrid = ({
           property={property}
           onPropertyClick={onPropertyClick}
           isDark={isDark}
+          onAddRentalIncome={onAddRentalIncome}
+          onAddCurrentValue={onAddCurrentValue}
         />
       ))}
     </div>

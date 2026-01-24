@@ -16,9 +16,9 @@ export interface EmptyStateCardProps {
   /** Highlighted terms in description (will be wrapped in spans) */
   highlightedTerms?: string[];
   /** Button text */
-  buttonText: string;
+  buttonText?: string;
   /** Button click handler */
-  onButtonClick: () => void;
+  onButtonClick?: () => void;
   /** Color theme variant */
   variant?: "violet" | "slate" | "indigo" | "emerald";
   /** Show placeholder skeleton bars */
@@ -221,33 +221,35 @@ export const EmptyStateCard = ({
         </div>
 
         {/* Right: Button */}
-        <div className="relative z-10">
-          {showPlaceholders && (
-            <div className="mb-4 flex items-center gap-4">
-              <div
-                className={cn("h-3 w-24 rounded-full", styles.placeholder)}
-              ></div>
-              <div
-                className={cn("h-6 w-32 rounded-xl", styles.placeholderLarge)}
-              ></div>
-            </div>
-          )}
-          <Button
-            onClick={onButtonClick}
-            variant="primary"
-            className={cn(
-              `
-                rounded-xl px-6 py-3 text-xs font-black tracking-widest
-                whitespace-nowrap uppercase shadow-lg transition-transform
-                group-hover:scale-[1.02]
-              `,
-              styles.button,
-              styles.focusRing
+        {buttonText && onButtonClick && (
+          <div className="relative z-10">
+            {showPlaceholders && (
+              <div className="mb-4 flex items-center gap-4">
+                <div
+                  className={cn("h-3 w-24 rounded-full", styles.placeholder)}
+                ></div>
+                <div
+                  className={cn("h-6 w-32 rounded-xl", styles.placeholderLarge)}
+                ></div>
+              </div>
             )}
-          >
-            {buttonText}
-          </Button>
-        </div>
+            <Button
+              onClick={onButtonClick}
+              variant="primary"
+              className={cn(
+                `
+                  rounded-xl px-6 py-3 text-xs font-black tracking-widest
+                  whitespace-nowrap uppercase shadow-lg transition-transform
+                  group-hover:scale-[1.02]
+                `,
+                styles.button,
+                styles.focusRing
+              )}
+            >
+              {buttonText}
+            </Button>
+          </div>
+        )}
       </Card>
     );
   }
@@ -310,24 +312,26 @@ export const EmptyStateCard = ({
           )}
         </div>
 
-        <div className="relative z-10 mt-12">
-          <Button
-            onClick={onButtonClick}
-            variant="primary"
-            fullWidth
-            className={cn(
-              `
-                rounded-2xl py-4 text-[10px] font-black tracking-widest
-                uppercase shadow-xl
-                group-hover:scale-[1.02]
-              `,
-              styles.button,
-              styles.focusRing
-            )}
-          >
-            {buttonText}
-          </Button>
-        </div>
+        {buttonText && onButtonClick && (
+          <div className="relative z-10 mt-12">
+            <Button
+              onClick={onButtonClick}
+              variant="primary"
+              fullWidth
+              className={cn(
+                `
+                  rounded-2xl py-4 text-[10px] font-black tracking-widest
+                  uppercase shadow-xl
+                  group-hover:scale-[1.02]
+                `,
+                styles.button,
+                styles.focusRing
+              )}
+            >
+              {buttonText}
+            </Button>
+          </div>
+        )}
       </div>
     </Card>
   );

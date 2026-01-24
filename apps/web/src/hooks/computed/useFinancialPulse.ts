@@ -109,25 +109,69 @@ export function useFinancialPulse(propertyId: string): FinancialMetrics {
       projectedSource = 'structured'
     }
 
-    // Calculate actual cash flow from transactions
+    // Calculate actual cash flow from transactions (current month only)
     let actualCashFlow: number | null = null
     let actualSource: 'transactions' | null = null
     let liquidReserves = 0
 
     if (transactionsData?.transactions && transactionsData.transactions.length > 0) {
-      const monthlyIncome = activeTransactions
-        .filter((t) => t.type === 'income')
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+      // Filter to current month transactions only
+      const today = new Date()
+      const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+      const currentMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999)
 
-      const monthlyExpenses = activeTransactions
-        .filter((t) => t.type === 'expense')
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+      const currentMonthTransactions = activeTransactions.filter((t) => {
+        // Parse transaction date (stored as "YYYY-MM-DD" string)
+        const [tYear, tMonth, tDay] = t.transactionDate.split('-').map(Number)
+        const transactionDate = new Date(tYear, tMonth - 1, tDay)
+        return transactionDate >= currentMonthStart && transactionDate <= currentMonthEnd
+      })
 
-      actualCashFlow = monthlyIncome - monthlyExpenses
-      actualSource = 'transactions'
+      // If no current month transactions, try most recent month with transactions
+      let transactionsToUse = currentMonthTransactions
+      if (transactionsToUse.length === 0) {
+        // Find the most recent month that has transactions
+        const transactionsByMonth = new Map<string, typeof activeTransactions>()
+        activeTransactions.forEach((t) => {
+          const [tYear, tMonth] = t.transactionDate.split('-').map(Number)
+          const monthKey = `${tYear}-${String(tMonth).padStart(2, '0')}`
+          if (!transactionsByMonth.has(monthKey)) {
+            transactionsByMonth.set(monthKey, [])
+          }
+          transactionsByMonth.get(monthKey)!.push(t)
+        })
 
-      // Calculate liquid reserves (CapEx accrual)
-      liquidReserves = monthlyExpenses * 12 // Simplified: 12 months of expenses
+        // Get the most recent month
+        const sortedMonths = Array.from(transactionsByMonth.keys()).sort().reverse()
+        if (sortedMonths.length > 0) {
+          transactionsToUse = transactionsByMonth.get(sortedMonths[0]) || []
+        }
+      }
+
+      if (transactionsToUse.length > 0) {
+        const monthlyIncome = transactionsToUse
+          .filter((t) => t.type === 'income')
+          .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+
+        const monthlyExpenses = transactionsToUse
+          .filter((t) => t.type === 'expense')
+          .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+
+        actualCashFlow = monthlyIncome - monthlyExpenses
+        actualSource = 'transactions'
+
+        // Calculate liquid reserves (12 months of average monthly expenses)
+        // Use all transactions to get average monthly expenses
+        const allMonthlyExpenses = activeTransactions
+          .filter((t) => t.type === 'expense')
+          .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+        const monthsOfData = Math.max(1, new Set(activeTransactions.map(t => {
+          const [year, month] = t.transactionDate.split('-').map(Number)
+          return `${year}-${month}`
+        })).size)
+        const avgMonthlyExpenses = allMonthlyExpenses / monthsOfData
+        liquidReserves = avgMonthlyExpenses * 12
+      }
     }
 
     // Calculate variance (actual - projected)

@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
-import { Drawer, ErrorCard, Input, Select } from '@axori/ui'
+import { useEffect, useMemo, useState } from 'react'
+import { Drawer, ErrorCard, Input, Select, Typography } from '@axori/ui'
 import { LOAN_TYPE_OPTIONS } from '@axori/shared'
 import { DrawerSectionTitle } from './DrawerSectionTitle'
 import type { LoanInsertApi } from '@axori/shared'
 import { useProperty } from '@/hooks/api/useProperties'
 import { useCreateLoan, useUpdateLoan } from '@/hooks/api/useLoans'
+import { calculateMonthlyPrincipalInterest } from '@/utils/finances'
 
 interface AddLoanDrawerProps {
   isOpen: boolean
@@ -95,6 +96,18 @@ export const AddLoanDrawer = ({
     }
   }, [existingLoan, isOpen, isEditMode])
 
+  // Calculate monthly payment in real-time as user changes inputs
+  const calculatedMonthlyPayment = useMemo(() => {
+    const principal = Number(formData.currentBalance) || Number(formData.originalLoanAmount) || 0
+    const interestRate = Number(formData.interestRate) || 0
+    const termMonths = Number(formData.termMonths) || 0
+
+    if (principal > 0 && interestRate > 0 && termMonths > 0) {
+      return calculateMonthlyPrincipalInterest(principal, interestRate, termMonths)
+    }
+    return null
+  }, [formData.currentBalance, formData.originalLoanAmount, formData.interestRate, formData.termMonths])
+
   const handleChange = (field: string, value: string | number | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
     // Clear error when user starts typing
@@ -138,6 +151,16 @@ export const AddLoanDrawer = ({
     }
 
     try {
+      // Calculate monthly P&I payment
+      const principal = Number(formData.currentBalance) || Number(formData.originalLoanAmount)
+      const interestRate = Number(formData.interestRate)
+      const termMonths = Number(formData.termMonths)
+      const monthlyPrincipalInterest = calculateMonthlyPrincipalInterest(
+        principal,
+        interestRate,
+        termMonths,
+      )
+
       const loanData: Omit<LoanInsertApi, 'userId'> = {
         propertyId,
         loanType: formData.loanType || 'conventional',
@@ -149,14 +172,34 @@ export const AddLoanDrawer = ({
         termMonths: Number(formData.termMonths),
         currentBalance: Number(formData.currentBalance),
         startDate: formData.startDate || undefined,
+        monthlyPrincipalInterest, // Include calculated monthly payment
       }
 
       if (isEditMode && loanId) {
-        await updateLoan.mutateAsync({
+        console.log('[Loan Drawer] Updating loan:', {
+          loanId,
+          propertyId,
+          calculatedMonthlyPayment: monthlyPrincipalInterest,
+          loanData: {
+            ...loanData,
+            monthlyPrincipalInterest, // Show calculated value
+          },
+        })
+        const result = await updateLoan.mutateAsync({
           ...loanData,
           loanId,
         })
+        console.log('[Loan Drawer] Update API response:', result)
+        console.log('[Loan Drawer] Updated loan monthlyPrincipalInterest:', result.loan?.monthlyPrincipalInterest)
+        console.log('[Loan Drawer] Updated loan totalMonthlyPayment:', result.loan?.totalMonthlyPayment)
       } else {
+        console.log('[Loan Drawer] Creating loan:', {
+          propertyId,
+          loanData: {
+            ...loanData,
+            monthlyPrincipalInterest, // Show calculated value
+          },
+        })
         await createLoan.mutateAsync(loanData)
         // Reset form only on create
         setFormData({
@@ -309,6 +352,33 @@ export const AddLoanDrawer = ({
                 error={errors.currentBalance}
               />
             </div>
+
+            {/* Calculated Monthly Payment Display */}
+            {calculatedMonthlyPayment !== null && (
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10">
+                <div className="flex items-center justify-between">
+                  <Typography
+                    variant="caption"
+                    weight="black"
+                    className="text-slate-600 dark:text-slate-400 uppercase tracking-widest"
+                  >
+                    Calculated Monthly Payment (P&I)
+                  </Typography>
+                  <Typography
+                    variant="h3"
+                    className="tabular-nums text-slate-900 dark:text-white font-black"
+                  >
+                    ${Math.round(calculatedMonthlyPayment).toLocaleString()}
+                  </Typography>
+                </div>
+                <Typography
+                  variant="overline"
+                  className="mt-2 text-slate-500 dark:text-slate-500 opacity-70"
+                >
+                  Based on current balance, interest rate, and term
+                </Typography>
+              </div>
+            )}
 
             {/* Servicer Name */}
             <div className="group">

@@ -8,6 +8,7 @@ import {
 import { useUser } from '@clerk/clerk-react'
 import { useEffect, useState } from 'react'
 import { Plus } from 'lucide-react'
+import { z } from 'zod'
 import {
   useDefaultPortfolio,
   useDeleteProperty,
@@ -28,14 +29,34 @@ import {
   PropertyViewControls,
   StrategicAlerts,
 } from '@/components/property-hub/property-hub'
+import {
+  RentalIncomeDrawer,
+  ValuationDrawer,
+} from '@/components/drawers'
+
+const propertyHubSearchSchema = z.object({
+  drawer: z.string().optional(), // Allow any string for child routes to handle their own validation
+  propertyId: z.string().uuid().optional(),
+})
 
 export const Route = createFileRoute('/_authed/property-hub')({
   component: RouteComponent,
+  validateSearch: (search: Record<string, unknown>) => {
+    const parsed = propertyHubSearchSchema.safeParse(search)
+    if (!parsed.success) {
+      return { drawer: undefined, propertyId: undefined }
+    }
+    // Pass through drawer value - don't filter it out
+    // This route only uses 'rental-income' and 'valuation', but child routes
+    // (like financials) need other drawer values like 'add-loan', 'acquisition', etc.
+    return parsed.data
+  },
 })
 
 function RouteComponent() {
-  const navigate = useNavigate()
+  const navigate = useNavigate({ from: Route.fullPath })
   const location = useLocation()
+  const search = Route.useSearch()
   const { isSignedIn, isLoaded } = useUser()
   const { completed: onboardingCompleted, isLoading: onboardingLoading } =
     useOnboardingStatus()
@@ -45,6 +66,51 @@ function RouteComponent() {
   const [searchQuery, setSearchQuery] = useState('')
   const [deletePropertyId, setDeletePropertyId] = useState<string | null>(null)
   const [deletePropertyAddress, setDeletePropertyAddress] = useState<string>('')
+
+  // Drawer state from URL search params
+  // Only check for drawers specific to this route (child routes handle their own)
+  const isRentalIncomeDrawerOpen = search.drawer === 'rental-income'
+  const isValuationDrawerOpen = search.drawer === 'valuation'
+  const drawerPropertyId = search.propertyId
+
+  const handleCloseDrawer = () => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        drawer: undefined,
+        propertyId: undefined,
+      }),
+      replace: true,
+    })
+  }
+
+  const handleOpenRentalIncomeDrawer = (propertyId: string) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        drawer: 'rental-income',
+        propertyId,
+      }),
+      replace: true,
+    })
+  }
+
+  const handleOpenValuationDrawer = (propertyId: string) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        drawer: 'valuation',
+        propertyId,
+      }),
+      replace: true,
+    })
+  }
+
+  const handleDrawerSuccess = () => {
+    // Invalidate queries to refresh property data
+    // The drawers will handle their own query invalidation via useUpdateProperty
+    handleCloseDrawer()
+  }
 
   // Fetch real properties from API
   const { data: portfolio } = useDefaultPortfolio()
@@ -203,12 +269,16 @@ function RouteComponent() {
           <ActivePropertiesGrid
             properties={filteredActiveProps}
             onPropertyClick={onNavigatePropertyAnalysis}
+            onAddRentalIncome={handleOpenRentalIncomeDrawer}
+            onAddCurrentValue={handleOpenValuationDrawer}
           />
         )}
         {viewMode === 'list' && (
           <ActivePropertiesList
             properties={filteredActiveProps}
             onPropertyClick={onNavigatePropertyAnalysis}
+            onAddRentalIncome={handleOpenRentalIncomeDrawer}
+            onAddCurrentValue={handleOpenValuationDrawer}
           />
         )}
         <ManagementTopology activeProperties={activeProperties} />
@@ -236,6 +306,24 @@ function RouteComponent() {
           }}
           isDeleting={deleteProperty.isPending}
         />
+      )}
+
+      {/* Drawers */}
+      {drawerPropertyId && (
+        <>
+          <RentalIncomeDrawer
+            isOpen={isRentalIncomeDrawerOpen}
+            onClose={handleCloseDrawer}
+            propertyId={drawerPropertyId}
+            onSuccess={handleDrawerSuccess}
+          />
+          <ValuationDrawer
+            isOpen={isValuationDrawerOpen}
+            onClose={handleCloseDrawer}
+            propertyId={drawerPropertyId}
+            onSuccess={handleDrawerSuccess}
+          />
+        </>
       )}
     </main>
   )

@@ -8,6 +8,7 @@ import {
   calculateTotalDebtService,
   calculateTotalFixedExpenses,
 } from '@/utils/finances'
+import { usePropertyCompleteness } from '@/components/property-hub/property-details/overview/hooks/usePropertyCompleteness'
 
 export interface PropertyGridMetrics {
   // Completeness score (0-100)
@@ -24,6 +25,13 @@ export interface PropertyGridMetrics {
   equity: number | null
   capRate: number | null
   ltv: number | null
+
+  // Data completeness status
+  dataCompleteness: {
+    hasRentalIncome: boolean
+    hasCurrentValue: boolean
+    missingFields: Array<'rentalIncome' | 'currentValue'>
+  }
 }
 
 /**
@@ -34,18 +42,12 @@ export interface PropertyGridMetrics {
 export function usePropertyGridMetrics(
   property: Property,
 ): PropertyGridMetrics {
+  // Use the same Asset Fidelity score calculation as the overview page
+  const completeness = usePropertyCompleteness(property, property.id)
+
   return useMemo(() => {
-    // Calculate completeness score
-    const checks = [
-      property.valuation?.currentValue || property.acquisition?.currentValue,
-      property.rentalIncome?.monthlyRent,
-      property.operatingExpenses,
-      property.acquisition?.purchaseDate,
-      property.characteristics?.propertyType,
-      property.loans?.some((l) => l.status === 'active'),
-    ]
-    const filled = checks.filter(Boolean).length
-    const score = Math.round((filled / checks.length) * 100)
+    // Use the Asset Fidelity score from usePropertyCompleteness (same as overview page)
+    const score = completeness.score
 
     // Get current value (convert to number if string)
     // Handle both string and number types, filter out NaN and 0 if they're invalid
@@ -164,6 +166,20 @@ export function usePropertyGridMetrics(
         ? (totalLoanAmount / currentValueNum) * 100
         : null
 
+    // Check data completeness
+    const hasRentalIncome =
+      !!property.rentalIncome?.monthlyRent &&
+      Number(property.rentalIncome.monthlyRent) > 0
+    const hasCurrentValue = currentValueNum !== null && currentValueNum > 0
+
+    const missingFields: Array<'rentalIncome' | 'currentValue'> = []
+    if (!hasRentalIncome) {
+      missingFields.push('rentalIncome')
+    }
+    if (!hasCurrentValue) {
+      missingFields.push('currentValue')
+    }
+
     return {
       score,
       cashFlow,
@@ -172,6 +188,11 @@ export function usePropertyGridMetrics(
       equity,
       capRate,
       ltv,
+      dataCompleteness: {
+        hasRentalIncome,
+        hasCurrentValue,
+        missingFields,
+      },
     }
-  }, [property])
+  }, [property, completeness.score])
 }

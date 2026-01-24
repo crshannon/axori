@@ -103,7 +103,68 @@ propertiesRouter.get(
         return dateB - dateA;
       });
 
-      return c.json({ properties: filtered });
+      // Join all normalized tables for each property
+      const propertiesWithData = await Promise.all(
+        filtered.map(async (property) => {
+          const [characteristics] = await db
+            .select()
+            .from(propertyCharacteristics)
+            .where(eq(propertyCharacteristics.propertyId, property.id))
+            .limit(1);
+
+          const [valuation] = await db
+            .select()
+            .from(propertyValuation)
+            .where(eq(propertyValuation.propertyId, property.id))
+            .limit(1);
+
+          const [acquisition] = await db
+            .select()
+            .from(propertyAcquisition)
+            .where(eq(propertyAcquisition.propertyId, property.id))
+            .limit(1);
+
+          const [rentalIncome] = await db
+            .select()
+            .from(propertyRentalIncome)
+            .where(eq(propertyRentalIncome.propertyId, property.id))
+            .limit(1);
+
+          const [operatingExpenses] = await db
+            .select()
+            .from(propertyOperatingExpenses)
+            .where(eq(propertyOperatingExpenses.propertyId, property.id))
+            .limit(1);
+
+          const [management] = await db
+            .select()
+            .from(propertyManagement)
+            .where(eq(propertyManagement.propertyId, property.id))
+            .limit(1);
+
+          // Get all active loans for the property
+          const propertyLoans = await db
+            .select()
+            .from(loans)
+            .where(and(
+              eq(loans.propertyId, property.id),
+              eq(loans.status, "active")
+            ));
+
+          return {
+            ...property,
+            characteristics: characteristics || null,
+            valuation: valuation || null,
+            acquisition: acquisition || null,
+            rentalIncome: rentalIncome || null,
+            operatingExpenses: operatingExpenses || null,
+            management: management || null,
+            loans: propertyLoans || [],
+          };
+        })
+      );
+
+      return c.json({ properties: propertiesWithData });
     } else {
       // Get all portfolios user has access to
       const userPortfoliosList = await db
@@ -138,7 +199,68 @@ propertiesRouter.get(
         return dateB - dateA;
       });
 
-      return c.json({ properties: filtered });
+      // Join all normalized tables for each property
+      const propertiesWithData = await Promise.all(
+        filtered.map(async (property) => {
+          const [characteristics] = await db
+            .select()
+            .from(propertyCharacteristics)
+            .where(eq(propertyCharacteristics.propertyId, property.id))
+            .limit(1);
+
+          const [valuation] = await db
+            .select()
+            .from(propertyValuation)
+            .where(eq(propertyValuation.propertyId, property.id))
+            .limit(1);
+
+          const [acquisition] = await db
+            .select()
+            .from(propertyAcquisition)
+            .where(eq(propertyAcquisition.propertyId, property.id))
+            .limit(1);
+
+          const [rentalIncome] = await db
+            .select()
+            .from(propertyRentalIncome)
+            .where(eq(propertyRentalIncome.propertyId, property.id))
+            .limit(1);
+
+          const [operatingExpenses] = await db
+            .select()
+            .from(propertyOperatingExpenses)
+            .where(eq(propertyOperatingExpenses.propertyId, property.id))
+            .limit(1);
+
+          const [management] = await db
+            .select()
+            .from(propertyManagement)
+            .where(eq(propertyManagement.propertyId, property.id))
+            .limit(1);
+
+          // Get all active loans for the property
+          const propertyLoans = await db
+            .select()
+            .from(loans)
+            .where(and(
+              eq(loans.propertyId, property.id),
+              eq(loans.status, "active")
+            ));
+
+          return {
+            ...property,
+            characteristics: characteristics || null,
+            valuation: valuation || null,
+            acquisition: acquisition || null,
+            rentalIncome: rentalIncome || null,
+            operatingExpenses: operatingExpenses || null,
+            management: management || null,
+            loans: propertyLoans || [],
+          };
+        })
+      );
+
+      return c.json({ properties: propertiesWithData });
     }
   }, { operation: "listProperties" })
 );
@@ -1104,6 +1226,22 @@ propertiesRouter.post(
     // Convert interest rate from percentage to decimal (e.g., 6.5% -> 0.06500)
     const interestRateDecimal = validated.interestRate! / 100;
 
+    // Calculate monthly principal and interest payment
+    // Use currentBalance for calculation (or originalLoanAmount if currentBalance not provided)
+    const principal = validated.currentBalance! || validated.originalLoanAmount!;
+    const monthlyRate = interestRateDecimal / 12;
+    let monthlyPrincipalInterest: string;
+    
+    if (monthlyRate === 0) {
+      // If interest rate is 0, payment is just principal divided by term
+      monthlyPrincipalInterest = String(principal / validated.termMonths!);
+    } else {
+      // Standard amortization formula: P * r * (1 + r)^n / ((1 + r)^n - 1)
+      const numerator = principal * monthlyRate * Math.pow(1 + monthlyRate, validated.termMonths!);
+      const denominator = Math.pow(1 + monthlyRate, validated.termMonths!) - 1;
+      monthlyPrincipalInterest = String(numerator / denominator);
+    }
+
     // Prepare data for database insert (convert to database format, remove userId)
     // All required fields are guaranteed to be present after validation
     const loanDataForInsert = {
@@ -1119,6 +1257,10 @@ propertiesRouter.post(
       maturityDate: validated.maturityDate || null,
       currentBalance: String(validated.currentBalance!),
       balanceAsOfDate: new Date().toISOString().split('T')[0],
+      monthlyPrincipalInterest, // Store calculated monthly payment
+      monthlyEscrow: validated.monthlyEscrow ? String(validated.monthlyEscrow) : '0',
+      // Calculate totalMonthlyPayment (P&I + Escrow)
+      totalMonthlyPayment: String(Number(monthlyPrincipalInterest) + (validated.monthlyEscrow ? Number(validated.monthlyEscrow) : 0)),
       status: validated.status || ("active" as const),
       isPrimary: validated.isPrimary ?? true,
       loanPosition: 1,
@@ -1262,6 +1404,83 @@ propertiesRouter.put(
       loanDataForUpdate.balanceAsOfDate = new Date().toISOString().split('T')[0];
     }
 
+    // ALWAYS recalculate monthly principal and interest when updating loan terms
+    // Use updated values if provided, otherwise use existing values from the database
+    const principal = validated.currentBalance !== undefined 
+      ? validated.currentBalance 
+      : validated.originalLoanAmount !== undefined
+        ? validated.originalLoanAmount
+        : Number(existingLoan.currentBalance);
+    
+    const interestRate = validated.interestRate !== undefined
+      ? validated.interestRate / 100 // Convert percentage to decimal
+      : Number(existingLoan.interestRate);
+    
+    const termMonths = validated.termMonths !== undefined
+      ? validated.termMonths
+      : existingLoan.termMonths;
+
+    // Calculate monthly principal and interest payment
+    const monthlyRate = interestRate / 12;
+    let monthlyPrincipalInterest: string;
+    
+    if (monthlyRate === 0 || termMonths === 0) {
+      // If interest rate is 0 or term is 0, payment is just principal divided by term
+      monthlyPrincipalInterest = termMonths > 0 ? String(principal / termMonths) : '0';
+    } else {
+      // Standard amortization formula: P * r * (1 + r)^n / ((1 + r)^n - 1)
+      const numerator = principal * monthlyRate * Math.pow(1 + monthlyRate, termMonths);
+      const denominator = Math.pow(1 + monthlyRate, termMonths) - 1;
+      monthlyPrincipalInterest = String(numerator / denominator);
+    }
+    
+    // Always update monthlyPrincipalInterest to ensure it's current
+    loanDataForUpdate.monthlyPrincipalInterest = monthlyPrincipalInterest;
+    
+    // Also update totalMonthlyPayment (P&I + Escrow)
+    // Preserve existing escrow value - if not being updated, use existing value
+    // If escrow field is null/undefined, try to calculate it from totalMonthlyPayment - old monthlyPrincipalInterest
+    let monthlyEscrow: number;
+    if (validated.monthlyEscrow !== undefined) {
+      // Use new escrow value if provided
+      monthlyEscrow = validated.monthlyEscrow;
+      loanDataForUpdate.monthlyEscrow = String(monthlyEscrow);
+    } else if (existingLoan.monthlyEscrow && Number(existingLoan.monthlyEscrow) > 0) {
+      // Use existing escrow value
+      monthlyEscrow = Number(existingLoan.monthlyEscrow);
+    } else if (existingLoan.totalMonthlyPayment && existingLoan.monthlyPrincipalInterest) {
+      // Calculate escrow from existing total - old P&I
+      const oldPAndI = Number(existingLoan.monthlyPrincipalInterest);
+      const oldTotal = Number(existingLoan.totalMonthlyPayment);
+      monthlyEscrow = oldTotal - oldPAndI;
+      // Only set escrow if calculated value is positive
+      if (monthlyEscrow > 0) {
+        loanDataForUpdate.monthlyEscrow = String(monthlyEscrow);
+      }
+    } else {
+      // No escrow
+      monthlyEscrow = 0;
+    }
+    
+    // Recalculate totalMonthlyPayment with new P&I and preserved/calculated escrow
+    const totalMonthlyPayment = Number(monthlyPrincipalInterest) + monthlyEscrow;
+    loanDataForUpdate.totalMonthlyPayment = String(totalMonthlyPayment);
+    
+    // Log for debugging (server-side - check API logs/terminal)
+    console.log('[Loan Update API] Recalculated monthly payment:', {
+      loanId,
+      propertyId: id,
+      principal,
+      interestRate: interestRate * 100 + '%',
+      termMonths,
+      monthlyPrincipalInterest,
+      monthlyEscrow,
+      totalMonthlyPayment,
+      existingLoanEscrow: existingLoan.monthlyEscrow,
+      existingLoanTotal: existingLoan.totalMonthlyPayment,
+      existingLoanPAndI: existingLoan.monthlyPrincipalInterest,
+    });
+
     // Update the loan
     const [updatedLoan] = await db
       .update(loans)
@@ -1271,6 +1490,13 @@ propertiesRouter.put(
         eq(loans.propertyId, id)
       ))
       .returning();
+
+    // Log what was actually saved
+    console.log('[Loan Update API] Saved loan data:', {
+      monthlyPrincipalInterest: updatedLoan.monthlyPrincipalInterest,
+      monthlyEscrow: updatedLoan.monthlyEscrow,
+      totalMonthlyPayment: updatedLoan.totalMonthlyPayment,
+    });
 
     return c.json({ loan: updatedLoan }, 200);
   } catch (error) {
