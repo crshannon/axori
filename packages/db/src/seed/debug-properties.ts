@@ -1,6 +1,6 @@
 /**
  * Debug Properties Access
- * 
+ *
  * Checks why properties aren't visible - verifies user, portfolio, and property relationships
  */
 
@@ -48,13 +48,13 @@ async function debugProperties() {
     console.log(`\n🔍 Checking user-portfolio relationships:\n`);
     for (const user of allUsers) {
       console.log(`👤 User: ${user.email} (${user.id})`);
-      
+
       // Get their portfolios
       const userPorts = await db
         .select()
         .from(userPortfolios)
         .where(eq(userPortfolios.userId, user.id));
-      
+
       console.log(`   Portfolios: ${userPorts.length}`);
       for (const up of userPorts) {
         // Get properties in this portfolio
@@ -62,7 +62,7 @@ async function debugProperties() {
           .select()
           .from(properties)
           .where(eq(properties.portfolioId, up.portfolioId));
-        
+
         console.log(
           `   - Portfolio ${up.portfolioId} (Role: ${up.role}): ${portfolioProperties.length} properties`
         );
