@@ -9,4 +9,6 @@ export { LearningHubDrawer } from './LearningHubDrawer'
 export { NotificationSettingsDrawer } from './NotificationSettingsDrawer'
 export { OperatingExpensesDrawer } from './OperatingExpensesDrawer'
 export { PropertyAcquisitionDrawer } from './PropertyAcqusitionDrawer'
+export { RentalIncomeDrawer } from './RentalIncomeDrawer'
+export { ValuationDrawer } from './ValuationDrawer'
 

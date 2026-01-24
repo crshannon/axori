@@ -48,6 +48,16 @@ export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
     })
   }
 
+  const handleManageRentalIncome = () => {
+    navigate({
+      to: '/property-hub/$propertyId/financials',
+      params: { propertyId },
+      search: {
+        drawer: 'rental-income',
+      },
+    })
+  }
+
   if (isLoading || !property) {
     return (
       <Card variant="rounded" padding="lg" radius="xl">
@@ -88,6 +98,89 @@ export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
       </div>
 
       <div className="space-y-6 relative z-10">
+        {/* Lease Income Information Section */}
+        <div className="p-6 rounded-[2rem] bg-violet-500/5 border border-violet-500/10">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              <Typography
+                variant="caption"
+                className="text-violet-600/70 dark:text-violet-500/70 mb-2"
+              >
+                Lease Income Information
+              </Typography>
+              {property.rentalIncome?.monthlyRent ? (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Typography variant="overline" className="text-slate-400">
+                      Monthly Rent
+                    </Typography>
+                    <Typography
+                      variant="h4"
+                      className="tabular-nums text-violet-500 dark:text-violet-400"
+                    >
+                      ${Number(property.rentalIncome.monthlyRent).toLocaleString()}
+                    </Typography>
+                  </div>
+                  {property.rentalIncome.rentSource && (
+                    <Typography variant="overline" className="text-slate-400 text-[9px]">
+                      Source: {property.rentalIncome.rentSource.charAt(0).toUpperCase() + property.rentalIncome.rentSource.slice(1)}
+                    </Typography>
+                  )}
+                  {(property.rentalIncome.leaseStartDate || property.rentalIncome.leaseEndDate) && (
+                    <div className="flex gap-4 mt-2">
+                      {property.rentalIncome.leaseStartDate && (
+                        <Typography variant="overline" className="text-slate-400 text-[9px]">
+                          Start: {new Date(property.rentalIncome.leaseStartDate).toLocaleDateString()}
+                        </Typography>
+                      )}
+                      {property.rentalIncome.leaseEndDate && (
+                        <Typography variant="overline" className="text-slate-400 text-[9px]">
+                          End: {new Date(property.rentalIncome.leaseEndDate).toLocaleDateString()}
+                        </Typography>
+                      )}
+                    </div>
+                  )}
+                  {/* Calculate total other income */}
+                  {(() => {
+                    const otherIncome = [
+                      property.rentalIncome.parkingIncomeMonthly,
+                      property.rentalIncome.laundryIncomeMonthly,
+                      property.rentalIncome.petRentMonthly,
+                      property.rentalIncome.storageIncomeMonthly,
+                      property.rentalIncome.utilityReimbursementMonthly,
+                      property.rentalIncome.otherIncomeMonthly,
+                    ]
+                      .filter(Boolean)
+                      .reduce((sum, val) => sum + Number(val || 0), 0)
+                    return otherIncome > 0 ? (
+                      <Typography variant="overline" className="text-slate-400 text-[9px]">
+                        Other Income: +${otherIncome.toLocaleString()}/mo
+                      </Typography>
+                    ) : null
+                  })()}
+                </div>
+              ) : (
+                <Typography variant="overline" className="text-slate-400">
+                  No lease income data configured
+                </Typography>
+              )}
+            </div>
+            {canEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-4 py-2 px-4 rounded-xl bg-violet-500/10 border-violet-500/20 text-violet-600 dark:text-violet-400 dark:bg-violet-500/5 dark:border-violet-500/10 dark:hover:bg-violet-500/10 font-black text-[9px] uppercase tracking-widest transition-all hover:bg-violet-500/20 dark:hover:bg-violet-500/10"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleManageRentalIncome()
+                }}
+              >
+                Configure
+              </Button>
+            )}
+          </div>
+        </div>
+
         {/* Expected Inflow Card */}
         <div className="p-6 rounded-[2rem] bg-emerald-500/5 border border-emerald-500/10">
           <div className="flex justify-between items-center mb-1">

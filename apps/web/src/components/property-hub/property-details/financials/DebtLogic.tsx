@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Badge, Button, Card, EmptyStateCard, Typography } from '@axori/ui'
 import { useNavigate } from '@tanstack/react-router'
 import { LearningHubButton } from './LearningHubButton'
@@ -16,6 +17,20 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
   const navigate = useNavigate()
   const { data: property, isLoading } = useProperty(propertyId)
   const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
+
+  // Debug: Log loan data when it changes
+  useEffect(() => {
+    if (property?.loans) {
+      const activeLoans = property.loans.filter((loan) => loan.status === 'active')
+      console.log('[DebtLogic] Active loans data:', activeLoans.map(loan => ({
+        id: loan.id,
+        lenderName: loan.lenderName,
+        monthlyPrincipalInterest: loan.monthlyPrincipalInterest,
+        monthlyEscrow: loan.monthlyEscrow,
+        totalMonthlyPayment: loan.totalMonthlyPayment,
+      })))
+    }
+  }, [property?.loans])
 
   const handleAddLoan = () => {
     navigate({
@@ -57,9 +72,17 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
     )
   }
 
-  // Get all active loans (not just primary)
+  // Get all active loans (not just primary) and sort with primary first
   const activeLoans =
-    property.loans?.filter((loan) => loan.status === 'active') || []
+    property.loans
+      ?.filter((loan) => loan.status === 'active')
+      .sort((a, b) => {
+        // Primary loans first
+        if (a.isPrimary && !b.isPrimary) return -1
+        if (!a.isPrimary && b.isPrimary) return 1
+        // Then by loan position
+        return (a.loanPosition || 0) - (b.loanPosition || 0)
+      }) || []
 
   // Loan summary calculations
   const summary = useLoanSummary(activeLoans)
@@ -212,10 +235,29 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
           <Card
             variant="rounded"
             padding="sm"
-            radius="lg"
+            radius="sm"
             className="mb-8 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10"
           >
             <div className="grid grid-cols-2 gap-4 sm:gap-6">
+            <div className="min-w-0">
+                <Typography
+                  variant="caption"
+                  weight="black"
+                  className="text-violet-600 dark:text-violet-400 mb-2 block uppercase tracking-widest"
+                >
+                  Monthly Payment
+                </Typography>
+                <Typography
+                  variant="h3"
+                  weight="black"
+                  className="tabular-nums text-violet-600 dark:text-violet-400 tracking-tighter break-words font-black"
+                >
+                  $
+                  {summary.totalMonthlyPayment.toLocaleString(undefined, {
+                    maximumFractionDigits: 0,
+                  })}
+                </Typography>
+              </div>
               <div className="min-w-0">
                 <Typography
                   variant="caption"
@@ -247,23 +289,7 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
                   {summary.weightedInterestRate.toFixed(2)}%
                 </Typography>
               </div>
-              <div className="min-w-0">
-                <Typography
-                  variant="caption"
-                  className="text-slate-500 dark:text-slate-400 mb-2 block"
-                >
-                  Total Monthly
-                </Typography>
-                <Typography
-                  variant="h4"
-                  className="tabular-nums text-slate-900 dark:text-white tracking-tighter break-words"
-                >
-                  $
-                  {summary.totalMonthlyPayment.toLocaleString(undefined, {
-                    maximumFractionDigits: 0,
-                  })}
-                </Typography>
-              </div>
+
               <div className="min-w-0">
                 <Typography
                   variant="caption"
@@ -331,29 +357,112 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
                       )}
                     </div>
 
-                    {/* Main Balance */}
-                    <div>
-                      <Typography
-                        variant="h3"
-                        className="tabular-nums text-slate-900 dark:text-white tracking-tighter"
-                      >
-                        {loanData.loanBalance !== null
-                          ? `$${loanData.loanBalance.toLocaleString()}`
-                          : 'Not set'}
-                      </Typography>
-                      {loanData.loanTerm && (
+                    {/* Main Balance & Interest Rate */}
+                    <div className="flex items-baseline justify-between gap-4">
+                      <div>
                         <Typography
-                          variant="caption"
-                          className="text-slate-500 dark:text-slate-400 mt-1"
+                          variant="h3"
+                          className="tabular-nums text-slate-900 dark:text-white tracking-tighter"
                         >
-                          {loanData.loanTerm}
+                          {loanData.loanBalance !== null
+                            ? `$${loanData.loanBalance.toLocaleString()}`
+                            : 'Not set'}
                         </Typography>
+                        {loanData.loanTerm && (
+                          <Typography
+                            variant="caption"
+                            className="text-slate-500 dark:text-slate-400 mt-1"
+                          >
+                            {loanData.loanTerm}
+                          </Typography>
+                        )}
+                      </div>
+                      {loanData.interestRate !== null && (
+                        <div className="text-right">
+                          <Typography
+                            variant="caption"
+                            className="text-slate-500 dark:text-slate-400 mb-0.5 block"
+                          >
+                            Interest Rate
+                          </Typography>
+                          <Typography
+                            variant="body-sm"
+                            weight="bold"
+                            className="tabular-nums text-slate-900 dark:text-white"
+                          >
+                            {loanData.interestRate.toFixed(2)}%
+                          </Typography>
+                        </div>
                       )}
                     </div>
 
-                    {/* Payment & Rate Row */}
-                    <div className="flex items-center gap-4 pt-2 border-t border-slate-200/50 dark:border-white/5">
-                      {loanData.totalMonthlyPayment !== null && (
+                    {/* Payment Breakdown & Rate Row */}
+                    <div className="pt-2 border-t border-slate-200/50 dark:border-white/5 space-y-2">
+                      {/* Payment Breakdown - Show for primary loan or if escrow exists */}
+                      {(isPrimary || loanData.monthlyEscrow !== null) && (
+                        <div className="grid grid-cols-3 gap-3">
+                          {loanData.monthlyPAndI !== null && (
+                            <div>
+                              <Typography
+                                variant="caption"
+                                className="text-slate-500 dark:text-slate-400 mb-0.5"
+                              >
+                                P&I
+                              </Typography>
+                              <Typography
+                                variant="body-sm"
+                                weight="bold"
+                                className="tabular-nums text-slate-900 dark:text-white"
+                              >
+                                ${loanData.monthlyPAndI.toLocaleString(undefined, {
+                                  maximumFractionDigits: 0,
+                                })}
+                              </Typography>
+                            </div>
+                          )}
+                          {loanData.monthlyEscrow !== null && loanData.monthlyEscrow > 0 && (
+                            <div>
+                              <Typography
+                                variant="caption"
+                                className="text-slate-500 dark:text-slate-400 mb-0.5"
+                              >
+                                Escrow
+                              </Typography>
+                              <Typography
+                                variant="body-sm"
+                                weight="bold"
+                                className="tabular-nums text-slate-900 dark:text-white"
+                              >
+                                ${loanData.monthlyEscrow.toLocaleString(undefined, {
+                                  maximumFractionDigits: 0,
+                                })}
+                              </Typography>
+                            </div>
+                          )}
+                          {loanData.totalMonthlyPayment !== null && (
+                            <div>
+                              <Typography
+                                variant="caption"
+                                className="text-slate-500 dark:text-slate-400 mb-0.5"
+                              >
+                                Total
+                              </Typography>
+                              <Typography
+                                variant="body-sm"
+                                weight="bold"
+                                className="tabular-nums text-slate-900 dark:text-white"
+                              >
+                                ${loanData.totalMonthlyPayment.toLocaleString(undefined, {
+                                  maximumFractionDigits: 0,
+                                })}
+                              </Typography>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Fallback: Show simple monthly payment if no breakdown available */}
+                      {!isPrimary && loanData.monthlyEscrow === null && loanData.totalMonthlyPayment !== null && (
                         <div>
                           <Typography
                             variant="caption"
@@ -366,30 +475,9 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
                             weight="bold"
                             className="tabular-nums text-slate-900 dark:text-white"
                           >
-                            $
-                            {loanData.totalMonthlyPayment.toLocaleString(
-                              undefined,
-                              {
-                                maximumFractionDigits: 0,
-                              },
-                            )}
-                          </Typography>
-                        </div>
-                      )}
-                      {loanData.interestRate !== null && (
-                        <div>
-                          <Typography
-                            variant="caption"
-                            className="text-slate-500 dark:text-slate-400 mb-0.5"
-                          >
-                            Interest Rate
-                          </Typography>
-                          <Typography
-                            variant="body-sm"
-                            weight="bold"
-                            className="tabular-nums text-slate-900 dark:text-white"
-                          >
-                            {loanData.interestRate.toFixed(2)}%
+                            ${loanData.totalMonthlyPayment.toLocaleString(undefined, {
+                              maximumFractionDigits: 0,
+                            })}
                           </Typography>
                         </div>
                       )}

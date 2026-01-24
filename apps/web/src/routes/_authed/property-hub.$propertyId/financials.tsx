@@ -14,6 +14,7 @@ import {
   BankAccountConnectionDrawer,
   OperatingExpensesDrawer,
   PropertyAcquisitionDrawer,
+  RentalIncomeDrawer,
 } from '@/components/drawers'
 import { useProperty } from '@/hooks/api/useProperties'
 import { AsyncLoader } from '@/components/loader/async-loader'
@@ -54,6 +55,7 @@ function FinancialsPage() {
   const isBankAccountDrawerOpen = search.drawer === 'connect-bank-account'
   const isOperatingExpensesDrawerOpen = search.drawer === 'operating-expenses'
   const isAddTransactionDrawerOpen = search.drawer === 'add-transaction'
+  const isRentalIncomeDrawerOpen = search.drawer === 'rental-income'
 
   const handleCloseDrawer = () => {
     navigate({
@@ -68,9 +70,9 @@ function FinancialsPage() {
   }
 
   const handleLoanSuccess = () => {
-    // Invalidate property query to refetch loan data
-    // TODO: Use react-query invalidation
-    // For now, just close the drawer - data will refresh on next navigation
+    // The mutation's onSuccess already handles query invalidation and refetch
+    // This callback is called after the mutation completes successfully
+    // No additional action needed - React Query will automatically refetch
   }
 
   if (isLoading) {
@@ -172,6 +174,13 @@ function FinancialsPage() {
         onClose={handleCloseDrawer}
         propertyId={propertyId}
         transactionId={search.transactionId}
+        onSuccess={handleLoanSuccess}
+      />
+
+      <RentalIncomeDrawer
+        isOpen={isRentalIncomeDrawerOpen}
+        onClose={handleCloseDrawer}
+        propertyId={propertyId}
         onSuccess={handleLoanSuccess}
       />
     </>

@@ -186,7 +186,7 @@ export function useProperty(propertyId: string | null | undefined) {
       return result.property
     },
     enabled: !!user?.id && !!propertyId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 5 * 1000, // 5 seconds - short enough to get fresh data after updates
   })
 }
 

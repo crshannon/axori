@@ -23,6 +23,7 @@ export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
         metrics.currentBasis,
         metrics.currentValue,
         metrics.unrealizedGain,
+        metrics.purchasePrice,
       )
     : []
 
@@ -90,9 +91,96 @@ export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
         </div>
 
         <div className="space-y-6">
-          {/* Current Basis - Primary Metric */}
+          {/* Primary Metrics - Equity and Equity Velocity (Most Important) */}
+          <div className="grid grid-cols-2 gap-6">
+            {/* Current Equity - PRIMARY METRIC (What the user actually owns) */}
+            {(() => {
+              // Calculate equity: current value - total loan amount
+              const currentValue =
+                property.valuation?.currentValue ||
+                property.acquisition?.currentValue ||
+                null
+              const currentValueNum =
+                currentValue !== null && currentValue !== undefined
+                  ? typeof currentValue === 'string'
+                    ? parseFloat(currentValue)
+                    : Number(currentValue)
+                  : null
+
+              const activeLoan = property.loans?.find(
+                (loan) => loan.status === 'active' && loan.isPrimary,
+              )
+              const totalLoanAmount = activeLoan?.originalLoanAmount
+                ? Number(activeLoan.originalLoanAmount)
+                : 0
+
+              const equity =
+                currentValueNum !== null &&
+                !isNaN(currentValueNum) &&
+                currentValueNum > 0
+                  ? currentValueNum - totalLoanAmount
+                  : null
+
+              return equity !== null ? (
+                <div>
+                  <Typography
+                    variant="caption"
+                    className="text-slate-500 dark:text-slate-400 mb-1 opacity-100"
+                  >
+                    Current Equity
+                  </Typography>
+                  <Typography
+                    variant="h3"
+                    className="tabular-nums text-violet-500 dark:text-violet-400"
+                  >
+                    ${Math.round(equity).toLocaleString()}
+                  </Typography>
+                  <Typography
+                    variant="overline"
+                    className="text-slate-400 dark:text-slate-500 mt-1"
+                  >
+                    Your stake in the property
+                  </Typography>
+                </div>
+              ) : null
+            })()}
+
+            {/* Equity Velocity - Performance Indicator */}
+            {metrics.equityVelocity !== null && (
+              <div>
+                <Typography
+                  variant="caption"
+                  className="text-slate-500 dark:text-slate-400 mb-1 opacity-100"
+                >
+                  Equity Velocity
+                </Typography>
+                <Typography
+                  variant="h4"
+                  className={`tabular-nums ${
+                    metrics.equityVelocity >= 0
+                      ? 'text-emerald-500 dark:text-emerald-400'
+                      : 'text-rose-500 dark:text-rose-400'
+                  }`}
+                >
+                  {metrics.equityVelocity >= 0 ? '+' : ''}
+                  {metrics.equityVelocity.toFixed(1)}%
+                </Typography>
+                {metrics.unrealizedGain !== null && (
+                  <Typography
+                    variant="overline"
+                    className="text-slate-400 dark:text-slate-300 mt-1"
+                  >
+                    ${metrics.unrealizedGain.toLocaleString()} unrealized{' '}
+                    {metrics.unrealizedGain >= 0 ? 'gain' : 'loss'}
+                  </Typography>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Secondary Metric - Current Basis (Tax/Accounting) */}
           {metrics.currentBasis !== null && (
-            <div>
+            <div className="pt-4 border-t border-slate-200 dark:border-white/5">
               <Typography
                 variant="caption"
                 className="text-slate-500 dark:text-slate-400 mb-1 opacity-100"
@@ -116,38 +204,12 @@ export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
                     closing costs
                   </Typography>
                 )}
-            </div>
-          )}
-
-          {/* Equity Velocity - Secondary Metric (Performance Indicator) */}
-          {metrics.equityVelocity !== null && (
-            <div>
               <Typography
-                variant="caption"
-                className="text-slate-500 dark:text-slate-400 mb-1 opacity-100"
+                variant="overline"
+                className="text-slate-400 dark:text-slate-500 mt-1 block"
               >
-                Equity Velocity
+                Tax basis for depreciation
               </Typography>
-              <Typography
-                variant="h3"
-                className={`tabular-nums ${
-                  metrics.equityVelocity >= 0
-                    ? 'text-emerald-500 dark:text-emerald-400'
-                    : 'text-rose-500 dark:text-rose-400'
-                }`}
-              >
-                {metrics.equityVelocity >= 0 ? '+' : ''}
-                {metrics.equityVelocity.toFixed(1)}%
-              </Typography>
-              {metrics.unrealizedGain !== null && (
-                <Typography
-                  variant="overline"
-                  className="text-slate-400 dark:text-slate-300 mt-1"
-                >
-                  ${metrics.unrealizedGain.toLocaleString()} unrealized{' '}
-                  {metrics.unrealizedGain >= 0 ? 'gain' : 'loss'}
-                </Typography>
-              )}
             </div>
           )}
         </div>

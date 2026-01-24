@@ -115,9 +115,72 @@ import { Input } from "@axori/ui";
 - **Accessibility**: Maintain proper ARIA labels and keyboard navigation
 - **Performance**: Keep components lightweight and optimized
 
+## Table Components
+
+### TanStack Table Pattern
+
+For data tables, use TanStack Table (`@tanstack/react-table`) following the pattern established in `PropertyTransactions.tsx`.
+
+**Required Imports:**
+```typescript
+import {
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table'
+import type { ColumnDef, SortingState } from '@tanstack/react-table'
+```
+
+**Table Structure:**
+
+- Wrap in `Card` component from `@axori/ui`
+- Use native `<table>` element with TanStack Table hooks
+- Header cells: `p-6 text-[9px] font-black uppercase tracking-[0.3em]`
+- Body cells: `p-6` with appropriate typography
+- Borders: `border-white/5` (dark) or `border-slate-100` (light)
+- Hover: `hover:bg-white/[0.02]` (dark) or `hover:bg-slate-50` (light)
+
+**Column Definition Pattern:**
+
+```typescript
+const columns = useMemo<Array<ColumnDef<RowType>>>(
+  () => [
+    {
+      accessorKey: 'field',
+      header: 'Header Text',
+      cell: ({ row }) => (
+        <Typography variant="body-sm">
+          {row.original.field}
+        </Typography>
+      ),
+    },
+  ],
+  [isDark]
+)
+```
+
+**Sorting:**
+
+- Use `SortingState` for sortable columns
+- Add sort indicators: `{{ asc: ' ↑', desc: ' ↓' }[sortState] ?? null}`
+- Make headers clickable with `onClick={header.column.getToggleSortingHandler()}`
+
+**Styling Consistency:**
+
+- Follow PropertyTransactions.tsx patterns exactly
+- Use `cn()` for conditional classes
+- Maintain consistent spacing (p-6 for cells)
+- Use Typography components in cells when appropriate
+
+**Example Reference:**
+
+See `apps/web/src/components/property-hub/property-details/financials/PropertyTransactions.tsx` for a complete implementation example.
+
 ## References
 
 - Design System: `packages/ui/README.md`
 - Design Tokens: `packages/ui/DESIGN_TOKENS.md`
 - Integration Guide: `packages/ui/INTEGRATION.md`
 - Legacy Rules: `packages/ui/.cursorrules` (to be archived)
+- Table Example: `apps/web/src/components/property-hub/property-details/financials/PropertyTransactions.tsx`
