@@ -1,13 +1,19 @@
+/**
+ * Settings Page
+ *
+ * Property settings management. Drawers are handled by the DrawerProvider
+ * at the root level - this page only needs to render the settings components.
+ *
+ * Drawer opening is handled by individual components using the useDrawer hook
+ * or navigate to add ?drawer=<name>&propertyId=<id> to the URL.
+ *
+ * @see AXO-93 - URL-Based Drawer Factory
+ */
+
 import { Loading, cn } from '@axori/ui'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { usePropertySettings } from '@/hooks/api'
-import {
-  AcquisitionMetadataDrawer,
-  AssetConfigurationDrawer,
-  CalculationPresumptionsDrawer,
-  NotificationSettingsDrawer,
-} from '@/components/drawers'
 import {
   AcquisitionMetadata,
   AssetConfiguration,
@@ -20,10 +26,13 @@ import {
   SystemSovereignty,
 } from '@/components/property-hub/property-details/settings'
 
+/**
+ * Search schema for settings page
+ * Drawer params are handled by the global DrawerProvider
+ */
 const settingsSearchSchema = z.object({
-  drawer: z
-    .enum(['asset-config', 'acquisition', 'presumptions', 'notifications'])
-    .optional(),
+  drawer: z.string().optional(),
+  propertyId: z.string().optional(),
 })
 
 export const Route = createFileRoute(
@@ -33,38 +42,20 @@ export const Route = createFileRoute(
   validateSearch: (search: Record<string, unknown>) => {
     const parsed = settingsSearchSchema.safeParse(search)
     if (!parsed.success) {
-      return { drawer: undefined }
+      return {}
     }
     return parsed.data
   },
 })
 
 function RouteComponent() {
-  const navigate = useNavigate({ from: Route.fullPath })
   const { propertyId } = Route.useParams()
-  const search = Route.useSearch()
 
   const {
     isLoading,
     hasError,
     propertyError,
   } = usePropertySettings(propertyId)
-
-  // Drawer state
-  const isAssetConfigDrawerOpen = search.drawer === 'asset-config'
-  const isAcquisitionDrawerOpen = search.drawer === 'acquisition'
-  const isPresumptionsDrawerOpen = search.drawer === 'presumptions'
-  const isNotificationsDrawerOpen = search.drawer === 'notifications'
-
-  const handleCloseDrawer = () => {
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        drawer: undefined,
-      }),
-      replace: true,
-    })
-  }
 
   // Track selected DNA strategy locally (separate from form data for now)
   const selectedDna = 'Yield Maximization' // This would come from portfolio settings
@@ -107,56 +98,30 @@ function RouteComponent() {
   }
 
   return (
-    <>
-      <div className="p-8 w-full space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Main Column: Configuration & Collaboration */}
-          <div className="lg:col-span-8 space-y-8">
-            <AssetConfiguration propertyId={propertyId} />
-            <AcquisitionMetadata propertyId={propertyId} />
-            <AssetDnaCalibration propertyId={propertyId} selectedDna={selectedDna} />
-            <StakeholderMatrix propertyId={propertyId} collaborators={collaborators} />
-          </div>
-
-          {/* Sidebar: Engine Presumptions & Notifs */}
-          <div className="lg:col-span-4 space-y-8">
-            <NotificationEngine propertyId={propertyId} />
-            <CalculationPresumptions propertyId={propertyId} />
-            <CloudConnect propertyId={propertyId} />
-          </div>
+    <div className="p-8 w-full space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Main Column: Configuration & Collaboration */}
+        <div className="lg:col-span-8 space-y-8">
+          <AssetConfiguration propertyId={propertyId} />
+          <AcquisitionMetadata propertyId={propertyId} />
+          <AssetDnaCalibration propertyId={propertyId} selectedDna={selectedDna} />
+          <StakeholderMatrix propertyId={propertyId} collaborators={collaborators} />
         </div>
 
-        {/* Billing Section - Owner Only */}
-        <BillingSection propertyId={propertyId} />
-
-        {/* Danger Zone - Admin/Owner Only */}
-        <SystemSovereignty propertyId={propertyId} />
+        {/* Sidebar: Engine Presumptions & Notifs */}
+        <div className="lg:col-span-4 space-y-8">
+          <NotificationEngine propertyId={propertyId} />
+          <CalculationPresumptions propertyId={propertyId} />
+          <CloudConnect propertyId={propertyId} />
+        </div>
       </div>
 
-      {/* Drawers */}
-      <AssetConfigurationDrawer
-        isOpen={isAssetConfigDrawerOpen}
-        onClose={handleCloseDrawer}
-        propertyId={propertyId}
-      />
+      {/* Billing Section - Owner Only */}
+      <BillingSection propertyId={propertyId} />
 
-      <AcquisitionMetadataDrawer
-        isOpen={isAcquisitionDrawerOpen}
-        onClose={handleCloseDrawer}
-        propertyId={propertyId}
-      />
-
-      <CalculationPresumptionsDrawer
-        isOpen={isPresumptionsDrawerOpen}
-        onClose={handleCloseDrawer}
-        propertyId={propertyId}
-      />
-
-      <NotificationSettingsDrawer
-        isOpen={isNotificationsDrawerOpen}
-        onClose={handleCloseDrawer}
-        propertyId={propertyId}
-      />
-    </>
+      {/* Danger Zone - Admin/Owner Only */}
+      <SystemSovereignty propertyId={propertyId} />
+    </div>
+    /* Drawers are rendered by DrawerProvider at root level based on URL params */
   )
 }

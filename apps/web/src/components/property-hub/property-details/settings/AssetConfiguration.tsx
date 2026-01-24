@@ -1,11 +1,11 @@
 import { Card, IconButton } from '@axori/ui'
 import { Pencil } from 'lucide-react'
-import { useNavigate } from '@tanstack/react-router'
 import { formatPropertyType } from '@axori/shared'
 import { LearningHubButton } from '../financials/LearningHubButton'
 import { getAssetConfigurationSnippets } from '@/data/learning-hub/settings-snippets'
 import { usePropertyPermissions, usePropertySettings } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
+import { useDrawer } from '@/lib/drawer'
 
 interface AssetConfigurationProps {
   propertyId: string
@@ -14,20 +14,16 @@ interface AssetConfigurationProps {
 /**
  * AssetConfiguration component - Displays property configuration details
  * Shows: nickname, property type, address, tax jurisdiction, currency override
+ *
+ * @see AXO-93 - Uses drawer factory for opening edit drawer
  */
 export const AssetConfiguration = ({ propertyId }: AssetConfigurationProps) => {
-  const navigate = useNavigate()
+  const { openDrawer } = useDrawer()
   const { formData, isLoading } = usePropertySettings(propertyId)
   const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   const handleOpenDrawer = () => {
-    navigate({
-      to: '/property-hub/$propertyId/settings',
-      params: { propertyId },
-      search: {
-        drawer: 'asset-config',
-      },
-    })
+    openDrawer('asset-config', { propertyId })
   }
 
   // Use centralized formatPropertyType function from @axori/shared
