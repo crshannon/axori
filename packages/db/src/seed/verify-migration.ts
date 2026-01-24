@@ -15,7 +15,7 @@ if (!DATABASE_URL) {
 }
 
 async function verify() {
-  const sql = postgres(DATABASE_URL, { max: 1 });
+  const sql = postgres(DATABASE_URL!, { max: 1 });
 
   try {
     // Check if invitation_tokens table exists

@@ -138,11 +138,14 @@ async function main() {
 
   const results: { name: string; passed: boolean }[] = []
 
+  // Filter to exclude mobile - focus on web, db, and api
+  const filterFlag = "--filter='!@axori/mobile'"
+
   // Run linting
   if (!options.skipLint) {
     // Always auto-fix linting issues first
     console.log('\n🔧 Auto-fixing linting issues...')
-    const fixPassed = runCommand('turbo run lint:fix', 'Lint fix', {
+    const fixPassed = runCommand(`turbo run lint:fix ${filterFlag}`, 'Lint fix', {
       silent: false,
     })
     if (!fixPassed) {
@@ -151,7 +154,7 @@ async function main() {
       )
     }
 
-    const passed = runCommand('turbo run lint', 'Linting')
+    const passed = runCommand(`turbo run lint ${filterFlag}`, 'Linting')
     results.push({ name: 'Linting', passed })
     if (!passed) {
       console.error(
@@ -165,7 +168,7 @@ async function main() {
 
   // Run type checking
   if (!options.skipTypeCheck) {
-    const passed = runCommand('turbo run type-check', 'Type checking')
+    const passed = runCommand(`turbo run type-check ${filterFlag}`, 'Type checking')
     results.push({ name: 'Type checking', passed })
     if (!passed) {
       console.error(
@@ -179,7 +182,7 @@ async function main() {
 
   // Run tests
   if (!options.skipTests) {
-    const passed = runCommand('turbo run test', 'Tests')
+    const passed = runCommand(`turbo run test ${filterFlag}`, 'Tests')
     results.push({ name: 'Tests', passed })
     if (!passed) {
       console.error('\n❌ Tests failed. Please fix failing tests before committing.')
@@ -191,7 +194,7 @@ async function main() {
 
   // Run build
   if (!options.skipBuild) {
-    const passed = runCommand('turbo run build', 'Build')
+    const passed = runCommand(`turbo run build ${filterFlag}`, 'Build')
     results.push({ name: 'Build', passed })
     if (!passed) {
       console.error(

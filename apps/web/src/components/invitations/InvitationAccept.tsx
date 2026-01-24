@@ -189,7 +189,7 @@ export function InvitationAccept({ token }: InvitationAcceptProps) {
             </p>
             <p className="text-3xl font-black tabular-nums tracking-tighter dark:text-[#059669] text-[#E8FF4D]">
               {invitation?.role
-                ? PORTFOLIO_ROLE_LABELS[invitation.role as PortfolioRole]
+                ? PORTFOLIO_ROLE_LABELS[invitation.role]
                 : 'Loading...'}
             </p>
           </div>
@@ -248,13 +248,13 @@ export function InvitationAccept({ token }: InvitationAcceptProps) {
                 </p>
                 <p className="text-lg font-bold dark:text-white text-slate-900">
                   {invitation?.role
-                    ? PORTFOLIO_ROLE_LABELS[invitation.role as PortfolioRole]
+                    ? PORTFOLIO_ROLE_LABELS[invitation.role]
                     : 'Unknown'}
                 </p>
                 {invitation?.role &&
-                  PORTFOLIO_ROLE_DESCRIPTIONS[invitation.role as PortfolioRole] && (
+                  PORTFOLIO_ROLE_DESCRIPTIONS[invitation.role] && (
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {PORTFOLIO_ROLE_DESCRIPTIONS[invitation.role as PortfolioRole]}
+                    {PORTFOLIO_ROLE_DESCRIPTIONS[invitation.role]}
                   </p>
                 )}
               </div>
