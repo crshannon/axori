@@ -1,6 +1,13 @@
 import { z } from "zod";
 
 // ============================================================================
+// FORM VALIDATION SCHEMAS
+// ============================================================================
+// Form schemas for UI validation with string inputs
+// Includes transform functions to convert form data to API format
+export * from "./form";
+
+// ============================================================================
 // DRIZZLE-ZOD BASE SCHEMAS (Phase 3)
 // ============================================================================
 // Export base schemas generated from Drizzle schema
