@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { Archive, MoreVertical, Trash2 } from 'lucide-react'
+import { useEffect, useRef, useState } from "react"
+import { Archive, MoreVertical, Trash2 } from "lucide-react"
 import {
   Button,
   DeleteConfirmationCard,
@@ -13,15 +13,18 @@ import {
   Select,
   Textarea,
   Typography,
-} from '@axori/ui'
-import { getTransactionCategories } from '@axori/shared'
-import { DrawerSectionTitle } from './DrawerSectionTitle'
+} from "@axori/ui"
+import { getTransactionCategories } from "@axori/shared"
+
+import { DrawerSectionTitle } from "./DrawerSectionTitle"
+import type { TransactionFormData } from "@axori/shared"
+
 import {
-  useCreateTransaction,
   useDeleteTransaction,
   usePropertyTransaction,
   useUpdateTransaction,
-} from '@/hooks/api/useTransactions'
+} from "@/hooks/api/useTransactions"
+import { useTransactionForm } from "@/hooks/forms"
 
 interface AddTransactionDrawerProps {
   isOpen: boolean
@@ -38,20 +41,32 @@ export const AddTransactionDrawer = ({
   transactionId,
   onSuccess,
 }: AddTransactionDrawerProps) => {
-  const createTransaction = useCreateTransaction()
   const updateTransaction = useUpdateTransaction()
   const deleteTransaction = useDeleteTransaction()
   const { data: existingTransaction } = usePropertyTransaction(
     propertyId,
-    transactionId || null,
+    transactionId || null
   )
-  const [errors, setErrors] = useState<Record<string, string>>({})
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const isEditMode = !!transactionId
-  const mutation = isEditMode ? updateTransaction : createTransaction
+
+  // Use the form hook with Zod validation
+  const {
+    form,
+    isEditMode,
+    isPending,
+    submitError,
+    setSubmitError,
+    handleSubmit,
+    getFieldError,
+  } = useTransactionForm({
+    propertyId,
+    transactionId,
+    onSuccess,
+    onClose,
+  })
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -62,173 +77,23 @@ export const AddTransactionDrawer = ({
     }
 
     if (showMenu) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
+      document.addEventListener("mousedown", handleClickOutside)
+      return () => document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [showMenu])
 
-  // Form state
-  const [formData, setFormData] = useState({
-    type: 'expense' as 'income' | 'expense' | 'capital',
-    transactionDate: new Date().toISOString().split('T')[0], // Today's date
-    amount: '',
-    category: '',
-    subcategory: '',
-    vendor: '', // For expenses
-    payer: '', // For income
-    description: '',
-    notes: '',
-    taxCategory: '',
-    isTaxDeductible: true,
-    isRecurring: false,
-    isExcluded: false,
-  })
+  // Get current form values for conditional rendering
+  const formType = form.state.values.type
 
   // Get categories based on transaction type (from shared utilities)
-  const getCategories = () => getTransactionCategories(formData.type)
+  const getCategories = () => getTransactionCategories(formType)
 
-  // Populate form with existing transaction data when editing
-  useEffect(() => {
-    if (existingTransaction && isOpen && isEditMode) {
-      setFormData({
-        type: existingTransaction.type,
-        transactionDate: existingTransaction.transactionDate,
-        amount: parseFloat(existingTransaction.amount).toString(),
-        category: existingTransaction.category,
-        subcategory: existingTransaction.subcategory || '',
-        vendor: existingTransaction.vendor || '',
-        payer: existingTransaction.payer || '',
-        description: existingTransaction.description || '',
-        notes: existingTransaction.notes || '',
-        taxCategory: existingTransaction.taxCategory || '',
-        isTaxDeductible: existingTransaction.isTaxDeductible ?? true,
-        isRecurring: existingTransaction.isRecurring ?? false,
-        isExcluded: existingTransaction.isExcluded ?? false,
-      })
-      setErrors({})
-    } else if (!isEditMode && isOpen) {
-      // Reset form when opening in create mode
-      setFormData({
-        type: 'expense',
-        transactionDate: new Date().toISOString().split('T')[0],
-        amount: '',
-        category: '',
-        subcategory: '',
-        vendor: '',
-        payer: '',
-        description: '',
-        notes: '',
-        taxCategory: '',
-        isTaxDeductible: true,
-        isRecurring: false,
-        isExcluded: false,
-      })
-      setErrors({})
-    }
-  }, [existingTransaction, isOpen, isEditMode])
-
-  // Reset category when type changes
-  useEffect(() => {
-    setFormData((prev) => ({ ...prev, category: '' }))
-  }, [formData.type])
-
-  const handleChange = (field: string, value: string | number | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[field]
-        return newErrors
-      })
-    }
-  }
-
-  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
-    e?.preventDefault()
-    setErrors({})
-
-    // Validate required fields
-    const validationErrors: Record<string, string> = {}
-    if (!formData.transactionDate) {
-      validationErrors.transactionDate = 'Transaction date is required'
-    }
-    if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      validationErrors.amount = 'Amount must be greater than 0'
-    }
-    if (!formData.category) {
-      validationErrors.category = 'Category is required'
-    }
-    if (formData.type === 'expense' && !formData.vendor.trim()) {
-      validationErrors.vendor = 'Vendor is required for expenses'
-    }
-    if (formData.type === 'income' && !formData.payer.trim()) {
-      validationErrors.payer = 'Payer is required for income'
-    }
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
-      return
-    }
-
-    try {
-      // Prepare transaction data
-      const transactionData: any = {
-        type: formData.type,
-        transactionDate: formData.transactionDate,
-        amount: parseFloat(formData.amount),
-        category: formData.category,
-        isTaxDeductible: formData.isTaxDeductible,
-        isRecurring: formData.isRecurring,
-      }
-
-      // Add type-specific fields
-      if (formData.type === 'expense' && formData.vendor) {
-        transactionData.vendor = formData.vendor.trim()
-      }
-      if (formData.type === 'income' && formData.payer) {
-        transactionData.payer = formData.payer.trim()
-      }
-
-      // Add optional fields
-      if (formData.subcategory.trim()) {
-        transactionData.subcategory = formData.subcategory.trim()
-      }
-      if (formData.description.trim()) {
-        transactionData.description = formData.description.trim()
-      }
-      if (formData.notes.trim()) {
-        transactionData.notes = formData.notes.trim()
-      }
-      if (formData.taxCategory.trim()) {
-        transactionData.taxCategory = formData.taxCategory.trim()
-      }
-      transactionData.isExcluded = formData.isExcluded
-
-      if (isEditMode && transactionId) {
-        await updateTransaction.mutateAsync({
-          propertyId,
-          transactionId,
-          ...transactionData,
-        })
-      } else {
-        await createTransaction.mutateAsync({
-          propertyId,
-          ...transactionData,
-        })
-      }
-
-      onSuccess?.()
-      onClose()
-    } catch (error) {
-      console.error('Error creating transaction:', error)
-      setErrors({
-        submit:
-          error instanceof Error
-            ? error.message
-            : 'Failed to create transaction. Please try again.',
-      })
-    }
+  // Handle field change with error clearing
+  const handleFieldChange = (
+    field: keyof TransactionFormData,
+    value: string | boolean
+  ) => {
+    form.setFieldValue(field, value as never)
   }
 
   const handleArchive = async () => {
@@ -244,13 +109,12 @@ export const AddTransactionDrawer = ({
       })
       onSuccess?.()
     } catch (error) {
-      console.error('Error archiving transaction:', error)
-      setErrors({
-        submit:
-          error instanceof Error
-            ? error.message
-            : 'Failed to archive transaction. Please try again.',
-      })
+      console.error("Error archiving transaction:", error)
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Failed to archive transaction. Please try again."
+      )
     }
   }
 
@@ -267,13 +131,12 @@ export const AddTransactionDrawer = ({
       onSuccess?.()
       onClose()
     } catch (error) {
-      console.error('Error deleting transaction:', error)
-      setErrors({
-        submit:
-          error instanceof Error
-            ? error.message
-            : 'Failed to delete transaction. Please try again.',
-      })
+      console.error("Error deleting transaction:", error)
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete transaction. Please try again."
+      )
     } finally {
       setIsDeleting(false)
       setShowDeleteConfirm(false)
@@ -289,7 +152,7 @@ export const AddTransactionDrawer = ({
     <Drawer
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditMode ? 'Edit Transaction' : 'Add Transaction'}
+      title={isEditMode ? "Edit Transaction" : "Add Transaction"}
       subtitle="HISTORICAL P&L REGISTRY"
       width="lg"
       className="relative"
@@ -310,11 +173,11 @@ export const AddTransactionDrawer = ({
                   icon={Archive}
                   label={
                     existingTransaction?.isExcluded
-                      ? 'Include in calculations'
-                      : 'Archive'
+                      ? "Include in calculations"
+                      : "Archive"
                   }
                   onClick={handleArchive}
-                  disabled={mutation.isPending}
+                  disabled={isPending}
                 />
                 <MenuDivider />
                 <MenuItem
@@ -322,7 +185,7 @@ export const AddTransactionDrawer = ({
                   label="Delete"
                   destructive
                   onClick={handleDeleteClick}
-                  disabled={mutation.isPending || isDeleting}
+                  disabled={isPending || isDeleting}
                 />
               </Menu>
             )}
@@ -335,7 +198,7 @@ export const AddTransactionDrawer = ({
             <Button
               type="button"
               onClick={onClose}
-              disabled={mutation.isPending || isDeleting}
+              disabled={isPending || isDeleting}
               variant="outline"
               size="lg"
               className="flex-1 py-4 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.2em]"
@@ -345,18 +208,18 @@ export const AddTransactionDrawer = ({
             <Button
               type="button"
               onClick={handleSubmit}
-              disabled={mutation.isPending || isDeleting}
+              disabled={isPending || isDeleting}
               variant="primary"
               size="lg"
               className="flex-[2] py-4 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.2em] hover:scale-105 disabled:hover:scale-100 shadow-xl shadow-violet-200 dark:shadow-[rgb(var(--color-accent))]/20"
             >
-              {mutation.isPending
+              {isPending
                 ? isEditMode
-                  ? 'Updating...'
-                  : 'Creating...'
+                  ? "Updating..."
+                  : "Creating..."
                 : isEditMode
-                  ? 'Update Transaction'
-                  : 'Add Transaction'}
+                  ? "Update Transaction"
+                  : "Add Transaction"}
             </Button>
           </div>
         ) : null
@@ -382,30 +245,30 @@ export const AddTransactionDrawer = ({
               <Select
                 variant="rounded"
                 label="Transaction Type"
-                value={formData.type}
+                value={form.state.values.type}
                 onChange={(e) =>
-                  handleChange(
-                    'type',
-                    e.target.value as 'income' | 'expense' | 'capital',
+                  handleFieldChange(
+                    "type",
+                    e.target.value as "income" | "expense" | "capital"
                   )
                 }
                 options={[
-                  { value: 'income', label: 'Income' },
-                  { value: 'expense', label: 'Expense' },
-                  { value: 'capital', label: 'Capital' },
+                  { value: "income", label: "Income" },
+                  { value: "expense", label: "Expense" },
+                  { value: "capital", label: "Capital" },
                 ]}
-                error={errors.type}
+                error={getFieldError("type")}
                 required
               />
               <Input
                 type="date"
                 variant="rounded"
                 label="Transaction Date"
-                value={formData.transactionDate}
+                value={form.state.values.transactionDate}
                 onChange={(e) =>
-                  handleChange('transactionDate', e.target.value)
+                  handleFieldChange("transactionDate", e.target.value)
                 }
-                error={errors.transactionDate}
+                error={getFieldError("transactionDate")}
                 required
               />
               <Input
@@ -414,19 +277,19 @@ export const AddTransactionDrawer = ({
                 label="Amount"
                 step="0.01"
                 min="0.01"
-                value={formData.amount}
-                onChange={(e) => handleChange('amount', e.target.value)}
+                value={form.state.values.amount}
+                onChange={(e) => handleFieldChange("amount", e.target.value)}
                 placeholder="0.00"
-                error={errors.amount}
+                error={getFieldError("amount")}
                 required
               />
               <Select
                 variant="rounded"
                 label="Category"
-                value={formData.category}
-                onChange={(e) => handleChange('category', e.target.value)}
+                value={form.state.values.category}
+                onChange={(e) => handleFieldChange("category", e.target.value)}
                 options={getCategories()}
-                error={errors.category}
+                error={getFieldError("category")}
                 required
               />
             </div>
@@ -436,35 +299,35 @@ export const AddTransactionDrawer = ({
           <section className="space-y-6">
             <DrawerSectionTitle
               title={
-                formData.type === 'expense'
-                  ? 'Vendor Information'
-                  : formData.type === 'income'
-                    ? 'Payer Information'
-                    : 'Transaction Details'
+                formType === "expense"
+                  ? "Vendor Information"
+                  : formType === "income"
+                    ? "Payer Information"
+                    : "Transaction Details"
               }
               color="emerald"
             />
-            {formData.type === 'expense' && (
+            {formType === "expense" && (
               <Input
                 type="text"
                 variant="rounded"
                 label="Vendor"
-                value={formData.vendor}
-                onChange={(e) => handleChange('vendor', e.target.value)}
+                value={form.state.values.vendor}
+                onChange={(e) => handleFieldChange("vendor", e.target.value)}
                 placeholder="Who was paid?"
-                error={errors.vendor}
+                error={getFieldError("vendor")}
                 required
               />
             )}
-            {formData.type === 'income' && (
+            {formType === "income" && (
               <Input
                 type="text"
                 variant="rounded"
                 label="Payer"
-                value={formData.payer}
-                onChange={(e) => handleChange('payer', e.target.value)}
+                value={form.state.values.payer}
+                onChange={(e) => handleFieldChange("payer", e.target.value)}
                 placeholder="Who paid?"
-                error={errors.payer}
+                error={getFieldError("payer")}
                 required
               />
             )}
@@ -472,10 +335,10 @@ export const AddTransactionDrawer = ({
               type="text"
               variant="rounded"
               label="Subcategory"
-              value={formData.subcategory}
-              onChange={(e) => handleChange('subcategory', e.target.value)}
+              value={form.state.values.subcategory}
+              onChange={(e) => handleFieldChange("subcategory", e.target.value)}
               placeholder="Optional subcategory"
-              error={errors.subcategory}
+              error={getFieldError("subcategory")}
             />
           </section>
 
@@ -486,33 +349,33 @@ export const AddTransactionDrawer = ({
               type="text"
               variant="rounded"
               label="Description"
-              value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
+              value={form.state.values.description}
+              onChange={(e) => handleFieldChange("description", e.target.value)}
               placeholder="Transaction description"
-              error={errors.description}
+              error={getFieldError("description")}
             />
             <Textarea
               variant="rounded"
               label="Notes"
-              value={formData.notes}
-              onChange={(e) => handleChange('notes', e.target.value)}
+              value={form.state.values.notes}
+              onChange={(e) => handleFieldChange("notes", e.target.value)}
               placeholder="Additional notes..."
               rows={3}
-              error={errors.notes}
+              error={getFieldError("notes")}
             />
           </section>
 
           {/* Tax Information */}
-          {(formData.type === 'expense' || formData.type === 'capital') && (
+          {(formType === "expense" || formType === "capital") && (
             <section className="space-y-6">
               <DrawerSectionTitle title="Tax Information" color="slate" />
               <div className="space-y-4">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={formData.isTaxDeductible}
+                    checked={form.state.values.isTaxDeductible}
                     onChange={(e) =>
-                      handleChange('isTaxDeductible', e.target.checked)
+                      handleFieldChange("isTaxDeductible", e.target.checked)
                     }
                     className="w-5 h-5 rounded border-slate-300 dark:border-white/20 text-violet-600 dark:text-[rgb(var(--color-accent))] focus:ring-violet-500 dark:focus:ring-[rgb(var(--color-accent))]"
                   />
@@ -528,10 +391,12 @@ export const AddTransactionDrawer = ({
                   type="text"
                   variant="rounded"
                   label="Tax Category (Schedule E)"
-                  value={formData.taxCategory}
-                  onChange={(e) => handleChange('taxCategory', e.target.value)}
+                  value={form.state.values.taxCategory}
+                  onChange={(e) =>
+                    handleFieldChange("taxCategory", e.target.value)
+                  }
                   placeholder="e.g., Repairs, Maintenance, Utilities"
-                  error={errors.taxCategory}
+                  error={getFieldError("taxCategory")}
                 />
               </div>
             </section>
@@ -543,8 +408,10 @@ export const AddTransactionDrawer = ({
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={formData.isRecurring}
-                onChange={(e) => handleChange('isRecurring', e.target.checked)}
+                checked={form.state.values.isRecurring}
+                onChange={(e) =>
+                  handleFieldChange("isRecurring", e.target.checked)
+                }
                 className="w-5 h-5 rounded border-slate-300 dark:border-white/20 text-violet-600 dark:text-[rgb(var(--color-accent))] focus:ring-violet-500 dark:focus:ring-[rgb(var(--color-accent))]"
               />
               <Typography
@@ -564,8 +431,10 @@ export const AddTransactionDrawer = ({
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={formData.isExcluded}
-                  onChange={(e) => handleChange('isExcluded', e.target.checked)}
+                  checked={form.state.values.isExcluded}
+                  onChange={(e) =>
+                    handleFieldChange("isExcluded", e.target.checked)
+                  }
                   className="w-5 h-5 rounded border-slate-300 dark:border-white/20 text-violet-600 dark:text-[rgb(var(--color-accent))] focus:ring-violet-500 dark:focus:ring-[rgb(var(--color-accent))]"
                 />
                 <div className="flex flex-col gap-1">
@@ -589,7 +458,7 @@ export const AddTransactionDrawer = ({
           )}
 
           {/* Error Message */}
-          {errors.submit && <ErrorCard message={errors.submit} />}
+          {submitError && <ErrorCard message={submitError} />}
         </form>
       )}
     </Drawer>
