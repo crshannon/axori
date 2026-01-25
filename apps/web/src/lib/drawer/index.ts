@@ -42,3 +42,19 @@ export {
   DrawerProvider,
   DrawerRenderer,
 } from './DrawerProvider'
+
+export {
+  // Permission helpers
+  hasRequiredPermission,
+  hasAllRequiredPermissions,
+  hasAnyRequiredPermission,
+  canView,
+  canEdit,
+  canAdmin,
+  isOwner,
+  getRoleRank,
+  isRoleAtLeast,
+  PORTFOLIO_ROLES,
+  // Types
+  type PortfolioRole,
+} from './permission-helpers'

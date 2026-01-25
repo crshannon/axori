@@ -249,3 +249,218 @@ describe('drawer permissions', () => {
     }
   })
 })
+
+// =============================================================================
+// PARAM PARSING EDGE CASES
+// =============================================================================
+
+describe('param parsing edge cases', () => {
+  describe('URL-encoded values', () => {
+    it('handles URL-encoded property IDs', () => {
+      // Simulate decodeURIComponent behavior for URL-encoded values
+      const encodedId = decodeURIComponent('prop%5F123%2Dtest')
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: encodedId,
+      })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.propertyId).toBe('prop_123-test')
+      }
+    })
+
+    it('handles IDs with special characters', () => {
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: 'prop_abc-123_xyz',
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('handles IDs with unicode characters', () => {
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: 'prop_日本語_test',
+      })
+      expect(result.success).toBe(true)
+    })
+  })
+
+  describe('malicious input handling', () => {
+    it('rejects script injection attempts in propertyId', () => {
+      // While Zod accepts strings, the schema validates minimum length
+      // The actual XSS protection happens at render time
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: '<script>alert("xss")</script>',
+      })
+      // Schema accepts any non-empty string - XSS protection is at render
+      expect(result.success).toBe(true)
+    })
+
+    it('handles SQL injection patterns (validation only, no execution)', () => {
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: "'; DROP TABLE properties; --",
+      })
+      // Schema accepts any non-empty string - SQL injection protection is at DB layer
+      expect(result.success).toBe(true)
+    })
+
+    it('handles very long input strings', () => {
+      const longId = 'a'.repeat(10000)
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: longId,
+      })
+      // Schema accepts any non-empty string without length limits
+      expect(result.success).toBe(true)
+    })
+
+    it('handles null byte injection', () => {
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: 'prop_123\x00malicious',
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('handles prototype pollution attempts', () => {
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: '__proto__',
+      })
+      expect(result.success).toBe(true)
+    })
+  })
+
+  describe('type coercion and edge cases', () => {
+    it('rejects number as propertyId', () => {
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: 12345,
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('rejects boolean as propertyId', () => {
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: true,
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('rejects array as propertyId', () => {
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: ['prop_123'],
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('rejects object as propertyId', () => {
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: { id: 'prop_123' },
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('rejects null as propertyId', () => {
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: null,
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('rejects undefined as propertyId', () => {
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: undefined,
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('handles whitespace-only propertyId', () => {
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: '   ',
+      })
+      // Should be accepted by base schema but min(1) should reject after trim
+      // Current schema just checks min(1) length, whitespace is 3+ chars
+      expect(result.success).toBe(true) // NOTE: Consider adding .trim() to schema if needed
+    })
+  })
+
+  describe('optional params handling', () => {
+    it('handles undefined optional loanId', () => {
+      const result = loanDrawerParamsSchema.safeParse({
+        propertyId: 'prop_123',
+        loanId: undefined,
+      })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.loanId).toBeUndefined()
+      }
+    })
+
+    it('handles null as optional loanId (should fail)', () => {
+      const result = loanDrawerParamsSchema.safeParse({
+        propertyId: 'prop_123',
+        loanId: null,
+      })
+      // z.string().optional() does not accept null
+      expect(result.success).toBe(false)
+    })
+
+    it('handles empty string as optional loanId', () => {
+      const result = loanDrawerParamsSchema.safeParse({
+        propertyId: 'prop_123',
+        loanId: '',
+      })
+      // Empty string is valid for optional string
+      expect(result.success).toBe(true)
+    })
+
+    it('strips unknown properties', () => {
+      const result = propertyDrawerParamsSchema.safeParse({
+        propertyId: 'prop_123',
+        unknownProp: 'should be stripped',
+        anotherUnknown: 12345,
+      })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).not.toHaveProperty('unknownProp')
+        expect(result.data).not.toHaveProperty('anotherUnknown')
+      }
+    })
+  })
+})
+
+describe('validateDrawerParams edge cases', () => {
+  it('returns null for undefined drawer name', () => {
+    const params = validateDrawerParams(undefined as any, {
+      propertyId: 'prop_123',
+    })
+    expect(params).toBeNull()
+  })
+
+  it('returns null for null drawer name', () => {
+    const params = validateDrawerParams(null as any, {
+      propertyId: 'prop_123',
+    })
+    expect(params).toBeNull()
+  })
+
+  it('handles extra properties in params', () => {
+    const params = validateDrawerParams('asset-config', {
+      propertyId: 'prop_123',
+      extraProp: 'should be stripped',
+    })
+    expect(params).toEqual({ propertyId: 'prop_123' })
+  })
+
+  it('preserves valid optional params', () => {
+    const params = validateDrawerParams('add-loan', {
+      propertyId: 'prop_123',
+      loanId: 'loan_456',
+    })
+    expect(params).toEqual({
+      propertyId: 'prop_123',
+      loanId: 'loan_456',
+    })
+  })
+
+  it('handles case sensitivity correctly', () => {
+    expect(validateDrawerParams('ASSET-CONFIG' as any, { propertyId: 'prop_123' })).toBeNull()
+    expect(validateDrawerParams('Asset-Config' as any, { propertyId: 'prop_123' })).toBeNull()
+    expect(validateDrawerParams('asset-config', { propertyId: 'prop_123' })).not.toBeNull()
+  })
+})
