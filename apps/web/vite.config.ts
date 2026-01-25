@@ -36,9 +36,11 @@ export default defineConfig(({ mode }) => {
       exclude: ['@axori/db'],
     },
     ssr: {
-      // Externalize @axori/db for SSR (it uses Node.js modules like path, fs)
-      noExternal: [],
-      external: ['@axori/db', 'path', 'fs', 'dotenv'],
+      // Process workspace packages for SSR so Vite can handle TypeScript files
+      // This ensures @axori/permissions -> @axori/db import chain works correctly
+      noExternal: ['@axori/db', '@axori/permissions'],
+      // Externalize Node.js built-ins that @axori/db uses
+      external: ['path', 'fs', 'dotenv'],
     },
     define: {
       'process.env': {},

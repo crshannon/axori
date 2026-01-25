@@ -1,5 +1,4 @@
-import { Card, IconButton } from '@axori/ui'
-import { Pencil } from 'lucide-react'
+import { Card, Button } from '@axori/ui'
 import { LearningHubButton } from '../financials/LearningHubButton'
 import { getNotificationSettingsSnippets } from '@/data/learning-hub/settings-snippets'
 import { usePropertyPermissions, usePropertySettings } from '@/hooks/api'
@@ -51,14 +50,14 @@ export const NotificationEngine = ({ propertyId }: NotificationEngineProps) => {
           />
           {isReadOnly && <ReadOnlyBanner variant="badge" />}
           {canEdit && (
-            <IconButton
-              icon={Pencil}
+            <Button
+              variant="outline"
               size="sm"
-              variant="ghost"
-              shape="rounded"
+              className="px-5 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest border-slate-200 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
               onClick={handleOpenDrawer}
-              aria-label="Edit notification settings"
-            />
+            >
+              Edit
+            </Button>
           )}
         </div>
       </div>

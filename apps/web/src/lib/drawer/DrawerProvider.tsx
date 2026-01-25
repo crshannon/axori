@@ -34,6 +34,7 @@ import { useRouterState, useNavigate } from '@tanstack/react-router'
 import { Loading } from '@axori/ui'
 import { usePermissions } from '@/hooks/api/usePermissions'
 import { useProperty } from '@/hooks/api/useProperties'
+import { usePropertyPermissions } from '@/hooks/api'
 import { toast } from '@/lib/toast'
 import {
   type DrawerName,
@@ -296,8 +297,16 @@ function PermissionGate({ drawerName, params, children, onDenied }: PermissionGa
   const portfolioId = property?.portfolioId || null
   const { role, isLoading: isLoadingPermissions } = usePermissions(portfolioId)
 
+  // Get property-level permissions (if propertyId is provided)
+  const { canEdit: canEditProperty, canView: canViewProperty, isLoading: isLoadingPropertyPermissions } = usePropertyPermissions(
+    propertyId || null
+  )
+
   // Determine if we're still loading
-  const isLoading = (propertyId && isLoadingProperty) || (portfolioId && isLoadingPermissions)
+  const isLoading = 
+    (propertyId && isLoadingProperty) || 
+    (portfolioId && isLoadingPermissions) ||
+    (propertyId && isLoadingPropertyPermissions)
 
   // Check permissions once loaded
   useEffect(() => {
@@ -322,7 +331,7 @@ function PermissionGate({ drawerName, params, children, onDenied }: PermissionGa
       return
     }
 
-    // Check permission requirement
+    // Check portfolio-level permission requirement
     if (entry && !hasRequiredPermission(role, entry.permission)) {
       console.warn(
         `[PermissionGate] Access denied to drawer "${drawerName}". ` +
@@ -333,6 +342,34 @@ function PermissionGate({ drawerName, params, children, onDenied }: PermissionGa
       return
     }
 
+    // For property-based drawers, also check property-level access
+    if (propertyId && entry) {
+      // Determine what property-level permission is needed based on drawer permission requirement
+      const needsEdit = entry.permission === 'member' || entry.permission === 'admin' || entry.permission === 'owner'
+      const needsView = entry.permission === 'viewer' || needsEdit
+
+      // Check property-level access
+      if (needsEdit && !canEditProperty) {
+        console.warn(
+          `[PermissionGate] Property-level access denied for drawer "${drawerName}". ` +
+            `Property: ${propertyId}, Can edit: ${canEditProperty}`
+        )
+        toast.warning(`You don't have permission to edit this property`)
+        onDenied()
+        return
+      }
+
+      if (needsView && !canViewProperty && !canEditProperty) {
+        console.warn(
+          `[PermissionGate] Property-level access denied for drawer "${drawerName}". ` +
+            `Property: ${propertyId}, Can view: ${canViewProperty}`
+        )
+        toast.warning(`You don't have permission to view this property`)
+        onDenied()
+        return
+      }
+    }
+
     // Permission check passed
     setPermissionChecked(true)
   }, [
@@ -340,11 +377,14 @@ function PermissionGate({ drawerName, params, children, onDenied }: PermissionGa
     entry,
     isLoading,
     isLoadingProperty,
+    isLoadingPropertyPermissions,
     onDenied,
     property,
     propertyError,
     propertyId,
     role,
+    canEditProperty,
+    canViewProperty,
   ])
 
   // Show loading while checking permissions
