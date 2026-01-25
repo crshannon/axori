@@ -29,55 +29,10 @@ import { useCallback, useMemo } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { getDrawerEntry, isValidDrawerName, validateDrawerParams } from './registry'
-import type { DrawerName, DrawerParams, DrawerPermission } from './registry'
+import type { DrawerName, DrawerParams } from './registry'
+import { hasRequiredPermission } from './permission-helpers'
+import type { PortfolioRole } from './permission-helpers'
 import { toast } from '@/lib/toast'
-
-// =============================================================================
-// PERMISSION HELPERS (inlined to avoid @axori/permissions -> @axori/db chain)
-// =============================================================================
-
-/**
- * Portfolio roles from least to most privileged
- */
-type PortfolioRole = 'viewer' | 'member' | 'admin' | 'owner'
-
-const PORTFOLIO_ROLES: ReadonlyArray<PortfolioRole> = ['owner', 'admin', 'member', 'viewer'] as const
-
-/**
- * Get the numeric rank of a role (higher = more privileged)
- */
-function getRoleRank(role: PortfolioRole): number {
-  const index = PORTFOLIO_ROLES.indexOf(role)
-  return PORTFOLIO_ROLES.length - 1 - index
-}
-
-/**
- * Check if role is at least the minimum required role
- */
-function isRoleAtLeast(role: PortfolioRole, minimumRole: PortfolioRole): boolean {
-  return getRoleRank(role) >= getRoleRank(minimumRole)
-}
-
-/**
- * Check if user can view (viewer+)
- */
-function canView(role: PortfolioRole): boolean {
-  return isRoleAtLeast(role, 'viewer')
-}
-
-/**
- * Check if user can edit (member+)
- */
-function canEdit(role: PortfolioRole): boolean {
-  return isRoleAtLeast(role, 'member')
-}
-
-/**
- * Check if user is admin (admin+)
- */
-function canAdmin(role: PortfolioRole): boolean {
-  return isRoleAtLeast(role, 'admin')
-}
 
 /**
  * Options for opening a drawer
@@ -118,38 +73,6 @@ interface DrawerSearchParams {
   drawer?: string
   // Additional params are dynamically added based on drawer type
   [key: string]: unknown
-}
-
-/**
- * Check if the user has the required permission level
- */
-function hasRequiredPermission(
-  userRole: PortfolioRole | null,
-  required: DrawerPermission
-): boolean {
-  // 'none' means any authenticated user can access
-  if (required === 'none') {
-    return true
-  }
-
-  // No role means no access
-  if (!userRole) {
-    return false
-  }
-
-  // Check permission based on required level
-  switch (required) {
-    case 'viewer':
-      return canView(userRole)
-    case 'member':
-      return canEdit(userRole)
-    case 'admin':
-      return canAdmin(userRole)
-    case 'owner':
-      return userRole === 'owner'
-    default:
-      return false
-  }
 }
 
 /**
