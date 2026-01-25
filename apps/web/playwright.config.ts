@@ -21,6 +21,43 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
  *
  * @see https://playwright.dev/docs/test-configuration
  */
+
+// ============================================================================
+// EARLY ENVIRONMENT CHECK
+// ============================================================================
+// Check for required environment variables BEFORE starting servers.
+// This prevents starting servers that will fail immediately.
+
+const REQUIRED_ENV_VARS = ['VITE_CLERK_PUBLISHABLE_KEY']
+const missingEnvVars = REQUIRED_ENV_VARS.filter((v) => !process.env[v])
+
+if (missingEnvVars.length > 0) {
+  console.log('\n')
+  console.log('╔' + '═'.repeat(62) + '╗')
+  console.log('║' + '  ❌ E2E TESTS CANNOT RUN - Missing Configuration'.padEnd(62) + '║')
+  console.log('╚' + '═'.repeat(62) + '╝')
+  console.log('')
+  console.log('Missing required environment variables:')
+  missingEnvVars.forEach((v) => console.log(`  ❌ ${v}`))
+  console.log('')
+  console.log('📝 To fix this:')
+  console.log('')
+  console.log('   1. Copy the example environment file:')
+  console.log('      cp .env.local.example .env.local')
+  console.log('')
+  console.log('   2. Edit .env.local and add the missing values:')
+  console.log('      - VITE_CLERK_PUBLISHABLE_KEY: Get from Clerk Dashboard → API Keys')
+  console.log('')
+  console.log('   3. Re-run the tests:')
+  console.log('      pnpm --filter @axori/web test:e2e')
+  console.log('')
+  console.log('📖 See tests/e2e/SETUP.md for detailed instructions')
+  console.log('')
+  
+  // Exit early - don't try to start servers
+  process.exit(1)
+}
+
 export default defineConfig({
   testDir: './tests/e2e',
 
