@@ -1,23 +1,22 @@
-import { useEffect, useState } from "react"
-import { useForm } from "@tanstack/react-form"
+import { useEffect, useState } from 'react'
+import { useForm } from '@tanstack/react-form'
 import {
   defaultTransactionFormValues,
   transactionFormSchema,
   transformApiToTransactionForm,
   transformTransactionFormToApi,
-} from "@axori/shared"
+} from '@axori/shared'
 
-import type { TransactionFormData } from "@axori/shared"
+import type { TransactionFormData } from '@axori/shared'
 
-import type { FieldErrors } from "@/lib/form-utils"
-import { formatZodErrors } from "@/lib/form-utils"
-
+import type { FieldErrors } from '@/lib/form-utils'
+import { formatZodErrors } from '@/lib/form-utils'
 
 import {
   useCreateTransaction,
   usePropertyTransaction,
   useUpdateTransaction,
-} from "@/hooks/api/useTransactions"
+} from '@/hooks/api/useTransactions'
 
 interface UseTransactionFormOptions {
   propertyId: string
@@ -63,7 +62,7 @@ export function useTransactionForm({
   // Fetch existing transaction data when editing
   const { data: existingTransaction } = usePropertyTransaction(
     propertyId,
-    transactionId || null
+    transactionId || null,
   )
 
   // Create the form - following pattern from useOnboardingForm
@@ -76,7 +75,7 @@ export function useTransactionForm({
           const errors = formatZodErrors(result.error)
           setFieldErrors(errors)
           // Return a single string for TanStack Form's form-level error
-          return result.error.issues.map((err) => err.message).join(", ")
+          return result.error.issues.map((err) => err.message).join(', ')
         }
         setFieldErrors({})
         return undefined
@@ -88,7 +87,7 @@ export function useTransactionForm({
   useEffect(() => {
     if (existingTransaction && isEditMode) {
       const formData = transformApiToTransactionForm(
-        existingTransaction as unknown as Record<string, unknown>
+        existingTransaction as unknown as Record<string, unknown>,
       )
       form.reset(formData)
       setFieldErrors({})
@@ -107,7 +106,7 @@ export function useTransactionForm({
 
   // Get error for a specific field
   const getFieldError = (
-    fieldName: keyof TransactionFormData
+    fieldName: keyof TransactionFormData,
   ): string | undefined => {
     return fieldErrors[fieldName]
   }
@@ -148,11 +147,11 @@ export function useTransactionForm({
       onSuccess?.()
       onClose?.()
     } catch (error) {
-      console.error("Error saving transaction:", error)
+      console.error('Error saving transaction:', error)
       setSubmitError(
         error instanceof Error
           ? error.message
-          : "Failed to save transaction. Please try again."
+          : 'Failed to save transaction. Please try again.',
       )
     }
   }

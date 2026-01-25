@@ -23,11 +23,11 @@ cp .env.local.example .env.local
 
 Edit `.env.local` and fill in the following required values:
 
-| Variable | Description | Where to Get It |
-|----------|-------------|-----------------|
-| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk frontend publishable key | [Clerk Dashboard](https://dashboard.clerk.com) → API Keys |
-| `CLERK_SECRET_KEY` | Clerk backend secret key | [Clerk Dashboard](https://dashboard.clerk.com) → API Keys |
-| `DATABASE_URL` | PostgreSQL connection string | [Supabase Dashboard](https://supabase.com) → Settings → Database |
+| Variable                     | Description                    | Where to Get It                                                  |
+| ---------------------------- | ------------------------------ | ---------------------------------------------------------------- |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk frontend publishable key | [Clerk Dashboard](https://dashboard.clerk.com) → API Keys        |
+| `CLERK_SECRET_KEY`           | Clerk backend secret key       | [Clerk Dashboard](https://dashboard.clerk.com) → API Keys        |
+| `DATABASE_URL`               | PostgreSQL connection string   | [Supabase Dashboard](https://supabase.com) → Settings → Database |
 
 ### 3. Install Dependencies
 
@@ -75,11 +75,11 @@ pnpm --filter @axori/web test:e2e -g "URL param change triggers correct drawer"
 
 ## Test Files
 
-| File | Description |
-|------|-------------|
-| `drawer-factory.spec.ts` | Tests for URL-based drawer system (opening, closing, navigation, error handling) |
-| `onboarding-name-save.spec.ts` | Tests for user onboarding name input flow |
-| `global-setup.ts` | Global setup that runs before all tests |
+| File                           | Description                                                                      |
+| ------------------------------ | -------------------------------------------------------------------------------- |
+| `drawer-factory.spec.ts`       | Tests for URL-based drawer system (opening, closing, navigation, error handling) |
+| `onboarding-name-save.spec.ts` | Tests for user onboarding name input flow                                        |
+| `global-setup.ts`              | Global setup that runs before all tests                                          |
 
 ## Test Architecture
 
@@ -161,10 +161,10 @@ test.describe('Feature Name', () => {
   test('should do something', async ({ page }) => {
     // Navigate
     await page.goto('/your-route')
-    
+
     // Interact
     await page.click('button')
-    
+
     // Assert
     await expect(page.locator('.result')).toBeVisible()
   })

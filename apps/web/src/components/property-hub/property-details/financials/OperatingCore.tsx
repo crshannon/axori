@@ -108,24 +108,47 @@ export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
                       variant="h4"
                       className="tabular-nums text-violet-500 dark:text-violet-400"
                     >
-                      ${Number(property.rentalIncome.monthlyRent).toLocaleString()}
+                      $
+                      {Number(
+                        property.rentalIncome.monthlyRent,
+                      ).toLocaleString()}
                     </Typography>
                   </div>
                   {property.rentalIncome.rentSource && (
-                    <Typography variant="overline" className="text-slate-400 text-[9px]">
-                      Source: {property.rentalIncome.rentSource.charAt(0).toUpperCase() + property.rentalIncome.rentSource.slice(1)}
+                    <Typography
+                      variant="overline"
+                      className="text-slate-400 text-[9px]"
+                    >
+                      Source:{' '}
+                      {property.rentalIncome.rentSource
+                        .charAt(0)
+                        .toUpperCase() +
+                        property.rentalIncome.rentSource.slice(1)}
                     </Typography>
                   )}
-                  {(property.rentalIncome.leaseStartDate || property.rentalIncome.leaseEndDate) && (
+                  {(property.rentalIncome.leaseStartDate ||
+                    property.rentalIncome.leaseEndDate) && (
                     <div className="flex gap-4 mt-2">
                       {property.rentalIncome.leaseStartDate && (
-                        <Typography variant="overline" className="text-slate-400 text-[9px]">
-                          Start: {new Date(property.rentalIncome.leaseStartDate).toLocaleDateString()}
+                        <Typography
+                          variant="overline"
+                          className="text-slate-400 text-[9px]"
+                        >
+                          Start:{' '}
+                          {new Date(
+                            property.rentalIncome.leaseStartDate,
+                          ).toLocaleDateString()}
                         </Typography>
                       )}
                       {property.rentalIncome.leaseEndDate && (
-                        <Typography variant="overline" className="text-slate-400 text-[9px]">
-                          End: {new Date(property.rentalIncome.leaseEndDate).toLocaleDateString()}
+                        <Typography
+                          variant="overline"
+                          className="text-slate-400 text-[9px]"
+                        >
+                          End:{' '}
+                          {new Date(
+                            property.rentalIncome.leaseEndDate,
+                          ).toLocaleDateString()}
                         </Typography>
                       )}
                     </div>
@@ -143,7 +166,10 @@ export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
                       .filter(Boolean)
                       .reduce((sum, val) => sum + Number(val || 0), 0)
                     return otherIncome > 0 ? (
-                      <Typography variant="overline" className="text-slate-400 text-[9px]">
+                      <Typography
+                        variant="overline"
+                        className="text-slate-400 text-[9px]"
+                      >
                         Other Income: +${otherIncome.toLocaleString()}/mo
                       </Typography>
                     ) : null

@@ -17,7 +17,9 @@ interface CostSegregationPanelProps {
  * CostSegregationPanel component - Displays cost segregation potential and study results
  * Shows: Cost seg potential, accelerated depreciation opportunities, first-year tax benefit
  */
-export const CostSegregationPanel = ({ propertyId }: CostSegregationPanelProps) => {
+export const CostSegregationPanel = ({
+  propertyId,
+}: CostSegregationPanelProps) => {
   const { data: property, isLoading } = useProperty(propertyId)
 
   if (isLoading || !property) {
@@ -59,7 +61,10 @@ export const CostSegregationPanel = ({ propertyId }: CostSegregationPanelProps) 
             Cost Segregation
           </Typography>
         </div>
-        <Typography variant="body" className="text-slate-500 dark:text-slate-400">
+        <Typography
+          variant="body"
+          className="text-slate-500 dark:text-slate-400"
+        >
           Add purchase price to analyze cost segregation potential.
         </Typography>
       </Card>
@@ -102,7 +107,8 @@ export const CostSegregationPanel = ({ propertyId }: CostSegregationPanelProps) 
   const learningSnippets = [
     {
       title: 'What is Cost Segregation?',
-      content: 'Cost segregation is an IRS-approved tax strategy that allows property owners to accelerate depreciation on certain building components. Instead of depreciating everything over 27.5 or 39 years, some items can be depreciated over 5, 7, or 15 years.',
+      content:
+        'Cost segregation is an IRS-approved tax strategy that allows property owners to accelerate depreciation on certain building components. Instead of depreciating everything over 27.5 or 39 years, some items can be depreciated over 5, 7, or 15 years.',
     },
     {
       title: 'Bonus Depreciation',
@@ -110,11 +116,13 @@ export const CostSegregationPanel = ({ propertyId }: CostSegregationPanelProps) 
     },
     {
       title: 'What Gets Reclassified?',
-      content: '5-year property includes appliances, carpeting, and blinds. 7-year property includes furniture and fixtures. 15-year property includes land improvements like landscaping, parking lots, and sidewalks.',
+      content:
+        '5-year property includes appliances, carpeting, and blinds. 7-year property includes furniture and fixtures. 15-year property includes land improvements like landscaping, parking lots, and sidewalks.',
     },
     {
       title: 'Is a Study Worth It?',
-      content: 'Cost segregation studies typically cost $5,000-$15,000 but can generate tax savings of 10x or more. They\'re most beneficial for properties over $500,000 and when you have other income to offset.',
+      content:
+        "Cost segregation studies typically cost $5,000-$15,000 but can generate tax savings of 10x or more. They're most beneficial for properties over $500,000 and when you have other income to offset.",
     },
   ]
 
@@ -151,8 +159,8 @@ export const CostSegregationPanel = ({ propertyId }: CostSegregationPanelProps) 
               costSegPotential.level === 'High Alpha'
                 ? 'bg-emerald-500/10'
                 : costSegPotential.level === 'Medium'
-                ? 'bg-amber-500/10'
-                : 'bg-slate-500/10'
+                  ? 'bg-amber-500/10'
+                  : 'bg-slate-500/10'
             }`}
           >
             <Typography
@@ -161,18 +169,25 @@ export const CostSegregationPanel = ({ propertyId }: CostSegregationPanelProps) 
                 costSegPotential.level === 'High Alpha'
                   ? 'text-emerald-500'
                   : costSegPotential.level === 'Medium'
-                  ? 'text-amber-500'
-                  : 'text-slate-500'
+                    ? 'text-amber-500'
+                    : 'text-slate-500'
               }`}
             >
               {costSegPotential.level}
             </Typography>
           </div>
           <div>
-            <Typography variant="caption" className="text-slate-500 uppercase tracking-widest">
+            <Typography
+              variant="caption"
+              className="text-slate-500 uppercase tracking-widest"
+            >
               Potential
             </Typography>
-            <Typography variant="body-sm" weight="bold" className="text-purple-500">
+            <Typography
+              variant="body-sm"
+              weight="bold"
+              className="text-purple-500"
+            >
               ~{costSegPotential.percentage}% acceleratable
             </Typography>
           </div>
@@ -215,41 +230,70 @@ export const CostSegregationPanel = ({ propertyId }: CostSegregationPanelProps) 
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-purple-500" />
-              <Typography variant="body-sm" className="text-slate-600 dark:text-slate-400">
+              <Typography
+                variant="body-sm"
+                className="text-slate-600 dark:text-slate-400"
+              >
                 5-Year Property
               </Typography>
             </div>
-            <Typography variant="body-sm" weight="bold" className="tabular-nums">
+            <Typography
+              variant="body-sm"
+              weight="bold"
+              className="tabular-nums"
+            >
               ${estimated5Year.toLocaleString()}
             </Typography>
           </div>
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-indigo-500" />
-              <Typography variant="body-sm" className="text-slate-600 dark:text-slate-400">
+              <Typography
+                variant="body-sm"
+                className="text-slate-600 dark:text-slate-400"
+              >
                 7-Year Property
               </Typography>
             </div>
-            <Typography variant="body-sm" weight="bold" className="tabular-nums">
+            <Typography
+              variant="body-sm"
+              weight="bold"
+              className="tabular-nums"
+            >
               ${estimated7Year.toLocaleString()}
             </Typography>
           </div>
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-blue-500" />
-              <Typography variant="body-sm" className="text-slate-600 dark:text-slate-400">
+              <Typography
+                variant="body-sm"
+                className="text-slate-600 dark:text-slate-400"
+              >
                 15-Year Property
               </Typography>
             </div>
-            <Typography variant="body-sm" weight="bold" className="tabular-nums">
+            <Typography
+              variant="body-sm"
+              weight="bold"
+              className="tabular-nums"
+            >
               ${estimated15Year.toLocaleString()}
             </Typography>
           </div>
           <div className="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-white/10">
-            <Typography variant="body-sm" weight="bold" className="text-slate-900 dark:text-white">
+            <Typography
+              variant="body-sm"
+              weight="bold"
+              className="text-slate-900 dark:text-white"
+            >
               Total Acceleratable
             </Typography>
-            <Typography variant="body-sm" weight="black" className="tabular-nums text-purple-500">
+            <Typography
+              variant="body-sm"
+              weight="black"
+              className="tabular-nums text-purple-500"
+            >
               ${estimatedAccelerated.toLocaleString()}
             </Typography>
           </div>
@@ -284,7 +328,9 @@ export const CostSegregationPanel = ({ propertyId }: CostSegregationPanelProps) 
               variant="overline"
               className="text-amber-600 dark:text-amber-400 mt-1"
             >
-              {bonusPercent > 0 ? 'Act now before phase-out continues' : 'Bonus depreciation has expired'}
+              {bonusPercent > 0
+                ? 'Act now before phase-out continues'
+                : 'Bonus depreciation has expired'}
             </Typography>
           </div>
         </div>

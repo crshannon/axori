@@ -43,24 +43,22 @@ export const AssetDnaCalibration = ({
         projections, exit strategies, and legal alert sensitivities.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          'Yield Maximization',
-          'Equity Growth',
-          'Capital Recirculation',
-        ].map((dna) => (
-          <div
-            key={dna}
-            className={`p-6 rounded-[2rem] border text-left transition-all ${
-              dna === selectedDna
-                ? 'bg-slate-900 text-white border-slate-900 shadow-xl dark:bg-white dark:text-black dark:border-white'
-                : 'border-slate-100 dark:border-white/5'
-            }`}
-          >
-            <p className="text-[11px] font-black uppercase tracking-tight">
-              {dna}
-            </p>
-          </div>
-        ))}
+        {['Yield Maximization', 'Equity Growth', 'Capital Recirculation'].map(
+          (dna) => (
+            <div
+              key={dna}
+              className={`p-6 rounded-[2rem] border text-left transition-all ${
+                dna === selectedDna
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-xl dark:bg-white dark:text-black dark:border-white'
+                  : 'border-slate-100 dark:border-white/5'
+              }`}
+            >
+              <p className="text-[11px] font-black uppercase tracking-tight">
+                {dna}
+              </p>
+            </div>
+          ),
+        )}
       </div>
     </Card>
   )

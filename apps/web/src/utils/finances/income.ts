@@ -106,4 +106,3 @@ export function calculateGrossIncome(
 
   return grossIncome
 }
-

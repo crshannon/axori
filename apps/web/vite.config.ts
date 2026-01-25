@@ -28,10 +28,7 @@ export default defineConfig(({ mode }) => {
     // Tell Vite to also look for .env files in the root directory
     envDir: resolve(__dirname, '../..'),
     optimizeDeps: {
-      include: [
-        'use-sync-external-store/shim/index.js',
-        '@axori/permissions',
-      ],
+      include: ['use-sync-external-store/shim/index.js', '@axori/permissions'],
       // Exclude @axori/db from client-side bundling (it uses Node.js modules)
       exclude: ['@axori/db'],
     },
@@ -52,13 +49,13 @@ export default defineConfig(({ mode }) => {
           // Externalize @axori/db main export (uses Node.js modules)
           // But allow @axori/db/types (types-only, safe for client)
           if (id === '@axori/db') {
-            return true;
+            return true
           }
           // Allow types-only import (no runtime code)
           if (id === '@axori/db/types') {
-            return false;
+            return false
           }
-          return false;
+          return false
         },
       },
     },
@@ -70,12 +67,16 @@ export default defineConfig(({ mode }) => {
           // If importing Node.js built-ins from @axori/db, mark as external
           // This prevents Vite from trying to bundle them
           if (
-            (id === 'path' || id === 'fs' || id === 'dotenv' || id === 'node:path' || id === 'node:fs') &&
+            (id === 'path' ||
+              id === 'fs' ||
+              id === 'dotenv' ||
+              id === 'node:path' ||
+              id === 'node:fs') &&
             importer?.includes('@axori/db')
           ) {
-            return { id, external: true };
+            return { id, external: true }
           }
-          return null;
+          return null
         },
       },
       // Node.js polyfills (minimal - only what we need)

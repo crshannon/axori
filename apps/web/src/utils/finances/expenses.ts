@@ -73,7 +73,8 @@ export function calculateFixedExpensesFromStructured(
     total += parseFloat(operatingExpenses.trashMonthly)
   if (operatingExpenses.electricMonthly)
     total += parseFloat(operatingExpenses.electricMonthly)
-  if (operatingExpenses.gasMonthly) total += parseFloat(operatingExpenses.gasMonthly)
+  if (operatingExpenses.gasMonthly)
+    total += parseFloat(operatingExpenses.gasMonthly)
   if (operatingExpenses.internetMonthly)
     total += parseFloat(operatingExpenses.internetMonthly)
   if (operatingExpenses.lawnCareMonthly)
@@ -186,8 +187,9 @@ export function calculateTotalFixedExpenses(
   let total = calculateFixedExpensesFromStructured(operatingExpenses)
 
   // Add management fee (can be flat fee or percentage-based)
-  const hasManagementExpense =
-    !!(operatingExpenses?.managementFlatFee || operatingExpenses?.managementRate)
+  const hasManagementExpense = !!(
+    operatingExpenses?.managementFlatFee || operatingExpenses?.managementRate
+  )
   const managementFee = calculateManagementFee(operatingExpenses, grossIncome)
   total += managementFee
 
@@ -198,13 +200,11 @@ export function calculateTotalFixedExpenses(
     hasManagementExpense,
   )
 
-  const transactionExpensesTotal = Array.from(recurringExpensesMap.values()).reduce(
-    (sum, amount) => sum + amount,
-    0,
-  )
+  const transactionExpensesTotal = Array.from(
+    recurringExpensesMap.values(),
+  ).reduce((sum, amount) => sum + amount, 0)
 
   total += transactionExpensesTotal
 
   return total
 }
-

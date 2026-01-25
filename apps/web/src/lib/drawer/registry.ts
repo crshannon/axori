@@ -9,8 +9,8 @@
  */
 
 import { z } from 'zod'
-import {   lazy } from 'react'
-import type {ComponentType, LazyExoticComponent} from 'react';
+import { lazy } from 'react'
+import type { ComponentType, LazyExoticComponent } from 'react'
 import type { PortfolioRole } from '@axori/permissions'
 
 /**
@@ -31,9 +31,13 @@ export interface DrawerComponentProps {
 /**
  * Base entry for drawer registry
  */
-export interface DrawerRegistryEntry<TParams extends z.ZodTypeAny = z.ZodTypeAny> {
+export interface DrawerRegistryEntry<
+  TParams extends z.ZodTypeAny = z.ZodTypeAny,
+> {
   /** The drawer component (lazy loaded) */
-  component: LazyExoticComponent<ComponentType<DrawerComponentProps & z.infer<TParams>>>
+  component: LazyExoticComponent<
+    ComponentType<DrawerComponentProps & z.infer<TParams>>
+  >
   /** Zod schema for validating URL params */
   paramsSchema: TParams
   /** Required permission level */
@@ -106,7 +110,6 @@ export const bankAccountDrawerParamsSchema = z.object({
   bankAccountId: z.string().optional(),
 })
 
-
 // =============================================================================
 // DRAWER NAMES (for type safety)
 // =============================================================================
@@ -151,40 +154,42 @@ export const DRAWER_REGISTRY: Record<DrawerName, DrawerRegistryEntry<any>> = {
     component: lazy(() =>
       import('@/components/drawers/AssetConfigurationDrawer').then((m) => ({
         default: m.AssetConfigurationDrawer,
-      }))
+      })),
     ),
     paramsSchema: propertyDrawerParamsSchema,
     permission: 'member',
     displayName: 'Asset Configuration',
   },
 
-  'acquisition': {
+  acquisition: {
     component: lazy(() =>
       import('@/components/drawers/AcquisitionMetadataDrawer').then((m) => ({
         default: m.AcquisitionMetadataDrawer,
-      }))
+      })),
     ),
     paramsSchema: propertyDrawerParamsSchema,
     permission: 'member',
     displayName: 'Acquisition Metadata',
   },
 
-  'presumptions': {
+  presumptions: {
     component: lazy(() =>
-      import('@/components/drawers/CalculationPresumptionsDrawer').then((m) => ({
-        default: m.CalculationPresumptionsDrawer,
-      }))
+      import('@/components/drawers/CalculationPresumptionsDrawer').then(
+        (m) => ({
+          default: m.CalculationPresumptionsDrawer,
+        }),
+      ),
     ),
     paramsSchema: propertyDrawerParamsSchema,
     permission: 'member',
     displayName: 'Calculation Presumptions',
   },
 
-  'notifications': {
+  notifications: {
     component: lazy(() =>
       import('@/components/drawers/NotificationSettingsDrawer').then((m) => ({
         default: m.NotificationSettingsDrawer,
-      }))
+      })),
     ),
     paramsSchema: propertyDrawerParamsSchema,
     permission: 'member',
@@ -198,7 +203,7 @@ export const DRAWER_REGISTRY: Record<DrawerName, DrawerRegistryEntry<any>> = {
     component: lazy(() =>
       import('@/components/drawers/AddLoanDrawer').then((m) => ({
         default: m.AddLoanDrawer,
-      }))
+      })),
     ),
     paramsSchema: loanDrawerParamsSchema,
     permission: 'member',
@@ -209,7 +214,7 @@ export const DRAWER_REGISTRY: Record<DrawerName, DrawerRegistryEntry<any>> = {
     component: lazy(() =>
       import('@/components/drawers/AddTransactionDrawer').then((m) => ({
         default: m.AddTransactionDrawer,
-      }))
+      })),
     ),
     paramsSchema: transactionDrawerParamsSchema,
     permission: 'member',
@@ -220,7 +225,7 @@ export const DRAWER_REGISTRY: Record<DrawerName, DrawerRegistryEntry<any>> = {
     component: lazy(() =>
       import('@/components/drawers/OperatingExpensesDrawer').then((m) => ({
         default: m.OperatingExpensesDrawer,
-      }))
+      })),
     ),
     paramsSchema: propertyDrawerParamsSchema,
     permission: 'member',
@@ -231,7 +236,7 @@ export const DRAWER_REGISTRY: Record<DrawerName, DrawerRegistryEntry<any>> = {
     component: lazy(() =>
       import('@/components/drawers/RentalIncomeDrawer').then((m) => ({
         default: m.RentalIncomeDrawer,
-      }))
+      })),
     ),
     paramsSchema: propertyDrawerParamsSchema,
     permission: 'member',
@@ -242,7 +247,7 @@ export const DRAWER_REGISTRY: Record<DrawerName, DrawerRegistryEntry<any>> = {
     component: lazy(() =>
       import('@/components/drawers/BankAccountConnectionDrawer').then((m) => ({
         default: m.BankAccountConnectionDrawer,
-      }))
+      })),
     ),
     paramsSchema: bankAccountDrawerParamsSchema,
     permission: 'admin',
@@ -253,18 +258,18 @@ export const DRAWER_REGISTRY: Record<DrawerName, DrawerRegistryEntry<any>> = {
     component: lazy(() =>
       import('@/components/drawers/PropertyAcqusitionDrawer').then((m) => ({
         default: m.PropertyAcquisitionDrawer,
-      }))
+      })),
     ),
     paramsSchema: propertyDrawerParamsSchema,
     permission: 'member',
     displayName: 'Property Acquisition',
   },
 
-  'valuation': {
+  valuation: {
     component: lazy(() =>
       import('@/components/drawers/ValuationDrawer').then((m) => ({
         default: m.ValuationDrawer,
-      }))
+      })),
     ),
     paramsSchema: propertyDrawerParamsSchema,
     permission: 'member',
@@ -307,7 +312,7 @@ export function getDrawerEntry(name: string): DrawerRegistryEntry | null {
  */
 export function validateDrawerParams<T extends DrawerName>(
   name: T,
-  params: Record<string, unknown>
+  params: Record<string, unknown>,
 ): DrawerParams<T> | null {
   const entry = getDrawerEntry(name)
   if (!entry) {
@@ -316,7 +321,10 @@ export function validateDrawerParams<T extends DrawerName>(
 
   const result = entry.paramsSchema.safeParse(params)
   if (!result.success) {
-    console.warn(`[DrawerRegistry] Invalid params for drawer "${name}":`, result.error.errors)
+    console.warn(
+      `[DrawerRegistry] Invalid params for drawer "${name}":`,
+      result.error.errors,
+    )
     return null
   }
 

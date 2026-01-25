@@ -75,4 +75,3 @@ export interface StepProps {
   formatCurrency: (val: string) => string
   calculatePI?: () => string
 }
-

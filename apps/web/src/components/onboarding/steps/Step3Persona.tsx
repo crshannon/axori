@@ -89,4 +89,3 @@ export function Step3Persona({ form, onNext, isDark }: Step3PersonaProps) {
     </div>
   )
 }
-

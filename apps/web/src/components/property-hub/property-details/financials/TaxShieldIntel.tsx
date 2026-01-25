@@ -36,7 +36,7 @@ export const TaxShieldIntel = ({ propertyId }: TaxShieldIntelProps) => {
   // Get property data for calculations
   const acquisition = property.acquisition
   const propertyType = property.characteristics?.propertyType
-  
+
   // Get cost basis components
   const purchasePrice = acquisition?.purchasePrice
     ? Number(acquisition.purchasePrice)
@@ -56,9 +56,14 @@ export const TaxShieldIntel = ({ propertyId }: TaxShieldIntelProps) => {
   const depreciableBasis = costBasis?.depreciableBasis || null
 
   // Calculate depreciation summary
-  const summary = depreciableBasis && placedInServiceDate
-    ? calculateDepreciationSummary(depreciableBasis, depreciationYears, placedInServiceDate)
-    : null
+  const summary =
+    depreciableBasis && placedInServiceDate
+      ? calculateDepreciationSummary(
+          depreciableBasis,
+          depreciationYears,
+          placedInServiceDate,
+        )
+      : null
 
   // Calculate tax shield
   const taxShield = summary
@@ -105,7 +110,7 @@ export const TaxShieldIntel = ({ propertyId }: TaxShieldIntelProps) => {
           />
         </div>
       </div>
-      
+
       <div className="space-y-6">
         {/* Annual Depreciation */}
         {summary ? (
@@ -126,7 +131,8 @@ export const TaxShieldIntel = ({ propertyId }: TaxShieldIntelProps) => {
               variant="overline"
               className="text-slate-400 dark:text-slate-500 mt-1"
             >
-              ${Math.round(summary.monthlyDepreciation).toLocaleString()}/mo over {depreciationYears} years
+              ${Math.round(summary.monthlyDepreciation).toLocaleString()}/mo
+              over {depreciationYears} years
             </Typography>
           </div>
         ) : (
@@ -184,7 +190,8 @@ export const TaxShieldIntel = ({ propertyId }: TaxShieldIntelProps) => {
                 variant="caption"
                 className="text-amber-500 uppercase tracking-widest font-black"
               >
-                {summary.yearsCompleted}/{Math.ceil(summary.totalDepreciableYears)} yrs
+                {summary.yearsCompleted}/
+                {Math.ceil(summary.totalDepreciableYears)} yrs
               </Typography>
             </div>
             <div className="h-2 w-full bg-black/10 dark:bg-white/5 rounded-full overflow-hidden">
@@ -200,7 +207,8 @@ export const TaxShieldIntel = ({ propertyId }: TaxShieldIntelProps) => {
                 variant="overline"
                 className="text-slate-400 dark:text-slate-500"
               >
-                ${Math.round(summary.accumulatedDepreciation).toLocaleString()} claimed
+                ${Math.round(summary.accumulatedDepreciation).toLocaleString()}{' '}
+                claimed
               </Typography>
               <Typography
                 variant="overline"
@@ -227,8 +235,8 @@ export const TaxShieldIntel = ({ propertyId }: TaxShieldIntelProps) => {
                 costSegPotential === 'High Alpha'
                   ? 'text-emerald-500'
                   : costSegPotential === 'Medium'
-                  ? 'text-amber-500'
-                  : 'text-slate-500'
+                    ? 'text-amber-500'
+                    : 'text-slate-500'
               }`}
             >
               {costSegPotential}
@@ -240,8 +248,8 @@ export const TaxShieldIntel = ({ propertyId }: TaxShieldIntelProps) => {
                 costSegPotential === 'High Alpha'
                   ? 'bg-emerald-500'
                   : costSegPotential === 'Medium'
-                  ? 'bg-amber-500'
-                  : 'bg-slate-500'
+                    ? 'bg-amber-500'
+                    : 'bg-slate-500'
               }`}
               style={{ width: `${costSegPercentage}%` }}
             />

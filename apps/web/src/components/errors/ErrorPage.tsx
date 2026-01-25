@@ -1,4 +1,11 @@
-import { AlertTriangle, ChevronDown, ChevronUp, Code, Home, RefreshCw } from 'lucide-react'
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Code,
+  Home,
+  RefreshCw,
+} from 'lucide-react'
 import { Button } from '@axori/ui'
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
@@ -9,11 +16,16 @@ interface ErrorPageProps {
   isDevelopment?: boolean
 }
 
-export function ErrorPage({ error, errorInfo, isDevelopment = false }: ErrorPageProps) {
+export function ErrorPage({
+  error,
+  errorInfo,
+  isDevelopment = false,
+}: ErrorPageProps) {
   const [showDetails, setShowDetails] = useState(false)
   const isDev = isDevelopment || import.meta.env.DEV
 
-  const errorMessage = error instanceof Error ? error.message : String(error || 'Unknown error')
+  const errorMessage =
+    error instanceof Error ? error.message : String(error || 'Unknown error')
   const errorStack = error instanceof Error ? error.stack : undefined
 
   return (
@@ -45,10 +57,7 @@ export function ErrorPage({ error, errorInfo, isDevelopment = false }: ErrorPage
               <RefreshCw className="w-4 h-4" />
               Reload Page
             </Button>
-            <Button
-              variant="outline"
-              asChild
-            >
+            <Button variant="outline" asChild>
               <Link to="/" className="flex items-center gap-2">
                 <Home className="w-4 h-4" />
                 Go Home
@@ -80,14 +89,18 @@ export function ErrorPage({ error, errorInfo, isDevelopment = false }: ErrorPage
                 <div className="mt-4 p-4 rounded-lg bg-slate-900 dark:bg-black text-slate-100 font-mono text-sm overflow-auto max-h-96">
                   {/* Error Message */}
                   <div className="mb-4">
-                    <div className="text-slate-400 text-xs mb-1">Error Message:</div>
+                    <div className="text-slate-400 text-xs mb-1">
+                      Error Message:
+                    </div>
                     <div className="text-red-400">{errorMessage}</div>
                   </div>
 
                   {/* Stack Trace */}
                   {errorStack && (
                     <div className="mb-4">
-                      <div className="text-slate-400 text-xs mb-1">Stack Trace:</div>
+                      <div className="text-slate-400 text-xs mb-1">
+                        Stack Trace:
+                      </div>
                       <pre className="text-xs whitespace-pre-wrap break-words text-slate-300">
                         {errorStack}
                       </pre>
@@ -97,7 +110,9 @@ export function ErrorPage({ error, errorInfo, isDevelopment = false }: ErrorPage
                   {/* Component Stack */}
                   {errorInfo?.componentStack && (
                     <div className="mb-4">
-                      <div className="text-slate-400 text-xs mb-1">Component Stack:</div>
+                      <div className="text-slate-400 text-xs mb-1">
+                        Component Stack:
+                      </div>
                       <pre className="text-xs whitespace-pre-wrap break-words text-slate-300">
                         {errorInfo.componentStack}
                       </pre>
@@ -106,19 +121,27 @@ export function ErrorPage({ error, errorInfo, isDevelopment = false }: ErrorPage
 
                   {/* Environment Info */}
                   <div className="mt-4 pt-4 border-t border-slate-700">
-                    <div className="text-slate-400 text-xs mb-2">Environment:</div>
+                    <div className="text-slate-400 text-xs mb-2">
+                      Environment:
+                    </div>
                     <div className="space-y-1 text-xs">
                       <div>
                         <span className="text-slate-500">Mode:</span>{' '}
-                        <span className="text-slate-300">{import.meta.env.MODE}</span>
+                        <span className="text-slate-300">
+                          {import.meta.env.MODE}
+                        </span>
                       </div>
                       <div>
                         <span className="text-slate-500">Dev:</span>{' '}
-                        <span className="text-slate-300">{String(import.meta.env.DEV)}</span>
+                        <span className="text-slate-300">
+                          {String(import.meta.env.DEV)}
+                        </span>
                       </div>
                       <div>
                         <span className="text-slate-500">URL:</span>{' '}
-                        <span className="text-slate-300">{window.location.href}</span>
+                        <span className="text-slate-300">
+                          {window.location.href}
+                        </span>
                       </div>
                       <div>
                         <span className="text-slate-500">User Agent:</span>{' '}
@@ -137,7 +160,8 @@ export function ErrorPage({ error, errorInfo, isDevelopment = false }: ErrorPage
           {!isDev && (
             <div className="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
               <p className="text-sm text-blue-800 dark:text-blue-200 text-center">
-                If this problem persists, please contact support with the error message above.
+                If this problem persists, please contact support with the error
+                message above.
               </p>
             </div>
           )}

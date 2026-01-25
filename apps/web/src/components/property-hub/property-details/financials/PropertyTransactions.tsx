@@ -86,8 +86,7 @@ export const PropertyTransactions = ({
       source: tx.source || 'manual',
       documentId: tx.documentId,
       notes: tx.notes || null,
-      reviewStatus: (tx.reviewStatus ||
-        'pending'),
+      reviewStatus: tx.reviewStatus || 'pending',
       isExcluded: tx.isExcluded || false,
       taxCategory: tx.taxCategory,
     }))

@@ -32,7 +32,7 @@ interface TransactionsResponse {
  */
 export function usePropertyTransactions(
   propertyId: string | null | undefined,
-  filters?: TransactionFilters
+  filters?: TransactionFilters,
 ) {
   const { user } = useUser()
 
@@ -48,9 +48,11 @@ export function usePropertyTransactions(
       if (filters?.endDate) params.append('endDate', filters.endDate)
       if (filters?.type) params.append('type', filters.type)
       if (filters?.category) params.append('category', filters.category)
-      if (filters?.reviewStatus) params.append('reviewStatus', filters.reviewStatus)
+      if (filters?.reviewStatus)
+        params.append('reviewStatus', filters.reviewStatus)
       if (filters?.page) params.append('page', filters.page.toString())
-      if (filters?.pageSize) params.append('pageSize', filters.pageSize.toString())
+      if (filters?.pageSize)
+        params.append('pageSize', filters.pageSize.toString())
 
       const queryString = params.toString()
       const url = `/api/properties/${propertyId}/transactions${queryString ? `?${queryString}` : ''}`
@@ -71,7 +73,7 @@ export function usePropertyTransactions(
  */
 export function usePropertyTransaction(
   propertyId: string | null | undefined,
-  transactionId: string | null | undefined
+  transactionId: string | null | undefined,
 ) {
   const { user } = useUser()
 
@@ -86,7 +88,7 @@ export function usePropertyTransaction(
         `/api/properties/${propertyId}/transactions/${transactionId}`,
         {
           clerkId: user.id,
-        }
+        },
       )
 
       return result.transaction
@@ -121,13 +123,17 @@ export function useCreateTransaction() {
           method: 'POST',
           clerkId: user.id,
           body: JSON.stringify(transactionData),
-        }
+        },
       )
     },
     onSuccess: (_data, variables) => {
       // Invalidate transaction queries
-      queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId, 'transactions'] })
-      queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId] })
+      queryClient.invalidateQueries({
+        queryKey: ['properties', variables.propertyId, 'transactions'],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['properties', variables.propertyId],
+      })
       queryClient.invalidateQueries({ queryKey: ['properties'] })
     },
   })
@@ -160,16 +166,25 @@ export function useUpdateTransaction() {
           method: 'PUT',
           clerkId: user.id,
           body: JSON.stringify(transactionData),
-        }
+        },
       )
     },
     onSuccess: (_data, variables) => {
       // Invalidate transaction queries
-      queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId, 'transactions'] })
       queryClient.invalidateQueries({
-        queryKey: ['properties', variables.propertyId, 'transactions', variables.transactionId],
+        queryKey: ['properties', variables.propertyId, 'transactions'],
       })
-      queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId] })
+      queryClient.invalidateQueries({
+        queryKey: [
+          'properties',
+          variables.propertyId,
+          'transactions',
+          variables.transactionId,
+        ],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['properties', variables.propertyId],
+      })
       queryClient.invalidateQueries({ queryKey: ['properties'] })
     },
   })
@@ -199,15 +214,18 @@ export function useDeleteTransaction() {
         {
           method: 'DELETE',
           clerkId: user.id,
-        }
+        },
       )
     },
     onSuccess: (_data, variables) => {
       // Invalidate transaction queries
-      queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId, 'transactions'] })
-      queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId] })
+      queryClient.invalidateQueries({
+        queryKey: ['properties', variables.propertyId, 'transactions'],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['properties', variables.propertyId],
+      })
       queryClient.invalidateQueries({ queryKey: ['properties'] })
     },
   })
 }
-

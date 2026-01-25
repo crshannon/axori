@@ -12,15 +12,14 @@ export interface LearningSnippet {
   category: string
   content: string | ReactNode
   context?:
-  | 'debt-logic'
-  | 'acquisition'
-  | 'operating-core'
-  | 'tax-shield'
-  | 'general'
-  | 'asset-configuration'
-  | 'acquisition-metadata'
-  | 'asset-dna-calibration'
-  | 'calculation-presumptions'
-  | 'notification-engine'
+    | 'debt-logic'
+    | 'acquisition'
+    | 'operating-core'
+    | 'tax-shield'
+    | 'general'
+    | 'asset-configuration'
+    | 'acquisition-metadata'
+    | 'asset-dna-calibration'
+    | 'calculation-presumptions'
+    | 'notification-engine'
 }
-

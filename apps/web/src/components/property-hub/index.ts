@@ -3,5 +3,6 @@ export { PropertyDetailsHeaderActions } from './property-details/shared/Property
 export { PropertyDetailsHeaderNav } from './property-details/shared/PropertyDetailsHeaderNav'
 export { PropertyHero } from './property-details/overview/PropertyHero'
 export { PropertyMetrics } from './property-details/overview/PropertyMetrics'
+export { CashFlowSummaryCard } from './property-details/overview/CashFlowSummaryCard'
 export { PropertyScoreGauge } from './PropertyScoreGauge'
 export { ReadOnlyBanner } from './ReadOnlyBanner'

@@ -46,12 +46,12 @@ interface MonthlyMetricsData {
 
 /**
  * Hook to calculate monthly projected vs actual financial metrics
- * 
+ *
  * Calculates monthly breakdown for trailing 12 months:
  * - Projected: From structured data (rental income, operating expenses, loans)
  * - Actual: From transactions aggregated by month
  * - Variance: Actual - Projected
- * 
+ *
  * Data Sources:
  * - Projected: Structured data (leases, mortgages) → monthly projected values
  * - Actual: Transactions → aggregated by month
@@ -78,7 +78,8 @@ export function useMonthlyMetrics(
 
     const rentalIncome = property?.rentalIncome
     const operatingExpenses = property?.operatingExpenses
-    const activeLoans = property?.loans?.filter((l) => l.status === 'active') || []
+    const activeLoans =
+      property?.loans?.filter((l) => l.status === 'active') || []
 
     // Calculate total loan payments using shared utility (constant across months)
     const totalDebtService = calculateTotalDebtService(activeLoans)
@@ -94,10 +95,14 @@ export function useMonthlyMetrics(
       const projectedIncome = calculateGrossIncomeFromStructured(rentalIncome)
 
       // Calculate projected expenses using shared utilities
-      let projectedExpenses = calculateFixedExpensesFromStructured(operatingExpenses)
-      
+      let projectedExpenses =
+        calculateFixedExpensesFromStructured(operatingExpenses)
+
       // Add management fee (requires gross income)
-      projectedExpenses += calculateManagementFee(operatingExpenses, projectedIncome)
+      projectedExpenses += calculateManagementFee(
+        operatingExpenses,
+        projectedIncome,
+      )
 
       // Calculate CapEx reserve using shared utility
       const capexReserve = calculateCapExReserve(
@@ -214,4 +219,3 @@ export function useMonthlyMetrics(
 
   return metrics
 }
-

@@ -114,17 +114,35 @@ export function useFinancialPulse(propertyId: string): FinancialMetrics {
     let actualSource: 'transactions' | null = null
     let liquidReserves = 0
 
-    if (transactionsData?.transactions && transactionsData.transactions.length > 0) {
+    if (
+      transactionsData?.transactions &&
+      transactionsData.transactions.length > 0
+    ) {
       // Filter to current month transactions only
       const today = new Date()
-      const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1)
-      const currentMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999)
+      const currentMonthStart = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        1,
+      )
+      const currentMonthEnd = new Date(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+        999,
+      )
 
       const currentMonthTransactions = activeTransactions.filter((t) => {
         // Parse transaction date (stored as "YYYY-MM-DD" string)
         const [tYear, tMonth, tDay] = t.transactionDate.split('-').map(Number)
         const transactionDate = new Date(tYear, tMonth - 1, tDay)
-        return transactionDate >= currentMonthStart && transactionDate <= currentMonthEnd
+        return (
+          transactionDate >= currentMonthStart &&
+          transactionDate <= currentMonthEnd
+        )
       })
 
       // If no current month transactions, try most recent month with transactions
@@ -142,7 +160,9 @@ export function useFinancialPulse(propertyId: string): FinancialMetrics {
         })
 
         // Get the most recent month
-        const sortedMonths = Array.from(transactionsByMonth.keys()).sort().reverse()
+        const sortedMonths = Array.from(transactionsByMonth.keys())
+          .sort()
+          .reverse()
         if (sortedMonths.length > 0) {
           transactionsToUse = transactionsByMonth.get(sortedMonths[0]) || []
         }
@@ -165,10 +185,15 @@ export function useFinancialPulse(propertyId: string): FinancialMetrics {
         const allMonthlyExpenses = activeTransactions
           .filter((t) => t.type === 'expense')
           .reduce((sum, t) => sum + parseFloat(t.amount), 0)
-        const monthsOfData = Math.max(1, new Set(activeTransactions.map(t => {
-          const [year, month] = t.transactionDate.split('-').map(Number)
-          return `${year}-${month}`
-        })).size)
+        const monthsOfData = Math.max(
+          1,
+          new Set(
+            activeTransactions.map((t) => {
+              const [year, month] = t.transactionDate.split('-').map(Number)
+              return `${year}-${month}`
+            }),
+          ).size,
+        )
         const avgMonthlyExpenses = allMonthlyExpenses / monthsOfData
         liquidReserves = avgMonthlyExpenses * 12
       }
@@ -187,7 +212,7 @@ export function useFinancialPulse(propertyId: string): FinancialMetrics {
 
     // Legacy: netCashFlow (prefer actual, fallback to projected)
     const netCashFlow =
-      actualCashFlow !== null ? actualCashFlow : projectedCashFlow ?? 0
+      actualCashFlow !== null ? actualCashFlow : (projectedCashFlow ?? 0)
 
     return {
       projectedCashFlow,
@@ -208,4 +233,3 @@ export function useFinancialPulse(propertyId: string): FinancialMetrics {
 
   return metrics
 }
-

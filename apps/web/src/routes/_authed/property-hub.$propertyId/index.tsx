@@ -4,6 +4,8 @@ import { PropertyHero, PropertyMetrics } from '@/components/property-hub'
 import { cn } from '@/utils/helpers'
 import { useProperty } from '@/hooks/api/useProperties'
 import { DataCompleteness } from '@/components/property-hub/property-details/overview/DataCompleteness'
+import { CashFlowSummaryCard } from '@/components/property-hub/property-details/overview/CashFlowSummaryCard'
+import { usePropertyMetrics } from '@/components/property-hub/property-details/overview/hooks/usePropertyMetrics'
 import { AsyncLoader } from '@/components/loader/async-loader'
 
 export const Route = createFileRoute('/_authed/property-hub/$propertyId/')({
@@ -15,6 +17,10 @@ function PropertyOverviewPage() {
 
   // Fetch property data using the hook (includes normalized data)
   const { data: property, isLoading, error } = useProperty(propertyId)
+
+  // Get real equity from property metrics
+  const { metrics } = usePropertyMetrics(property, propertyId)
+  const equity = metrics.equity.value
 
   // Show loading state with AsyncLoader
   if (isLoading) {
@@ -84,12 +90,6 @@ function PropertyOverviewPage() {
     yearBuilt: yearBuilt?.toString() || 'Unknown',
     image:
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=1200', // TODO: Add property images
-    metrics: [
-      { l: 'Gross Yield', v: '7.8%' },
-      { l: 'Cap Rate', v: '6.2%' },
-      { l: 'Cash-on-Cash', v: '11.4%' },
-      { l: 'Debt Coverage', v: '1.65x' },
-    ],
     swot: {
       strengths: [
         'Section 8 voucher readiness',
@@ -137,7 +137,7 @@ function PropertyOverviewPage() {
   return (
     <div className="p-8 w-full">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
-        <PropertyHero propertyId={propertyId} />
+        <PropertyHero propertyId={propertyId} equity={equity} />
         <PropertyMetrics propertyId={propertyId} />
 
         {/* <div
@@ -183,27 +183,9 @@ function PropertyOverviewPage() {
         </div> */}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+        <CashFlowSummaryCard propertyId={propertyId} />
         <DataCompleteness propertyId={propertyId} />
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-        {prop.metrics.map((m) => (
-          <div
-            key={m.l}
-            className={cn(cardClass, 'p-8 flex flex-col justify-between')}
-          >
-            <Overline className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/70">
-              {m.l}
-            </Overline>
-            <Typography
-              variant="h4"
-              className="text-4xl font-black tabular-nums tracking-tighter mt-4 text-black dark:text-white"
-            >
-              {m.v}
-            </Typography>
-          </div>
-        ))}
       </div>
 
       {/* Operational Alpha Drivers */}

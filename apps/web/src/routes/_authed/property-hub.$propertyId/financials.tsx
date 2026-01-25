@@ -19,7 +19,8 @@ import { OperatingCore } from '@/components/property-hub/property-details/financ
 import { DebtLogic } from '@/components/property-hub/property-details/financials/DebtLogic'
 import { AcquisitionIntel } from '@/components/property-hub/property-details/financials/AcquisitionIntel'
 import { TaxShieldIntel } from '@/components/property-hub/property-details/financials/TaxShieldIntel'
-import { MonthlyComparisonChart } from '@/components/property-hub/property-details/financials/MonthlyComparisonChart'
+import { IncomeExpenseChart } from '@/components/property-hub/property-details/financials/IncomeExpenseChart'
+import { CashFlowPerformanceChart } from '@/components/property-hub/property-details/financials/CashFlowPerformanceChart'
 import { PropertyTransactions } from '@/components/property-hub/property-details/financials/PropertyTransactions'
 import { useProperty } from '@/hooks/api/useProperties'
 import { AsyncLoader } from '@/components/loader/async-loader'
@@ -106,9 +107,10 @@ function FinancialsPage() {
         <DebtLogic propertyId={propertyId} />
       </div>
 
-      {/* Monthly Comparison Chart */}
-      <div className="w-full">
-        <MonthlyComparisonChart propertyId={propertyId} />
+      {/* Income vs Expenses & Cash Flow Performance Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <IncomeExpenseChart propertyId={propertyId} />
+        <CashFlowPerformanceChart propertyId={propertyId} />
       </div>
 
       {/* Historical P&L Registry */}

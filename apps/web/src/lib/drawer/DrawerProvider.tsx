@@ -21,27 +21,24 @@
 
 import * as React from 'react'
 import {
-  
   Suspense,
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
-  useState
+  useState,
 } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { Loading } from '@axori/ui'
 import {
-  
-  
   getDrawerEntry,
   isValidDrawerName,
-  validateDrawerParams
+  validateDrawerParams,
 } from './registry'
-import type {ReactNode} from 'react';
-import type {DrawerName} from './registry';
 import { hasRequiredPermission } from './permission-helpers'
+import type { ReactNode } from 'react'
+import type { DrawerName } from './registry'
 import type { PortfolioRole } from './permission-helpers'
 import { usePermissions } from '@/hooks/api/usePermissions'
 import { useProperty } from '@/hooks/api/useProperties'
@@ -116,7 +113,11 @@ class DrawerErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('[DrawerErrorBoundary] Drawer failed to load:', error, errorInfo)
+    console.error(
+      '[DrawerErrorBoundary] Drawer failed to load:',
+      error,
+      errorInfo,
+    )
     this.props.onError()
   }
 
@@ -146,7 +147,6 @@ class DrawerErrorBoundary extends React.Component<
   }
 }
 
-
 // =============================================================================
 // DRAWER RENDERER
 // =============================================================================
@@ -160,7 +160,11 @@ interface DrawerRendererProps {
 /**
  * Renders the appropriate drawer component based on the drawer name
  */
-function DrawerRendererInner({ drawerName, params, onClose }: DrawerRendererProps) {
+function DrawerRendererInner({
+  drawerName,
+  params,
+  onClose,
+}: DrawerRendererProps) {
   const entry = getDrawerEntry(drawerName)
 
   if (!entry) {
@@ -204,28 +208,37 @@ interface PermissionGateProps {
 /**
  * Checks permissions before rendering the drawer
  */
-function PermissionGate({ drawerName, params, children, onDenied }: PermissionGateProps) {
+function PermissionGate({
+  drawerName,
+  params,
+  children,
+  onDenied,
+}: PermissionGateProps) {
   const entry = getDrawerEntry(drawerName)
   const propertyId = params.propertyId as string | undefined
   const [permissionChecked, setPermissionChecked] = useState(false)
 
   // Get property to find portfolioId (only if we have a propertyId)
-  const { data: property, isLoading: isLoadingProperty, error: propertyError } = useProperty(
-    propertyId || null
-  )
+  const {
+    data: property,
+    isLoading: isLoadingProperty,
+    error: propertyError,
+  } = useProperty(propertyId || null)
 
   // Get user permissions for the portfolio
   const portfolioId = property?.portfolioId || null
   const { role, isLoading: isLoadingPermissions } = usePermissions(portfolioId)
 
   // Get property-level permissions (if propertyId is provided)
-  const { canEdit: canEditProperty, canView: canViewProperty, isLoading: isLoadingPropertyPermissions } = usePropertyPermissions(
-    propertyId || null
-  )
+  const {
+    canEdit: canEditProperty,
+    canView: canViewProperty,
+    isLoading: isLoadingPropertyPermissions,
+  } = usePropertyPermissions(propertyId || null)
 
   // Determine if we're still loading
-  const isLoading = 
-    (propertyId && isLoadingProperty) || 
+  const isLoading =
+    (propertyId && isLoadingProperty) ||
     (portfolioId && isLoadingPermissions) ||
     (propertyId && isLoadingPropertyPermissions)
 
@@ -238,7 +251,10 @@ function PermissionGate({ drawerName, params, children, onDenied }: PermissionGa
 
     // If drawer requires a property but there was an error loading it
     if (propertyId && propertyError) {
-      console.warn(`[PermissionGate] Error loading property: ${propertyId}`, propertyError)
+      console.warn(
+        `[PermissionGate] Error loading property: ${propertyId}`,
+        propertyError,
+      )
       toast.error('Failed to load property')
       onDenied()
       return
@@ -256,7 +272,7 @@ function PermissionGate({ drawerName, params, children, onDenied }: PermissionGa
     if (entry && !hasRequiredPermission(role, entry.permission)) {
       console.warn(
         `[PermissionGate] Access denied to drawer "${drawerName}". ` +
-          `Required: ${entry.permission}, User role: ${role || 'none'}`
+          `Required: ${entry.permission}, User role: ${role || 'none'}`,
       )
       toast.warning(`You don't have permission to access ${entry.displayName}`)
       onDenied()
@@ -266,14 +282,17 @@ function PermissionGate({ drawerName, params, children, onDenied }: PermissionGa
     // For property-based drawers, also check property-level access
     if (propertyId && entry) {
       // Determine what property-level permission is needed based on drawer permission requirement
-      const needsEdit = entry.permission === 'member' || entry.permission === 'admin' || entry.permission === 'owner'
+      const needsEdit =
+        entry.permission === 'member' ||
+        entry.permission === 'admin' ||
+        entry.permission === 'owner'
       const needsView = entry.permission === 'viewer' || needsEdit
 
       // Check property-level access
       if (needsEdit && !canEditProperty) {
         console.warn(
           `[PermissionGate] Property-level access denied for drawer "${drawerName}". ` +
-            `Property: ${propertyId}, Can edit: ${canEditProperty}`
+            `Property: ${propertyId}, Can edit: ${canEditProperty}`,
         )
         toast.warning(`You don't have permission to edit this property`)
         onDenied()
@@ -283,7 +302,7 @@ function PermissionGate({ drawerName, params, children, onDenied }: PermissionGa
       if (needsView && !canViewProperty && !canEditProperty) {
         console.warn(
           `[PermissionGate] Property-level access denied for drawer "${drawerName}". ` +
-            `Property: ${propertyId}, Can view: ${canViewProperty}`
+            `Property: ${propertyId}, Can view: ${canViewProperty}`,
         )
         toast.warning(`You don't have permission to view this property`)
         onDenied()

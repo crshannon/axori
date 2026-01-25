@@ -66,10 +66,7 @@ export const DNAProfile = ({
             >
               {dna.l}
             </Overline>
-            <Body
-              weight="black"
-              className={cn('text-[10px] uppercase', dna.c)}
-            >
+            <Body weight="black" className={cn('text-[10px] uppercase', dna.c)}>
               {dna.v}
             </Body>
           </div>
@@ -91,4 +88,3 @@ export const DNAProfile = ({
     </div>
   )
 }
-

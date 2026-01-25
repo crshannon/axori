@@ -201,14 +201,22 @@ export function getCalculationPresumptionsSnippets(): Array<LearningSnippet> {
  * Get learning snippets for asset DNA calibration
  */
 export function getAssetDnaSnippets(): Array<LearningSnippet> {
-  return [yieldMaximizationSnippet, equityGrowthSnippet, capitalRecirculationSnippet]
+  return [
+    yieldMaximizationSnippet,
+    equityGrowthSnippet,
+    capitalRecirculationSnippet,
+  ]
 }
 
 /**
  * Get learning snippets for notification settings
  */
 export function getNotificationSettingsSnippets(): Array<LearningSnippet> {
-  return [emailNotificationsSnippet, smsNotificationsSnippet, pushNotificationsSnippet]
+  return [
+    emailNotificationsSnippet,
+    smsNotificationsSnippet,
+    pushNotificationsSnippet,
+  ]
 }
 
 /**

@@ -23,8 +23,8 @@
  */
 
 import { useProperty } from './useProperties'
-import {  usePermissions } from './usePermissions'
-import type {UsePermissionsResult} from './usePermissions';
+import { usePermissions } from './usePermissions'
+import type { UsePermissionsResult } from './usePermissions'
 
 /**
  * Return type for the usePropertyPermissions hook
@@ -49,9 +49,12 @@ export interface UsePropertyPermissionsResult extends UsePermissionsResult {
  * - Then fetches permissions for that portfolio
  * - Returns isReadOnly = true when user can view but not edit
  */
-export function usePropertyPermissions(propertyId: string | null | undefined): UsePropertyPermissionsResult {
+export function usePropertyPermissions(
+  propertyId: string | null | undefined,
+): UsePropertyPermissionsResult {
   // First, fetch the property to get its portfolioId
-  const { data: property, isLoading: isPropertyLoading } = useProperty(propertyId)
+  const { data: property, isLoading: isPropertyLoading } =
+    useProperty(propertyId)
 
   // Then, fetch permissions for that portfolio
   const portfolioId = property?.portfolioId ?? null

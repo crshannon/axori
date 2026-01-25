@@ -274,21 +274,25 @@ export async function cleanupAndReseedUserData(identifier: string) {
 
 // Run if called directly
 if (require.main === module) {
-  const identifier = process.argv[2];
+  // Load environment variables from root .env.local
+  require("dotenv").config({ path: "../../.env.local" });
+
+  // Use CLI argument first, then fall back to SEED_USER_ID env var
+  const identifier = process.argv[2] || process.env.SEED_USER_ID;
   if (!identifier) {
-    console.error(
-      "❌ Please provide a Clerk user ID or user ID (UUID) as an argument"
-    );
-    console.error(
-      "Usage: tsx src/seed/cleanup-user-data.ts <clerk-id-or-user-id>"
-    );
-    console.error("Example: tsx src/seed/cleanup-user-data.ts user_abc123");
-    console.error(
-      "Example: tsx src/seed/cleanup-user-data.ts 3b1b1672-2dad-4108-ae41-40e285e7cc17"
-    );
+    console.error("❌ Please provide a Clerk user ID or user ID (UUID)");
+    console.error("");
+    console.error("Option 1: Pass as argument");
+    console.error("  Usage: pnpm db:seed:cleanup <clerk-id-or-user-id>");
+    console.error("  Example: pnpm db:seed:cleanup user_abc123");
+    console.error("");
+    console.error("Option 2: Set SEED_USER_ID in .env.local");
+    console.error("  Add: SEED_USER_ID=your-clerk-id-or-user-uuid");
+    console.error("  Then run: pnpm db:seed:cleanup");
     process.exit(1);
   }
 
+  console.log(`📍 Using identifier: ${identifier}`);
   cleanupAndReseedUserData(identifier)
     .then(() => {
       console.log("\n✅ Script completed");

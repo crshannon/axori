@@ -31,7 +31,8 @@ export function calculateMonthlyPrincipalInterest(
   if (annualInterestRate === 0) return principal / termMonths
 
   const monthlyRate = annualInterestRate / 100 / 12
-  const numerator = principal * monthlyRate * Math.pow(1 + monthlyRate, termMonths)
+  const numerator =
+    principal * monthlyRate * Math.pow(1 + monthlyRate, termMonths)
   const denominator = Math.pow(1 + monthlyRate, termMonths) - 1
 
   return numerator / denominator
@@ -80,4 +81,3 @@ export function getPrimaryLoanInterestRate(loans: Array<Loan>): number {
 
   return 0
 }
-

@@ -69,4 +69,3 @@ export function setupSystemPreferenceListener(
   mediaQuery.addEventListener('change', handler)
   return () => mediaQuery.removeEventListener('change', handler)
 }
-

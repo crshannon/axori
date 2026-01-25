@@ -2,10 +2,7 @@
  * Routes that should not show the main Header
  * These routes have their own full-page layouts or use SideNav
  */
-const ROUTES_WITHOUT_HEADER = [
-  '/sign-in',
-  '/sign-up',
-] as const
+const ROUTES_WITHOUT_HEADER = ['/sign-in', '/sign-up'] as const
 
 /**
  * Routes that should show SideNav instead of Header
@@ -52,8 +49,7 @@ export function shouldShowSideNav(pathname: string): boolean {
   }
 
   // Check if pathname starts with any authenticated route prefix
-  return AUTHED_ROUTE_PREFIXES.some((prefix) =>
-    pathname.startsWith(prefix + '/') || pathname === prefix,
+  return AUTHED_ROUTE_PREFIXES.some(
+    (prefix) => pathname.startsWith(prefix + '/') || pathname === prefix,
   )
 }
-

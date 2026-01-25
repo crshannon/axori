@@ -16,7 +16,7 @@ import {
   markets,
 } from "../schema";
 import { eq, and } from "drizzle-orm";
-import { generateSampleTransactions } from "./data/transactions";
+import { generateSampleTransactions, generateSparseTransactions } from "./data/transactions";
 import {
   sampleCharacteristics,
   sampleValuation,
@@ -25,6 +25,13 @@ import {
   sampleOperatingExpenses,
   sampleManagement,
   sampleLoan,
+  sparseDataCharacteristics,
+  sparseDataValuation,
+  sparseDataAcquisition,
+  sparseDataRentalIncome,
+  sparseDataOperatingExpenses,
+  sparseDataManagement,
+  sparseDataLoan,
 } from "./data/properties";
 
 /**
@@ -243,7 +250,7 @@ export async function seedMockUserData(identifier: string) {
     console.log(`✅ Added primary loan: ${loan.id}`);
 
     // Add HELOC (second lien) to "456 Oak Avenue"
-    // Reduced balance for realistic cash flow
+    // Low balance for cash flow positive scenario
     const [helocLoan] = await db
       .insert(loans)
       .values({
@@ -252,11 +259,11 @@ export async function seedMockUserData(identifier: string) {
         lenderName: "Community Credit Union",
         servicerName: "Community Credit Union",
         loanNumber: "HELOC-2024-456",
-        originalLoanAmount: "25000", // $25k HELOC (reduced for better cash flow)
+        originalLoanAmount: "25000", // $25k HELOC
         interestRate: "0.085", // 8.5% (typically higher than primary mortgage)
         termMonths: 120, // 10 years draw period
-        currentBalance: "10000", // $10k current balance (interest-only payment ~$71/month)
-        monthlyPrincipalInterest: "71", // Interest-only payment: $10k @ 8.5% / 12
+        currentBalance: "6000", // $6k current balance (paid down for positive cash flow)
+        monthlyPrincipalInterest: "42", // Interest-only payment: $6k @ 8.5% / 12 = ~$42/month
         startDate: "2024-01-15",
         maturityDate: "2034-01-15",
         status: "active" as const,
@@ -285,23 +292,110 @@ export async function seedMockUserData(identifier: string) {
       `✅ Added ${insertedTransactions.length} transactions (${incomeCount} income, ${expenseCount} expenses)`
     );
 
+    // 4. Create sparse data property (for testing limited data scenarios)
+    const [sparseProperty] = await db
+      .insert(properties)
+      .values({
+        portfolioId: portfolio.id,
+        userId: user.id,
+        addedBy: user.id,
+        address: "789 Riverfront Drive, Unit 4B",
+        city: "Memphis",
+        state: "TN",
+        zipCode: "38103",
+        status: "active",
+      })
+      .returning();
+
+    console.log(`✅ Created sparse data property: ${sparseProperty.id} (${sparseProperty.address})`);
+
+    // Add characteristics for sparse property
+    await db.insert(propertyCharacteristics).values({
+      propertyId: sparseProperty.id,
+      ...sparseDataCharacteristics,
+    });
+
+    // Add valuation for sparse property
+    await db.insert(propertyValuation).values({
+      propertyId: sparseProperty.id,
+      ...sparseDataValuation,
+    });
+
+    // Add acquisition for sparse property
+    await db.insert(propertyAcquisition).values({
+      propertyId: sparseProperty.id,
+      ...sparseDataAcquisition,
+    });
+
+    // Add rental income for sparse property
+    await db.insert(propertyRentalIncome).values({
+      propertyId: sparseProperty.id,
+      ...sparseDataRentalIncome,
+    });
+
+    // Add operating expenses for sparse property
+    await db.insert(propertyOperatingExpenses).values({
+      propertyId: sparseProperty.id,
+      ...sparseDataOperatingExpenses,
+    });
+
+    // Add management for sparse property
+    await db.insert(propertyManagement).values({
+      propertyId: sparseProperty.id,
+      ...sparseDataManagement,
+    });
+
+    // Add loan for sparse property
+    const [sparseLoan] = await db
+      .insert(loans)
+      .values({
+        propertyId: sparseProperty.id,
+        ...sparseDataLoan,
+      })
+      .returning();
+
+    console.log(`✅ Added sparse property loan: ${sparseLoan.id}`);
+
+    // Add sparse transactions (only 1 month of data)
+    const sparseTransactions = generateSparseTransactions(
+      sparseProperty.id,
+      user.id
+    );
+
+    const insertedSparseTransactions = await db
+      .insert(propertyTransactions)
+      .values(sparseTransactions)
+      .returning();
+
+    const sparseIncomeCount = sparseTransactions.filter((t) => t.type === "income").length;
+    const sparseExpenseCount = sparseTransactions.filter((t) => t.type === "expense").length;
+
+    console.log(
+      `✅ Added ${insertedSparseTransactions.length} sparse transactions (${sparseIncomeCount} income, ${sparseExpenseCount} expenses)`
+    );
+
     console.log(`\n✅ Successfully seeded mock data for user ${identifier}`);
     console.log(`\n📊 Summary:`);
     console.log(`   - User: ${user.email} (ID: ${user.id})`);
     console.log(`   - Portfolio: ${portfolio.name} (${portfolio.id})`);
     console.log(`   - Empty Property: ${emptyProperty.id} - ${emptyProperty.address}`);
     console.log(`   - Full Property: ${fullProperty.id} - ${fullProperty.address}`);
+    console.log(`   - Sparse Data Property: ${sparseProperty.id} - ${sparseProperty.address} (1 month data)`);
     console.log(`   - Primary Loan: ${loan.id} - $${loan.originalLoanAmount} @ ${(parseFloat(loan.interestRate) * 100).toFixed(2)}% (${loan.loanType})`);
     console.log(`   - HELOC: ${helocLoan.id} - $${helocLoan.originalLoanAmount} @ ${(parseFloat(helocLoan.interestRate) * 100).toFixed(2)}% (Current Balance: $${helocLoan.currentBalance})`);
-    console.log(`   - Transactions: ${insertedTransactions.length} (Income: ${incomeCount}, Expenses: ${expenseCount})`);
+    console.log(`   - Sparse Loan: ${sparseLoan.id} - $${sparseLoan.originalLoanAmount} @ ${(parseFloat(sparseLoan.interestRate) * 100).toFixed(2)}%`);
+    console.log(`   - Full Property Transactions: ${insertedTransactions.length} (12 months)`);
+    console.log(`   - Sparse Property Transactions: ${insertedSparseTransactions.length} (1 month only)`);
 
     return {
       user,
       portfolio,
       emptyProperty,
       fullProperty,
+      sparseProperty,
       loan,
       helocLoan,
+      sparseLoan,
     };
   } catch (error) {
     console.error("❌ Error seeding mock user data:", error);
@@ -311,15 +405,25 @@ export async function seedMockUserData(identifier: string) {
 
 // Run if called directly
 if (require.main === module) {
-  const identifier = process.argv[2];
+  // Load environment variables from root .env.local
+  require("dotenv").config({ path: "../../.env.local" });
+
+  // Use CLI argument first, then fall back to SEED_USER_ID env var
+  const identifier = process.argv[2] || process.env.SEED_USER_ID;
   if (!identifier) {
-    console.error("❌ Please provide a Clerk user ID or user ID (UUID) as an argument");
-    console.error("Usage: tsx src/seed/mock-user-data.ts <clerk-id-or-user-id>");
-    console.error("Example: tsx src/seed/mock-user-data.ts user_abc123");
-    console.error("Example: tsx src/seed/mock-user-data.ts 3b1b1672-2dad-4108-ae41-40e285e7cc17");
+    console.error("❌ Please provide a Clerk user ID or user ID (UUID)");
+    console.error("");
+    console.error("Option 1: Pass as argument");
+    console.error("  Usage: pnpm db:seed:user <clerk-id-or-user-id>");
+    console.error("  Example: pnpm db:seed:user user_abc123");
+    console.error("");
+    console.error("Option 2: Set SEED_USER_ID in .env.local");
+    console.error("  Add: SEED_USER_ID=your-clerk-id-or-user-uuid");
+    console.error("  Then run: pnpm db:seed:user");
     process.exit(1);
   }
 
+  console.log(`📍 Using identifier: ${identifier}`);
   seedMockUserData(identifier)
     .then(() => {
       console.log("\n✅ Seed completed");
