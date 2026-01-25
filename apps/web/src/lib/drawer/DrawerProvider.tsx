@@ -21,28 +21,30 @@
 
 import * as React from 'react'
 import {
+  
   Suspense,
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
-  useState,
-  type ReactNode,
+  useState
 } from 'react'
-import { useRouterState, useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { Loading } from '@axori/ui'
+import {
+  
+  
+  getDrawerEntry,
+  isValidDrawerName,
+  validateDrawerParams
+} from './registry'
+import type {ReactNode} from 'react';
+import type {DrawerName, DrawerPermission} from './registry';
 import { usePermissions } from '@/hooks/api/usePermissions'
 import { useProperty } from '@/hooks/api/useProperties'
 import { usePropertyPermissions } from '@/hooks/api'
 import { toast } from '@/lib/toast'
-import {
-  type DrawerName,
-  type DrawerPermission,
-  getDrawerEntry,
-  isValidDrawerName,
-  validateDrawerParams,
-} from './registry'
 
 // =============================================================================
 // PERMISSION HELPERS (inlined to avoid @axori/permissions -> @axori/db chain)
@@ -53,7 +55,7 @@ import {
  */
 type PortfolioRole = 'viewer' | 'member' | 'admin' | 'owner'
 
-const PORTFOLIO_ROLES: readonly PortfolioRole[] = ['owner', 'admin', 'member', 'viewer'] as const
+const PORTFOLIO_ROLES: ReadonlyArray<PortfolioRole> = ['owner', 'admin', 'member', 'viewer'] as const
 
 /**
  * Get the numeric rank of a role (higher = more privileged)
@@ -419,7 +421,7 @@ export function DrawerRenderer() {
 
   // Extract drawer state from URL
   const currentSearch = useMemo(() => {
-    return (routerState.location.search || {}) as Record<string, unknown>
+    return routerState.location.search as Record<string, unknown>
   }, [routerState.location.search])
 
   const drawerName = useMemo((): DrawerName | null => {

@@ -17,7 +17,7 @@ import { usePropertyPermissions } from '@/hooks/api'
 import { useTheme } from '@/utils/providers/theme-provider'
 import { cn } from '@/utils/helpers/cn'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
-import { useDrawer, DRAWERS } from '@/lib/drawer'
+import { DRAWERS, useDrawer } from '@/lib/drawer'
 
 interface PropertyTransactionsProps {
   propertyId: string

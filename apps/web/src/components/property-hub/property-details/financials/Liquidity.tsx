@@ -1,7 +1,7 @@
 import { Card, EmptyStateCard } from '@axori/ui'
 import { useProperty } from '@/hooks/api/useProperties'
 import { usePropertyPermissions } from '@/hooks/api'
-import { useDrawer, DRAWERS } from '@/lib/drawer'
+import { DRAWERS, useDrawer } from '@/lib/drawer'
 
 interface LiquidityProps {
   propertyId: string

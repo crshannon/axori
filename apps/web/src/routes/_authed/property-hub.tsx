@@ -38,7 +38,7 @@ import {
   PropertyViewControls,
   StrategicAlerts,
 } from '@/components/property-hub/property-hub'
-import { useDrawer, DRAWERS } from '@/lib/drawer'
+import { DRAWERS, useDrawer } from '@/lib/drawer'
 
 /**
  * Search schema for property hub

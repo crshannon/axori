@@ -16,9 +16,9 @@ export interface Toast {
   duration?: number
 }
 
-type ToastListener = (toasts: Toast[]) => void
+type ToastListener = (toasts: Array<Toast>) => void
 
-let toasts: Toast[] = []
+let toasts: Array<Toast> = []
 const listeners: Set<ToastListener> = new Set()
 
 /**

@@ -7,10 +7,10 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react'
-import { cn } from '@/utils/helpers/cn'
+import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from 'lucide-react'
+import { removeToast, subscribeToToasts } from './index'
 import type { Toast } from './index'
-import { subscribeToToasts, removeToast } from './index'
+import { cn } from '@/utils/helpers/cn'
 
 const TOAST_ICONS = {
   success: CheckCircle,
@@ -65,7 +65,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
 }
 
 export function ToastContainer() {
-  const [toasts, setToasts] = useState<Toast[]>([])
+  const [toasts, setToasts] = useState<Array<Toast>>([])
 
   // Subscribe to toast changes
   useEffect(() => {

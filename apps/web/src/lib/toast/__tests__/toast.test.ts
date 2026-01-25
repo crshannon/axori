@@ -6,18 +6,18 @@
  * @see AXO-93 - URL-Based Drawer Factory
  */
 
-import { describe, expect, it, beforeEach, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   addToast,
-  removeToast,
   clearToasts,
+  removeToast,
   subscribeToToasts,
   toast,
 } from '../index'
 
 // Helper to collect toasts from subscription
-function collectToasts(callback?: (toasts: any[]) => void) {
-  const toasts: any[][] = []
+function collectToasts(callback?: (toasts: Array<any>) => void) {
+  const toasts: Array<Array<any>> = []
   const unsubscribe = subscribeToToasts((t) => {
     toasts.push([...t])
     callback?.(t)
@@ -68,7 +68,7 @@ describe('addToast', () => {
     unsubscribe()
   })
 
-  it('auto-removes toast after duration', async () => {
+  it('auto-removes toast after duration', () => {
     vi.useFakeTimers()
     
     const { toasts, unsubscribe } = collectToasts()

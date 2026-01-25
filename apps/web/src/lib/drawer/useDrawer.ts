@@ -28,8 +28,8 @@
 import { useCallback, useMemo } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
+import { getDrawerEntry, isValidDrawerName, validateDrawerParams } from './registry'
 import type { DrawerName, DrawerParams, DrawerPermission } from './registry'
-import { isValidDrawerName, validateDrawerParams, getDrawerEntry } from './registry'
 import { toast } from '@/lib/toast'
 
 // =============================================================================
@@ -41,7 +41,7 @@ import { toast } from '@/lib/toast'
  */
 type PortfolioRole = 'viewer' | 'member' | 'admin' | 'owner'
 
-const PORTFOLIO_ROLES: readonly PortfolioRole[] = ['owner', 'admin', 'member', 'viewer'] as const
+const PORTFOLIO_ROLES: ReadonlyArray<PortfolioRole> = ['owner', 'admin', 'member', 'viewer'] as const
 
 /**
  * Get the numeric rank of a role (higher = more privileged)
@@ -171,7 +171,7 @@ export function useDrawer(): UseDrawerResult {
 
   // Get current search params safely
   const currentSearch = useMemo(() => {
-    return (routerState.location.search || {}) as DrawerSearchParams
+    return routerState.location.search as DrawerSearchParams
   }, [routerState.location.search])
 
   // Extract current drawer state

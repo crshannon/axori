@@ -6,7 +6,7 @@ import { useOperatingCore } from '@/hooks/computed/useOperatingCore'
 import { useProperty } from '@/hooks/api/useProperties'
 import { usePropertyPermissions } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
-import { useDrawer, DRAWERS } from '@/lib/drawer'
+import { DRAWERS, useDrawer } from '@/lib/drawer'
 
 interface OperatingCoreProps {
   propertyId: string

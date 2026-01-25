@@ -9,7 +9,8 @@
  */
 
 import { z } from 'zod'
-import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
+import {   lazy } from 'react'
+import type {ComponentType, LazyExoticComponent} from 'react';
 import type { PortfolioRole } from '@axori/permissions'
 
 /**
@@ -297,7 +298,7 @@ export function getDrawerEntry(name: string): DrawerRegistryEntry | null {
   if (!isValidDrawerName(name)) {
     return null
   }
-  return DRAWER_REGISTRY[name] ?? null
+  return DRAWER_REGISTRY[name]
 }
 
 /**

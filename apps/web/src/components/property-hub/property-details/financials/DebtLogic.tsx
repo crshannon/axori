@@ -7,7 +7,7 @@ import { useProperty } from '@/hooks/api/useProperties'
 import { useLoanSummary } from '@/hooks/useLoanSummary'
 import { usePropertyPermissions } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
-import { useDrawer, DRAWERS } from '@/lib/drawer'
+import { DRAWERS, useDrawer } from '@/lib/drawer'
 
 interface DebtLogicProps {
   propertyId: string

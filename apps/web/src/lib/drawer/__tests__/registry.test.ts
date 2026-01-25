@@ -13,13 +13,13 @@ import { describe, expect, it } from 'vitest'
 import {
   DRAWER_NAMES,
   DRAWER_REGISTRY,
-  isValidDrawerName,
-  getDrawerEntry,
-  validateDrawerParams,
-  propertyDrawerParamsSchema,
-  loanDrawerParamsSchema,
-  transactionDrawerParamsSchema,
   bankAccountDrawerParamsSchema,
+  getDrawerEntry,
+  isValidDrawerName,
+  loanDrawerParamsSchema,
+  propertyDrawerParamsSchema,
+  transactionDrawerParamsSchema,
+  validateDrawerParams,
 } from '../registry'
 
 describe('DRAWER_NAMES', () => {

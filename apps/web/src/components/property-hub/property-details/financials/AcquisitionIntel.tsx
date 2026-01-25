@@ -5,7 +5,7 @@ import { useAcquisitionIntel } from '@/hooks/computed/useAcquisitionIntel'
 import { useProperty } from '@/hooks/api/useProperties'
 import { usePropertyPermissions } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
-import { useDrawer, DRAWERS } from '@/lib/drawer'
+import { DRAWERS, useDrawer } from '@/lib/drawer'
 
 interface AcquisitionIntelProps {
   propertyId: string
@@ -100,7 +100,7 @@ export const AcquisitionIntel = ({ propertyId }: AcquisitionIntelProps) => {
                 property.acquisition?.currentValue ||
                 null
               const currentValueNum =
-                currentValue !== null && currentValue !== undefined
+                currentValue !== null
                   ? typeof currentValue === 'string'
                     ? parseFloat(currentValue)
                     : Number(currentValue)
