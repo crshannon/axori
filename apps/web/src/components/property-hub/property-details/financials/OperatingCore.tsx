@@ -1,5 +1,4 @@
 import { Button, Card, Typography } from '@axori/ui'
-import { useNavigate } from '@tanstack/react-router'
 import { LearningHubButton } from './LearningHubButton'
 import { generateOperatingCoreLearning } from '@/data/learning-hub/operating-core-snippets'
 import { useFinancialPulse } from '@/hooks/computed/useFinancialPulse'
@@ -7,6 +6,7 @@ import { useOperatingCore } from '@/hooks/computed/useOperatingCore'
 import { useProperty } from '@/hooks/api/useProperties'
 import { usePropertyPermissions } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
+import { DRAWERS, useDrawer } from '@/lib/drawer'
 
 interface OperatingCoreProps {
   propertyId: string
@@ -15,9 +15,11 @@ interface OperatingCoreProps {
 /**
  * OperatingCore component - Displays operating income and expenses
  * Shows: Gross Income, Fixed Expenses, Debt Service, CapEx Accrual, NOI
+ *
+ * @see AXO-93 - Uses drawer factory for opening edit drawers
  */
 export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
-  const navigate = useNavigate()
+  const { openDrawer } = useDrawer()
   const { data: property, isLoading } = useProperty(propertyId)
   const metrics = useFinancialPulse(propertyId)
   const operatingMetrics = useOperatingCore(propertyId)
@@ -39,23 +41,11 @@ export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
   )
 
   const handleManageExpenses = () => {
-    navigate({
-      to: '/property-hub/$propertyId/financials',
-      params: { propertyId },
-      search: {
-        drawer: 'operating-expenses',
-      },
-    })
+    openDrawer(DRAWERS.OPERATING_EXPENSES, { propertyId })
   }
 
   const handleManageRentalIncome = () => {
-    navigate({
-      to: '/property-hub/$propertyId/financials',
-      params: { propertyId },
-      search: {
-        drawer: 'rental-income',
-      },
-    })
+    openDrawer(DRAWERS.RENTAL_INCOME, { propertyId })
   }
 
   if (isLoading || !property) {

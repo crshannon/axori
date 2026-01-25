@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { Badge, Button, Card, EmptyStateCard, Typography } from '@axori/ui'
-import { useNavigate } from '@tanstack/react-router'
 import { LearningHubButton } from './LearningHubButton'
 import type { Loan } from '@axori/shared'
 import { generateDebtLogicLearning } from '@/data/learning-hub/loan-snippets'
@@ -8,13 +7,19 @@ import { useProperty } from '@/hooks/api/useProperties'
 import { useLoanSummary } from '@/hooks/useLoanSummary'
 import { usePropertyPermissions } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
+import { DRAWERS, useDrawer } from '@/lib/drawer'
 
 interface DebtLogicProps {
   propertyId: string
 }
 
+/**
+ * DebtLogic component - Displays loan summary and debt architecture
+ *
+ * @see AXO-93 - Uses drawer factory for opening add/edit loan drawer
+ */
 export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
-  const navigate = useNavigate()
+  const { openDrawer } = useDrawer()
   const { data: property, isLoading } = useProperty(propertyId)
   const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
@@ -33,24 +38,11 @@ export const DebtLogic = ({ propertyId }: DebtLogicProps) => {
   }, [property?.loans])
 
   const handleAddLoan = () => {
-    navigate({
-      to: '/property-hub/$propertyId/financials',
-      params: { propertyId },
-      search: {
-        drawer: 'add-loan',
-      },
-    })
+    openDrawer(DRAWERS.ADD_LOAN, { propertyId })
   }
 
   const handleEditLoan = (loanId: string) => {
-    navigate({
-      to: '/property-hub/$propertyId/financials',
-      params: { propertyId },
-      search: {
-        drawer: 'add-loan',
-        loanId,
-      },
-    })
+    openDrawer(DRAWERS.ADD_LOAN, { propertyId, loanId })
   }
 
   if (isLoading || !property) {

@@ -1,10 +1,9 @@
-import { Card, IconButton } from '@axori/ui'
-import { Pencil } from 'lucide-react'
-import { useNavigate } from '@tanstack/react-router'
+import { Button, Card } from '@axori/ui'
 import { LearningHubButton } from '../financials/LearningHubButton'
 import { getNotificationSettingsSnippets } from '@/data/learning-hub/settings-snippets'
 import { usePropertyPermissions, usePropertySettings } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
+import { DRAWERS, useDrawer } from '@/lib/drawer'
 
 interface NotificationEngineProps {
   propertyId: string
@@ -13,20 +12,16 @@ interface NotificationEngineProps {
 /**
  * NotificationEngine component - Displays notification preferences
  * Shows: email, SMS, push notification toggles
+ *
+ * @see AXO-93 - Uses drawer factory for opening edit drawer
  */
 export const NotificationEngine = ({ propertyId }: NotificationEngineProps) => {
-  const navigate = useNavigate()
+  const { openDrawer } = useDrawer()
   const { formData, isLoading } = usePropertySettings(propertyId)
   const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   const handleOpenDrawer = () => {
-    navigate({
-      to: '/property-hub/$propertyId/settings',
-      params: { propertyId },
-      search: {
-        drawer: 'notifications',
-      },
-    })
+    openDrawer(DRAWERS.NOTIFICATIONS, { propertyId })
   }
 
   if (isLoading) {
@@ -55,14 +50,14 @@ export const NotificationEngine = ({ propertyId }: NotificationEngineProps) => {
           />
           {isReadOnly && <ReadOnlyBanner variant="badge" />}
           {canEdit && (
-            <IconButton
-              icon={Pencil}
+            <Button
+              variant="outline"
               size="sm"
-              variant="ghost"
-              shape="rounded"
+              className="px-5 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest border-slate-200 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
               onClick={handleOpenDrawer}
-              aria-label="Edit notification settings"
-            />
+            >
+              Edit
+            </Button>
           )}
         </div>
       </div>

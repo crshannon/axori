@@ -1,11 +1,10 @@
-import { Card, IconButton } from '@axori/ui'
-import { Pencil } from 'lucide-react'
-import { useNavigate } from '@tanstack/react-router'
+import { Button, Card } from '@axori/ui'
 import { formatPropertyType } from '@axori/shared'
 import { LearningHubButton } from '../financials/LearningHubButton'
 import { getAssetConfigurationSnippets } from '@/data/learning-hub/settings-snippets'
 import { usePropertyPermissions, usePropertySettings } from '@/hooks/api'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
+import { DRAWERS, useDrawer } from '@/lib/drawer'
 
 interface AssetConfigurationProps {
   propertyId: string
@@ -14,20 +13,16 @@ interface AssetConfigurationProps {
 /**
  * AssetConfiguration component - Displays property configuration details
  * Shows: nickname, property type, address, tax jurisdiction, currency override
+ *
+ * @see AXO-93 - Uses drawer factory for opening edit drawer
  */
 export const AssetConfiguration = ({ propertyId }: AssetConfigurationProps) => {
-  const navigate = useNavigate()
+  const { openDrawer } = useDrawer()
   const { formData, isLoading } = usePropertySettings(propertyId)
   const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
 
   const handleOpenDrawer = () => {
-    navigate({
-      to: '/property-hub/$propertyId/settings',
-      params: { propertyId },
-      search: {
-        drawer: 'asset-config',
-      },
-    })
+    openDrawer(DRAWERS.ASSET_CONFIG, { propertyId })
   }
 
   // Use centralized formatPropertyType function from @axori/shared
@@ -58,14 +53,14 @@ export const AssetConfiguration = ({ propertyId }: AssetConfigurationProps) => {
           />
           {isReadOnly && <ReadOnlyBanner variant="badge" />}
           {canEdit && (
-            <IconButton
-              icon={Pencil}
+            <Button
+              variant="outline"
               size="sm"
-              variant="ghost"
-              shape="rounded"
+              className="px-5 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest border-slate-200 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
               onClick={handleOpenDrawer}
-              aria-label="Edit asset configuration"
-            />
+            >
+              Edit
+            </Button>
           )}
         </div>
       </div>

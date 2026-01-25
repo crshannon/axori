@@ -2,6 +2,8 @@ import { Outlet, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useUser } from '@clerk/tanstack-react-start'
 import { useEffect } from 'react'
 import { SideNav } from '@/components/side-nav/SideNav'
+import { DrawerProvider } from '@/lib/drawer'
+import { ToastContainer } from '@/lib/toast/ToastContainer'
 
 export const Route = createFileRoute('/_authed' as any)({
   component: AuthedLayout,
@@ -29,11 +31,14 @@ function AuthedLayout() {
   }
 
   return (
-    <div className="flex flex-grow min-h-screen">
-      <SideNav />
-      <main className="flex-1 pl-[60px]">
-        <Outlet />
-      </main>
-    </div>
+    <DrawerProvider>
+      <div className="flex flex-grow min-h-screen">
+        <SideNav />
+        <main className="flex-1 pl-[60px]">
+          <Outlet />
+        </main>
+      </div>
+      <ToastContainer />
+    </DrawerProvider>
   )
 }

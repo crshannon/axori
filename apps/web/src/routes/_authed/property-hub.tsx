@@ -1,3 +1,12 @@
+/**
+ * Property Hub Layout
+ *
+ * Main property hub page with portfolio overview. Drawers are handled by
+ * the DrawerProvider at the root level.
+ *
+ * @see AXO-93 - URL-Based Drawer Factory
+ */
+
 import {
   Link,
   Outlet,
@@ -29,14 +38,18 @@ import {
   PropertyViewControls,
   StrategicAlerts,
 } from '@/components/property-hub/property-hub'
-import {
-  RentalIncomeDrawer,
-  ValuationDrawer,
-} from '@/components/drawers'
+import { DRAWERS, useDrawer } from '@/lib/drawer'
 
+/**
+ * Search schema for property hub
+ * Drawer params are handled by the global DrawerProvider
+ */
 const propertyHubSearchSchema = z.object({
-  drawer: z.string().optional(), // Allow any string for child routes to handle their own validation
-  propertyId: z.string().uuid().optional(),
+  drawer: z.string().optional(),
+  propertyId: z.string().optional(),
+  loanId: z.string().optional(),
+  transactionId: z.string().optional(),
+  bankAccountId: z.string().optional(),
 })
 
 export const Route = createFileRoute('/_authed/property-hub')({
@@ -44,11 +57,8 @@ export const Route = createFileRoute('/_authed/property-hub')({
   validateSearch: (search: Record<string, unknown>) => {
     const parsed = propertyHubSearchSchema.safeParse(search)
     if (!parsed.success) {
-      return { drawer: undefined, propertyId: undefined }
+      return {}
     }
-    // Pass through drawer value - don't filter it out
-    // This route only uses 'rental-income' and 'valuation', but child routes
-    // (like financials) need other drawer values like 'add-loan', 'acquisition', etc.
     return parsed.data
   },
 })
@@ -56,7 +66,7 @@ export const Route = createFileRoute('/_authed/property-hub')({
 function RouteComponent() {
   const navigate = useNavigate({ from: Route.fullPath })
   const location = useLocation()
-  const search = Route.useSearch()
+  const { openDrawer } = useDrawer()
   const { isSignedIn, isLoaded } = useUser()
   const { completed: onboardingCompleted, isLoading: onboardingLoading } =
     useOnboardingStatus()
@@ -67,49 +77,13 @@ function RouteComponent() {
   const [deletePropertyId, setDeletePropertyId] = useState<string | null>(null)
   const [deletePropertyAddress, setDeletePropertyAddress] = useState<string>('')
 
-  // Drawer state from URL search params
-  // Only check for drawers specific to this route (child routes handle their own)
-  const isRentalIncomeDrawerOpen = search.drawer === 'rental-income'
-  const isValuationDrawerOpen = search.drawer === 'valuation'
-  const drawerPropertyId = search.propertyId
-
-  const handleCloseDrawer = () => {
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        drawer: undefined,
-        propertyId: undefined,
-      }),
-      replace: true,
-    })
-  }
-
+  // Drawer handlers using the drawer factory
   const handleOpenRentalIncomeDrawer = (propertyId: string) => {
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        drawer: 'rental-income',
-        propertyId,
-      }),
-      replace: true,
-    })
+    openDrawer(DRAWERS.RENTAL_INCOME, { propertyId })
   }
 
   const handleOpenValuationDrawer = (propertyId: string) => {
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        drawer: 'valuation',
-        propertyId,
-      }),
-      replace: true,
-    })
-  }
-
-  const handleDrawerSuccess = () => {
-    // Invalidate queries to refresh property data
-    // The drawers will handle their own query invalidation via useUpdateProperty
-    handleCloseDrawer()
+    openDrawer(DRAWERS.VALUATION, { propertyId })
   }
 
   // Fetch real properties from API
@@ -307,24 +281,7 @@ function RouteComponent() {
           isDeleting={deleteProperty.isPending}
         />
       )}
-
-      {/* Drawers */}
-      {drawerPropertyId && (
-        <>
-          <RentalIncomeDrawer
-            isOpen={isRentalIncomeDrawerOpen}
-            onClose={handleCloseDrawer}
-            propertyId={drawerPropertyId}
-            onSuccess={handleDrawerSuccess}
-          />
-          <ValuationDrawer
-            isOpen={isValuationDrawerOpen}
-            onClose={handleCloseDrawer}
-            propertyId={drawerPropertyId}
-            onSuccess={handleDrawerSuccess}
-          />
-        </>
-      )}
+      {/* Drawers are rendered by DrawerProvider at root level based on URL params */}
     </main>
   )
 }

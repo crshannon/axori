@@ -190,8 +190,8 @@ export const AddLoanDrawer = ({
           loanId,
         })
         console.log('[Loan Drawer] Update API response:', result)
-        console.log('[Loan Drawer] Updated loan monthlyPrincipalInterest:', result.loan?.monthlyPrincipalInterest)
-        console.log('[Loan Drawer] Updated loan totalMonthlyPayment:', result.loan?.totalMonthlyPayment)
+        console.log('[Loan Drawer] Updated loan monthlyPrincipalInterest:', result.loan.monthlyPrincipalInterest)
+        console.log('[Loan Drawer] Updated loan totalMonthlyPayment:', result.loan.totalMonthlyPayment)
       } else {
         console.log('[Loan Drawer] Creating loan:', {
           propertyId,
