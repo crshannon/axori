@@ -465,3 +465,64 @@ export const propertyFinancesUpdateSchema = z.object({
 // Property Management schemas are now exported from normalized-property.ts
 // These old schemas are deprecated - use the new ones from normalized-property.ts
 
+// ============================================================================
+// EMAIL CAPTURE SCHEMAS (Coming Soon / Waitlist)
+// ============================================================================
+
+// Email capture status enum values
+export const EMAIL_CAPTURE_STATUS = ["pending", "notified", "converted", "unsubscribed"] as const;
+export type EmailCaptureStatus = typeof EMAIL_CAPTURE_STATUS[number];
+
+// Email capture insert schema - for API requests
+export const emailCaptureInsertSchema = z.object({
+  email: z.string()
+    .email("Please enter a valid email address")
+    .max(255, "Email must be 255 characters or less")
+    .transform((val) => val.toLowerCase().trim()),
+  firstName: z.string()
+    .min(1, "First name is required")
+    .max(50, "First name must be 50 characters or less")
+    .regex(namePattern, "First name can only contain letters, spaces, hyphens, and apostrophes")
+    .transform((val) => val.trim()),
+  lastName: z.string()
+    .max(50, "Last name must be 50 characters or less")
+    .regex(namePattern, "Last name can only contain letters, spaces, hyphens, and apostrophes")
+    .transform((val) => val.trim())
+    .optional()
+    .nullable(),
+  source: z.string().max(100).optional().default("homepage"),
+  campaign: z.string().max(100).optional().nullable(),
+  // UTM tracking
+  utmSource: z.string().max(255).optional().nullable(),
+  utmMedium: z.string().max(255).optional().nullable(),
+  utmCampaign: z.string().max(255).optional().nullable(),
+  utmContent: z.string().max(255).optional().nullable(),
+  utmTerm: z.string().max(255).optional().nullable(),
+});
+
+// Email capture select schema - for database responses
+export const emailCaptureSelectSchema = emailCaptureInsertSchema.extend({
+  id: z.string().uuid(),
+  status: z.enum(EMAIL_CAPTURE_STATUS),
+  ipAddress: z.string().nullable(),
+  userAgent: z.string().nullable(),
+  referrer: z.string().nullable(),
+  convertedUserId: z.string().uuid().nullable(),
+  convertedAt: z.date().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+// Email capture update schema - for status updates
+export const emailCaptureUpdateSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(EMAIL_CAPTURE_STATUS).optional(),
+  convertedUserId: z.string().uuid().optional().nullable(),
+  convertedAt: z.date().optional().nullable(),
+});
+
+// Type exports
+export type EmailCaptureInsert = z.infer<typeof emailCaptureInsertSchema>;
+export type EmailCaptureSelect = z.infer<typeof emailCaptureSelectSchema>;
+export type EmailCaptureUpdate = z.infer<typeof emailCaptureUpdateSchema>;
+

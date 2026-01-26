@@ -279,4 +279,107 @@ export function PortfolioInvitationEmail({
   );
 }
 
+// ============================================================================
+// Coming Soon Confirmation Email
+// ============================================================================
 
+export interface ComingSoonConfirmationEmailProps {
+  firstName: string;
+}
+
+/**
+ * Coming Soon Confirmation Email Template
+ *
+ * Sent when someone signs up for the waitlist/coming soon email capture.
+ * The email is warm, personal, and sets expectations for what's coming.
+ */
+export function ComingSoonConfirmationEmail({
+  firstName,
+}: ComingSoonConfirmationEmailProps) {
+  return (
+    <Html>
+      <Head />
+      <Preview>You're on the list, {firstName}!</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          {/* Header */}
+          <Section style={{ padding: "24px 24px 0" }}>
+            <Text
+              style={{
+                ...text,
+                textAlign: "center",
+                margin: "0 0 8px",
+                fontSize: "14px",
+                color: "#8898aa",
+              }}
+            >
+              Welcome to Axori
+            </Text>
+          </Section>
+
+          {/* Main Content */}
+          <Heading style={h1}>You're on the list, {firstName}!</Heading>
+
+          <Text style={text}>Thanks for your interest in Axori!</Text>
+
+          <Text style={text}>
+            We're building something special for real estate investors like you
+            — a platform that puts YOUR investment strategy at the center, not
+            generic market data.
+          </Text>
+
+          <Text style={{ ...text, fontWeight: "600" }}>
+            Here's what you can look forward to:
+          </Text>
+
+          <Text style={{ ...text, marginLeft: "16px" }}>
+            • <strong>Personalized portfolio analytics</strong> — See your real
+            numbers, not industry averages
+          </Text>
+          <Text style={{ ...text, marginLeft: "16px", marginTop: "8px" }}>
+            • <strong>Smart tax optimization insights</strong> — Depreciation
+            tracking and cost segregation tools
+          </Text>
+          <Text style={{ ...text, marginLeft: "16px", marginTop: "8px" }}>
+            • <strong>Real-time property performance</strong> — Know exactly how
+            each property is performing
+          </Text>
+          <Text style={{ ...text, marginLeft: "16px", marginTop: "8px" }}>
+            • <strong>Institutional-grade tools</strong> — The same analytics
+            the big players use
+          </Text>
+
+          <Hr style={hr} />
+
+          <Text style={text}>
+            We're putting the finishing touches on things and will reach out the
+            moment we're ready for you.
+          </Text>
+
+          <Text style={text}>
+            In the meantime, feel free to reply to this email with any questions
+            or features you'd love to see. We read every message.
+          </Text>
+
+          <Text style={{ ...text, fontWeight: "600" }}>
+            Talk soon,
+            <br />
+            The Axori Team
+          </Text>
+
+          <Hr style={hr} />
+
+          {/* Footer */}
+          <Text style={{ ...footer, fontStyle: "italic" }}>
+            P.S. As an early supporter, you'll get priority access when we
+            launch.
+          </Text>
+
+          <Text style={footer}>
+            &copy; {new Date().getFullYear()} Axori. All rights reserved.
+          </Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+}

@@ -1,9 +1,29 @@
 import { Link } from '@tanstack/react-router'
+import { useComingSoonMode } from '@/hooks/useFeatureFlags'
+import { EmailCaptureForm } from '@/components/home/EmailCaptureForm'
 
 export const Footer = () => {
+  const comingSoonMode = useComingSoonMode()
+
   return (
     <footer className="py-20 px-4 transition-colors duration-500 border-t bg-slate-50 text-slate-500 border-black/5 dark:bg-black dark:text-slate-200 dark:border-white/5">
       <div className="max-w-[1400px] mx-auto">
+        {/* Email Capture Section - Only in coming soon mode */}
+        {comingSoonMode && (
+          <div id="waitlist" className="mb-20 pb-16 border-b border-black/5 dark:border-white/5">
+            <div className="max-w-xl">
+              <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter mb-4 text-slate-900 dark:text-white">
+                Get Early Access
+              </h3>
+              <p className="text-sm font-medium mb-6 text-slate-500 dark:text-slate-400">
+                Join the waitlist to be first in line when we launch.
+                We'll send you updates on our progress and exclusive early access.
+              </p>
+              <EmailCaptureForm source="footer" variant="footer" />
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col md:flex-row justify-between items-start gap-16 mb-20">
           <div className="max-w-sm">
             <Link
