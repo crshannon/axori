@@ -1,0 +1,210 @@
+{
+  "category": "taxation",
+  "terms": [
+    {
+      "_id": "term_depreciation",
+      "_type": "glossaryTerm",
+      "slug": "depreciation",
+      "term": "Depreciation",
+      "shortDefinition": "A tax deduction for the wear and tear on your property over time, allowing you to reduce taxable income without spending cash.",
+      "fullDefinition": "Depreciation is a non-cash tax deduction that allows you to write off the cost of a building over its useful life (27.5 years for residential, 39 years for commercial). This 'phantom expense' reduces your taxable income even though you're not actually spending money. The building (not land) portion of your purchase price is divided by the depreciation period to determine your annual deduction. Depreciation is one of the most powerful tax benefits of real estate investing.",
+      "category": "taxation",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["cost-segregation", "tax-shield", "depreciation-recapture", "land-value"],
+      "synonyms": ["property depreciation", "building depreciation", "cost recovery"],
+      "formulas": [
+        {
+          "name": "Annual Depreciation (Residential)",
+          "expression": "Building Value ÷ 27.5 years",
+          "variables": [
+            { "symbol": "Building Value", "description": "Purchase price minus land value", "unit": "$" }
+          ],
+          "example": {
+            "inputs": { "buildingValue": 275000 },
+            "result": 10000
+          }
+        }
+      ],
+      "proTips": [
+        "You can depreciate the building, not the land—allocate appropriately",
+        "Depreciation is recaptured (taxed) when you sell unless you do a 1031 exchange",
+        "Cost segregation can accelerate depreciation significantly",
+        "Even if your property appreciates, you still get depreciation deductions"
+      ],
+      "examples": [
+        {
+          "title": "Depreciation Tax Savings",
+          "scenario": "You buy a rental for $300K. Land is worth $50K, building is $250K. Your tax bracket is 32%.",
+          "calculation": "Annual depreciation = $250K ÷ 27.5 = $9,091. Tax savings = $9,091 × 32% = $2,909/year",
+          "outcome": "You save $2,909 in taxes annually, even though you haven't spent any cash on depreciation"
+        }
+      ],
+      "relevantContexts": ["tax-shield"],
+      "featureLink": {
+        "label": "View in Tax Shield",
+        "route": "/property-hub/:propertyId/financials",
+        "section": "tax-shield"
+      },
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_cost_seg",
+      "_type": "glossaryTerm",
+      "slug": "cost-segregation",
+      "term": "Cost Segregation Study",
+      "shortDefinition": "An engineering analysis that reclassifies building components into shorter depreciation schedules, accelerating tax deductions.",
+      "fullDefinition": "A cost segregation study is an IRS-approved engineering analysis that identifies property components that can be depreciated over shorter periods (5, 7, or 15 years) instead of 27.5 or 39 years. Items like appliances, carpeting, certain fixtures, and site improvements qualify. This front-loads your depreciation deductions, providing larger tax benefits in the early years of ownership. Combined with bonus depreciation, cost segregation can create massive first-year deductions.",
+      "category": "taxation",
+      "investorLevel": "advanced",
+      "relatedTerms": ["depreciation", "bonus-depreciation", "tax-shield"],
+      "synonyms": ["cost seg", "cost seg study", "accelerated depreciation"],
+      "proTips": [
+        "Cost seg typically makes sense for properties worth $500K+ due to study costs ($5-15K)",
+        "Bonus depreciation allows 60-100% first-year deduction on cost seg components",
+        "You can do a 'look-back' study on properties you've owned for years",
+        "Work with a tax professional to maximize benefits and ensure compliance"
+      ],
+      "examples": [
+        {
+          "title": "Cost Segregation Impact",
+          "scenario": "You buy a $1M property. Normal depreciation = $36K/year. Cost seg identifies $300K in 5/7/15 year property.",
+          "calculation": "With 60% bonus depreciation: $300K × 60% = $180K first-year deduction, plus remaining depreciation",
+          "outcome": "Instead of $36K deduction in year one, you might get $200K+, creating significant tax losses"
+        }
+      ],
+      "relevantContexts": ["tax-shield"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_1031",
+      "_type": "glossaryTerm",
+      "slug": "1031-exchange",
+      "term": "1031 Exchange",
+      "shortDefinition": "A tax-deferred exchange allowing you to sell investment property and reinvest proceeds without paying immediate capital gains tax.",
+      "fullDefinition": "A 1031 exchange (named after IRS Section 1031) allows you to defer capital gains taxes when selling an investment property by reinvesting the proceeds into a 'like-kind' property. Strict rules apply: you must identify replacement properties within 45 days and close within 180 days. A Qualified Intermediary must hold the funds—you can never touch them. The new property must be equal or greater value, and you must reinvest all proceeds and debt.",
+      "category": "taxation",
+      "investorLevel": "advanced",
+      "relatedTerms": ["capital-gains", "depreciation-recapture", "qualified-intermediary"],
+      "synonyms": ["like-kind exchange", "Starker exchange", "tax-deferred exchange", "1031"],
+      "proTips": [
+        "You're deferring taxes, not eliminating them—the basis carries forward",
+        "You can 1031 into multiple properties or consolidate multiple into one",
+        "'Like-kind' is broad—you can exchange a house for an apartment building",
+        "Consider a 1031 into a DST (Delaware Statutory Trust) for truly passive investing"
+      ],
+      "examples": [
+        {
+          "title": "1031 Exchange Scenario",
+          "scenario": "You sell a rental for $400K (bought for $200K). Without 1031, you'd owe ~$60K in capital gains tax.",
+          "calculation": "With 1031: Use full $400K to buy replacement property. $0 tax due now. Basis carries forward.",
+          "outcome": "You keep all $400K working for you instead of paying $60K to the IRS. Tax is deferred until you sell without another 1031."
+        }
+      ],
+      "relevantContexts": ["tax-shield", "acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_tax_shield",
+      "_type": "glossaryTerm",
+      "slug": "tax-shield",
+      "term": "Tax Shield (Phantom Loss)",
+      "shortDefinition": "When depreciation creates a paper loss that reduces taxable income, even when you're cash flow positive.",
+      "fullDefinition": "A tax shield occurs when depreciation and other deductions create a loss on paper, even though you're actually making money. This 'phantom loss' can offset other income and reduce your overall tax bill. For example, if your property generates $10K cash flow but $15K depreciation, you show a $5K loss for tax purposes. This is one of the most powerful wealth-building aspects of real estate.",
+      "category": "taxation",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["depreciation", "passive-income", "cash-flow"],
+      "synonyms": ["phantom loss", "paper loss", "tax loss", "depreciation shelter"],
+      "proTips": [
+        "Passive losses can offset passive income from other rentals",
+        "With Real Estate Professional Status (REPS), losses can offset W-2 income",
+        "Stack multiple properties to maximize tax shielding",
+        "Tax shield is why many investors show losses while building wealth"
+      ],
+      "examples": [
+        {
+          "title": "Tax Shield in Action",
+          "scenario": "Your rental: $18K rent collected, $10K expenses paid, $12K depreciation",
+          "calculation": "Cash flow: $18K - $10K = +$8K. Taxable income: $18K - $10K - $12K = -$4K loss",
+          "outcome": "You pocket $8K in cash but show a $4K loss on your taxes. The $4K loss can offset other passive income."
+        }
+      ],
+      "relevantContexts": ["tax-shield"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_capital_gains",
+      "_type": "glossaryTerm",
+      "slug": "capital-gains",
+      "term": "Capital Gains Tax",
+      "shortDefinition": "Tax on the profit from selling an asset, with different rates for short-term (< 1 year) vs. long-term (> 1 year) holdings.",
+      "fullDefinition": "Capital gains tax is levied on the profit when you sell a property for more than your cost basis (purchase price plus improvements, minus depreciation taken). Short-term gains (held less than a year) are taxed as ordinary income. Long-term gains (held over a year) get preferential rates (0%, 15%, or 20% depending on income). Real estate investors often use 1031 exchanges to defer capital gains indefinitely.",
+      "category": "taxation",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["1031-exchange", "depreciation-recapture", "cost-basis"],
+      "synonyms": ["cap gains", "capital gains", "gains tax"],
+      "proTips": [
+        "Hold for at least a year to qualify for long-term rates (15-20% vs. up to 37%)",
+        "Depreciation reduces your basis, increasing capital gains when you sell",
+        "Use a 1031 exchange to defer gains or live in the property 2 years for exclusion",
+        "Factor in state capital gains tax—it varies significantly by state"
+      ],
+      "relevantContexts": ["tax-shield"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_passive_income",
+      "_type": "glossaryTerm",
+      "slug": "passive-income",
+      "term": "Passive vs Active Income",
+      "shortDefinition": "Rental income is generally passive for tax purposes, which limits how losses can be used unless you qualify as a Real Estate Professional.",
+      "fullDefinition": "The IRS classifies rental real estate income as 'passive' for most investors. Passive income and losses are in their own bucket—you can offset passive income with passive losses, but you generally can't use passive losses against W-2 or active business income (with exceptions for those under $150K AGI). Real Estate Professional Status (REPS) converts rental income to non-passive, allowing losses to offset any income.",
+      "category": "taxation",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["tax-shield", "depreciation", "real-estate-professional"],
+      "synonyms": ["passive activity", "rental income classification", "passive losses"],
+      "proTips": [
+        "If AGI is under $100K, you can deduct up to $25K of passive losses against ordinary income",
+        "Stack rental properties to create passive losses that offset passive income",
+        "Real Estate Professional Status requires 750+ hours and majority of time in RE",
+        "Short-term rentals may qualify as active income if you materially participate"
+      ],
+      "relevantContexts": ["tax-shield"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_depreciation_recapture",
+      "_type": "glossaryTerm",
+      "slug": "depreciation-recapture",
+      "term": "Depreciation Recapture",
+      "shortDefinition": "When you sell, the IRS 'recaptures' depreciation you've taken by taxing it at 25%, in addition to capital gains tax.",
+      "fullDefinition": "Depreciation recapture is the IRS's way of recovering the tax benefits you received from depreciation deductions. When you sell a property, any depreciation you claimed is 'recaptured' and taxed at a maximum rate of 25%. This is in addition to capital gains tax on appreciation. The only ways to avoid recapture are through a 1031 exchange (defers it) or dying (basis steps up). Factor recapture into your exit strategy.",
+      "category": "taxation",
+      "investorLevel": "advanced",
+      "relatedTerms": ["depreciation", "1031-exchange", "capital-gains"],
+      "synonyms": ["recapture tax", "Section 1250 gain", "unrecaptured Section 1250 gain"],
+      "proTips": [
+        "Recapture applies even if you didn't claim depreciation—you should have claimed it",
+        "1031 exchange defers both capital gains AND depreciation recapture",
+        "Cost segregation accelerates depreciation but also accelerates potential recapture",
+        "Factor recapture into your sale price analysis to understand true net proceeds"
+      ],
+      "examples": [
+        {
+          "title": "Depreciation Recapture at Sale",
+          "scenario": "You sell for $400K. Basis was $300K, but you took $50K depreciation (adjusted basis = $250K)",
+          "calculation": "Total gain: $400K - $250K = $150K. Recapture: $50K × 25% = $12,500. Cap gains: $100K × 15% = $15,000",
+          "outcome": "Total tax due: $12,500 + $15,000 = $27,500 (without considering state taxes)"
+        }
+      ],
+      "relevantContexts": ["tax-shield"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    }
+  ]
+}

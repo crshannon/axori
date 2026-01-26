@@ -1,0 +1,139 @@
+{
+  "category": "acquisition",
+  "terms": [
+    {
+      "_id": "term_closing_costs",
+      "_type": "glossaryTerm",
+      "slug": "closing-costs",
+      "term": "Closing Costs",
+      "shortDefinition": "Fees and expenses paid when finalizing a property purchase, typically 2-5% of the purchase price.",
+      "fullDefinition": "Closing costs are the fees and expenses paid when a property sale is finalized. They include lender fees (origination, points, appraisal), title fees (insurance, search, recording), prepaid items (taxes, insurance, interest), and other costs. Buyers typically pay 2-5% of the purchase price; sellers pay agent commissions plus their own closing costs. Factor closing costs into your total investment when calculating returns.",
+      "category": "acquisition",
+      "investorLevel": "beginner",
+      "relatedTerms": ["down-payment", "loan-to-value", "cash-on-cash-return"],
+      "synonyms": ["settlement costs", "closing fees", "transaction costs"],
+      "proTips": [
+        "Request a Loan Estimate upfront to see expected closing costs",
+        "Some costs are negotiable—shop title companies and ask for credits",
+        "Seller concessions can cover some or all of your closing costs",
+        "Include closing costs in your total cash needed calculation"
+      ],
+      "examples": [
+        {
+          "title": "Typical Closing Costs",
+          "scenario": "Buying a $400K investment property with 25% down ($100K). Loan amount: $300K.",
+          "calculation": "Typical closing costs: 2-4% of purchase price = $8K-$16K. Plus prepaid taxes/insurance: ~$3K.",
+          "outcome": "Total cash needed: $100K down + $11K-$19K closing costs = $111K-$119K"
+        }
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_due_diligence",
+      "_type": "glossaryTerm",
+      "slug": "due-diligence",
+      "term": "Due Diligence",
+      "shortDefinition": "The investigation period before closing where you verify all claims about the property and uncover potential issues.",
+      "fullDefinition": "Due diligence is your opportunity to investigate everything about a property before you're committed to purchase. This includes property inspection, title search, rent roll verification, expense review, environmental checks, and zoning verification. Most contracts include a due diligence period (7-30 days) during which you can cancel without penalty if you discover issues. Thorough due diligence prevents costly surprises after closing.",
+      "category": "acquisition",
+      "investorLevel": "beginner",
+      "relatedTerms": ["property-inspection", "title-insurance", "rent-roll", "earnest-money"],
+      "synonyms": ["DD", "inspection period", "feasibility period"],
+      "proTips": [
+        "Create a due diligence checklist and use it every time",
+        "Verify rent rolls with bank statements or leases, not just the seller's word",
+        "Get quotes for any needed repairs during due diligence",
+        "Walk away if the numbers don't work—there will be other deals"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_earnest_money",
+      "_type": "glossaryTerm",
+      "slug": "earnest-money",
+      "term": "Earnest Money Deposit",
+      "shortDefinition": "A good faith deposit showing you're serious about purchasing, typically 1-3% of the purchase price.",
+      "fullDefinition": "Earnest money is a deposit made when you go under contract to show you're a serious buyer. It's held in escrow (usually by the title company) and credited toward your purchase at closing. If you cancel within the due diligence period, you typically get it back. If you cancel without a valid contingency after due diligence, you may lose it. Standard amounts are 1-3% of purchase price, but can be negotiable.",
+      "category": "acquisition",
+      "investorLevel": "beginner",
+      "relatedTerms": ["due-diligence", "closing-costs", "contract"],
+      "synonyms": ["EMD", "good faith deposit", "escrow deposit"],
+      "proTips": [
+        "More earnest money can make your offer stronger",
+        "Understand exactly when your earnest money becomes 'hard' (non-refundable)",
+        "Use contingencies to protect your earnest money",
+        "Earnest money goes toward closing costs or down payment at closing"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_title_insurance",
+      "_type": "glossaryTerm",
+      "slug": "title-insurance",
+      "term": "Title Insurance",
+      "shortDefinition": "Insurance protecting against claims on property ownership, required by lenders and recommended for buyers.",
+      "fullDefinition": "Title insurance protects against financial loss from defects in title—like unknown liens, forgeries, or errors in public records. There are two types: lender's policy (required by the lender, you pay for it) and owner's policy (optional but recommended). Unlike other insurance that protects against future events, title insurance protects against past events that might affect your ownership. It's a one-time premium paid at closing.",
+      "category": "acquisition",
+      "investorLevel": "beginner",
+      "relatedTerms": ["due-diligence", "closing-costs", "lien"],
+      "synonyms": ["title policy", "title protection", "TI"],
+      "proTips": [
+        "Always get an owner's policy—the cost is small compared to the protection",
+        "Read the exceptions carefully—they list what's NOT covered",
+        "Shop title companies—prices and service vary",
+        "Enhanced policies cover more but cost more"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_property_inspection",
+      "_type": "glossaryTerm",
+      "slug": "property-inspection",
+      "term": "Property Inspection",
+      "shortDefinition": "A professional examination of a property's condition, identifying defects and needed repairs.",
+      "fullDefinition": "A property inspection is a thorough examination of a property's physical condition by a licensed inspector. They check structure, roof, HVAC, plumbing, electrical, and more. The inspection report helps you understand the property's condition, negotiate repairs or price reductions, and budget for future maintenance. For investment properties, inspection findings directly impact your rehab budget and return projections.",
+      "category": "acquisition",
+      "investorLevel": "beginner",
+      "relatedTerms": ["due-diligence", "capex-reserve", "arv"],
+      "synonyms": ["home inspection", "building inspection", "property assessment"],
+      "proTips": [
+        "Attend the inspection and ask questions",
+        "Get specialized inspections for older homes (sewer scope, radon, etc.)",
+        "Use inspection findings to negotiate or to refine your rehab budget",
+        "Some issues are deal-killers (foundation, environmental)—know your limits"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_down_payment",
+      "_type": "glossaryTerm",
+      "slug": "down-payment",
+      "term": "Down Payment",
+      "shortDefinition": "The cash portion of the purchase price you pay upfront, determining your loan-to-value ratio.",
+      "fullDefinition": "The down payment is the portion of the purchase price you pay in cash at closing, with the rest financed by a mortgage. For investment properties, typical down payments are 20-25%. Lower down payments mean higher leverage and potentially better returns, but also higher risk. Your down payment determines your LTV, which affects interest rates and whether you need mortgage insurance.",
+      "category": "acquisition",
+      "investorLevel": "beginner",
+      "relatedTerms": ["loan-to-value", "leverage", "closing-costs"],
+      "synonyms": ["down pmt", "cash down", "equity investment"],
+      "proTips": [
+        "Investment properties typically require 20-25% down",
+        "House hacking allows 3.5-5% down with owner-occupied loans",
+        "Lower down payment = higher leverage but also higher monthly payment",
+        "Factor down payment into your cash-on-cash return calculations"
+      ],
+      "relevantContexts": ["acquisition", "debt-logic"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    }
+  ]
+}

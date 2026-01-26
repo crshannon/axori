@@ -26,8 +26,10 @@ import { Route as PublicAnalysisRouteImport } from './routes/_public/analysis'
 import { Route as PublicAboutRouteImport } from './routes/_public/about'
 import { Route as AuthedWealthJourneyRouteImport } from './routes/_authed/wealth-journey'
 import { Route as AuthedPropertyHubRouteImport } from './routes/_authed/property-hub'
+import { Route as AuthedLearningHubRouteImport } from './routes/_authed/learning-hub'
 import { Route as AuthedExploreRouteImport } from './routes/_authed/explore'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedLearningHubIndexRouteImport } from './routes/_authed/learning-hub/index'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
@@ -36,6 +38,7 @@ import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
 import { Route as AuthedPropertyHubAddRouteImport } from './routes/_authed/property-hub.add'
 import { Route as AuthedPropertyHubPropertyIdRouteImport } from './routes/_authed/property-hub.$propertyId'
+import { Route as AuthedLearningHubGlossaryRouteImport } from './routes/_authed/learning-hub/glossary'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as AuthedPropertyHubPropertyIdIndexRouteImport } from './routes/_authed/property-hub.$propertyId/index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
@@ -49,6 +52,7 @@ import { Route as AuthedPropertyHubPropertyIdFinancialsRouteImport } from './rou
 import { Route as AuthedPropertyHubPropertyIdDocumentsRouteImport } from './routes/_authed/property-hub.$propertyId/documents'
 import { Route as AuthedPropertyHubPropertyIdCommunicationsRouteImport } from './routes/_authed/property-hub.$propertyId/communications'
 import { Route as AuthedPropertyHubPropertyIdAnalyticsRouteImport } from './routes/_authed/property-hub.$propertyId/analytics'
+import { Route as AuthedLearningHubGlossarySlugRouteImport } from './routes/_authed/learning-hub/glossary.$slug'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -133,6 +137,11 @@ const AuthedPropertyHubRoute = AuthedPropertyHubRouteImport.update({
   path: '/property-hub',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedLearningHubRoute = AuthedLearningHubRouteImport.update({
+  id: '/learning-hub',
+  path: '/learning-hub',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedExploreRoute = AuthedExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
@@ -142,6 +151,11 @@ const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedLearningHubIndexRoute = AuthedLearningHubIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedLearningHubRoute,
 } as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
   id: '/demo/start/server-funcs',
@@ -183,6 +197,12 @@ const AuthedPropertyHubPropertyIdRoute =
     id: '/$propertyId',
     path: '/$propertyId',
     getParentRoute: () => AuthedPropertyHubRoute,
+  } as any)
+const AuthedLearningHubGlossaryRoute =
+  AuthedLearningHubGlossaryRouteImport.update({
+    id: '/glossary',
+    path: '/glossary',
+    getParentRoute: () => AuthedLearningHubRoute,
   } as any)
 const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
   id: '/demo/start/ssr/',
@@ -258,6 +278,12 @@ const AuthedPropertyHubPropertyIdAnalyticsRoute =
     path: '/analytics',
     getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
   } as any)
+const AuthedLearningHubGlossarySlugRoute =
+  AuthedLearningHubGlossarySlugRouteImport.update({
+    id: '/$slug',
+    path: '/$slug',
+    getParentRoute: () => AuthedLearningHubGlossaryRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -266,6 +292,7 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/explore': typeof AuthedExploreRoute
+  '/learning-hub': typeof AuthedLearningHubRouteWithChildren
   '/property-hub': typeof AuthedPropertyHubRouteWithChildren
   '/wealth-journey': typeof AuthedWealthJourneyRoute
   '/about': typeof PublicAboutRoute
@@ -277,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/invitation/accept': typeof InvitationAcceptRoute
+  '/learning-hub/glossary': typeof AuthedLearningHubGlossaryRouteWithChildren
   '/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdRouteWithChildren
   '/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -285,6 +313,8 @@ export interface FileRoutesByFullPath {
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/learning-hub/': typeof AuthedLearningHubIndexRoute
+  '/learning-hub/glossary/$slug': typeof AuthedLearningHubGlossarySlugRoute
   '/property-hub/$propertyId/analytics': typeof AuthedPropertyHubPropertyIdAnalyticsRoute
   '/property-hub/$propertyId/communications': typeof AuthedPropertyHubPropertyIdCommunicationsRoute
   '/property-hub/$propertyId/documents': typeof AuthedPropertyHubPropertyIdDocumentsRoute
@@ -317,6 +347,7 @@ export interface FileRoutesByTo {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/invitation/accept': typeof InvitationAcceptRoute
+  '/learning-hub/glossary': typeof AuthedLearningHubGlossaryRouteWithChildren
   '/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
@@ -324,6 +355,8 @@ export interface FileRoutesByTo {
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/learning-hub': typeof AuthedLearningHubIndexRoute
+  '/learning-hub/glossary/$slug': typeof AuthedLearningHubGlossarySlugRoute
   '/property-hub/$propertyId/analytics': typeof AuthedPropertyHubPropertyIdAnalyticsRoute
   '/property-hub/$propertyId/communications': typeof AuthedPropertyHubPropertyIdCommunicationsRoute
   '/property-hub/$propertyId/documents': typeof AuthedPropertyHubPropertyIdDocumentsRoute
@@ -348,6 +381,7 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/explore': typeof AuthedExploreRoute
+  '/_authed/learning-hub': typeof AuthedLearningHubRouteWithChildren
   '/_authed/property-hub': typeof AuthedPropertyHubRouteWithChildren
   '/_authed/wealth-journey': typeof AuthedWealthJourneyRoute
   '/_public/about': typeof PublicAboutRoute
@@ -359,6 +393,7 @@ export interface FileRoutesById {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/invitation/accept': typeof InvitationAcceptRoute
+  '/_authed/learning-hub/glossary': typeof AuthedLearningHubGlossaryRouteWithChildren
   '/_authed/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdRouteWithChildren
   '/_authed/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -367,6 +402,8 @@ export interface FileRoutesById {
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/_authed/learning-hub/': typeof AuthedLearningHubIndexRoute
+  '/_authed/learning-hub/glossary/$slug': typeof AuthedLearningHubGlossarySlugRoute
   '/_authed/property-hub/$propertyId/analytics': typeof AuthedPropertyHubPropertyIdAnalyticsRoute
   '/_authed/property-hub/$propertyId/communications': typeof AuthedPropertyHubPropertyIdCommunicationsRoute
   '/_authed/property-hub/$propertyId/documents': typeof AuthedPropertyHubPropertyIdDocumentsRoute
@@ -390,6 +427,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/dashboard'
     | '/explore'
+    | '/learning-hub'
     | '/property-hub'
     | '/wealth-journey'
     | '/about'
@@ -401,6 +439,7 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/invitation/accept'
+    | '/learning-hub/glossary'
     | '/property-hub/$propertyId'
     | '/property-hub/add'
     | '/demo/api/names'
@@ -409,6 +448,8 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/learning-hub/'
+    | '/learning-hub/glossary/$slug'
     | '/property-hub/$propertyId/analytics'
     | '/property-hub/$propertyId/communications'
     | '/property-hub/$propertyId/documents'
@@ -441,6 +482,7 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/invitation/accept'
+    | '/learning-hub/glossary'
     | '/property-hub/add'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
@@ -448,6 +490,8 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/learning-hub'
+    | '/learning-hub/glossary/$slug'
     | '/property-hub/$propertyId/analytics'
     | '/property-hub/$propertyId/communications'
     | '/property-hub/$propertyId/documents'
@@ -471,6 +515,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/_authed/dashboard'
     | '/_authed/explore'
+    | '/_authed/learning-hub'
     | '/_authed/property-hub'
     | '/_authed/wealth-journey'
     | '/_public/about'
@@ -482,6 +527,7 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/invitation/accept'
+    | '/_authed/learning-hub/glossary'
     | '/_authed/property-hub/$propertyId'
     | '/_authed/property-hub/add'
     | '/demo/api/names'
@@ -490,6 +536,8 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/_authed/learning-hub/'
+    | '/_authed/learning-hub/glossary/$slug'
     | '/_authed/property-hub/$propertyId/analytics'
     | '/_authed/property-hub/$propertyId/communications'
     | '/_authed/property-hub/$propertyId/documents'
@@ -650,6 +698,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPropertyHubRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/learning-hub': {
+      id: '/_authed/learning-hub'
+      path: '/learning-hub'
+      fullPath: '/learning-hub'
+      preLoaderRoute: typeof AuthedLearningHubRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/explore': {
       id: '/_authed/explore'
       path: '/explore'
@@ -663,6 +718,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthedDashboardRouteImport
       parentRoute: typeof AuthedRoute
+    }
+    '/_authed/learning-hub/': {
+      id: '/_authed/learning-hub/'
+      path: '/'
+      fullPath: '/learning-hub/'
+      preLoaderRoute: typeof AuthedLearningHubIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
     }
     '/demo/start/server-funcs': {
       id: '/demo/start/server-funcs'
@@ -719,6 +781,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/property-hub/$propertyId'
       preLoaderRoute: typeof AuthedPropertyHubPropertyIdRouteImport
       parentRoute: typeof AuthedPropertyHubRoute
+    }
+    '/_authed/learning-hub/glossary': {
+      id: '/_authed/learning-hub/glossary'
+      path: '/glossary'
+      fullPath: '/learning-hub/glossary'
+      preLoaderRoute: typeof AuthedLearningHubGlossaryRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
     }
     '/demo/start/ssr/': {
       id: '/demo/start/ssr/'
@@ -811,8 +880,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPropertyHubPropertyIdAnalyticsRouteImport
       parentRoute: typeof AuthedPropertyHubPropertyIdRoute
     }
+    '/_authed/learning-hub/glossary/$slug': {
+      id: '/_authed/learning-hub/glossary/$slug'
+      path: '/$slug'
+      fullPath: '/learning-hub/glossary/$slug'
+      preLoaderRoute: typeof AuthedLearningHubGlossarySlugRouteImport
+      parentRoute: typeof AuthedLearningHubGlossaryRoute
+    }
   }
 }
+
+interface AuthedLearningHubGlossaryRouteChildren {
+  AuthedLearningHubGlossarySlugRoute: typeof AuthedLearningHubGlossarySlugRoute
+}
+
+const AuthedLearningHubGlossaryRouteChildren: AuthedLearningHubGlossaryRouteChildren =
+  {
+    AuthedLearningHubGlossarySlugRoute: AuthedLearningHubGlossarySlugRoute,
+  }
+
+const AuthedLearningHubGlossaryRouteWithChildren =
+  AuthedLearningHubGlossaryRoute._addFileChildren(
+    AuthedLearningHubGlossaryRouteChildren,
+  )
+
+interface AuthedLearningHubRouteChildren {
+  AuthedLearningHubGlossaryRoute: typeof AuthedLearningHubGlossaryRouteWithChildren
+  AuthedLearningHubIndexRoute: typeof AuthedLearningHubIndexRoute
+}
+
+const AuthedLearningHubRouteChildren: AuthedLearningHubRouteChildren = {
+  AuthedLearningHubGlossaryRoute: AuthedLearningHubGlossaryRouteWithChildren,
+  AuthedLearningHubIndexRoute: AuthedLearningHubIndexRoute,
+}
+
+const AuthedLearningHubRouteWithChildren =
+  AuthedLearningHubRoute._addFileChildren(AuthedLearningHubRouteChildren)
 
 interface AuthedPropertyHubPropertyIdRouteChildren {
   AuthedPropertyHubPropertyIdAnalyticsRoute: typeof AuthedPropertyHubPropertyIdAnalyticsRoute
@@ -870,6 +973,7 @@ const AuthedPropertyHubRouteWithChildren =
 interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedExploreRoute: typeof AuthedExploreRoute
+  AuthedLearningHubRoute: typeof AuthedLearningHubRouteWithChildren
   AuthedPropertyHubRoute: typeof AuthedPropertyHubRouteWithChildren
   AuthedWealthJourneyRoute: typeof AuthedWealthJourneyRoute
 }
@@ -877,6 +981,7 @@ interface AuthedRouteChildren {
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedExploreRoute: AuthedExploreRoute,
+  AuthedLearningHubRoute: AuthedLearningHubRouteWithChildren,
   AuthedPropertyHubRoute: AuthedPropertyHubRouteWithChildren,
   AuthedWealthJourneyRoute: AuthedWealthJourneyRoute,
 }

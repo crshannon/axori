@@ -1441,7 +1441,7 @@ propertiesRouter.put(
     // Preserve existing escrow value - if not being updated, use existing value
     // If escrow field is null/undefined, try to calculate it from totalMonthlyPayment - old monthlyPrincipalInterest
     let monthlyEscrow: number;
-    if (validated.monthlyEscrow !== undefined) {
+    if (validated.monthlyEscrow != null) {
       // Use new escrow value if provided
       monthlyEscrow = validated.monthlyEscrow;
       loanDataForUpdate.monthlyEscrow = String(monthlyEscrow);

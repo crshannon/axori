@@ -1,0 +1,103 @@
+{
+  "category": "market-analysis",
+  "terms": [
+    {
+      "_id": "term_dom",
+      "_type": "glossaryTerm",
+      "slug": "days-on-market",
+      "term": "Days on Market (DOM)",
+      "shortDefinition": "The average time properties take to sell in a market, indicating whether it's a buyer's or seller's market.",
+      "fullDefinition": "Days on Market (DOM) measures the average time from listing to accepted offer in a given market. Low DOM (under 30 days) indicates a seller's market with high demand and competition. High DOM (over 90 days) suggests a buyer's market where you have more negotiating power. Track DOM trends to understand market conditions and time your buying or selling decisions.",
+      "category": "market-analysis",
+      "investorLevel": "beginner",
+      "relatedTerms": ["comps", "absorption-rate", "market-cycle"],
+      "synonyms": ["DOM", "time on market", "market time"],
+      "proTips": [
+        "Properties with high DOM may have motivated sellers willing to negotiate",
+        "Compare current DOM to historical averages to identify trends",
+        "DOM varies by property type and price point within the same market",
+        "Rising DOM often indicates a softening market"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_absorption_rate",
+      "_type": "glossaryTerm",
+      "slug": "absorption-rate",
+      "term": "Absorption Rate",
+      "shortDefinition": "The rate at which available properties sell in a market, typically expressed as months of inventory.",
+      "fullDefinition": "Absorption rate measures how quickly the market is absorbing available inventory. It's calculated by dividing active listings by monthly sales. The result is 'months of inventory'—how long it would take to sell all current listings at the current pace. Under 4 months = seller's market; 4-6 months = balanced; over 6 months = buyer's market. Absorption rate helps you understand supply/demand dynamics.",
+      "category": "market-analysis",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["days-on-market", "market-cycle", "supply-demand"],
+      "synonyms": ["months of inventory", "inventory level", "market absorption"],
+      "formulas": [
+        {
+          "name": "Absorption Rate",
+          "expression": "Active Listings ÷ Monthly Sales",
+          "variables": [
+            { "symbol": "Active Listings", "description": "Current properties for sale", "unit": "count" },
+            { "symbol": "Monthly Sales", "description": "Average properties sold per month", "unit": "count" }
+          ],
+          "example": {
+            "inputs": { "activeListings": 200, "monthlySales": 50 },
+            "result": 4
+          }
+        }
+      ],
+      "proTips": [
+        "Track absorption rate monthly to spot market shifts early",
+        "Low absorption rate in a target market means more competition for deals",
+        "New construction absorption rate tells you about builder confidence",
+        "Absorption rate varies by price point—analyze your target segment"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_market_cycle",
+      "_type": "glossaryTerm",
+      "slug": "market-cycle",
+      "term": "Market Cycle",
+      "shortDefinition": "The recurring phases of expansion, peak, contraction, and recovery in real estate markets.",
+      "fullDefinition": "Real estate markets move in cycles with four phases: Recovery (prices stabilizing, inventory declining), Expansion (prices rising, new construction increasing), Hyper Supply (overbuilding, vacancy rising), and Recession (prices falling, distressed sales). Understanding where your market is in the cycle helps you adjust strategy—buying during recovery/early expansion and selling or holding during late expansion/hyper supply.",
+      "category": "market-analysis",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["absorption-rate", "cap-rate", "appreciation"],
+      "synonyms": ["real estate cycle", "property cycle", "market phase"],
+      "proTips": [
+        "Different markets are in different phases—local analysis matters",
+        "Buy and hold investors can ride out cycles; flippers need to time them",
+        "Cap rates tend to compress during expansion and expand during recession",
+        "Cash flow protects you during downturns; appreciation rewards you during expansion"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_rent_growth",
+      "_type": "glossaryTerm",
+      "slug": "rent-growth",
+      "term": "Rent Growth",
+      "shortDefinition": "The percentage increase in rents over time, a key factor in projecting future income and property value.",
+      "fullDefinition": "Rent growth measures how much rents are increasing in a market, typically expressed as an annual percentage. Strong rent growth (3-5%+) indicates healthy demand and supports both cash flow improvement and property appreciation. Historical rent growth is a key factor in underwriting deals and projecting future returns. Markets with strong job and population growth tend to have above-average rent growth.",
+      "category": "market-analysis",
+      "investorLevel": "beginner",
+      "relatedTerms": ["gross-rental-income", "appreciation", "cash-flow"],
+      "synonyms": ["rental appreciation", "rent appreciation", "rental increase"],
+      "proTips": [
+        "Historical rent growth is no guarantee of future growth",
+        "Strong rent growth can offset initially lower cash flow",
+        "Compare rent growth to expense growth (especially property taxes)",
+        "Markets with rent control have limited rent growth potential"
+      ],
+      "relevantContexts": ["operating-core", "acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    }
+  ]
+}

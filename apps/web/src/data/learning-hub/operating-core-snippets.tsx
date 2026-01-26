@@ -15,6 +15,7 @@ export const noiSnippet: LearningSnippet = {
   title: 'Understanding Net Operating Income',
   category: 'Operations',
   context: 'operating-core',
+  glossarySlug: 'net-operating-income',
   content:
     "NOI is your property's income after operating expenses but before financing costs and taxes. It's the true measure of property performance. Higher NOI means more cash flow available for debt service, reserves, and profit.",
 }
@@ -39,6 +40,7 @@ export const capexReserveSnippet: LearningSnippet = {
   title: 'Capital Expenditure Reserves',
   category: 'Operations',
   context: 'operating-core',
+  glossarySlug: 'capex-reserve',
   content:
     'CapEx reserves are funds set aside for major repairs and replacements (roofs, HVAC, appliances). Typically 5-10% of rental income. Proper reserves prevent cash flow surprises and protect your investment value.',
 }
@@ -51,6 +53,7 @@ export const fixedExpensesSnippet: LearningSnippet = {
   title: 'Fixed vs Variable Expenses',
   category: 'Operations',
   context: 'operating-core',
+  glossarySlug: 'operating-expenses',
   content:
     "Fixed expenses are recurring costs that don't vary with occupancy (property taxes, insurance, management fees). Variable expenses fluctuate with use (utilities, repairs, maintenance). Understanding this helps with cash flow planning.",
 }
@@ -63,6 +66,7 @@ export const grossIncomeSnippet: LearningSnippet = {
   title: 'Gross Rental Income',
   category: 'Operations',
   context: 'operating-core',
+  glossarySlug: 'gross-rental-income',
   content:
     "Gross income is your total rental income before expenses. Market-adjusted rent reflects current market rates, not just what you're collecting. Use this for projections and when evaluating refinancing or selling.",
 }

@@ -1,0 +1,228 @@
+{
+  "category": "investment-metrics",
+  "terms": [
+    {
+      "_id": "term_coc",
+      "_type": "glossaryTerm",
+      "slug": "cash-on-cash-return",
+      "term": "Cash-on-Cash Return",
+      "shortDefinition": "Annual cash flow divided by total cash invested, measuring the actual return on your invested capital.",
+      "fullDefinition": "Cash-on-cash return measures the annual return on the actual cash you've invested in a property. Unlike cap rate (which ignores financing), cash-on-cash accounts for your mortgage payments and reflects real returns on YOUR money. It's calculated by dividing annual pre-tax cash flow by total cash invested (down payment + closing costs + any rehab). This is the metric that tells you how hard your invested dollars are working.",
+      "category": "investment-metrics",
+      "investorLevel": "beginner",
+      "relatedTerms": ["cap-rate", "cash-flow", "roi", "internal-rate-of-return"],
+      "synonyms": ["CoC", "cash on cash", "cash return", "equity dividend rate"],
+      "formulas": [
+        {
+          "name": "Cash-on-Cash Return",
+          "expression": "(Annual Cash Flow ÷ Total Cash Invested) × 100",
+          "variables": [
+            { "symbol": "Annual Cash Flow", "description": "NOI minus annual debt service", "unit": "$" },
+            { "symbol": "Total Cash Invested", "description": "Down payment + closing costs + rehab", "unit": "$" }
+          ],
+          "example": {
+            "inputs": { "annualCashFlow": 7200, "cashInvested": 80000 },
+            "result": 9
+          }
+        }
+      ],
+      "proTips": [
+        "Target 8-12%+ cash-on-cash for most markets—but know your local benchmarks",
+        "Cash-on-cash improves as you pay down the mortgage (same cash flow, less investment at risk)",
+        "A property with lower cash-on-cash but strong appreciation potential might still be good",
+        "Refinancing reduces cash invested and can dramatically increase cash-on-cash"
+      ],
+      "examples": [
+        {
+          "title": "Cash-on-Cash Calculation",
+          "scenario": "You invest $80K (down payment + closing + minor repairs). Property cash flows $600/month after all expenses and mortgage.",
+          "calculation": "CoC = ($600 × 12) ÷ $80,000 = $7,200 ÷ $80,000 = 9%",
+          "outcome": "Your 9% cash-on-cash means your $80K investment earns $7,200/year in cash flow—plus equity paydown and appreciation"
+        }
+      ],
+      "relevantContexts": ["acquisition", "operating-core"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_equity",
+      "_type": "glossaryTerm",
+      "slug": "equity",
+      "term": "Equity",
+      "shortDefinition": "The difference between your property's value and what you owe on it—your ownership stake.",
+      "fullDefinition": "Equity is your ownership stake in a property—the difference between its current market value and any loans against it. Equity grows through appreciation (value increases), principal paydown (paying down your mortgage), and forced appreciation (improvements). Equity is wealth on paper that can be accessed through selling, refinancing, or a HELOC. Building equity is one of the four wealth-building pillars of real estate investing.",
+      "category": "investment-metrics",
+      "investorLevel": "beginner",
+      "relatedTerms": ["loan-to-value", "refinance", "heloc", "equity-velocity"],
+      "synonyms": ["home equity", "property equity", "net equity"],
+      "formulas": [
+        {
+          "name": "Equity Calculation",
+          "expression": "Property Value - Total Debt",
+          "variables": [
+            { "symbol": "Property Value", "description": "Current market value", "unit": "$" },
+            { "symbol": "Total Debt", "description": "Sum of all loans on property", "unit": "$" }
+          ],
+          "example": {
+            "inputs": { "propertyValue": 400000, "totalDebt": 280000 },
+            "result": 120000
+          }
+        }
+      ],
+      "proTips": [
+        "Equity is only valuable if you can access it—refinance or HELOC to deploy it",
+        "Lazy equity (sitting in a paid-off property) could be earning returns elsewhere",
+        "Monitor your equity growth quarterly to track wealth building",
+        "Equity builds faster in the later years of a mortgage due to amortization"
+      ],
+      "relevantContexts": ["acquisition", "debt-logic"],
+      "featureLink": {
+        "label": "View in Acquisition Intel",
+        "route": "/property-hub/:propertyId/financials",
+        "section": "acquisition"
+      },
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_equity_velocity",
+      "_type": "glossaryTerm",
+      "slug": "equity-velocity",
+      "term": "Equity Velocity",
+      "shortDefinition": "The rate at which you're building or recycling equity, measuring wealth-building momentum.",
+      "fullDefinition": "Equity velocity measures how quickly you're building equity and, importantly, how efficiently you're recycling that equity into new investments. High equity velocity means your money is constantly working—you're not letting equity sit idle in properties. The BRRRR strategy exemplifies high equity velocity: invest, create equity through forced appreciation, refinance to extract it, and reinvest. Equity velocity is a key differentiator between investors who build wealth slowly vs. rapidly.",
+      "category": "investment-metrics",
+      "investorLevel": "advanced",
+      "relatedTerms": ["equity", "brrrr", "refinance", "cash-on-cash-return"],
+      "synonyms": ["velocity of equity", "equity turnover", "capital velocity"],
+      "proTips": [
+        "Equity sitting idle in properties isn't earning returns—consider mobilizing it",
+        "BRRRR strategy maximizes equity velocity by recycling capital",
+        "Balance equity velocity with risk—don't over-leverage",
+        "Track equity growth and deployment quarterly"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_cash_flow",
+      "_type": "glossaryTerm",
+      "slug": "cash-flow",
+      "term": "Cash Flow",
+      "shortDefinition": "The money left over after collecting rent and paying all expenses, including the mortgage payment.",
+      "fullDefinition": "Cash flow is the actual money in your pocket after all income is collected and all bills are paid—including your mortgage. Positive cash flow means you're making money each month; negative cash flow means you're subsidizing the property. Cash flow = Gross Income - Vacancy - Operating Expenses - Debt Service - CapEx Reserves. While appreciation builds wealth on paper, cash flow pays the bills today.",
+      "category": "investment-metrics",
+      "investorLevel": "beginner",
+      "relatedTerms": ["net-operating-income", "cash-on-cash-return", "debt-service-coverage-ratio"],
+      "synonyms": ["monthly cash flow", "cash flow positive", "net cash flow"],
+      "formulas": [
+        {
+          "name": "Cash Flow Calculation",
+          "expression": "NOI - Debt Service - CapEx Reserve",
+          "variables": [
+            { "symbol": "NOI", "description": "Net operating income", "unit": "$" },
+            { "symbol": "Debt Service", "description": "Monthly mortgage payment", "unit": "$" },
+            { "symbol": "CapEx Reserve", "description": "Monthly capital reserve contribution", "unit": "$" }
+          ],
+          "example": {
+            "inputs": { "noi": 2800, "debtService": 1900, "capex": 200 },
+            "result": 700
+          }
+        }
+      ],
+      "proTips": [
+        "Aim for $100-200+ per unit per month as a baseline",
+        "Cash flow can be negative in high-appreciation markets—understand the trade-off",
+        "Don't forget CapEx reserves when calculating true cash flow",
+        "Cash flow increases over time as rents rise but mortgage stays fixed"
+      ],
+      "relevantContexts": ["operating-core"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_roi",
+      "_type": "glossaryTerm",
+      "slug": "roi",
+      "term": "Return on Investment (ROI)",
+      "shortDefinition": "Total return (cash flow + equity growth + tax benefits) divided by investment, measuring overall performance.",
+      "fullDefinition": "Return on Investment (ROI) measures your total return from all sources: cash flow, principal paydown, appreciation, and tax benefits. While cash-on-cash only looks at cash flow, ROI captures the complete picture. Real estate's power is in these multiple return streams working together. A property with modest cash flow might have excellent ROI when appreciation and tax benefits are included.",
+      "category": "investment-metrics",
+      "investorLevel": "beginner",
+      "relatedTerms": ["cash-on-cash-return", "internal-rate-of-return", "equity"],
+      "synonyms": ["total return", "overall return", "investment return"],
+      "formulas": [
+        {
+          "name": "Total ROI",
+          "expression": "((Cash Flow + Principal Paydown + Appreciation + Tax Savings) ÷ Cash Invested) × 100",
+          "variables": [
+            { "symbol": "Cash Flow", "description": "Annual net cash flow", "unit": "$" },
+            { "symbol": "Principal Paydown", "description": "Mortgage principal paid annually", "unit": "$" },
+            { "symbol": "Appreciation", "description": "Property value increase", "unit": "$" },
+            { "symbol": "Tax Savings", "description": "Value of tax deductions", "unit": "$" }
+          ]
+        }
+      ],
+      "proTips": [
+        "Real estate's magic is the stacking of 4+ return streams",
+        "Compare total ROI, not just cash flow, when evaluating investments",
+        "Tax benefits can add 2-5%+ to your total ROI depending on bracket",
+        "Appreciation is not guaranteed—be conservative in projections"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_irr",
+      "_type": "glossaryTerm",
+      "slug": "internal-rate-of-return",
+      "term": "Internal Rate of Return (IRR)",
+      "shortDefinition": "A sophisticated metric measuring annualized return accounting for the timing of all cash flows.",
+      "fullDefinition": "Internal Rate of Return (IRR) is an annualized return metric that accounts for the timing of cash flows—when you invest and when you get money back. Unlike simple ROI, IRR recognizes that money today is worth more than money in the future. IRR is commonly used in syndications and by sophisticated investors to compare investments with different hold periods and cash flow patterns. It's the discount rate that makes the net present value (NPV) of all cash flows equal to zero.",
+      "category": "investment-metrics",
+      "investorLevel": "advanced",
+      "relatedTerms": ["roi", "cash-on-cash-return", "equity"],
+      "synonyms": ["IRR", "internal rate", "annualized return"],
+      "proTips": [
+        "IRR is great for comparing investments with different timelines",
+        "A quick profit (high IRR) might mean less total dollars than a longer hold",
+        "Syndication sponsors often target 15-20% IRR",
+        "Use IRR for exit analysis—what return did you actually achieve?"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_leverage",
+      "_type": "glossaryTerm",
+      "slug": "leverage",
+      "term": "Leverage",
+      "shortDefinition": "Using borrowed money to increase potential returns, allowing you to control more assets with less capital.",
+      "fullDefinition": "Leverage means using borrowed money (debt) to amplify returns. With 20% down on a $500K property, you control $500K of real estate with $100K. If the property appreciates 5% ($25K), your return on $100K invested is 25%—not 5%. Leverage works both ways: it amplifies gains AND losses. Smart use of leverage is one of real estate's greatest advantages, but over-leveraging can be dangerous if property values decline or cash flow turns negative.",
+      "category": "investment-metrics",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["loan-to-value", "debt-service-coverage-ratio", "cash-on-cash-return"],
+      "synonyms": ["financial leverage", "debt leverage", "OPM (other people's money)"],
+      "proTips": [
+        "Leverage magnifies returns—both positive and negative",
+        "Use leverage wisely; ensure you can cover debt service in bad scenarios",
+        "As you build wealth, consider paying down debt for stability",
+        "Good leverage = positive leverage (returns exceed cost of borrowing)"
+      ],
+      "examples": [
+        {
+          "title": "Power of Leverage",
+          "scenario": "You have $100K. Option A: Buy $100K property cash. Option B: Buy $500K property with $100K down.",
+          "calculation": "Both appreciate 5%. Option A gain: $5K (5% return). Option B gain: $25K (25% return on your $100K)",
+          "outcome": "Leverage amplified your return 5x. Plus Option B likely has more rent income to cover the mortgage."
+        }
+      ],
+      "relevantContexts": ["debt-logic", "acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    }
+  ]
+}

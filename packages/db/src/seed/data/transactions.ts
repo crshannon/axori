@@ -136,7 +136,7 @@ export function generateSampleTransactions(
         vendor: "State Farm Insurance",
         description: "Annual property insurance",
         isRecurring: true,
-        recurrenceFrequency: "yearly",
+        recurrenceFrequency: "annual",
         isTaxDeductible: true,
         taxCategory: "Insurance",
         source: "plaid",

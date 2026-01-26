@@ -1,0 +1,301 @@
+{
+  "category": "financing",
+  "terms": [
+    {
+      "_id": "term_ltv",
+      "_type": "glossaryTerm",
+      "slug": "loan-to-value",
+      "term": "Loan-to-Value Ratio (LTV)",
+      "shortDefinition": "The ratio of a loan amount to the property value, expressed as a percentage. A key metric lenders use to assess lending risk.",
+      "fullDefinition": "Loan-to-Value (LTV) ratio measures how much you're borrowing relative to a property's appraised value or purchase price. For example, if you purchase a $500,000 property with a $400,000 loan, your LTV is 80%. Lenders use LTV to assess risk—higher LTV means more risk for the lender, often resulting in higher interest rates or requirements for private mortgage insurance (PMI). Most conventional investment property loans cap LTV at 75-80%.",
+      "category": "financing",
+      "investorLevel": "beginner",
+      "relatedTerms": ["equity", "refinance", "down-payment", "private-mortgage-insurance"],
+      "synonyms": ["LTV", "loan to value", "leverage ratio"],
+      "formulas": [
+        {
+          "name": "LTV Calculation",
+          "expression": "(Loan Amount ÷ Property Value) × 100",
+          "variables": [
+            { "symbol": "Loan Amount", "description": "Total mortgage balance", "unit": "$" },
+            { "symbol": "Property Value", "description": "Appraised or purchase price", "unit": "$" }
+          ],
+          "example": {
+            "inputs": { "loanAmount": 400000, "propertyValue": 500000 },
+            "result": 80
+          }
+        }
+      ],
+      "proTips": [
+        "Most conventional loans require LTV of 80% or below to avoid PMI on primary residences",
+        "Investment property loans typically allow max 75-80% LTV",
+        "DSCR loans may allow higher LTV for strong cash-flowing properties",
+        "Lower LTV often means better interest rates"
+      ],
+      "examples": [
+        {
+          "title": "Investment Property Purchase",
+          "scenario": "You're buying a $400,000 rental property and putting 25% down ($100,000)",
+          "calculation": "LTV = $300,000 ÷ $400,000 = 75%",
+          "outcome": "At 75% LTV, you qualify for most investment property loans with competitive rates"
+        }
+      ],
+      "relevantContexts": ["debt-logic"],
+      "featureLink": {
+        "label": "View in Debt Logic",
+        "route": "/property-hub/:propertyId/financials",
+        "section": "debt-logic"
+      },
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_dscr",
+      "_type": "glossaryTerm",
+      "slug": "debt-service-coverage-ratio",
+      "term": "Debt Service Coverage Ratio (DSCR)",
+      "shortDefinition": "A ratio comparing a property's net operating income to its annual debt payments, measuring ability to cover loan obligations.",
+      "fullDefinition": "The Debt Service Coverage Ratio (DSCR) is a critical metric that measures a property's ability to generate enough income to cover its debt payments. Lenders use DSCR to determine loan eligibility and terms. A DSCR of 1.0 means the property generates exactly enough income to cover debt—anything above 1.0 provides a cushion. Most lenders require a minimum DSCR of 1.20-1.25 for investment properties.",
+      "category": "financing",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["net-operating-income", "cash-flow", "loan-to-value"],
+      "synonyms": ["DSCR", "debt coverage ratio", "DCR"],
+      "formulas": [
+        {
+          "name": "DSCR Calculation",
+          "expression": "Net Operating Income ÷ Annual Debt Service",
+          "variables": [
+            { "symbol": "NOI", "description": "Annual net operating income", "unit": "$" },
+            { "symbol": "Debt Service", "description": "Annual loan payments (P&I)", "unit": "$" }
+          ],
+          "example": {
+            "inputs": { "noi": 36000, "annualDebtService": 28800 },
+            "result": 1.25
+          }
+        }
+      ],
+      "proTips": [
+        "DSCR loans qualify you based on property income, not personal income—great for scaling",
+        "A DSCR of 1.25 or higher typically gets you the best rates",
+        "DSCR below 1.0 means you're losing money on the property monthly",
+        "Consider both current DSCR and DSCR after planned rent increases"
+      ],
+      "examples": [
+        {
+          "title": "Rental Property DSCR",
+          "scenario": "Your property generates $3,000/month NOI and your mortgage payment is $2,400/month",
+          "calculation": "DSCR = ($3,000 × 12) ÷ ($2,400 × 12) = $36,000 ÷ $28,800 = 1.25",
+          "outcome": "With a 1.25 DSCR, you have a 25% cushion above your debt payments—solid coverage"
+        }
+      ],
+      "relevantContexts": ["debt-logic"],
+      "featureLink": {
+        "label": "View in Debt Logic",
+        "route": "/property-hub/:propertyId/financials",
+        "section": "debt-logic"
+      },
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_heloc",
+      "_type": "glossaryTerm",
+      "slug": "heloc",
+      "term": "Home Equity Line of Credit (HELOC)",
+      "shortDefinition": "A revolving credit line secured by your home equity, allowing you to borrow against your property's value as needed.",
+      "fullDefinition": "A Home Equity Line of Credit (HELOC) is a flexible financing tool that lets you borrow against the equity in your property. Unlike a traditional loan, a HELOC works like a credit card—you have a credit limit and can borrow and repay as needed during the draw period (typically 10 years). HELOCs usually have variable interest rates and can be powerful tools for real estate investors to access capital for down payments, renovations, or other investments.",
+      "category": "financing",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["equity", "refinance", "loan-position", "interest-rate"],
+      "synonyms": ["HELOC", "home equity line", "equity line of credit"],
+      "proTips": [
+        "HELOCs are great for BRRRR investors—use for down payments, repay after refinance",
+        "Consider locking a portion to a fixed rate if concerned about rate increases",
+        "Keep your HELOC open even if not using it—the available credit is valuable",
+        "HELOCs on investment properties typically have higher rates than primary residence HELOCs"
+      ],
+      "examples": [
+        {
+          "title": "Using HELOC for Down Payment",
+          "scenario": "You have $100K equity in your primary home. You get a HELOC for $80K (80% of equity) at 8%",
+          "calculation": "Monthly interest-only payment on $80K at 8% = $533/month",
+          "outcome": "You can use this $80K as a down payment on an investment property, then pay it back over time or after a cash-out refinance"
+        }
+      ],
+      "relevantContexts": ["debt-logic"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_refinance",
+      "_type": "glossaryTerm",
+      "slug": "refinance",
+      "term": "Refinance (Cash-Out Refinance)",
+      "shortDefinition": "Replacing your existing mortgage with a new loan, often to access equity (cash-out) or secure better terms (rate-and-term).",
+      "fullDefinition": "Refinancing means replacing your current mortgage with a new one. There are two main types: Rate-and-Term refinance (to get a lower rate or different term) and Cash-Out refinance (to extract equity as cash). Cash-out refinancing is a key strategy for real estate investors—it allows you to pull out tax-free capital from appreciated properties to reinvest. Most lenders allow up to 75-80% LTV on investment property cash-out refinances.",
+      "category": "financing",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["equity", "loan-to-value", "brrrr", "closing-costs"],
+      "synonyms": ["refi", "cash-out refi", "rate and term refi"],
+      "proTips": [
+        "Cash-out refinance proceeds are not taxable income—you're borrowing against your equity",
+        "Most lenders require 6-12 month 'seasoning' before you can refinance",
+        "Calculate break-even point to see if refinancing makes financial sense",
+        "Consider the impact on cash flow when pulling out equity"
+      ],
+      "examples": [
+        {
+          "title": "BRRRR Cash-Out Refinance",
+          "scenario": "You bought a property for $150K, put $50K into rehab. After improvements, it appraises at $280K",
+          "calculation": "75% LTV cash-out = $280K × 0.75 = $210K loan. You pay off your $150K purchase loan and get $60K cash back",
+          "outcome": "You've recycled most of your capital and still own a property worth $280K with $70K equity"
+        }
+      ],
+      "relevantContexts": ["debt-logic", "acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_amortization",
+      "_type": "glossaryTerm",
+      "slug": "amortization",
+      "term": "Amortization",
+      "shortDefinition": "The process of paying off a loan through regular payments over time, with each payment covering both principal and interest.",
+      "fullDefinition": "Amortization is the gradual repayment of a loan through scheduled payments. Each payment is split between interest (cost of borrowing) and principal (reducing what you owe). Early in the loan, most of your payment goes to interest; over time, more goes to principal. This is why you build equity slowly at first, then faster as the loan matures. Understanding amortization helps you see how each payment builds wealth through principal paydown.",
+      "category": "financing",
+      "investorLevel": "beginner",
+      "relatedTerms": ["principal-interest", "equity", "loan-term"],
+      "synonyms": ["loan amortization", "mortgage amortization", "payment schedule"],
+      "proTips": [
+        "Early extra payments have the biggest impact on total interest paid",
+        "A 15-year mortgage builds equity faster but has higher monthly payments",
+        "Interest-only loans don't amortize—you're not building equity through payments",
+        "Use an amortization schedule to see exactly how each payment breaks down"
+      ],
+      "examples": [
+        {
+          "title": "30-Year Mortgage Amortization",
+          "scenario": "You have a $300,000 loan at 7% for 30 years. Monthly payment is $1,996",
+          "calculation": "Month 1: $1,750 goes to interest, $246 to principal. Month 360: $12 goes to interest, $1,984 to principal",
+          "outcome": "Over 30 years, you'll pay $418,527 in interest but build $300,000 in equity through principal paydown"
+        }
+      ],
+      "relevantContexts": ["debt-logic"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_pmi",
+      "_type": "glossaryTerm",
+      "slug": "private-mortgage-insurance",
+      "term": "Private Mortgage Insurance (PMI)",
+      "shortDefinition": "Insurance required by lenders when your down payment is less than 20%, protecting the lender if you default.",
+      "fullDefinition": "Private Mortgage Insurance (PMI) is a type of insurance that protects the lender—not you—if you default on your loan. It's typically required when your down payment is less than 20% (LTV above 80%). PMI adds to your monthly payment and doesn't provide any benefit to you as the borrower. Once you reach 20% equity, you can usually request PMI removal. For investment properties, PMI is less common since most require 20-25% down anyway.",
+      "category": "financing",
+      "investorLevel": "beginner",
+      "relatedTerms": ["loan-to-value", "down-payment", "equity"],
+      "synonyms": ["PMI", "mortgage insurance", "MI"],
+      "proTips": [
+        "PMI typically costs 0.5-1% of the loan amount annually",
+        "You can request PMI removal once you reach 20% equity",
+        "PMI automatically terminates at 22% equity for most loans",
+        "Consider whether paying PMI allows you to invest sooner vs. waiting to save 20%"
+      ],
+      "relevantContexts": ["debt-logic"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_interest_rate",
+      "_type": "glossaryTerm",
+      "slug": "interest-rate",
+      "term": "Interest Rate vs APR",
+      "shortDefinition": "The interest rate is the cost of borrowing money, while APR includes additional fees and represents the true annual cost.",
+      "fullDefinition": "The interest rate is the percentage charged on your loan principal, determining your monthly payment. The Annual Percentage Rate (APR) includes the interest rate plus other costs like origination fees, points, and mortgage insurance—giving you a more complete picture of borrowing costs. When comparing loans, APR is more useful because it accounts for all costs, not just the rate.",
+      "category": "financing",
+      "investorLevel": "beginner",
+      "relatedTerms": ["amortization", "closing-costs", "refinance"],
+      "synonyms": ["rate", "APR", "annual percentage rate", "mortgage rate"],
+      "proTips": [
+        "Compare APR, not just interest rates, when shopping for loans",
+        "A lower rate with high fees might have a higher APR than a slightly higher rate with lower fees",
+        "Points can buy down your rate—calculate break-even to see if it makes sense",
+        "Investment property rates are typically 0.5-0.75% higher than primary residence rates"
+      ],
+      "relevantContexts": ["debt-logic"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_loan_position",
+      "_type": "glossaryTerm",
+      "slug": "loan-position",
+      "term": "Loan Position (Lien Priority)",
+      "shortDefinition": "The order in which lenders get paid if a property is sold or foreclosed, with first position having priority.",
+      "fullDefinition": "Loan position refers to a lender's priority in the event of foreclosure or sale. The first position (1st lien) gets paid first, then second position, and so on. Your primary mortgage is typically in first position. A HELOC or second mortgage is in second position—it gets paid only after the first lien is satisfied. Lien priority affects interest rates (higher risk = higher rate) and is recorded with the county.",
+      "category": "financing",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["heloc", "refinance", "equity"],
+      "synonyms": ["lien position", "lien priority", "first lien", "second lien"],
+      "proTips": [
+        "When you refinance, the new loan takes first position and existing HELOCs may need to subordinate",
+        "Second position loans carry more risk for lenders, so rates are higher",
+        "In foreclosure, second lien holders may get nothing if the first lien exceeds sale proceeds",
+        "Some HELOCs allow you to 'freeze' them to maintain position during a refinance"
+      ],
+      "relevantContexts": ["debt-logic"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_hard_money",
+      "_type": "glossaryTerm",
+      "slug": "hard-money-loan",
+      "term": "Hard Money Loan",
+      "shortDefinition": "Short-term, asset-based loans from private lenders, typically used for fix-and-flip or bridge financing.",
+      "fullDefinition": "Hard money loans are short-term loans (6-24 months) from private lenders or companies, secured by the property itself rather than your credit. They feature higher interest rates (10-15%+) and fees but offer faster closing (days instead of weeks) and less stringent qualification. They're commonly used for fix-and-flip projects, bridge financing, or when traditional lending isn't available. The exit strategy is usually selling the property or refinancing into conventional debt.",
+      "category": "financing",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["brrrr", "fix-and-flip", "refinance", "arv"],
+      "synonyms": ["hard money", "private money", "bridge loan", "asset-based loan"],
+      "proTips": [
+        "Always have a clear exit strategy before taking hard money",
+        "Factor in all costs: interest, points, fees, and potential extensions",
+        "Build relationships with hard money lenders before you need them",
+        "Hard money can be a tool, not a crutch—use it strategically"
+      ],
+      "examples": [
+        {
+          "title": "Fix-and-Flip Hard Money",
+          "scenario": "You find a property for $150K that needs $50K in rehab. ARV is $280K. Hard money lender offers 80% of purchase + 100% of rehab",
+          "calculation": "Loan = ($150K × 80%) + $50K = $120K + $50K = $170K at 12% + 2 points",
+          "outcome": "You bring $30K + points + closing costs. Complete rehab in 4 months, sell for $280K, pay off loan, keep profit"
+        }
+      ],
+      "relevantContexts": ["debt-logic", "acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_seller_financing",
+      "_type": "glossaryTerm",
+      "slug": "seller-financing",
+      "term": "Seller Financing",
+      "shortDefinition": "When the property seller acts as the lender, allowing the buyer to make payments directly to them instead of a bank.",
+      "fullDefinition": "Seller financing (also called owner financing) is when the seller provides the loan to the buyer, bypassing traditional lenders. The buyer makes payments to the seller based on agreed terms. This can benefit both parties: buyers who might not qualify for traditional financing can still purchase, and sellers can earn interest income and potentially defer capital gains taxes. Terms are fully negotiable between buyer and seller.",
+      "category": "financing",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["creative-financing", "down-payment", "closing-costs"],
+      "synonyms": ["owner financing", "seller carry", "seller carryback", "owner carry"],
+      "proTips": [
+        "Seller financing is more common with motivated sellers or unique properties",
+        "Use a real estate attorney to structure the deal properly",
+        "The seller still holds the title until the loan is paid (or use a land contract)",
+        "This can be combined with traditional financing for larger purchases"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    }
+  ]
+}
