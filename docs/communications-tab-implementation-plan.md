@@ -1031,5 +1031,447 @@ packages/
 
 ---
 
+---
+
+## 11. Email Processing Architecture (Inbox Intelligence)
+
+The "Inbox Intelligence" feature allows users to forward emails to a property-specific address, which then automatically:
+1. Ingests the email and attachments
+2. Extracts content from PDFs/images via OCR
+3. Analyzes intent and categorizes the communication
+4. Creates actionable tasks when appropriate
+5. Logs everything to the communication history
+
+### 11.1 Current State
+
+**What exists:**
+- Perplexity AI client (`packages/shared/src/integrations/ai.ts`) - can be used for intent analysis
+- Resend email client - for **sending** emails only
+- React Email templates for transactional emails
+
+**What's missing:**
+- Inbound email receiving infrastructure
+- Document/attachment processing (OCR)
+- Background job queue for async processing
+- AI pipeline for categorization and task extraction
+
+### 11.2 Email Ingestion Options
+
+#### Option A: Resend Inbound Webhooks (Recommended for MVP)
+Resend supports inbound email processing via webhooks.
+
+```
+User forwards email → prop-{propertyId}@inbound.axori.com
+                              ↓
+                    Resend receives email
+                              ↓
+                    Webhook POST to /api/webhooks/email
+                              ↓
+                    Process & store in database
+```
+
+**Pros:**
+- Already using Resend for outbound
+- Simple webhook integration
+- Handles email parsing, attachments
+- No separate email infrastructure needed
+
+**Cons:**
+- Cost per email received
+- Dependent on Resend's parsing
+
+**Setup Required:**
+1. Configure Resend inbound domain (e.g., `inbound.axori.com`)
+2. Create webhook endpoint in API
+3. Verify webhook signatures for security
+
+#### Option B: Postmark Inbound Streams
+Similar to Resend but with more robust inbound features.
+
+#### Option C: SendGrid Inbound Parse
+Industry standard, more complex setup.
+
+#### Option D: Self-hosted (Mailgun/SES)
+Most control, most complexity.
+
+**Recommendation:** Start with Resend for consistency, evaluate if volume/cost becomes an issue.
+
+### 11.3 Database Schema Additions
+
+```typescript
+// Additional schema for email processing
+
+export const emailProcessingStatusEnum = pgEnum("email_processing_status", [
+  "received",      // Email received, not yet processed
+  "processing",    // Currently being processed
+  "processed",     // Successfully processed
+  "failed",        // Processing failed
+  "manual_review", // Requires human review
+])
+
+export const inboundEmails = pgTable(
+  "inbound_emails",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    propertyId: uuid("property_id")
+      .notNull()
+      .references(() => properties.id, { onDelete: "cascade" }),
+
+    // Raw email data
+    messageId: text("message_id").notNull().unique(), // For deduplication
+    fromEmail: text("from_email").notNull(),
+    fromName: text("from_name"),
+    toEmail: text("to_email").notNull(),
+    subject: text("subject"),
+    textBody: text("text_body"),
+    htmlBody: text("html_body"),
+    rawHeaders: jsonb("raw_headers"),
+
+    // Processing state
+    status: emailProcessingStatusEnum("status").notNull().default("received"),
+    processingError: text("processing_error"),
+    processedAt: timestamp("processed_at"),
+
+    // AI Analysis results
+    aiAnalysis: jsonb("ai_analysis"), // Structured extraction results
+    confidence: real("confidence"), // AI confidence score 0-1
+    suggestedCategory: communicationCategoryEnum("suggested_category"),
+    suggestedTasks: jsonb("suggested_tasks"), // Array of task suggestions
+
+    // Link to created communication entry
+    communicationId: uuid("communication_id").references(() => propertyCommunications.id),
+
+    // Timestamps
+    receivedAt: timestamp("received_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    propertyIdIdx: index("idx_inbound_emails_property_id").on(table.propertyId),
+    statusIdx: index("idx_inbound_emails_status").on(table.status),
+    messageIdIdx: index("idx_inbound_emails_message_id").on(table.messageId),
+  })
+)
+
+export const emailAttachments = pgTable(
+  "email_attachments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    emailId: uuid("email_id")
+      .notNull()
+      .references(() => inboundEmails.id, { onDelete: "cascade" }),
+
+    // File info
+    filename: text("filename").notNull(),
+    contentType: text("content_type").notNull(),
+    size: integer("size").notNull(), // bytes
+    storageUrl: text("storage_url"), // Supabase Storage URL
+
+    // OCR processing
+    ocrStatus: text("ocr_status"), // "pending", "processing", "completed", "failed", "skipped"
+    ocrText: text("ocr_text"), // Extracted text from OCR
+    ocrConfidence: real("ocr_confidence"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    emailIdIdx: index("idx_email_attachments_email_id").on(table.emailId),
+  })
+)
+```
+
+### 11.4 Processing Pipeline
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         EMAIL PROCESSING PIPELINE                        │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Step 1: INGESTION (Webhook Handler)
+┌─────────────────────────────────────────────────────────────────────────┐
+│  POST /api/webhooks/email                                                │
+│  ├── Verify webhook signature                                            │
+│  ├── Parse property ID from recipient address                            │
+│  ├── Check for duplicate (messageId)                                     │
+│  ├── Store raw email in `inbound_emails` (status: "received")           │
+│  ├── Store attachments metadata in `email_attachments`                   │
+│  ├── Upload attachment files to Supabase Storage                         │
+│  └── Return 200 OK (async processing continues)                          │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+Step 2: DOCUMENT PROCESSING (Background Job - Future)
+┌─────────────────────────────────────────────────────────────────────────┐
+│  For MVP: Process inline (acceptable for low volume)                     │
+│  For Scale: Use pg-boss or similar job queue                            │
+│                                                                          │
+│  For each attachment:                                                    │
+│  ├── If PDF → Extract text (pdf-parse library)                          │
+│  ├── If image → OCR (Tesseract.js or cloud OCR API)                     │
+│  ├── Store extracted text in `email_attachments.ocr_text`               │
+│  └── Update status accordingly                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+Step 3: AI ANALYSIS (Intent & Entity Extraction)
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Use existing Perplexity client or add OpenAI/Anthropic                  │
+│                                                                          │
+│  Input: email body + attachment text + property context                  │
+│                                                                          │
+│  AI Prompt Structure:                                                    │
+│  ───────────────────                                                     │
+│  "Analyze this email forwarded to a property management system.          │
+│   Property: {address}, Type: {type}, Management: {pm/self}               │
+│                                                                          │
+│   Email:                                                                 │
+│   From: {from}                                                           │
+│   Subject: {subject}                                                     │
+│   Body: {body}                                                           │
+│   Attachments: {attachment_summaries}                                    │
+│                                                                          │
+│   Extract:                                                               │
+│   1. Category (maintenance/lease/payment/general/urgent/etc)             │
+│   2. Sender role (tenant/contractor/pm/vendor/unknown)                   │
+│   3. Key entities (amounts, dates, names, addresses)                     │
+│   4. Suggested tasks (if action needed)                                  │
+│   5. Priority level (low/medium/high/urgent)                             │
+│   6. Summary (1-2 sentences)                                             │
+│                                                                          │
+│   Return as JSON."                                                       │
+│                                                                          │
+│  Output stored in `inbound_emails.ai_analysis`                          │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+Step 4: COMMUNICATION CREATION
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Create entry in `property_communications`:                              │
+│  ├── type: "email"                                                       │
+│  ├── direction: "inbound"                                                │
+│  ├── category: AI suggested (or "general" if low confidence)            │
+│  ├── subject: email subject                                              │
+│  ├── content: email body                                                 │
+│  ├── contactName: from name                                              │
+│  ├── contactEmail: from email                                            │
+│  ├── attachmentUrls: links to stored files                              │
+│  └── Link back to inbound_email record                                   │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+Step 5: TASK CREATION (If AI suggests tasks)
+┌─────────────────────────────────────────────────────────────────────────┐
+│  For each suggested task from AI:                                        │
+│  ├── Create in `property_tasks` table (new table, or use existing)      │
+│  ├── Link to communication                                               │
+│  ├── Set status: "pending_review" (user must confirm)                   │
+│  └── Notify user of new tasks                                            │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 11.5 API Endpoints for Email Processing
+
+```typescript
+/**
+ * POST /api/webhooks/email
+ * Resend webhook endpoint for inbound emails
+ * - Verifies signature
+ * - Ingests email and triggers processing
+ */
+POST /api/webhooks/email
+
+/**
+ * GET /api/properties/:propertyId/emails
+ * List inbound emails for a property
+ * - Includes processing status
+ * - Filterable by status, date range
+ */
+GET /api/properties/:propertyId/emails
+
+/**
+ * GET /api/properties/:propertyId/emails/:emailId
+ * Get single email with full details
+ * - Includes AI analysis
+ * - Includes attachment info
+ */
+GET /api/properties/:propertyId/emails/:emailId
+
+/**
+ * POST /api/properties/:propertyId/emails/:emailId/reprocess
+ * Manually trigger reprocessing of an email
+ * - Useful if AI analysis failed or was incorrect
+ */
+POST /api/properties/:propertyId/emails/:emailId/reprocess
+
+/**
+ * PUT /api/properties/:propertyId/emails/:emailId/review
+ * Mark email as reviewed, optionally override category
+ * - For "manual_review" status emails
+ */
+PUT /api/properties/:propertyId/emails/:emailId/review
+```
+
+### 11.6 OCR Strategy
+
+**For MVP (Low Volume):**
+```typescript
+// Use pdf-parse for PDFs (server-side, no external API)
+import pdf from 'pdf-parse'
+
+async function extractPdfText(buffer: Buffer): Promise<string> {
+  const data = await pdf(buffer)
+  return data.text
+}
+
+// Use Tesseract.js for images (client-side or server-side)
+import Tesseract from 'tesseract.js'
+
+async function extractImageText(imageUrl: string): Promise<string> {
+  const result = await Tesseract.recognize(imageUrl, 'eng')
+  return result.data.text
+}
+```
+
+**For Scale (High Volume):**
+- Google Cloud Vision API
+- AWS Textract
+- Azure Computer Vision
+
+These provide:
+- Better accuracy
+- Handwriting recognition
+- Table/form extraction
+- Document structure analysis
+
+### 11.7 AI Provider Considerations
+
+**Current: Perplexity**
+- Good for general reasoning
+- Has web search capability (not needed here)
+- May be overkill for structured extraction
+
+**Recommended: Add OpenAI or Anthropic**
+```typescript
+// packages/shared/src/integrations/ai.ts
+
+export class AnthropicClient {
+  private apiKey: string
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey
+  }
+
+  async analyzeEmail(params: EmailAnalysisParams): Promise<EmailAnalysis> {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-haiku-20240307', // Fast & cheap for extraction
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: buildEmailAnalysisPrompt(params)
+        }]
+      })
+    })
+    // Parse and validate response...
+  }
+}
+```
+
+**Why Claude Haiku for this use case:**
+- Very fast (~0.5s response)
+- Very cheap (~$0.00025 per email)
+- Excellent at structured extraction
+- Good at following JSON output format
+
+### 11.8 Email Address Routing
+
+**Address Format:** `prop-{propertyId}@inbound.axori.com`
+
+**Webhook Handler Logic:**
+```typescript
+// Extract property ID from recipient address
+function parsePropertyIdFromEmail(toAddress: string): string | null {
+  const match = toAddress.match(/^prop-([a-f0-9-]+)@inbound\.axori\.com$/i)
+  return match ? match[1] : null
+}
+
+// Validate property exists and user has access
+async function validatePropertyAccess(
+  propertyId: string,
+  fromEmail: string
+): Promise<boolean> {
+  // Option 1: Allow any email (user forwarded it, so it's intentional)
+  // Option 2: Check if fromEmail matches a known contact
+  // Option 3: Check if fromEmail is a portfolio member
+
+  // Recommendation: Option 1 for MVP, add allow-listing later
+  const property = await db.query.properties.findFirst({
+    where: eq(properties.id, propertyId)
+  })
+  return !!property
+}
+```
+
+### 11.9 Implementation Phases for Email Processing
+
+#### Phase 6a: Basic Email Ingestion
+- Set up Resend inbound domain
+- Create webhook endpoint
+- Store raw emails in database
+- Display in UI (raw, no processing)
+
+#### Phase 6b: Document Extraction
+- Implement PDF text extraction
+- Implement basic image OCR
+- Store extracted text
+- Display in email detail view
+
+#### Phase 6c: AI Categorization
+- Add Anthropic/OpenAI client
+- Implement email analysis prompt
+- Auto-categorize incoming emails
+- Show AI suggestions in UI
+
+#### Phase 6d: Task Generation
+- Create property_tasks table
+- Generate tasks from AI suggestions
+- Add task review UI
+- Connect tasks to communications
+
+#### Phase 6e: Polish & Scale
+- Add background job queue
+- Implement retry logic
+- Add confidence thresholds
+- Allow manual corrections that improve AI
+
+### 11.10 Cost Estimation
+
+| Component | Cost per Email | Notes |
+|-----------|---------------|-------|
+| Resend Inbound | ~$0.001 | Estimate based on outbound pricing |
+| Supabase Storage | ~$0.0001 | Attachment storage, minimal |
+| Claude Haiku | ~$0.00025 | ~500 input tokens, ~200 output |
+| OCR (if cloud) | ~$0.001-0.01 | Varies by provider/complexity |
+| **Total MVP** | **~$0.002-0.003** | Per email processed |
+
+At 1,000 emails/month: ~$2-3/month
+At 10,000 emails/month: ~$20-30/month
+
+### 11.11 Security Considerations
+
+1. **Webhook Verification:** Always verify Resend signature
+2. **Property Access:** Validate property ID exists before processing
+3. **Attachment Scanning:** Consider virus scanning for attachments
+4. **PII Handling:** Email content may contain sensitive data
+5. **Rate Limiting:** Prevent abuse of inbound addresses
+6. **Spam Filtering:** Rely on Resend's spam filtering + add own checks
+
+---
+
 *Document created: January 2026*
 *Last updated: January 2026*
