@@ -40,7 +40,10 @@ import { Route as AuthedPropertyHubAddRouteImport } from './routes/_authed/prope
 import { Route as AuthedPropertyHubPropertyIdRouteImport } from './routes/_authed/property-hub.$propertyId'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as AuthedPropertyHubPropertyIdIndexRouteImport } from './routes/_authed/property-hub.$propertyId/index'
+import { Route as AuthedLearningHubPathsIndexRouteImport } from './routes/_authed/learning-hub/paths/index'
 import { Route as AuthedLearningHubGlossaryIndexRouteImport } from './routes/_authed/learning-hub/glossary/index'
+import { Route as AuthedLearningHubCalculatorsIndexRouteImport } from './routes/_authed/learning-hub/calculators/index'
+import { Route as AuthedLearningHubArticlesIndexRouteImport } from './routes/_authed/learning-hub/articles/index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
@@ -52,7 +55,9 @@ import { Route as AuthedPropertyHubPropertyIdFinancialsRouteImport } from './rou
 import { Route as AuthedPropertyHubPropertyIdDocumentsRouteImport } from './routes/_authed/property-hub.$propertyId/documents'
 import { Route as AuthedPropertyHubPropertyIdCommunicationsRouteImport } from './routes/_authed/property-hub.$propertyId/communications'
 import { Route as AuthedPropertyHubPropertyIdAnalyticsRouteImport } from './routes/_authed/property-hub.$propertyId/analytics'
+import { Route as AuthedLearningHubPathsSlugRouteImport } from './routes/_authed/learning-hub/paths/$slug'
 import { Route as AuthedLearningHubGlossarySlugRouteImport } from './routes/_authed/learning-hub/glossary/$slug'
+import { Route as AuthedLearningHubArticlesSlugRouteImport } from './routes/_authed/learning-hub/articles/$slug'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -209,10 +214,28 @@ const AuthedPropertyHubPropertyIdIndexRoute =
     path: '/',
     getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
   } as any)
+const AuthedLearningHubPathsIndexRoute =
+  AuthedLearningHubPathsIndexRouteImport.update({
+    id: '/paths/',
+    path: '/paths/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
 const AuthedLearningHubGlossaryIndexRoute =
   AuthedLearningHubGlossaryIndexRouteImport.update({
     id: '/glossary/',
     path: '/glossary/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubCalculatorsIndexRoute =
+  AuthedLearningHubCalculatorsIndexRouteImport.update({
+    id: '/calculators/',
+    path: '/calculators/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubArticlesIndexRoute =
+  AuthedLearningHubArticlesIndexRouteImport.update({
+    id: '/articles/',
+    path: '/articles/',
     getParentRoute: () => AuthedLearningHubRoute,
   } as any)
 const DemoStartSsrSpaModeRoute = DemoStartSsrSpaModeRouteImport.update({
@@ -278,10 +301,22 @@ const AuthedPropertyHubPropertyIdAnalyticsRoute =
     path: '/analytics',
     getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
   } as any)
+const AuthedLearningHubPathsSlugRoute =
+  AuthedLearningHubPathsSlugRouteImport.update({
+    id: '/paths/$slug',
+    path: '/paths/$slug',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
 const AuthedLearningHubGlossarySlugRoute =
   AuthedLearningHubGlossarySlugRouteImport.update({
     id: '/glossary/$slug',
     path: '/glossary/$slug',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubArticlesSlugRoute =
+  AuthedLearningHubArticlesSlugRouteImport.update({
+    id: '/articles/$slug',
+    path: '/articles/$slug',
     getParentRoute: () => AuthedLearningHubRoute,
   } as any)
 
@@ -313,7 +348,9 @@ export interface FileRoutesByFullPath {
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/learning-hub/': typeof AuthedLearningHubIndexRoute
+  '/learning-hub/articles/$slug': typeof AuthedLearningHubArticlesSlugRoute
   '/learning-hub/glossary/$slug': typeof AuthedLearningHubGlossarySlugRoute
+  '/learning-hub/paths/$slug': typeof AuthedLearningHubPathsSlugRoute
   '/property-hub/$propertyId/analytics': typeof AuthedPropertyHubPropertyIdAnalyticsRoute
   '/property-hub/$propertyId/communications': typeof AuthedPropertyHubPropertyIdCommunicationsRoute
   '/property-hub/$propertyId/documents': typeof AuthedPropertyHubPropertyIdDocumentsRoute
@@ -325,7 +362,10 @@ export interface FileRoutesByFullPath {
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/learning-hub/articles': typeof AuthedLearningHubArticlesIndexRoute
+  '/learning-hub/calculators': typeof AuthedLearningHubCalculatorsIndexRoute
   '/learning-hub/glossary': typeof AuthedLearningHubGlossaryIndexRoute
+  '/learning-hub/paths': typeof AuthedLearningHubPathsIndexRoute
   '/property-hub/$propertyId/': typeof AuthedPropertyHubPropertyIdIndexRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
 }
@@ -355,7 +395,9 @@ export interface FileRoutesByTo {
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/learning-hub': typeof AuthedLearningHubIndexRoute
+  '/learning-hub/articles/$slug': typeof AuthedLearningHubArticlesSlugRoute
   '/learning-hub/glossary/$slug': typeof AuthedLearningHubGlossarySlugRoute
+  '/learning-hub/paths/$slug': typeof AuthedLearningHubPathsSlugRoute
   '/property-hub/$propertyId/analytics': typeof AuthedPropertyHubPropertyIdAnalyticsRoute
   '/property-hub/$propertyId/communications': typeof AuthedPropertyHubPropertyIdCommunicationsRoute
   '/property-hub/$propertyId/documents': typeof AuthedPropertyHubPropertyIdDocumentsRoute
@@ -367,7 +409,10 @@ export interface FileRoutesByTo {
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/learning-hub/articles': typeof AuthedLearningHubArticlesIndexRoute
+  '/learning-hub/calculators': typeof AuthedLearningHubCalculatorsIndexRoute
   '/learning-hub/glossary': typeof AuthedLearningHubGlossaryIndexRoute
+  '/learning-hub/paths': typeof AuthedLearningHubPathsIndexRoute
   '/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdIndexRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
 }
@@ -402,7 +447,9 @@ export interface FileRoutesById {
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/_authed/learning-hub/': typeof AuthedLearningHubIndexRoute
+  '/_authed/learning-hub/articles/$slug': typeof AuthedLearningHubArticlesSlugRoute
   '/_authed/learning-hub/glossary/$slug': typeof AuthedLearningHubGlossarySlugRoute
+  '/_authed/learning-hub/paths/$slug': typeof AuthedLearningHubPathsSlugRoute
   '/_authed/property-hub/$propertyId/analytics': typeof AuthedPropertyHubPropertyIdAnalyticsRoute
   '/_authed/property-hub/$propertyId/communications': typeof AuthedPropertyHubPropertyIdCommunicationsRoute
   '/_authed/property-hub/$propertyId/documents': typeof AuthedPropertyHubPropertyIdDocumentsRoute
@@ -414,7 +461,10 @@ export interface FileRoutesById {
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/_authed/learning-hub/articles/': typeof AuthedLearningHubArticlesIndexRoute
+  '/_authed/learning-hub/calculators/': typeof AuthedLearningHubCalculatorsIndexRoute
   '/_authed/learning-hub/glossary/': typeof AuthedLearningHubGlossaryIndexRoute
+  '/_authed/learning-hub/paths/': typeof AuthedLearningHubPathsIndexRoute
   '/_authed/property-hub/$propertyId/': typeof AuthedPropertyHubPropertyIdIndexRoute
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
 }
@@ -448,7 +498,9 @@ export interface FileRouteTypes {
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
     | '/learning-hub/'
+    | '/learning-hub/articles/$slug'
     | '/learning-hub/glossary/$slug'
+    | '/learning-hub/paths/$slug'
     | '/property-hub/$propertyId/analytics'
     | '/property-hub/$propertyId/communications'
     | '/property-hub/$propertyId/documents'
@@ -460,7 +512,10 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/learning-hub/articles'
+    | '/learning-hub/calculators'
     | '/learning-hub/glossary'
+    | '/learning-hub/paths'
     | '/property-hub/$propertyId/'
     | '/demo/start/ssr'
   fileRoutesByTo: FileRoutesByTo
@@ -490,7 +545,9 @@ export interface FileRouteTypes {
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
     | '/learning-hub'
+    | '/learning-hub/articles/$slug'
     | '/learning-hub/glossary/$slug'
+    | '/learning-hub/paths/$slug'
     | '/property-hub/$propertyId/analytics'
     | '/property-hub/$propertyId/communications'
     | '/property-hub/$propertyId/documents'
@@ -502,7 +559,10 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/learning-hub/articles'
+    | '/learning-hub/calculators'
     | '/learning-hub/glossary'
+    | '/learning-hub/paths'
     | '/property-hub/$propertyId'
     | '/demo/start/ssr'
   id:
@@ -536,7 +596,9 @@ export interface FileRouteTypes {
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
     | '/_authed/learning-hub/'
+    | '/_authed/learning-hub/articles/$slug'
     | '/_authed/learning-hub/glossary/$slug'
+    | '/_authed/learning-hub/paths/$slug'
     | '/_authed/property-hub/$propertyId/analytics'
     | '/_authed/property-hub/$propertyId/communications'
     | '/_authed/property-hub/$propertyId/documents'
@@ -548,7 +610,10 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/_authed/learning-hub/articles/'
+    | '/_authed/learning-hub/calculators/'
     | '/_authed/learning-hub/glossary/'
+    | '/_authed/learning-hub/paths/'
     | '/_authed/property-hub/$propertyId/'
     | '/demo/start/ssr/'
   fileRoutesById: FileRoutesById
@@ -796,11 +861,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPropertyHubPropertyIdIndexRouteImport
       parentRoute: typeof AuthedPropertyHubPropertyIdRoute
     }
+    '/_authed/learning-hub/paths/': {
+      id: '/_authed/learning-hub/paths/'
+      path: '/paths'
+      fullPath: '/learning-hub/paths'
+      preLoaderRoute: typeof AuthedLearningHubPathsIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
     '/_authed/learning-hub/glossary/': {
       id: '/_authed/learning-hub/glossary/'
       path: '/glossary'
       fullPath: '/learning-hub/glossary'
       preLoaderRoute: typeof AuthedLearningHubGlossaryIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/calculators/': {
+      id: '/_authed/learning-hub/calculators/'
+      path: '/calculators'
+      fullPath: '/learning-hub/calculators'
+      preLoaderRoute: typeof AuthedLearningHubCalculatorsIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/articles/': {
+      id: '/_authed/learning-hub/articles/'
+      path: '/articles'
+      fullPath: '/learning-hub/articles'
+      preLoaderRoute: typeof AuthedLearningHubArticlesIndexRouteImport
       parentRoute: typeof AuthedLearningHubRoute
     }
     '/demo/start/ssr/spa-mode': {
@@ -880,6 +966,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPropertyHubPropertyIdAnalyticsRouteImport
       parentRoute: typeof AuthedPropertyHubPropertyIdRoute
     }
+    '/_authed/learning-hub/paths/$slug': {
+      id: '/_authed/learning-hub/paths/$slug'
+      path: '/paths/$slug'
+      fullPath: '/learning-hub/paths/$slug'
+      preLoaderRoute: typeof AuthedLearningHubPathsSlugRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
     '/_authed/learning-hub/glossary/$slug': {
       id: '/_authed/learning-hub/glossary/$slug'
       path: '/glossary/$slug'
@@ -887,19 +980,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedLearningHubGlossarySlugRouteImport
       parentRoute: typeof AuthedLearningHubRoute
     }
+    '/_authed/learning-hub/articles/$slug': {
+      id: '/_authed/learning-hub/articles/$slug'
+      path: '/articles/$slug'
+      fullPath: '/learning-hub/articles/$slug'
+      preLoaderRoute: typeof AuthedLearningHubArticlesSlugRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
   }
 }
 
 interface AuthedLearningHubRouteChildren {
   AuthedLearningHubIndexRoute: typeof AuthedLearningHubIndexRoute
+  AuthedLearningHubArticlesSlugRoute: typeof AuthedLearningHubArticlesSlugRoute
   AuthedLearningHubGlossarySlugRoute: typeof AuthedLearningHubGlossarySlugRoute
+  AuthedLearningHubPathsSlugRoute: typeof AuthedLearningHubPathsSlugRoute
+  AuthedLearningHubArticlesIndexRoute: typeof AuthedLearningHubArticlesIndexRoute
+  AuthedLearningHubCalculatorsIndexRoute: typeof AuthedLearningHubCalculatorsIndexRoute
   AuthedLearningHubGlossaryIndexRoute: typeof AuthedLearningHubGlossaryIndexRoute
+  AuthedLearningHubPathsIndexRoute: typeof AuthedLearningHubPathsIndexRoute
 }
 
 const AuthedLearningHubRouteChildren: AuthedLearningHubRouteChildren = {
   AuthedLearningHubIndexRoute: AuthedLearningHubIndexRoute,
+  AuthedLearningHubArticlesSlugRoute: AuthedLearningHubArticlesSlugRoute,
   AuthedLearningHubGlossarySlugRoute: AuthedLearningHubGlossarySlugRoute,
+  AuthedLearningHubPathsSlugRoute: AuthedLearningHubPathsSlugRoute,
+  AuthedLearningHubArticlesIndexRoute: AuthedLearningHubArticlesIndexRoute,
+  AuthedLearningHubCalculatorsIndexRoute:
+    AuthedLearningHubCalculatorsIndexRoute,
   AuthedLearningHubGlossaryIndexRoute: AuthedLearningHubGlossaryIndexRoute,
+  AuthedLearningHubPathsIndexRoute: AuthedLearningHubPathsIndexRoute,
 }
 
 const AuthedLearningHubRouteWithChildren =

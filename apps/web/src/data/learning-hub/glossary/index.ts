@@ -5,7 +5,6 @@
  * and provides utilities for accessing content.
  */
 
-import type { GlossaryTerm, GlossaryCategory } from "@axori/shared";
 
 // Import glossary files
 import financingData from "./financing.json";
@@ -18,11 +17,12 @@ import acquisitionData from "./acquisition.json";
 import legalData from "./legal.json";
 import marketAnalysisData from "./market-analysis.json";
 import propertyTypesData from "./property-types.json";
+import type { GlossaryCategory, GlossaryTerm } from "@axori/shared";
 
 /**
  * All glossary terms from all categories
  */
-export const allGlossaryTerms: GlossaryTerm[] = [
+export const allGlossaryTerms: Array<GlossaryTerm> = [
   ...financingData.terms,
   ...operationsData.terms,
   ...valuationData.terms,
@@ -33,22 +33,22 @@ export const allGlossaryTerms: GlossaryTerm[] = [
   ...legalData.terms,
   ...marketAnalysisData.terms,
   ...propertyTypesData.terms,
-] as GlossaryTerm[];
+] as Array<GlossaryTerm>;
 
 /**
  * Get terms organized by category
  */
-export const termsByCategory: Record<GlossaryCategory, GlossaryTerm[]> = {
-  financing: financingData.terms as GlossaryTerm[],
-  operations: operationsData.terms as GlossaryTerm[],
-  valuation: valuationData.terms as GlossaryTerm[],
-  taxation: taxationData.terms as GlossaryTerm[],
-  "investment-metrics": investmentMetricsData.terms as GlossaryTerm[],
-  strategies: strategiesData.terms as GlossaryTerm[],
-  acquisition: acquisitionData.terms as GlossaryTerm[],
-  legal: legalData.terms as GlossaryTerm[],
-  "market-analysis": marketAnalysisData.terms as GlossaryTerm[],
-  "property-types": propertyTypesData.terms as GlossaryTerm[],
+export const termsByCategory: Record<GlossaryCategory, Array<GlossaryTerm>> = {
+  financing: financingData.terms as Array<GlossaryTerm>,
+  operations: operationsData.terms as Array<GlossaryTerm>,
+  valuation: valuationData.terms as Array<GlossaryTerm>,
+  taxation: taxationData.terms as Array<GlossaryTerm>,
+  "investment-metrics": investmentMetricsData.terms as Array<GlossaryTerm>,
+  strategies: strategiesData.terms as Array<GlossaryTerm>,
+  acquisition: acquisitionData.terms as Array<GlossaryTerm>,
+  legal: legalData.terms as Array<GlossaryTerm>,
+  "market-analysis": marketAnalysisData.terms as Array<GlossaryTerm>,
+  "property-types": propertyTypesData.terms as Array<GlossaryTerm>,
 };
 
 /**
@@ -61,8 +61,8 @@ export function getTermBySlug(slug: string): GlossaryTerm | undefined {
 /**
  * Get terms by category
  */
-export function getTermsByCategory(category: GlossaryCategory): GlossaryTerm[] {
-  return termsByCategory[category] || [];
+export function getTermsByCategory(category: GlossaryCategory): Array<GlossaryTerm> {
+  return termsByCategory[category];
 }
 
 /**
@@ -70,14 +70,14 @@ export function getTermsByCategory(category: GlossaryCategory): GlossaryTerm[] {
  */
 export function getTermsByLevel(
   level: "beginner" | "intermediate" | "advanced"
-): GlossaryTerm[] {
+): Array<GlossaryTerm> {
   return allGlossaryTerms.filter((term) => term.investorLevel === level);
 }
 
 /**
  * Get related terms for a given term
  */
-export function getRelatedTerms(term: GlossaryTerm): GlossaryTerm[] {
+export function getRelatedTerms(term: GlossaryTerm): Array<GlossaryTerm> {
   return term.relatedTerms
     .map((slug) => getTermBySlug(slug))
     .filter((t): t is GlossaryTerm => t !== undefined);
@@ -86,23 +86,25 @@ export function getRelatedTerms(term: GlossaryTerm): GlossaryTerm[] {
 /**
  * Get terms organized by first letter for A-Z navigation
  */
-export function getTermsByLetter(): Record<string, GlossaryTerm[]> {
-  const result: Record<string, GlossaryTerm[]> = {};
+export function getTermsByLetter(): Record<string, Array<GlossaryTerm>> {
+  const result: Partial<Record<string, Array<GlossaryTerm>>> = {};
 
   allGlossaryTerms.forEach((term) => {
     const letter = term.term.charAt(0).toUpperCase();
-    if (!result[letter]) {
-      result[letter] = [];
+    const existing = result[letter];
+    if (existing) {
+      existing.push(term);
+    } else {
+      result[letter] = [term];
     }
-    result[letter].push(term);
   });
 
   // Sort terms within each letter
   Object.keys(result).forEach((letter) => {
-    result[letter].sort((a, b) => a.term.localeCompare(b.term));
+    result[letter]?.sort((a, b) => a.term.localeCompare(b.term));
   });
 
-  return result;
+  return result as Record<string, Array<GlossaryTerm>>;
 }
 
 /**

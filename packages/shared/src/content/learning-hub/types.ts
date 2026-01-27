@@ -345,7 +345,7 @@ export interface LearningModule {
 export interface LearningLesson {
   _id: string;
   title: string;
-  type: "article" | "video" | "quiz" | "exercise" | "checklist" | "calculator";
+  type: "article" | "video" | "quiz" | "exercise" | "checklist" | "calculator" | "glossary";
   contentRef: string;
   order: number;
   estimatedMinutes: number;

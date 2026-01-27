@@ -19,8 +19,6 @@ import type {
   Example,
   Formula,
   FormulaVariable,
-  GlossaryCategory,
-  InvestorLevel,
 } from "@axori/shared";
 import { cn } from "@/utils/helpers";
 import { useTheme } from "@/utils/providers/theme-provider";

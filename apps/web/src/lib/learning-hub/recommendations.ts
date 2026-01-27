@@ -7,9 +7,9 @@
  * - Learning activity (viewed terms, gaps)
  */
 
+import { getViewedTerms } from "./progress";
 import type { GlossaryCategory } from "@axori/shared";
 import { allGlossaryTerms } from "@/data/learning-hub/glossary";
-import { getViewedTerms } from "./progress";
 
 // ============================================
 // Types
@@ -26,12 +26,12 @@ export interface UserLearningContext {
   totalProperties: number;
   totalEquity: number;
   hasLoans: boolean;
-  propertyTypes: string[];
-  loanTypes: string[];
+  propertyTypes: Array<string>;
+  loanTypes: Array<string>;
 
   // From activity
-  viewedTermSlugs: string[];
-  bookmarkedSlugs: string[];
+  viewedTermSlugs: Array<string>;
+  bookmarkedSlugs: Array<string>;
 }
 
 export interface Recommendation {
@@ -49,7 +49,7 @@ export interface Recommendation {
 // ============================================
 
 // Terms recommended by persona
-const PERSONA_TERMS: Record<string, string[]> = {
+const PERSONA_TERMS: Partial<Record<string, Array<string>>> = {
   "freedom-seeker": ["cash-flow", "passive-income", "noi", "cap-rate", "dscr"],
   "wealth-builder": ["equity", "appreciation", "leverage", "refinance", "brrrr"],
   "tax-optimizer": ["depreciation", "1031-exchange", "cost-segregation", "passive-losses", "bonus-depreciation"],
@@ -57,7 +57,7 @@ const PERSONA_TERMS: Record<string, string[]> = {
 };
 
 // Terms recommended by phase
-const PHASE_TERMS: Record<string, string[]> = {
+const PHASE_TERMS: Partial<Record<string, Array<string>>> = {
   researching: ["cap-rate", "cash-on-cash-return", "noi", "cash-flow", "dscr", "ltv"],
   "first-property": ["closing-costs", "due-diligence", "earnest-money", "inspection", "conventional-loan", "fha-loan"],
   scaling: ["portfolio-loan", "dscr-loan", "refinance", "brrrr", "1031-exchange", "syndication"],
@@ -65,7 +65,7 @@ const PHASE_TERMS: Record<string, string[]> = {
 };
 
 // Terms recommended by strategy
-const STRATEGY_TERMS: Record<string, string[]> = {
+const STRATEGY_TERMS: Partial<Record<string, Array<string>>> = {
   "buy-and-hold": ["cash-flow", "appreciation", "cap-rate", "noi", "vacancy-rate"],
   brrrr: ["brrrr", "arv", "hard-money-loan", "refinance", "equity", "forced-appreciation"],
   "house-hacking": ["house-hacking", "fha-loan", "owner-occupied", "rental-income", "pmi"],
@@ -74,7 +74,7 @@ const STRATEGY_TERMS: Record<string, string[]> = {
 };
 
 // Essential terms everyone should know (by category)
-const ESSENTIAL_TERMS: Record<GlossaryCategory, string[]> = {
+const ESSENTIAL_TERMS: Record<GlossaryCategory, Array<string>> = {
   financing: ["ltv", "dscr", "interest-rate", "amortization"],
   valuation: ["cap-rate", "arv", "comps"],
   operations: ["noi", "vacancy-rate", "gross-rent"],
@@ -97,8 +97,8 @@ const ESSENTIAL_TERMS: Record<GlossaryCategory, string[]> = {
 export function generateRecommendations(
   context: UserLearningContext,
   limit = 10
-): Recommendation[] {
-  const recommendations: Recommendation[] = [];
+): Array<Recommendation> {
+  const recommendations: Array<Recommendation> = [];
   const viewedSet = new Set(context.viewedTermSlugs);
 
   // Helper to add term recommendation if not already viewed
@@ -125,8 +125,8 @@ export function generateRecommendations(
   };
 
   // 1. Persona-based recommendations (priority 9)
-  if (context.persona && PERSONA_TERMS[context.persona]) {
-    const personaTerms = PERSONA_TERMS[context.persona];
+  const personaTerms = context.persona ? PERSONA_TERMS[context.persona] : undefined;
+  if (personaTerms) {
     const personaReasons: Record<string, string> = {
       "freedom-seeker": "Essential for achieving financial freedom",
       "wealth-builder": "Key to building long-term wealth",
@@ -143,8 +143,8 @@ export function generateRecommendations(
   }
 
   // 2. Phase-based recommendations (priority 8)
-  if (context.phase && PHASE_TERMS[context.phase]) {
-    const phaseTerms = PHASE_TERMS[context.phase];
+  const phaseTerms = context.phase ? PHASE_TERMS[context.phase] : undefined;
+  if (phaseTerms) {
     const phaseReasons: Record<string, string> = {
       researching: "Fundamental concept for new investors",
       "first-property": "Important for your first acquisition",
@@ -161,11 +161,11 @@ export function generateRecommendations(
   }
 
   // 3. Strategy-based recommendations (priority 7)
-  if (context.strategy && STRATEGY_TERMS[context.strategy]) {
-    const strategyTerms = STRATEGY_TERMS[context.strategy];
+  const strategyTerms = context.strategy ? STRATEGY_TERMS[context.strategy] : undefined;
+  if (strategyTerms) {
     addTermRecommendation(
       strategyTerms[0],
-      `Core concept for ${context.strategy.replace(/-/g, " ")} strategy`,
+      `Core concept for ${context.strategy!.replace(/-/g, " ")} strategy`,
       7
     );
     strategyTerms.slice(1).forEach((slug) => {
@@ -241,9 +241,9 @@ export function generateRecommendations(
  */
 export function getQuickRecommendations(
   journey: "builder" | "optimizer" | "explorer",
-  viewedSlugs: string[] = [],
+  viewedSlugs: Array<string> = [],
   limit = 5
-): Recommendation[] {
+): Array<Recommendation> {
   const journeyMappings: Record<string, Partial<UserLearningContext>> = {
     builder: {
       persona: "wealth-builder",
@@ -279,9 +279,9 @@ export function getQuickRecommendations(
 /**
  * Get "continue learning" recommendations based on recently viewed
  */
-export function getContinueLearning(limit = 5): Recommendation[] {
+export function getContinueLearning(limit = 5): Array<Recommendation> {
   const viewed = getViewedTerms();
-  const recommendations: Recommendation[] = [];
+  const recommendations: Array<Recommendation> = [];
 
   // Get related terms from recently viewed
   viewed.slice(0, 3).forEach((viewedTerm) => {
@@ -316,9 +316,9 @@ export function getContinueLearning(limit = 5): Recommendation[] {
  */
 export function getCategoryRecommendations(
   category: GlossaryCategory,
-  viewedSlugs: string[] = [],
+  viewedSlugs: Array<string> = [],
   limit = 5
-): Recommendation[] {
+): Array<Recommendation> {
   const viewedSet = new Set(viewedSlugs);
 
   const categoryTerms = allGlossaryTerms

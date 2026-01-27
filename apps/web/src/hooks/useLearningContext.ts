@@ -9,16 +9,16 @@
  * Used by the recommendation engine to personalize content.
  */
 
-import { useMemo, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
+import type { UserLearningContext } from "@/lib/learning-hub/recommendations";
 import { apiFetch } from "@/lib/api/client";
 import {
-  getViewedTerms,
   getBookmarks,
   getLearningStats,
+  getViewedTerms,
 } from "@/lib/learning-hub/progress";
-import type { UserLearningContext } from "@/lib/learning-hub/recommendations";
 
 // Types for API responses
 interface OnboardingData {
@@ -26,14 +26,14 @@ interface OnboardingData {
   persona?: string;
   strategy?: string;
   freedomNumber?: number;
-  markets?: string[];
+  markets?: Array<string>;
 }
 
 interface PortfolioSummary {
   totalProperties: number;
   totalEquity: number;
-  propertyTypes: string[];
-  loanTypes: string[];
+  propertyTypes: Array<string>;
+  loanTypes: Array<string>;
   hasLoans: boolean;
 }
 

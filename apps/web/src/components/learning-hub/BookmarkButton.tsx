@@ -5,14 +5,15 @@
  * Uses localStorage via progress.ts utilities.
  */
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Bookmark, BookmarkCheck } from "lucide-react";
+import type {Bookmark as BookmarkType} from "@/lib/learning-hub/progress";
 import { cn } from "@/utils/helpers";
 import { useTheme } from "@/utils/providers/theme-provider";
 import {
+  
   isBookmarked,
-  toggleBookmark,
-  type Bookmark as BookmarkType,
+  toggleBookmark
 } from "@/lib/learning-hub/progress";
 
 interface BookmarkButtonProps {

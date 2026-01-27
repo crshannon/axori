@@ -6,23 +6,30 @@ import {
   Bookmark,
   ChevronRight,
   Clock,
+  GraduationCap,
   History,
   Zap,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import {
   CATEGORY_ICONS,
-  CATEGORY_LABELS
-  
+  CATEGORY_LABELS,
+  LEVEL_LABELS,
 } from "@axori/shared";
 import { useLearningHubContext } from "../learning-hub";
-import type {GlossaryCategory} from "@axori/shared";
+import type { GlossaryCategory } from "@axori/shared";
 import { cn } from "@/utils/helpers";
 import { useTheme } from "@/utils/providers/theme-provider";
 import { allGlossaryTerms, getTermBySlug } from "@/data/learning-hub/glossary";
 import {
+  allLearningPaths,
+  getPathLessonCount,
+  getPathTotalMinutes,
+} from "@/data/learning-hub/paths";
+import {
   getBookmarksByType,
   getLearningStats,
+  getPathsInProgress,
   getRecentlyViewed,
 } from "@/lib/learning-hub/progress";
 import { getQuickRecommendations } from "@/lib/learning-hub/recommendations";
@@ -110,12 +117,14 @@ function LearningHubHome() {
   const [recentlyViewed, setRecentlyViewed] = useState<ReturnType<typeof getRecentlyViewed>>([]);
   const [bookmarks, setBookmarks] = useState<ReturnType<typeof getBookmarksByType>>([]);
   const [stats, setStats] = useState<ReturnType<typeof getLearningStats> | null>(null);
+  const [pathsInProgress, setPathsInProgress] = useState<ReturnType<typeof getPathsInProgress>>([]);
 
   // Load personalization data
   useEffect(() => {
     setRecentlyViewed(getRecentlyViewed(5));
     setBookmarks(getBookmarksByType("term"));
     setStats(getLearningStats());
+    setPathsInProgress(getPathsInProgress());
   }, []);
 
   // Get icon component by name
@@ -364,6 +373,175 @@ function LearningHubHome() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Learning Paths Section */}
+      <div className="mb-10">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <GraduationCap
+              className={isDark ? "text-[#E8FF4D]" : "text-violet-600"}
+              size={20}
+            />
+            <h2
+              className={cn(
+                "text-sm font-black uppercase tracking-widest",
+                isDark ? "text-white" : "text-slate-900"
+              )}
+            >
+              Learning Paths
+            </h2>
+          </div>
+          <Link
+            to="/learning-hub/paths"
+            className={cn(
+              "text-sm font-bold flex items-center gap-1 transition-all",
+              isDark
+                ? "text-[#E8FF4D] hover:text-[#E8FF4D]/80"
+                : "text-violet-600 hover:text-violet-700"
+            )}
+          >
+            View All Paths
+            <ArrowRight size={16} />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {allLearningPaths
+            .filter((p) => p.status === "published")
+            .slice(0, 3)
+            .map((path) => {
+              const PathIcon = getIcon(path.icon);
+              const lessonCount = getPathLessonCount(path);
+              const totalMinutes = getPathTotalMinutes(path);
+              const progressData = pathsInProgress.find(
+                (p) => p.pathSlug === path.slug
+              );
+              const completedCount = progressData?.completedLessons.length || 0;
+              const progressPercent =
+                lessonCount > 0 ? (completedCount / lessonCount) * 100 : 0;
+
+              return (
+                <Link
+                  key={path.slug}
+                  to="/learning-hub/paths/$slug"
+                  params={{ slug: path.slug }}
+                  className={cn(
+                    "group p-5 rounded-xl border transition-all",
+                    isDark
+                      ? "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
+                      : "bg-white border-slate-200 hover:shadow-lg hover:border-violet-200"
+                  )}
+                >
+                  <div className="flex items-start gap-4">
+                    <div
+                      className={cn(
+                        "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0",
+                        path.investorLevel === "beginner" &&
+                          (isDark
+                            ? "bg-emerald-500/20 text-emerald-400"
+                            : "bg-emerald-100 text-emerald-600"),
+                        path.investorLevel === "intermediate" &&
+                          (isDark
+                            ? "bg-amber-500/20 text-amber-400"
+                            : "bg-amber-100 text-amber-600"),
+                        path.investorLevel === "advanced" &&
+                          (isDark
+                            ? "bg-violet-500/20 text-violet-400"
+                            : "bg-violet-100 text-violet-600")
+                      )}
+                    >
+                      <PathIcon size={22} />
+                    </div>
+
+                    <div className="flex-grow min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className={cn(
+                            "text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded",
+                            path.investorLevel === "beginner" &&
+                              (isDark
+                                ? "bg-emerald-500/20 text-emerald-400"
+                                : "bg-emerald-100 text-emerald-700"),
+                            path.investorLevel === "intermediate" &&
+                              (isDark
+                                ? "bg-amber-500/20 text-amber-400"
+                                : "bg-amber-100 text-amber-700"),
+                            path.investorLevel === "advanced" &&
+                              (isDark
+                                ? "bg-violet-500/20 text-violet-400"
+                                : "bg-violet-100 text-violet-700")
+                          )}
+                        >
+                          {LEVEL_LABELS[path.investorLevel]}
+                        </span>
+                      </div>
+                      <h3
+                        className={cn(
+                          "font-bold text-base mb-1",
+                          isDark ? "text-white" : "text-slate-900"
+                        )}
+                      >
+                        {path.title}
+                      </h3>
+                      <p
+                        className={cn(
+                          "text-xs line-clamp-2 mb-3",
+                          isDark ? "text-white/50" : "text-slate-500"
+                        )}
+                      >
+                        {path.description}
+                      </p>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 text-xs",
+                          isDark ? "text-white/40" : "text-slate-400"
+                        )}
+                      >
+                        <span>{path.modules.length} modules</span>
+                        <span>-</span>
+                        <span>
+                          {totalMinutes < 60
+                            ? `${totalMinutes}m`
+                            : `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mt-4">
+                    <div
+                      className={cn(
+                        "h-1.5 rounded-full",
+                        isDark ? "bg-white/10" : "bg-slate-100"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all",
+                          path.investorLevel === "beginner" && "bg-emerald-500",
+                          path.investorLevel === "intermediate" && "bg-amber-500",
+                          path.investorLevel === "advanced" && "bg-violet-500"
+                        )}
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                    <div
+                      className={cn(
+                        "text-xs mt-1",
+                        isDark ? "text-white/40" : "text-slate-400"
+                      )}
+                    >
+                      {completedCount > 0
+                        ? `${completedCount}/${lessonCount} lessons`
+                        : "Not started"}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
         </div>
       </div>
 
@@ -623,7 +801,7 @@ function LearningHubHome() {
           { value: stats?.totalTermsViewed || 0, label: "Terms Viewed" },
           { value: stats?.totalBookmarks || 0, label: "Bookmarked" },
           { value: allGlossaryTerms.length, label: "Total Terms" },
-          { value: PROTOCOLS.length, label: "Protocols" },
+          { value: allLearningPaths.length, label: "Learning Paths" },
         ].map((stat) => (
           <div key={stat.label} className="text-center">
             <div

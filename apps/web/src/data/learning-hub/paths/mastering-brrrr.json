@@ -1,0 +1,204 @@
+{
+  "_id": "path-mastering-brrrr",
+  "_type": "learningPath",
+  "slug": "mastering-brrrr",
+  "title": "Mastering the BRRRR Strategy",
+  "description": "Deep dive into the BRRRR strategy - Buy, Rehab, Rent, Refinance, Repeat. Learn how to recycle your capital and scale your portfolio faster than traditional investing.",
+  "icon": "RefreshCw",
+  "investorLevel": "intermediate",
+  "estimatedHours": 5,
+  "targetPersonas": ["equity-optimizer", "wealth-builder"],
+  "targetStrategies": ["brrrr", "fix-and-flip"],
+  "modules": [
+    {
+      "_id": "module-brrrr-1",
+      "title": "BRRRR Fundamentals",
+      "description": "Understand the core mechanics of the BRRRR strategy and why it's so powerful for scaling your portfolio.",
+      "order": 1,
+      "lessons": [
+        {
+          "_id": "lesson-brrrr-1-1",
+          "title": "What is BRRRR?",
+          "type": "glossary",
+          "contentRef": "brrrr",
+          "order": 1,
+          "estimatedMinutes": 7,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-brrrr-1-2",
+          "title": "The Power of Forced Appreciation",
+          "type": "glossary",
+          "contentRef": "forced-appreciation",
+          "order": 2,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-brrrr-1-3",
+          "title": "Understanding ARV",
+          "type": "glossary",
+          "contentRef": "arv",
+          "order": 3,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-brrrr-1-4",
+          "title": "The 70% Rule for Acquisitions",
+          "type": "glossary",
+          "contentRef": "70-percent-rule",
+          "order": 4,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "_id": "module-brrrr-2",
+      "title": "Finding & Analyzing Deals",
+      "description": "Learn how to find distressed properties and analyze them for BRRRR potential.",
+      "order": 2,
+      "lessons": [
+        {
+          "_id": "lesson-brrrr-2-1",
+          "title": "Identifying Distressed Properties",
+          "type": "article",
+          "contentRef": "finding-distressed-properties",
+          "order": 1,
+          "estimatedMinutes": 10,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-brrrr-2-2",
+          "title": "Running Comparable Sales",
+          "type": "glossary",
+          "contentRef": "comparable-sales",
+          "order": 2,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-brrrr-2-3",
+          "title": "Estimating Repair Costs",
+          "type": "glossary",
+          "contentRef": "rehab-costs",
+          "order": 3,
+          "estimatedMinutes": 8,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-brrrr-2-4",
+          "title": "BRRRR Deal Analyzer",
+          "type": "calculator",
+          "contentRef": "brrrr-calculator",
+          "order": 4,
+          "estimatedMinutes": 12,
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "_id": "module-brrrr-3",
+      "title": "The Rehab Phase",
+      "description": "Master the renovation process - from budgeting to contractor management.",
+      "order": 3,
+      "lessons": [
+        {
+          "_id": "lesson-brrrr-3-1",
+          "title": "Creating a Rehab Budget",
+          "type": "article",
+          "contentRef": "creating-rehab-budget",
+          "order": 1,
+          "estimatedMinutes": 12,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-brrrr-3-2",
+          "title": "Understanding CapEx",
+          "type": "glossary",
+          "contentRef": "capex",
+          "order": 2,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-brrrr-3-3",
+          "title": "Value-Add Improvements",
+          "type": "glossary",
+          "contentRef": "value-add",
+          "order": 3,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-brrrr-3-4",
+          "title": "Managing Contractors",
+          "type": "article",
+          "contentRef": "managing-contractors",
+          "order": 4,
+          "estimatedMinutes": 10,
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "_id": "module-brrrr-4",
+      "title": "Refinancing & Repeating",
+      "description": "Extract your capital and prepare to do it all again.",
+      "order": 4,
+      "lessons": [
+        {
+          "_id": "lesson-brrrr-4-1",
+          "title": "Cash-Out Refinance Explained",
+          "type": "glossary",
+          "contentRef": "cash-out-refinance",
+          "order": 1,
+          "estimatedMinutes": 7,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-brrrr-4-2",
+          "title": "Seasoning Periods",
+          "type": "glossary",
+          "contentRef": "seasoning-period",
+          "order": 2,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-brrrr-4-3",
+          "title": "When to Refinance",
+          "type": "article",
+          "contentRef": "when-to-refinance",
+          "order": 3,
+          "estimatedMinutes": 8,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-brrrr-4-4",
+          "title": "Refinance Analyzer",
+          "type": "calculator",
+          "contentRef": "refinance-calculator",
+          "order": 4,
+          "estimatedMinutes": 10,
+          "isRequired": false
+        },
+        {
+          "_id": "lesson-brrrr-4-5",
+          "title": "BRRRR Mastery Quiz",
+          "type": "quiz",
+          "contentRef": "quiz-brrrr-final",
+          "order": 5,
+          "estimatedMinutes": 10,
+          "isRequired": true
+        }
+      ]
+    }
+  ],
+  "prerequisites": ["real-estate-investing-101"],
+  "certificateEnabled": true,
+  "status": "published",
+  "createdAt": "2025-01-15T00:00:00Z",
+  "updatedAt": "2025-01-15T00:00:00Z"
+}

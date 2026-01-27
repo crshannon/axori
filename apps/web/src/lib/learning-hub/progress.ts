@@ -11,6 +11,7 @@ const VIEWED_TERMS_KEY = `${STORAGE_PREFIX}:viewed-terms`;
 const BOOKMARKS_KEY = `${STORAGE_PREFIX}:bookmarks`;
 const SEARCH_HISTORY_KEY = `${STORAGE_PREFIX}:search-history`;
 const RECENTLY_VIEWED_KEY = `${STORAGE_PREFIX}:recently-viewed`;
+const PATH_PROGRESS_KEY = `${STORAGE_PREFIX}:path-progress`;
 
 // Types
 export interface ViewedTerm {
@@ -37,6 +38,14 @@ export interface SearchHistoryItem {
   query: string;
   searchedAt: string;
   resultCount: number;
+}
+
+export interface PathProgress {
+  pathSlug: string;
+  completedLessons: Array<string>; // Lesson IDs
+  startedAt: string;
+  lastActivityAt: string;
+  completedAt?: string;
 }
 
 // Helper to safely access localStorage
@@ -67,7 +76,7 @@ function setStorageItem<T>(key: string, value: T): void {
  * Mark a term as viewed, incrementing view count
  */
 export function markTermViewed(slug: string): void {
-  const viewed = getStorageItem<Record<string, ViewedTerm>>(VIEWED_TERMS_KEY, {});
+  const viewed = getStorageItem<Partial<Record<string, ViewedTerm>>>(VIEWED_TERMS_KEY, {});
   const existing = viewed[slug];
 
   viewed[slug] = {
@@ -85,7 +94,7 @@ export function markTermViewed(slug: string): void {
 /**
  * Get all viewed terms
  */
-export function getViewedTerms(): ViewedTerm[] {
+export function getViewedTerms(): Array<ViewedTerm> {
   const viewed = getStorageItem<Record<string, ViewedTerm>>(VIEWED_TERMS_KEY, {});
   return Object.values(viewed).sort(
     (a, b) => new Date(b.viewedAt).getTime() - new Date(a.viewedAt).getTime()
@@ -120,7 +129,7 @@ export function addBookmark(
   slug: string,
   title: string
 ): void {
-  const bookmarks = getStorageItem<Bookmark[]>(BOOKMARKS_KEY, []);
+  const bookmarks = getStorageItem<Array<Bookmark>>(BOOKMARKS_KEY, []);
 
   // Check if already bookmarked
   const exists = bookmarks.some(
@@ -150,7 +159,7 @@ export function removeBookmark(
   contentType: Bookmark["contentType"],
   slug: string
 ): void {
-  const bookmarks = getStorageItem<Bookmark[]>(BOOKMARKS_KEY, []);
+  const bookmarks = getStorageItem<Array<Bookmark>>(BOOKMARKS_KEY, []);
   const filtered = bookmarks.filter(
     (b) => !(b.contentType === contentType && b.slug === slug)
   );
@@ -181,7 +190,7 @@ export function isBookmarked(
   contentType: Bookmark["contentType"],
   slug: string
 ): boolean {
-  const bookmarks = getStorageItem<Bookmark[]>(BOOKMARKS_KEY, []);
+  const bookmarks = getStorageItem<Array<Bookmark>>(BOOKMARKS_KEY, []);
   return bookmarks.some(
     (b) => b.contentType === contentType && b.slug === slug
   );
@@ -190,8 +199,8 @@ export function isBookmarked(
 /**
  * Get all bookmarks
  */
-export function getBookmarks(): Bookmark[] {
-  return getStorageItem<Bookmark[]>(BOOKMARKS_KEY, []);
+export function getBookmarks(): Array<Bookmark> {
+  return getStorageItem<Array<Bookmark>>(BOOKMARKS_KEY, []);
 }
 
 /**
@@ -199,7 +208,7 @@ export function getBookmarks(): Bookmark[] {
  */
 export function getBookmarksByType(
   contentType: Bookmark["contentType"]
-): Bookmark[] {
+): Array<Bookmark> {
   return getBookmarks().filter((b) => b.contentType === contentType);
 }
 
@@ -215,7 +224,7 @@ export function addToRecentlyViewed(
   slug: string,
   title: string
 ): void {
-  const recent = getStorageItem<RecentlyViewedItem[]>(RECENTLY_VIEWED_KEY, []);
+  const recent = getStorageItem<Array<RecentlyViewedItem>>(RECENTLY_VIEWED_KEY, []);
 
   // Remove if already exists (to move to front)
   const filtered = recent.filter(
@@ -240,8 +249,8 @@ export function addToRecentlyViewed(
 /**
  * Get recently viewed items
  */
-export function getRecentlyViewed(limit = 10): RecentlyViewedItem[] {
-  const recent = getStorageItem<RecentlyViewedItem[]>(RECENTLY_VIEWED_KEY, []);
+export function getRecentlyViewed(limit = 10): Array<RecentlyViewedItem> {
+  const recent = getStorageItem<Array<RecentlyViewedItem>>(RECENTLY_VIEWED_KEY, []);
   return recent.slice(0, limit);
 }
 
@@ -254,7 +263,7 @@ export function updateRecentlyViewedTitle(
   slug: string,
   title: string
 ): void {
-  const recent = getStorageItem<RecentlyViewedItem[]>(RECENTLY_VIEWED_KEY, []);
+  const recent = getStorageItem<Array<RecentlyViewedItem>>(RECENTLY_VIEWED_KEY, []);
   const updated = recent.map((r) =>
     r.contentType === contentType && r.slug === slug ? { ...r, title } : r
   );
@@ -271,7 +280,7 @@ export function updateRecentlyViewedTitle(
 export function trackSearchQuery(query: string, resultCount: number): void {
   if (!query.trim()) return;
 
-  const history = getStorageItem<SearchHistoryItem[]>(SEARCH_HISTORY_KEY, []);
+  const history = getStorageItem<Array<SearchHistoryItem>>(SEARCH_HISTORY_KEY, []);
 
   // Remove duplicate queries
   const filtered = history.filter(
@@ -295,8 +304,8 @@ export function trackSearchQuery(query: string, resultCount: number): void {
 /**
  * Get search history
  */
-export function getSearchHistory(limit = 10): SearchHistoryItem[] {
-  const history = getStorageItem<SearchHistoryItem[]>(SEARCH_HISTORY_KEY, []);
+export function getSearchHistory(limit = 10): Array<SearchHistoryItem> {
+  const history = getStorageItem<Array<SearchHistoryItem>>(SEARCH_HISTORY_KEY, []);
   return history.slice(0, limit);
 }
 
@@ -305,6 +314,128 @@ export function getSearchHistory(limit = 10): SearchHistoryItem[] {
  */
 export function clearSearchHistory(): void {
   setStorageItem(SEARCH_HISTORY_KEY, []);
+}
+
+// ============================================
+// Path Progress Tracking
+// ============================================
+
+/**
+ * Get all path progress data
+ */
+function getAllPathProgress(): Partial<Record<string, PathProgress>> {
+  return getStorageItem<Partial<Record<string, PathProgress>>>(PATH_PROGRESS_KEY, {});
+}
+
+/**
+ * Get progress for a specific path
+ */
+export function getPathProgress(pathSlug: string): PathProgress | null {
+  const all = getAllPathProgress();
+  return all[pathSlug] ?? null;
+}
+
+/**
+ * Get completed lessons for a path
+ */
+export function getCompletedLessons(pathSlug: string): Array<string> {
+  const progress = getPathProgress(pathSlug);
+  return progress?.completedLessons || [];
+}
+
+/**
+ * Mark a lesson as completed
+ */
+export function markLessonCompleted(
+  pathSlug: string,
+  lessonId: string,
+  totalLessons: number
+): void {
+  const all = getAllPathProgress();
+  const existing = all[pathSlug];
+  const now = new Date().toISOString();
+
+  if (existing) {
+    // Add lesson if not already completed
+    if (!existing.completedLessons.includes(lessonId)) {
+      existing.completedLessons.push(lessonId);
+    }
+    existing.lastActivityAt = now;
+
+    // Check if path is now complete
+    if (existing.completedLessons.length >= totalLessons && !existing.completedAt) {
+      existing.completedAt = now;
+    }
+
+    all[pathSlug] = existing;
+  } else {
+    // Create new progress entry
+    all[pathSlug] = {
+      pathSlug,
+      completedLessons: [lessonId],
+      startedAt: now,
+      lastActivityAt: now,
+      completedAt: totalLessons <= 1 ? now : undefined,
+    };
+  }
+
+  setStorageItem(PATH_PROGRESS_KEY, all);
+}
+
+/**
+ * Mark a lesson as incomplete
+ */
+export function markLessonIncomplete(pathSlug: string, lessonId: string): void {
+  const all = getAllPathProgress();
+  const existing = all[pathSlug];
+
+  if (existing) {
+    existing.completedLessons = existing.completedLessons.filter(
+      (id) => id !== lessonId
+    );
+    existing.lastActivityAt = new Date().toISOString();
+    // Remove completedAt if we're uncompleting a lesson
+    existing.completedAt = undefined;
+    all[pathSlug] = existing;
+    setStorageItem(PATH_PROGRESS_KEY, all);
+  }
+}
+
+/**
+ * Check if a lesson is completed
+ */
+export function isLessonCompleted(pathSlug: string, lessonId: string): boolean {
+  const completedLessons = getCompletedLessons(pathSlug);
+  return completedLessons.includes(lessonId);
+}
+
+/**
+ * Get all paths with progress
+ */
+export function getPathsWithProgress(): Array<PathProgress> {
+  const all = getAllPathProgress();
+  return Object.values(all)
+    .filter((p): p is PathProgress => p !== undefined)
+    .sort(
+      (a, b) =>
+        new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime()
+    );
+}
+
+/**
+ * Get paths in progress (started but not completed)
+ */
+export function getPathsInProgress(): Array<PathProgress> {
+  return getPathsWithProgress().filter(
+    (p) => p.completedLessons.length > 0 && !p.completedAt
+  );
+}
+
+/**
+ * Get completed paths
+ */
+export function getCompletedPaths(): Array<PathProgress> {
+  return getPathsWithProgress().filter((p) => p.completedAt);
 }
 
 // ============================================
@@ -318,11 +449,15 @@ export function getLearningStats() {
   const viewedTerms = getViewedTerms();
   const bookmarks = getBookmarks();
   const recentlyViewed = getRecentlyViewed();
+  const pathsInProgress = getPathsInProgress();
+  const completedPaths = getCompletedPaths();
 
   return {
     totalTermsViewed: viewedTerms.length,
     totalBookmarks: bookmarks.length,
     recentActivityCount: recentlyViewed.length,
+    pathsInProgress: pathsInProgress.length,
+    pathsCompleted: completedPaths.length,
     mostViewedTerms: viewedTerms
       .sort((a, b) => b.viewCount - a.viewCount)
       .slice(0, 5),
@@ -339,4 +474,5 @@ export function clearAllLearningData(): void {
   localStorage.removeItem(BOOKMARKS_KEY);
   localStorage.removeItem(SEARCH_HISTORY_KEY);
   localStorage.removeItem(RECENTLY_VIEWED_KEY);
+  localStorage.removeItem(PATH_PROGRESS_KEY);
 }
