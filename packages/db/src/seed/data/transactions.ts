@@ -33,7 +33,7 @@ export function generateSampleTransactions(
       propertyId,
       type: "income",
       transactionDate: new Date(monthYear, monthMonth, 1).toISOString().split("T")[0],
-      amount: "1850", // Matches property seed data
+      amount: "1950", // Slightly above market rent for cash flow positive property
       category: "rent",
       payer: "Tenant - John Doe",
       description: "Monthly rent payment",
@@ -64,19 +64,25 @@ export function generateSampleTransactions(
       createdBy: userId,
     });
 
-    // Primary loan payment (P&I) - 1st of each month
+    // Primary loan payment (P&I + Escrow) - 1st of each month
+    // This property has escrow enabled (hasEscrow: true), so tax and insurance
+    // are collected as part of this payment. We record the full payment amount.
+    // The escrow breakdown:
+    // - P&I: $1,295/month
+    // - Escrow (Tax + Insurance): $450/month ($325 tax + $125 insurance)
+    // - Total: $1,745/month
     transactions.push({
       propertyId,
       type: "expense",
       transactionDate: new Date(monthYear, monthMonth, 1).toISOString().split("T")[0],
-      amount: "1295", // Matches loan seed data
+      amount: "1745", // P&I ($1,295) + Escrow ($450) = Total mortgage payment
       category: "other",
       subcategory: "loan_payment",
       vendor: "First National Bank",
-      description: "Primary mortgage payment (P&I)",
+      description: "Primary mortgage payment (P&I + Escrow)",
       isRecurring: true,
       recurrenceFrequency: "monthly",
-      isTaxDeductible: false,
+      isTaxDeductible: false, // P&I not deductible; tax portion handled separately for tax reporting
       source: "plaid",
       reviewStatus: "approved",
       isExcluded: false,
@@ -84,11 +90,12 @@ export function generateSampleTransactions(
     });
 
     // HELOC payment (interest-only) - 1st of each month
+    // Note: HELOC has been paid down, so interest is lower now
     transactions.push({
       propertyId,
       type: "expense",
       transactionDate: new Date(monthYear, monthMonth, 1).toISOString().split("T")[0],
-      amount: "71", // Interest-only: $10k @ 8.5% / 12 = ~$71/month
+      amount: "42", // Interest-only: $6k balance @ 8.5% / 12 = ~$42/month (paid down from $10k)
       category: "other",
       subcategory: "loan_payment",
       vendor: "Community Credit Union",
@@ -102,49 +109,10 @@ export function generateSampleTransactions(
       createdBy: userId,
     });
 
-    // Property tax (paid quarterly from escrow) - every 3 months
-    if (monthOffset % 3 === 0) {
-      transactions.push({
-        propertyId,
-        type: "expense",
-        transactionDate: new Date(monthYear, monthMonth, 15).toISOString().split("T")[0],
-        amount: "1050", // Quarterly: $4,200 annual / 4 = $1,050
-        category: "property_tax",
-        vendor: "County Tax Assessor",
-        description: "Property tax payment (quarterly)",
-        isRecurring: true,
-        recurrenceFrequency: "quarterly",
-        isTaxDeductible: true,
-        taxCategory: "Property Tax",
-        source: "plaid",
-        reviewStatus: "approved",
-        isExcluded: false,
-        createdBy: userId,
-      });
-    }
-
-    // Insurance (paid annually, but show as monthly escrow deduction)
-    // In reality this comes from escrow, but we'll show it as a monthly transaction
-    if (monthOffset === 0) {
-      // Annual insurance payment in current month
-      transactions.push({
-        propertyId,
-        type: "expense",
-        transactionDate: new Date(monthYear, monthMonth, 10).toISOString().split("T")[0],
-        amount: "1800", // Annual insurance: $1,800
-        category: "insurance",
-        vendor: "State Farm Insurance",
-        description: "Annual property insurance",
-        isRecurring: true,
-        recurrenceFrequency: "yearly",
-        isTaxDeductible: true,
-        taxCategory: "Insurance",
-        source: "plaid",
-        reviewStatus: "approved",
-        isExcluded: false,
-        createdBy: userId,
-      });
-    }
+    // NOTE: Property tax and insurance are NOT recorded as separate transactions
+    // because this property has escrow enabled (hasEscrow: true on the loan).
+    // Tax and insurance are paid through the mortgage escrow account as part
+    // of the monthly mortgage payment above.
 
     // Management fee (if not self-managed) - monthly
     // Note: Property is self-managed, so no management fee transactions
@@ -194,19 +162,18 @@ export function generateSampleTransactions(
     }
 
     // Occasional repairs (varies by month for realism)
-    // Add repairs in 3-4 months out of 12 for variety
-    const repairMonths = [2, 5, 8, 11] // Months with repairs
+    // Add repairs in 2-3 months out of 12 for a well-maintained property
+    const repairMonths = [3, 7, 11] // Months with repairs
     if (repairMonths.includes(monthOffset % 12)) {
-      const repairAmounts = ["150", "250", "180", "320"] // Varying repair costs
-      const repairVendors = ["ABC Plumbing", "Handyman Pro", "Quick Fix Services", "Reliable Repairs"]
+      const repairAmounts = ["95", "150", "120"] // Lower repair costs for well-maintained property
+      const repairVendors = ["ABC Plumbing", "Handyman Pro", "Quick Fix Services"]
       const repairDescriptions = [
         "Minor plumbing repair",
-        "Electrical outlet replacement",
         "Door handle repair",
-        "HVAC filter and service"
+        "HVAC filter replacement"
       ]
-      const repairIndex = Math.floor(monthOffset / 3) % repairAmounts.length
-      
+      const repairIndex = repairMonths.indexOf(monthOffset % 12)
+
       transactions.push({
         propertyId,
         type: "expense",
@@ -245,15 +212,16 @@ export function generateSampleTransactions(
     }
   }
 
-  // Add one-time Capex expense 3 months ago (for historical context)
+  // Add one-time Capex expense 6 months ago (for historical context)
+  // These are excluded from monthly calculations but show in history
   transactions.push({
     propertyId,
     type: "expense",
-    transactionDate: new Date(today.getFullYear(), today.getMonth() - 3, 15).toISOString().split("T")[0],
-    amount: "1200",
+    transactionDate: new Date(today.getFullYear(), today.getMonth() - 6, 15).toISOString().split("T")[0],
+    amount: "450",
     category: "capex",
     vendor: "Home Depot",
-    description: "New water heater installation",
+    description: "Water heater maintenance and anode replacement",
     isTaxDeductible: true,
     taxCategory: "Capital Improvements",
     source: "document_ai",
@@ -262,18 +230,116 @@ export function generateSampleTransactions(
     createdBy: userId,
   });
 
-  // Add another Capex expense 8 months ago
+  return transactions;
+}
+
+/**
+ * Generate sparse transactions for a newly acquired property
+ * Only generates 1 month of data to test how charts handle limited data
+ *
+ * @param propertyId - The property ID to associate transactions with
+ * @param userId - The user ID who created these transactions
+ * @returns Array of transaction data ready for insertion (only 1 month)
+ */
+export function generateSparseTransactions(
+  propertyId: string,
+  userId: string
+): Array<Omit<PropertyTransactionInsert, "id" | "createdAt" | "updatedAt">> {
+  const today = new Date();
+  const transactions: Array<Omit<PropertyTransactionInsert, "id" | "createdAt" | "updatedAt">> = [];
+
+  // Only generate transactions for the current month (simulating a newly acquired property)
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+
+  // Monthly rent income (1st of current month)
+  transactions.push({
+    propertyId,
+    type: "income",
+    transactionDate: new Date(currentYear, currentMonth, 1).toISOString().split("T")[0],
+    amount: "1450", // Matches sparse property seed data
+    category: "rent",
+    payer: "Tenant - Maria Garcia",
+    description: "Monthly rent payment",
+    isRecurring: true,
+    recurrenceFrequency: "monthly",
+    source: "plaid",
+    reviewStatus: "approved",
+    isExcluded: false,
+    isTaxDeductible: true,
+    createdBy: userId,
+  });
+
+  // Parking income (1st of current month)
+  transactions.push({
+    propertyId,
+    type: "income",
+    transactionDate: new Date(currentYear, currentMonth, 1).toISOString().split("T")[0],
+    amount: "75",
+    category: "parking",
+    payer: "Tenant - Maria Garcia",
+    description: "Reserved parking space",
+    isRecurring: true,
+    recurrenceFrequency: "monthly",
+    source: "manual",
+    reviewStatus: "approved",
+    isExcluded: false,
+    isTaxDeductible: true,
+    createdBy: userId,
+  });
+
+  // Mortgage payment (1st of current month)
   transactions.push({
     propertyId,
     type: "expense",
-    transactionDate: new Date(today.getFullYear(), today.getMonth() - 8, 22).toISOString().split("T")[0],
-    amount: "850",
-    category: "capex",
-    vendor: "Local HVAC Company",
-    description: "AC unit service and capacitor replacement",
+    transactionDate: new Date(currentYear, currentMonth, 1).toISOString().split("T")[0],
+    amount: "1010", // Matches sparse property loan data
+    category: "other",
+    subcategory: "loan_payment",
+    vendor: "Wells Fargo",
+    description: "Mortgage payment (P&I)",
+    isRecurring: true,
+    recurrenceFrequency: "monthly",
+    isTaxDeductible: false,
+    source: "plaid",
+    reviewStatus: "approved",
+    isExcluded: false,
+    createdBy: userId,
+  });
+
+  // HOA fee (1st of current month)
+  transactions.push({
+    propertyId,
+    type: "expense",
+    transactionDate: new Date(currentYear, currentMonth, 1).toISOString().split("T")[0],
+    amount: "250", // Matches sparse property HOA
+    category: "hoa",
+    vendor: "Riverfront Condo Association",
+    description: "Monthly HOA fee",
+    isRecurring: true,
+    recurrenceFrequency: "monthly",
     isTaxDeductible: true,
-    taxCategory: "Capital Improvements",
-    source: "document_ai",
+    taxCategory: "HOA Fees",
+    source: "plaid",
+    reviewStatus: "approved",
+    isExcluded: false,
+    createdBy: userId,
+  });
+
+  // Property management fee (5th of current month)
+  transactions.push({
+    propertyId,
+    type: "expense",
+    transactionDate: new Date(currentYear, currentMonth, 5).toISOString().split("T")[0],
+    amount: "145", // 10% of $1,450 rent
+    category: "management",
+    vendor: "Urban Property Management",
+    description: "Monthly management fee",
+    isRecurring: true,
+    recurrenceFrequency: "monthly",
+    isTaxDeductible: true,
+    taxCategory: "Management Fees",
+    source: "plaid",
     reviewStatus: "approved",
     isExcluded: false,
     createdBy: userId,

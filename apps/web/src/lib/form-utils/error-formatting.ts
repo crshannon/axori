@@ -29,7 +29,7 @@ export function formatZodErrors(error: ZodLikeError): FieldErrors {
   const fieldErrors: FieldErrors = {}
 
   for (const issue of error.issues) {
-    const path = issue.path.join(".")
+    const path = issue.path.join('.')
     // Only keep the first error per field for cleaner UX
     if (!fieldErrors[path]) {
       fieldErrors[path] = issue.message
@@ -47,7 +47,7 @@ export function formatZodErrors(error: ZodLikeError): FieldErrors {
  * @returns First error message or generic fallback
  */
 export function getFirstError(error: ZodLikeError): string {
-  return error.issues[0]?.message || "Validation error"
+  return error.issues[0]?.message || 'Validation error'
 }
 
 /**
@@ -69,7 +69,7 @@ export function hasFieldError(errors: FieldErrors, field: string): boolean {
  */
 export function clearFieldError(
   errors: FieldErrors,
-  field: string
+  field: string,
 ): FieldErrors {
   const newErrors = { ...errors }
   delete newErrors[field]

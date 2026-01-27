@@ -35,14 +35,14 @@ export function OnboardingPage() {
   const form = useOnboardingForm({
     firstName: onboardingData?.firstName || undefined,
     lastName: onboardingData?.lastName || undefined,
-      phase: onboardingData?.data?.phase,
-      persona: onboardingData?.data?.persona,
-      ownership: onboardingData?.data?.ownership || 'Personal',
-      llcName: onboardingData?.data?.llcName || undefined,
-      freedomNumber: onboardingData?.data?.freedomNumber || 5000,
-      strategy: onboardingData?.data?.strategy,
-      markets: onboardingData?.data?.markets || [],
-    })
+    phase: onboardingData?.data?.phase,
+    persona: onboardingData?.data?.persona,
+    ownership: onboardingData?.data?.ownership || 'Personal',
+    llcName: onboardingData?.data?.llcName || undefined,
+    freedomNumber: onboardingData?.data?.freedomNumber || 5000,
+    strategy: onboardingData?.data?.strategy,
+    markets: onboardingData?.data?.markets || [],
+  })
 
   // Redirect to dashboard if onboarding is already completed
   useEffect(() => {

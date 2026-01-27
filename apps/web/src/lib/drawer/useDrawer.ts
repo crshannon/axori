@@ -28,9 +28,13 @@
 import { useCallback, useMemo } from 'react'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { getDrawerEntry, isValidDrawerName, validateDrawerParams } from './registry'
-import type { DrawerName, DrawerParams } from './registry'
+import {
+  getDrawerEntry,
+  isValidDrawerName,
+  validateDrawerParams,
+} from './registry'
 import { hasRequiredPermission } from './permission-helpers'
+import type { DrawerName, DrawerParams } from './registry'
 import type { PortfolioRole } from './permission-helpers'
 import { toast } from '@/lib/toast'
 
@@ -52,7 +56,7 @@ export interface UseDrawerResult {
   openDrawer: <T extends DrawerName>(
     name: T,
     params: DrawerParams<T>,
-    options?: OpenDrawerOptions
+    options?: OpenDrawerOptions,
   ) => void
   /** Close the currently open drawer */
   closeDrawer: (options?: OpenDrawerOptions) => void
@@ -132,9 +136,10 @@ export function useDrawer(): UseDrawerResult {
       }
 
       // Try to get cached property data
-      const propertyData = queryClient.getQueryData<{ portfolioId?: string }>(
-        ['properties', propertyId]
-      )
+      const propertyData = queryClient.getQueryData<{ portfolioId?: string }>([
+        'properties',
+        propertyId,
+      ])
 
       if (!propertyData?.portfolioId) {
         // No cached data - let DrawerProvider handle it
@@ -144,7 +149,7 @@ export function useDrawer(): UseDrawerResult {
 
       // Try to get cached permission data
       const permissionData = queryClient.getQueryData<{ role?: PortfolioRole }>(
-        ['permissions', propertyData.portfolioId]
+        ['permissions', propertyData.portfolioId],
       )
 
       if (!permissionData?.role) {
@@ -155,7 +160,7 @@ export function useDrawer(): UseDrawerResult {
       // Check if user has required permission
       return hasRequiredPermission(permissionData.role, entry.permission)
     },
-    [queryClient]
+    [queryClient],
   )
 
   /**
@@ -166,7 +171,7 @@ export function useDrawer(): UseDrawerResult {
     <T extends DrawerName>(
       name: T,
       params: DrawerParams<T>,
-      options: OpenDrawerOptions = {}
+      options: OpenDrawerOptions = {},
     ): void => {
       const { replace = true, skipPermissionCheck = false } = options
 
@@ -179,16 +184,19 @@ export function useDrawer(): UseDrawerResult {
 
       // Check permissions from cache before updating URL
       if (!skipPermissionCheck) {
-        const propertyId = (validatedParams as { propertyId?: string }).propertyId
+        const propertyId = (validatedParams as { propertyId?: string })
+          .propertyId
         const hasPermission = checkPermissionFromCache(name, propertyId)
 
         if (!hasPermission) {
           const entry = getDrawerEntry(name)
           console.warn(
             `[useDrawer] Access denied to drawer "${name}". ` +
-              `Required: ${entry?.permission}`
+              `Required: ${entry?.permission}`,
           )
-          toast.warning(`You don't have permission to access ${entry?.displayName || name}`)
+          toast.warning(
+            `You don't have permission to access ${entry?.displayName || name}`,
+          )
           return
         }
       }
@@ -202,7 +210,7 @@ export function useDrawer(): UseDrawerResult {
         replace,
       })
     },
-    [navigate, checkPermissionFromCache]
+    [navigate, checkPermissionFromCache],
   )
 
   /**
@@ -224,7 +232,7 @@ export function useDrawer(): UseDrawerResult {
         replace,
       })
     },
-    [navigate]
+    [navigate],
   )
 
   /**
@@ -234,7 +242,7 @@ export function useDrawer(): UseDrawerResult {
     (name: DrawerName): boolean => {
       return currentDrawer === name
     },
-    [currentDrawer]
+    [currentDrawer],
   )
 
   return {

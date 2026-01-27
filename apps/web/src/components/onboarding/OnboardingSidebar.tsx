@@ -19,7 +19,7 @@ export function OnboardingSidebar({
     switch (step) {
       case 1:
         return formData.firstName
-          ? "Great! Now, where are you on your journey?"
+          ? 'Great! Now, where are you on your journey?'
           : "First, let's locate you on the map."
       case 2:
         return 'Your persona dictates your risk appetite.'
@@ -38,16 +38,16 @@ export function OnboardingSidebar({
 
   const getFunFact = () => {
     const facts = [
-      "The average real estate investor owns 3-5 properties before achieving financial independence.",
-      "Cap rates in secondary markets average 2-3% higher than primary markets.",
-      "The BRRRR method can recycle capital up to 10x faster than traditional buy-and-hold.",
-      "LLC structures can provide liability protection for up to $1M+ in assets.",
-      "Cash flow-focused investors typically achieve positive returns within 6-12 months.",
-      "The median rent-to-price ratio in investor-friendly markets is 0.8-1.2%.",
-      "Value-add properties can increase NOI by 20-40% within the first year.",
-      "Diversifying across 3+ markets reduces portfolio risk by 35%.",
-      "The top 10% of real estate investors use data-driven market selection.",
-      "House hacking can reduce housing costs by 50-100% while building equity.",
+      'The average real estate investor owns 3-5 properties before achieving financial independence.',
+      'Cap rates in secondary markets average 2-3% higher than primary markets.',
+      'The BRRRR method can recycle capital up to 10x faster than traditional buy-and-hold.',
+      'LLC structures can provide liability protection for up to $1M+ in assets.',
+      'Cash flow-focused investors typically achieve positive returns within 6-12 months.',
+      'The median rent-to-price ratio in investor-friendly markets is 0.8-1.2%.',
+      'Value-add properties can increase NOI by 20-40% within the first year.',
+      'Diversifying across 3+ markets reduces portfolio risk by 35%.',
+      'The top 10% of real estate investors use data-driven market selection.',
+      'House hacking can reduce housing costs by 50-100% while building equity.',
     ]
     // Use step as seed for consistent fact per step
     return facts[step % facts.length]
@@ -162,7 +162,9 @@ export function OnboardingSidebar({
                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">
                   Investor Persona
                 </p>
-                <p className="text-sm font-black uppercase">{formData.persona}</p>
+                <p className="text-sm font-black uppercase">
+                  {formData.persona}
+                </p>
               </div>
             )}
             {formData.ownership && step >= 4 && (
@@ -176,7 +178,9 @@ export function OnboardingSidebar({
                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">
                   Ownership Structure
                 </p>
-                <p className="text-sm font-black uppercase">{formData.ownership}</p>
+                <p className="text-sm font-black uppercase">
+                  {formData.ownership}
+                </p>
                 {formData.ownership === 'LLC' && formData.llcName && (
                   <p className="text-xs font-medium mt-2 opacity-70">
                     {formData.llcName}
@@ -184,22 +188,24 @@ export function OnboardingSidebar({
                 )}
               </div>
             )}
-            {formData.freedomNumber && formData.freedomNumber > 0 && step >= 5 && (
-              <div
-                className={`p-5 rounded-3xl border animate-in slide-in-from-left-4 ${
-                  isDark
-                    ? 'bg-[#E8FF4D] text-black border-transparent'
-                    : 'bg-violet-600 text-white border-transparent'
-                }`}
-              >
-                <p className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-2">
-                  Freedom Number
-                </p>
-                <p className="text-2xl font-black tabular-nums">
-                  ${formData.freedomNumber.toLocaleString()}/mo
-                </p>
-              </div>
-            )}
+            {formData.freedomNumber &&
+              formData.freedomNumber > 0 &&
+              step >= 5 && (
+                <div
+                  className={`p-5 rounded-3xl border animate-in slide-in-from-left-4 ${
+                    isDark
+                      ? 'bg-[#E8FF4D] text-black border-transparent'
+                      : 'bg-violet-600 text-white border-transparent'
+                  }`}
+                >
+                  <p className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-2">
+                    Freedom Number
+                  </p>
+                  <p className="text-2xl font-black tabular-nums">
+                    ${formData.freedomNumber.toLocaleString()}/mo
+                  </p>
+                </div>
+              )}
             {formData.strategy && step >= 6 && (
               <div
                 className={`p-5 rounded-3xl border animate-in slide-in-from-left-4 ${
@@ -211,7 +217,9 @@ export function OnboardingSidebar({
                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">
                   Strategy Focus
                 </p>
-                <p className="text-sm font-black uppercase">{formData.strategy}</p>
+                <p className="text-sm font-black uppercase">
+                  {formData.strategy}
+                </p>
               </div>
             )}
             {formData.markets && formData.markets.length > 0 && step >= 7 && (
@@ -226,7 +234,8 @@ export function OnboardingSidebar({
                   Target Markets
                 </p>
                 <p className="text-sm font-black tabular-nums">
-                  {formData.markets.length} market{formData.markets.length !== 1 ? 's' : ''} selected
+                  {formData.markets.length} market
+                  {formData.markets.length !== 1 ? 's' : ''} selected
                 </p>
               </div>
             )}
@@ -261,4 +270,3 @@ export function OnboardingSidebar({
     </aside>
   )
 }
-

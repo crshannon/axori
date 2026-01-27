@@ -87,9 +87,12 @@ test.describe('Onboarding - First and Last Name', () => {
 
     // Wait for the page to load - look for either the welcome text or input fields
     try {
-      await page.waitForSelector('input[placeholder="John"], input[placeholder="Doe"], text=Welcome', {
-        timeout: 15000
-      })
+      await page.waitForSelector(
+        'input[placeholder="John"], input[placeholder="Doe"], text=Welcome',
+        {
+          timeout: 15000,
+        },
+      )
     } catch {
       // If selectors don't appear, wait a bit more for React to hydrate
       await page.waitForTimeout(2000)
@@ -242,4 +245,3 @@ test.describe('Onboarding - First and Last Name', () => {
     expect(errors.length).toBe(0)
   })
 })
-

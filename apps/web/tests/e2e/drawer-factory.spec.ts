@@ -18,7 +18,8 @@
  * @see AXO-120 - Drawer Factory Integration Tests
  */
 
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
 
 // =============================================================================
 // TEST CONSTANTS
@@ -36,11 +37,14 @@ const MOCK_USER_ID = 'user_test_123'
  * Helper to set up authentication and API mocks for tests
  * This mocks Clerk authentication and all necessary API endpoints
  */
-async function setupTestMocks(page: Page, options: {
-  userRole?: 'viewer' | 'member' | 'admin' | 'owner'
-  propertyExists?: boolean
-  failPropertyFetch?: boolean
-} = {}) {
+async function setupTestMocks(
+  page: Page,
+  options: {
+    userRole?: 'viewer' | 'member' | 'admin' | 'owner'
+    propertyExists?: boolean
+    failPropertyFetch?: boolean
+  } = {},
+) {
   const {
     userRole = 'member',
     propertyExists = true,
@@ -199,7 +203,10 @@ async function setupTestMocks(page: Page, options: {
           currencyOverride: 'USD',
         }),
       })
-    } else if (route.request().method() === 'PUT' || route.request().method() === 'PATCH') {
+    } else if (
+      route.request().method() === 'PUT' ||
+      route.request().method() === 'PATCH'
+    ) {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -299,8 +306,8 @@ async function setupTestMocks(page: Page, options: {
  * Wait for drawer to be visible
  */
 async function waitForDrawerOpen(page: Page, timeout = 15000) {
-  await page.waitForSelector('[role="dialog"]', { 
-    state: 'visible', 
+  await page.waitForSelector('[role="dialog"]', {
+    state: 'visible',
     timeout,
   })
 }
@@ -309,8 +316,8 @@ async function waitForDrawerOpen(page: Page, timeout = 15000) {
  * Wait for drawer to be hidden
  */
 async function waitForDrawerClosed(page: Page, timeout = 10000) {
-  await page.waitForSelector('[role="dialog"]', { 
-    state: 'hidden', 
+  await page.waitForSelector('[role="dialog"]', {
+    state: 'hidden',
     timeout,
   })
 }
@@ -335,7 +342,7 @@ async function getSearchParams(page: Page): Promise<URLSearchParams> {
  * Navigate to a page and wait for it to load
  */
 async function navigateTo(page: Page, url: string) {
-  await page.goto(url, { 
+  await page.goto(url, {
     waitUntil: 'domcontentloaded',
     timeout: 30000,
   })
@@ -356,7 +363,7 @@ test.describe('Drawer Opening', () => {
     // Navigate to URL with drawer param
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     // Wait for drawer to appear
@@ -366,21 +373,23 @@ test.describe('Drawer Opening', () => {
     expect(await isDrawerOpen(page)).toBe(true)
 
     // Verify it's the correct drawer (Asset Configuration has this title)
-    await expect(page.locator('[role="dialog"]')).toContainText('Asset Configuration')
+    await expect(page.locator('[role="dialog"]')).toContainText(
+      'Asset Configuration',
+    )
   })
 
   test('Drawer receives correct props from URL params', async ({ page }) => {
     // Open drawer with specific property ID
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     await waitForDrawerOpen(page)
 
     // Verify the drawer content loads correctly (should have form fields)
     await expect(page.locator('[role="dialog"]')).toBeVisible()
-    
+
     // Check that the drawer has loaded property data (form fields should be present)
     const drawer = page.locator('[role="dialog"]')
     await expect(drawer).toBeVisible()
@@ -390,12 +399,12 @@ test.describe('Drawer Opening', () => {
     // Open drawer
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     // The drawer should appear after lazy loading
     await waitForDrawerOpen(page)
-    
+
     // Verify content is loaded (not just the loading fallback)
     const drawer = page.locator('[role="dialog"]')
     await expect(drawer).toContainText('Asset Configuration')
@@ -405,30 +414,40 @@ test.describe('Drawer Opening', () => {
     // Navigate to drawer URL
     await page.goto(
       `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
-      { waitUntil: 'commit' }
+      { waitUntil: 'commit' },
     )
 
     // Check that some loading indicator or drawer appears
-    const loadingOrContent = await page.waitForSelector('[role="dialog"], text=Loading', {
-      timeout: 15000,
-    })
+    const loadingOrContent = await page.waitForSelector(
+      '[role="dialog"], text=Loading',
+      {
+        timeout: 15000,
+      },
+    )
     expect(loadingOrContent).toBeTruthy()
 
     // Eventually, the actual content should load
     await waitForDrawerOpen(page)
   })
 
-  test('Multiple rapid open/close cycles do not cause race conditions', async ({ page }) => {
+  test('Multiple rapid open/close cycles do not cause race conditions', async ({
+    page,
+  }) => {
     // Navigate to settings first
     await navigateTo(page, `/property-hub/${TEST_PROPERTY_ID}/settings`)
 
     // Rapidly change URL params multiple times
-    const drawerSequence = ['asset-config', 'acquisition', 'presumptions', 'asset-config']
+    const drawerSequence = [
+      'asset-config',
+      'acquisition',
+      'presumptions',
+      'asset-config',
+    ]
 
     for (const drawerName of drawerSequence) {
       await page.goto(
         `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=${drawerName}&propertyId=${TEST_PROPERTY_ID}`,
-        { waitUntil: 'commit' }
+        { waitUntil: 'commit' },
       )
       // Small delay to simulate rapid interactions
       await page.waitForTimeout(100)
@@ -439,7 +458,7 @@ test.describe('Drawer Opening', () => {
 
     // Final state should show the last drawer
     await waitForDrawerOpen(page)
-    
+
     // Verify URL has the last drawer
     const params = await getSearchParams(page)
     expect(params.get('drawer')).toBe('asset-config')
@@ -459,13 +478,15 @@ test.describe('Drawer Closing', () => {
     // Open drawer via URL
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     await waitForDrawerOpen(page)
 
     // Click close button (X button in drawer header)
-    const closeButton = page.locator('[role="dialog"]').locator('[aria-label="Close drawer"]')
+    const closeButton = page
+      .locator('[role="dialog"]')
+      .locator('[aria-label="Close drawer"]')
     await closeButton.click()
 
     // Wait for drawer to close
@@ -480,7 +501,7 @@ test.describe('Drawer Closing', () => {
     // Open drawer via URL
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     await waitForDrawerOpen(page)
@@ -500,7 +521,7 @@ test.describe('Drawer Closing', () => {
     // Open drawer via URL
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     await waitForDrawerOpen(page)
@@ -508,7 +529,7 @@ test.describe('Drawer Closing', () => {
     // Click on the backdrop (the overlay outside the drawer panel)
     // The backdrop is the fixed overlay with bg-black/50
     const backdrop = page.locator('.fixed.inset-0.z-50').first()
-    
+
     // Click on the left edge of the backdrop (outside the drawer panel)
     await backdrop.click({ position: { x: 50, y: 300 }, force: true })
 
@@ -520,14 +541,16 @@ test.describe('Drawer Closing', () => {
     expect(params.get('drawer')).toBeNull()
   })
 
-  test('Browser back button closes drawer and restores previous URL', async ({ page }) => {
+  test('Browser back button closes drawer and restores previous URL', async ({
+    page,
+  }) => {
     // Start on settings page without drawer
     await navigateTo(page, `/property-hub/${TEST_PROPERTY_ID}/settings`)
 
     // Navigate to drawer URL (using navigate, not replace)
     await page.goto(
       `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
-      { waitUntil: 'domcontentloaded' }
+      { waitUntil: 'domcontentloaded' },
     )
 
     await waitForDrawerOpen(page)
@@ -551,13 +574,15 @@ test.describe('Drawer Closing', () => {
     // Open drawer via URL
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     await waitForDrawerOpen(page)
 
     // Click Cancel button (in the drawer footer)
-    const cancelButton = page.locator('[role="dialog"]').locator('button', { hasText: 'Cancel' })
+    const cancelButton = page
+      .locator('[role="dialog"]')
+      .locator('button', { hasText: 'Cancel' })
     await cancelButton.click()
 
     // Wait for drawer to close
@@ -577,11 +602,13 @@ test.describe('Navigation & Deep Linking', () => {
     await setupTestMocks(page)
   })
 
-  test('Direct URL with drawer params opens drawer on page load', async ({ page }) => {
+  test('Direct URL with drawer params opens drawer on page load', async ({
+    page,
+  }) => {
     // Navigate directly to URL with drawer params
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     // Drawer should open automatically
@@ -592,11 +619,13 @@ test.describe('Navigation & Deep Linking', () => {
     await expect(drawer).toContainText('Asset Configuration')
   })
 
-  test('Refreshing page with drawer open re-opens same drawer', async ({ page }) => {
+  test('Refreshing page with drawer open re-opens same drawer', async ({
+    page,
+  }) => {
     // Navigate to page with drawer open
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     await waitForDrawerOpen(page)
@@ -618,13 +647,15 @@ test.describe('Navigation & Deep Linking', () => {
     expect(params.get('propertyId')).toBe(TEST_PROPERTY_ID)
   })
 
-  test('Sharing URL with drawer params works for authorized users', async ({ page }) => {
+  test('Sharing URL with drawer params works for authorized users', async ({
+    page,
+  }) => {
     // Simulate sharing a URL - user navigates directly to deep link
     // This tests that drawer opens for a user with proper permissions
-    
+
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=acquisition&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=acquisition&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     // Drawer should open for authorized user
@@ -639,16 +670,15 @@ test.describe('Navigation & Deep Linking', () => {
     // Open drawer
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     await waitForDrawerOpen(page)
 
     // Navigate to a different route (financials page without drawer params)
-    await page.goto(
-      `/property-hub/${TEST_PROPERTY_ID}/financials`,
-      { waitUntil: 'domcontentloaded' }
-    )
+    await page.goto(`/property-hub/${TEST_PROPERTY_ID}/financials`, {
+      waitUntil: 'domcontentloaded',
+    })
 
     // Wait for navigation to complete
     await page.waitForTimeout(500)
@@ -665,18 +695,18 @@ test.describe('Navigation & Deep Linking', () => {
     // Open first drawer
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     await waitForDrawerOpen(page)
-    
+
     let params = await getSearchParams(page)
     expect(params.get('drawer')).toBe('asset-config')
 
     // Navigate to a different drawer
     await page.goto(
       `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=acquisition&propertyId=${TEST_PROPERTY_ID}`,
-      { waitUntil: 'domcontentloaded' }
+      { waitUntil: 'domcontentloaded' },
     )
 
     await page.waitForTimeout(500)
@@ -704,7 +734,7 @@ test.describe('Error Handling', () => {
     // Navigate to page with invalid drawer name
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=invalid-drawer-name&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=invalid-drawer-name&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     // App should not crash - settings page should still be visible
@@ -731,7 +761,7 @@ test.describe('Error Handling', () => {
 
       // App should not crash
       await expect(page.locator('body')).toBeVisible()
-      
+
       await page.waitForTimeout(300)
     }
   })
@@ -740,26 +770,28 @@ test.describe('Error Handling', () => {
     // Navigate with drawer but no propertyId
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config`,
     )
 
     // App should not crash
     await expect(page.locator('body')).toBeVisible()
-    
+
     await page.waitForTimeout(500)
-    
+
     // Page should still be functional
     await expect(page.locator('body')).toBeVisible()
   })
 
-  test('Network error during property fetch is handled gracefully', async ({ page }) => {
+  test('Network error during property fetch is handled gracefully', async ({
+    page,
+  }) => {
     // Setup API mocks with failed property fetch
     await setupTestMocks(page, { failPropertyFetch: true })
 
     // Navigate to drawer URL
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     // Wait for error handling
@@ -776,7 +808,7 @@ test.describe('Error Handling', () => {
     // Navigate to drawer URL
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     // Wait for error handling
@@ -793,7 +825,7 @@ test.describe('Error Handling', () => {
     // Navigate to drawer that requires member+ permission
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     // Wait for permission check
@@ -811,7 +843,7 @@ test.describe('Error Handling', () => {
     // Navigate to admin-only drawer (connect-bank-account requires admin)
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=connect-bank-account&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=connect-bank-account&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     // Wait for permission check
@@ -834,7 +866,7 @@ test.describe('URL State Management', () => {
   test('Drawer params are properly encoded in URL', async ({ page }) => {
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=add-loan&propertyId=${TEST_PROPERTY_ID}&loanId=${TEST_LOAN_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=add-loan&propertyId=${TEST_PROPERTY_ID}&loanId=${TEST_LOAN_ID}`,
     )
 
     const params = await getSearchParams(page)
@@ -846,7 +878,7 @@ test.describe('URL State Management', () => {
   test('Multiple drawer params coexist correctly', async ({ page }) => {
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/financials?drawer=add-loan&propertyId=${TEST_PROPERTY_ID}&loanId=${TEST_LOAN_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/financials?drawer=add-loan&propertyId=${TEST_PROPERTY_ID}&loanId=${TEST_LOAN_ID}`,
     )
 
     const params = await getSearchParams(page)
@@ -855,12 +887,14 @@ test.describe('URL State Management', () => {
     expect(params.get('loanId')).toBe(TEST_LOAN_ID)
   })
 
-  test('Special characters in params are handled correctly', async ({ page }) => {
+  test('Special characters in params are handled correctly', async ({
+    page,
+  }) => {
     const specialPropertyId = 'prop_test-123_special'
-    
+
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${encodeURIComponent(specialPropertyId)}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${encodeURIComponent(specialPropertyId)}`,
     )
 
     const params = await getSearchParams(page)
@@ -878,12 +912,17 @@ test.describe('Drawer Type-Specific Tests', () => {
   })
 
   test('Settings drawers work correctly', async ({ page }) => {
-    const settingsDrawers = ['asset-config', 'acquisition', 'presumptions', 'notifications']
+    const settingsDrawers = [
+      'asset-config',
+      'acquisition',
+      'presumptions',
+      'notifications',
+    ]
 
     for (const drawerName of settingsDrawers) {
       await navigateTo(
         page,
-        `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=${drawerName}&propertyId=${TEST_PROPERTY_ID}`
+        `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=${drawerName}&propertyId=${TEST_PROPERTY_ID}`,
       )
 
       // Drawer should open
@@ -900,12 +939,17 @@ test.describe('Drawer Type-Specific Tests', () => {
   })
 
   test('Financial drawers work correctly', async ({ page }) => {
-    const financialDrawers = ['add-loan', 'add-transaction', 'operating-expenses', 'rental-income']
+    const financialDrawers = [
+      'add-loan',
+      'add-transaction',
+      'operating-expenses',
+      'rental-income',
+    ]
 
     for (const drawerName of financialDrawers) {
       await navigateTo(
         page,
-        `/property-hub/${TEST_PROPERTY_ID}/financials?drawer=${drawerName}&propertyId=${TEST_PROPERTY_ID}`
+        `/property-hub/${TEST_PROPERTY_ID}/financials?drawer=${drawerName}&propertyId=${TEST_PROPERTY_ID}`,
       )
 
       // Drawer should open
@@ -924,7 +968,7 @@ test.describe('Drawer Type-Specific Tests', () => {
   test('Loan drawer with loanId opens in edit mode', async ({ page }) => {
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/financials?drawer=add-loan&propertyId=${TEST_PROPERTY_ID}&loanId=${TEST_LOAN_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/financials?drawer=add-loan&propertyId=${TEST_PROPERTY_ID}&loanId=${TEST_LOAN_ID}`,
     )
 
     await waitForDrawerOpen(page)
@@ -947,7 +991,7 @@ test.describe('Accessibility', () => {
   test('Drawer has proper ARIA attributes', async ({ page }) => {
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     await waitForDrawerOpen(page)
@@ -959,7 +1003,7 @@ test.describe('Accessibility', () => {
   test('Close button has proper aria-label', async ({ page }) => {
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     await waitForDrawerOpen(page)
@@ -971,14 +1015,14 @@ test.describe('Accessibility', () => {
   test('Focus is managed within drawer when open', async ({ page }) => {
     await navigateTo(
       page,
-      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`
+      `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${TEST_PROPERTY_ID}`,
     )
 
     await waitForDrawerOpen(page)
 
     // Tab through the drawer
     await page.keyboard.press('Tab')
-    
+
     // Focus should be within the drawer - verify drawer is still active
     const drawer = page.locator('[role="dialog"]')
     await expect(drawer).toBeVisible()

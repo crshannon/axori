@@ -420,6 +420,7 @@ export const loans = pgTable("loans", {
   // Payment
   monthlyPrincipalInterest: numeric("monthly_principal_interest", { precision: 10, scale: 2 }), // Calculated P&I
   monthlyEscrow: numeric("monthly_escrow", { precision: 10, scale: 2 }).default("0"), // Tax/insurance escrow
+  hasEscrow: boolean("has_escrow").default(false), // Whether tax/insurance are escrowed (included in monthlyEscrow)
   monthlyPmi: numeric("monthly_pmi", { precision: 10, scale: 2 }).default("0"), // Private mortgage insurance
   monthlyMip: numeric("monthly_mip", { precision: 10, scale: 2 }).default("0"), // FHA mortgage insurance
   monthlyHoaCollected: numeric("monthly_hoa_collected", { precision: 10, scale: 2 }).default("0"), // HOA collected by lender
@@ -1160,6 +1161,7 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
   improvements: many(propertyImprovements),
   costSegStudies: many(costSegregationStudies),
   depreciationRecords: many(annualDepreciationRecords),
+  bankAccounts: many(propertyBankAccounts),
 }));
 
 export const propertyCharacteristicsRelations = relations(propertyCharacteristics, ({ one }) => ({
@@ -1338,6 +1340,70 @@ export const invitationTokensRelations = relations(invitationTokens, ({ one }) =
     fields: [invitationTokens.usedBy],
     references: [users.id],
     relationName: "invitationTokenUser",
+  }),
+}));
+
+// =============================================================================
+// BANK ACCOUNTS
+// =============================================================================
+
+// Bank account type enum
+export const bankAccountTypeEnum = pgEnum("bank_account_type", [
+  "checking",
+  "savings",
+  "money_market",
+  "other",
+]);
+
+// Property Bank Accounts - Connected bank accounts for liquidity tracking
+export const propertyBankAccounts = pgTable("property_bank_accounts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  propertyId: uuid("property_id")
+    .notNull()
+    .references(() => properties.id, { onDelete: "cascade" }),
+
+  // Plaid connection (optional - can be manual entry)
+  plaidAccountId: text("plaid_account_id"),
+  plaidAccessToken: text("plaid_access_token"), // Should be encrypted in production
+  plaidItemId: text("plaid_item_id"),
+
+  // Account details
+  accountName: text("account_name").notNull(),
+  accountType: bankAccountTypeEnum("account_type"),
+  institutionName: text("institution_name"),
+  mask: text("mask"), // Last 4 digits for display
+
+  // Balance (synced from Plaid or manual entry)
+  currentBalance: numeric("current_balance", { precision: 12, scale: 2 }),
+  availableBalance: numeric("available_balance", { precision: 12, scale: 2 }),
+  lastSynced: timestamp("last_synced"),
+
+  // Allocation targets (user-set manual amounts)
+  maintenanceTarget: numeric("maintenance_target", { precision: 10, scale: 2 }).default("0"),
+  capexTarget: numeric("capex_target", { precision: 10, scale: 2 }).default("0"),
+  lifeSupportTarget: numeric("life_support_target", { precision: 10, scale: 2 }).default("0"),
+  lifeSupportMonths: integer("life_support_months"), // Alternative: auto-calculate from X months of expenses
+
+  // Metadata
+  isPrimary: boolean("is_primary").default(false),
+  isActive: boolean("is_active").default(true),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  propertyIdIdx: index("idx_property_bank_accounts_property_id").on(table.propertyId),
+  plaidAccountIdIdx: index("idx_property_bank_accounts_plaid_account_id").on(table.plaidAccountId),
+}));
+
+// Property Bank Account Relations
+export const propertyBankAccountsRelations = relations(propertyBankAccounts, ({ one }) => ({
+  property: one(properties, {
+    fields: [propertyBankAccounts.propertyId],
+    references: [properties.id],
+  }),
+  createdByUser: one(users, {
+    fields: [propertyBankAccounts.createdBy],
+    references: [users.id],
   }),
 }));
 

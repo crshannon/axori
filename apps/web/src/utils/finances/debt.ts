@@ -31,7 +31,8 @@ export function calculateMonthlyPrincipalInterest(
   if (annualInterestRate === 0) return principal / termMonths
 
   const monthlyRate = annualInterestRate / 100 / 12
-  const numerator = principal * monthlyRate * Math.pow(1 + monthlyRate, termMonths)
+  const numerator =
+    principal * monthlyRate * Math.pow(1 + monthlyRate, termMonths)
   const denominator = Math.pow(1 + monthlyRate, termMonths) - 1
 
   return numerator / denominator
@@ -68,16 +69,15 @@ export function calculateTotalDebtService(loans: Array<Loan>): number {
  * Gets interest rate from primary loan
  *
  * @param loans - Array of loan objects
- * @returns Interest rate as percentage (e.g., 4.5 for 4.5%)
+ * @returns Interest rate as decimal (e.g., 0.065 for 6.5%)
  */
 export function getPrimaryLoanInterestRate(loans: Array<Loan>): number {
   const activeLoans = loans.filter((l) => l.status === 'active')
   const primaryLoan = activeLoans.find((l) => l.isPrimary)
 
   if (primaryLoan?.interestRate) {
-    return parseFloat(primaryLoan.interestRate) * 100
+    return parseFloat(primaryLoan.interestRate)
   }
 
   return 0
 }
-

@@ -51,8 +51,9 @@ export const PageHeader = ({
           Good morning, {user?.firstName || 'Investor'}
         </Caption>
       </div>
-      {rightContent && <div className="flex items-center gap-6">{rightContent}</div>}
+      {rightContent && (
+        <div className="flex items-center gap-6">{rightContent}</div>
+      )}
     </header>
   )
 }
-

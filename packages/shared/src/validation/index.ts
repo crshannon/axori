@@ -39,6 +39,11 @@ export {
   propertyTransactionSelectSchema,
 } from "./base/transactions";
 
+export {
+  propertyBankAccountInsertSchema,
+  propertyBankAccountSelectSchema,
+} from "./base/bankAccounts";
+
 // ============================================================================
 // ENHANCED SCHEMAS (Phase 4)
 // ============================================================================
@@ -525,4 +530,70 @@ export const emailCaptureUpdateSchema = z.object({
 export type EmailCaptureInsert = z.infer<typeof emailCaptureInsertSchema>;
 export type EmailCaptureSelect = z.infer<typeof emailCaptureSelectSchema>;
 export type EmailCaptureUpdate = z.infer<typeof emailCaptureUpdateSchema>;
+
+// ============================================================================
+// PROPERTY BANK ACCOUNTS
+// ============================================================================
+
+// Bank Account Update Schema - all fields optional except ID
+export const propertyBankAccountUpdateSchema = z.object({
+  id: z.string().uuid(),
+  accountName: z.string().min(1, "Account name is required").max(255).optional(),
+  accountType: z.enum(["checking", "savings", "money_market", "other"]).optional().nullable(),
+  institutionName: z.string().max(255).optional().nullable(),
+  mask: z.string().max(4).optional().nullable(),
+  currentBalance: z.union([z.string(), z.number()])
+    .optional()
+    .nullable()
+    .transform((val) => (val === undefined || val === null ? null : String(val))),
+  availableBalance: z.union([z.string(), z.number()])
+    .optional()
+    .nullable()
+    .transform((val) => (val === undefined || val === null ? null : String(val))),
+  // Allocation targets
+  maintenanceTarget: z.union([z.string(), z.number()])
+    .optional()
+    .transform((val) => (val === undefined ? undefined : String(val))),
+  capexTarget: z.union([z.string(), z.number()])
+    .optional()
+    .transform((val) => (val === undefined ? undefined : String(val))),
+  lifeSupportTarget: z.union([z.string(), z.number()])
+    .optional()
+    .transform((val) => (val === undefined ? undefined : String(val))),
+  lifeSupportMonths: z.number().int().min(1).max(24).optional().nullable(),
+  isPrimary: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+});
+
+// Bank Account Create Schema - for manual entry (no Plaid)
+export const propertyBankAccountCreateSchema = z.object({
+  propertyId: z.string().uuid("Property ID must be a valid UUID"),
+  accountName: z.string().min(1, "Account name is required").max(255),
+  accountType: z.enum(["checking", "savings", "money_market", "other"]).optional().nullable(),
+  institutionName: z.string().max(255).optional().nullable(),
+  mask: z.string().max(4).optional().nullable(),
+  currentBalance: z.union([z.string(), z.number()])
+    .optional()
+    .nullable()
+    .transform((val) => (val === undefined || val === null ? null : String(val))),
+  availableBalance: z.union([z.string(), z.number()])
+    .optional()
+    .nullable()
+    .transform((val) => (val === undefined || val === null ? null : String(val))),
+  // Allocation targets (default to 0)
+  maintenanceTarget: z.union([z.string(), z.number()])
+    .optional()
+    .default("0")
+    .transform((val) => String(val)),
+  capexTarget: z.union([z.string(), z.number()])
+    .optional()
+    .default("0")
+    .transform((val) => String(val)),
+  lifeSupportTarget: z.union([z.string(), z.number()])
+    .optional()
+    .default("0")
+    .transform((val) => String(val)),
+  lifeSupportMonths: z.number().int().min(1).max(24).optional().nullable(),
+  isPrimary: z.boolean().optional().default(false),
+});
 

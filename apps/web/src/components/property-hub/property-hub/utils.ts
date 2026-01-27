@@ -22,9 +22,7 @@ export function getPropertyScore(p: Property): number {
 export function getPropertyCashFlow(p: Property): number {
   const monthlyRent = Number(p.rentalIncome?.monthlyRent || 0)
   const monthlyExpenses = 0 // Simplified - will be calculated when operatingExpenses interface is updated
-  const activeLoan = p.loans?.find(
-    (l) => l.status === 'active' && l.isPrimary,
-  )
+  const activeLoan = p.loans?.find((l) => l.status === 'active' && l.isPrimary)
   const monthlyLoanPayment = activeLoan?.monthlyPrincipalInterest
     ? Number(activeLoan.monthlyPrincipalInterest)
     : 0

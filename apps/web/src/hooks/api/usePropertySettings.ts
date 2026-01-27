@@ -83,7 +83,10 @@ const DEFAULT_FORM_DATA: PropertySettingsFormData = {
 /**
  * Parse rate value (convert decimal to percentage display)
  */
-function parseRate(value: string | null | undefined, defaultValue = ''): string {
+function parseRate(
+  value: string | null | undefined,
+  defaultValue = '',
+): string {
   if (value === null || value === undefined) return defaultValue
   const num = parseFloat(value)
   if (isNaN(num)) return defaultValue
@@ -120,9 +123,11 @@ export function usePropertySettings(propertyId: string | null | undefined) {
   const updateMutation = useUpdateProperty()
 
   // Form state
-  const [formData, setFormData] = useState<PropertySettingsFormData>(DEFAULT_FORM_DATA)
+  const [formData, setFormData] =
+    useState<PropertySettingsFormData>(DEFAULT_FORM_DATA)
   const [isDirty, setIsDirty] = useState(false)
-  const [initialFormData, setInitialFormData] = useState<PropertySettingsFormData>(DEFAULT_FORM_DATA)
+  const [initialFormData, setInitialFormData] =
+    useState<PropertySettingsFormData>(DEFAULT_FORM_DATA)
 
   // Populate form data when property loads
   useEffect(() => {
@@ -130,7 +135,10 @@ export function usePropertySettings(propertyId: string | null | undefined) {
       const newFormData: PropertySettingsFormData = {
         // Basic Info
         nickname: property.fullAddress || property.address || '',
-        propertyType: property.characteristics?.propertyType?.toLowerCase().replace(/\s+/g, '-') || 'single-family',
+        propertyType:
+          property.characteristics?.propertyType
+            ?.toLowerCase()
+            .replace(/\s+/g, '-') || 'single-family',
 
         // Address
         address: property.address || '',
@@ -154,7 +162,10 @@ export function usePropertySettings(propertyId: string | null | undefined) {
 
         // Calculation Presumptions
         vacancyRate: parseRate(property.operatingExpenses?.vacancyRate, '5.0'),
-        maintenanceRate: parseRate(property.operatingExpenses?.maintenanceRate, '8.0'),
+        maintenanceRate: parseRate(
+          property.operatingExpenses?.maintenanceRate,
+          '8.0',
+        ),
         expenseInflation: '3.0', // Not in current schema
         capexSinking: parseRate(property.operatingExpenses?.capexRate, '5.0'),
 
@@ -173,31 +184,37 @@ export function usePropertySettings(propertyId: string | null | undefined) {
   }, [property])
 
   // Update a single field
-  const updateField = useCallback((
-    field: keyof Omit<PropertySettingsFormData, 'notifications'>,
-    value: string
-  ) => {
-    setFormData((prev) => {
-      const updated = { ...prev, [field]: value }
-      return updated
-    })
-    setIsDirty(true)
-  }, [])
+  const updateField = useCallback(
+    (
+      field: keyof Omit<PropertySettingsFormData, 'notifications'>,
+      value: string,
+    ) => {
+      setFormData((prev) => {
+        const updated = { ...prev, [field]: value }
+        return updated
+      })
+      setIsDirty(true)
+    },
+    [],
+  )
 
   // Update notification setting
-  const updateNotification = useCallback((
-    notifType: keyof PropertySettingsFormData['notifications'],
-    value: boolean
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      notifications: {
-        ...prev.notifications,
-        [notifType]: value,
-      },
-    }))
-    setIsDirty(true)
-  }, [])
+  const updateNotification = useCallback(
+    (
+      notifType: keyof PropertySettingsFormData['notifications'],
+      value: boolean,
+    ) => {
+      setFormData((prev) => ({
+        ...prev,
+        notifications: {
+          ...prev.notifications,
+          [notifType]: value,
+        },
+      }))
+      setIsDirty(true)
+    },
+    [],
+  )
 
   // Reset form to initial values
   const resetForm = useCallback(() => {
@@ -208,84 +225,95 @@ export function usePropertySettings(propertyId: string | null | undefined) {
   // Save form data to API
   // Accepts optional formData parameter to avoid closure stale data issue
   // When drawers update fields and immediately save, they can pass the updated data directly
-  const saveSettings = useCallback(async (overrideFormData?: Partial<PropertySettingsFormData>) => {
-    if (!propertyId) {
-      throw new Error('Property ID is required')
-    }
+  const saveSettings = useCallback(
+    async (overrideFormData?: Partial<PropertySettingsFormData>) => {
+      if (!propertyId) {
+        throw new Error('Property ID is required')
+      }
 
-    // Use override data if provided, otherwise fall back to current formData
-    // This allows drawers to pass their local form state directly, avoiding
-    // the React state update batching issue where saveSettings reads stale closure data
-    const dataToSave = overrideFormData
-      ? { ...formData, ...overrideFormData }
-      : formData
+      // Use override data if provided, otherwise fall back to current formData
+      // This allows drawers to pass their local form state directly, avoiding
+      // the React state update batching issue where saveSettings reads stale closure data
+      const dataToSave = overrideFormData
+        ? { ...formData, ...overrideFormData }
+        : formData
 
-    // Parse purchase price (remove $ and commas)
-    const purchasePriceRaw = dataToSave.purchasePrice.replace(/[$,]/g, '')
-    const purchasePrice = purchasePriceRaw ? parseFloat(purchasePriceRaw) : undefined
+      // Parse purchase price (remove $ and commas)
+      const purchasePriceRaw = dataToSave.purchasePrice.replace(/[$,]/g, '')
+      const purchasePrice = purchasePriceRaw
+        ? parseFloat(purchasePriceRaw)
+        : undefined
 
-    // Build update payload
-    const updatePayload: Record<string, unknown> = {
-      id: propertyId,
-      // Core property fields
-      nickname: dataToSave.nickname,
-      address: dataToSave.address,
-      city: dataToSave.city,
-      state: dataToSave.state,
-      zipCode: dataToSave.zipCode,
-    }
+      // Build update payload
+      const updatePayload: Record<string, unknown> = {
+        id: propertyId,
+        // Core property fields
+        nickname: dataToSave.nickname,
+        address: dataToSave.address,
+        city: dataToSave.city,
+        state: dataToSave.state,
+        zipCode: dataToSave.zipCode,
+      }
 
-    // Characteristics
-    const characteristics: Record<string, unknown> = {}
-    if (dataToSave.propertyType) {
-      // Convert type to database format using centralized function
-      characteristics.propertyType = propertyTypeValueToDatabaseFormat(dataToSave.propertyType)
-    }
-    if (dataToSave.yearBuilt) {
-      characteristics.yearBuilt = parseInt(dataToSave.yearBuilt, 10)
-    }
-    if (Object.keys(characteristics).length > 0) {
-      updatePayload.characteristics = characteristics
-    }
+      // Characteristics
+      const characteristics: Record<string, unknown> = {}
+      if (dataToSave.propertyType) {
+        // Convert type to database format using centralized function
+        characteristics.propertyType = propertyTypeValueToDatabaseFormat(
+          dataToSave.propertyType,
+        )
+      }
+      if (dataToSave.yearBuilt) {
+        characteristics.yearBuilt = parseInt(dataToSave.yearBuilt, 10)
+      }
+      if (Object.keys(characteristics).length > 0) {
+        updatePayload.characteristics = characteristics
+      }
 
-    // Acquisition
-    const acquisition: Record<string, unknown> = {}
-    if (purchasePrice) {
-      acquisition.purchasePrice = purchasePrice
-    }
-    if (dataToSave.closingDate) {
-      acquisition.purchaseDate = dataToSave.closingDate
-    }
-    if (Object.keys(acquisition).length > 0) {
-      updatePayload.acquisition = acquisition
-    }
+      // Acquisition
+      const acquisition: Record<string, unknown> = {}
+      if (purchasePrice) {
+        acquisition.purchasePrice = purchasePrice
+      }
+      if (dataToSave.closingDate) {
+        acquisition.purchaseDate = dataToSave.closingDate
+      }
+      if (Object.keys(acquisition).length > 0) {
+        updatePayload.acquisition = acquisition
+      }
 
-    // Operating Expenses (calculation presumptions)
-    const operatingExpenses: Record<string, unknown> = {}
-    if (dataToSave.vacancyRate) {
-      operatingExpenses.vacancyRate = formatRateForApi(dataToSave.vacancyRate)
-    }
-    if (dataToSave.maintenanceRate) {
-      operatingExpenses.maintenanceRate = formatRateForApi(dataToSave.maintenanceRate)
-    }
-    if (dataToSave.capexSinking) {
-      operatingExpenses.capexRate = formatRateForApi(dataToSave.capexSinking)
-    }
-    if (Object.keys(operatingExpenses).length > 0) {
-      updatePayload.operatingExpenses = operatingExpenses
-    }
+      // Operating Expenses (calculation presumptions)
+      const operatingExpenses: Record<string, unknown> = {}
+      if (dataToSave.vacancyRate) {
+        operatingExpenses.vacancyRate = formatRateForApi(dataToSave.vacancyRate)
+      }
+      if (dataToSave.maintenanceRate) {
+        operatingExpenses.maintenanceRate = formatRateForApi(
+          dataToSave.maintenanceRate,
+        )
+      }
+      if (dataToSave.capexSinking) {
+        operatingExpenses.capexRate = formatRateForApi(dataToSave.capexSinking)
+      }
+      if (Object.keys(operatingExpenses).length > 0) {
+        updatePayload.operatingExpenses = operatingExpenses
+      }
 
-    // Execute update
-    // Note: updatePayload is typed as Record<string, unknown> to allow nested objects
-    // The API expects a partial PropertyInsert with nested characteristics, acquisition, etc.
-    await updateMutation.mutateAsync(updatePayload as Partial<PropertyInsert> & { id: string })
+      // Execute update
+      // Note: updatePayload is typed as Record<string, unknown> to allow nested objects
+      // The API expects a partial PropertyInsert with nested characteristics, acquisition, etc.
+      await updateMutation.mutateAsync(
+        updatePayload as Partial<PropertyInsert> & { id: string },
+      )
 
-    // Update form state with saved data
-    const finalFormData = overrideFormData ? dataToSave : formData
-    setFormData(finalFormData)
-    setInitialFormData(finalFormData)
-    setIsDirty(false)
-  }, [propertyId, formData, updateMutation])
+      // Update form state with saved data
+      const finalFormData = overrideFormData ? dataToSave : formData
+      setFormData(finalFormData)
+      setInitialFormData(finalFormData)
+      setIsDirty(false)
+    },
+    [propertyId, formData, updateMutation],
+  )
 
   // Computed values
   const isLoading = isLoadingProperty

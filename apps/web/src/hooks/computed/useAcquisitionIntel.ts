@@ -121,7 +121,9 @@ export function useAcquisitionIntel(
 
     // Check if we have minimum acquisition data
     const hasAcquisitionData =
-      acquisition !== null && acquisition !== undefined && (purchasePrice !== null || purchaseDate !== null)
+      acquisition !== null &&
+      acquisition !== undefined &&
+      (purchasePrice !== null || purchaseDate !== null)
 
     return {
       purchasePrice,
@@ -139,4 +141,3 @@ export function useAcquisitionIntel(
     }
   }, [property])
 }
-

@@ -13,7 +13,13 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
+
+// Import the mocked toast for assertions
+import { useDrawer } from '../useDrawer'
+import { toast as mockToast } from '@/lib/toast'
+
+// Import hook after mocking
 
 // =============================================================================
 // MOCKS - Define mock state that will be used by the mock factories
@@ -52,12 +58,6 @@ vi.mock('@/lib/toast', () => ({
     info: vi.fn(),
   },
 }))
-
-// Import the mocked toast for assertions
-import { toast as mockToast } from '@/lib/toast'
-
-// Import hook after mocking
-import { useDrawer } from '../useDrawer'
 
 // =============================================================================
 // SETUP & TEARDOWN
@@ -213,7 +213,7 @@ describe('useDrawer - openDrawer', () => {
     })
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      expect.objectContaining({ replace: true })
+      expect.objectContaining({ replace: true }),
     )
   })
 
@@ -221,11 +221,15 @@ describe('useDrawer - openDrawer', () => {
     const { result } = renderHook(() => useDrawer())
 
     act(() => {
-      result.current.openDrawer('add-loan', { propertyId: 'prop_123' }, { replace: false })
+      result.current.openDrawer(
+        'add-loan',
+        { propertyId: 'prop_123' },
+        { replace: false },
+      )
     })
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      expect.objectContaining({ replace: false })
+      expect.objectContaining({ replace: false }),
     )
   })
 
@@ -287,7 +291,7 @@ describe('useDrawer - closeDrawer', () => {
     })
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      expect.objectContaining({ replace: true })
+      expect.objectContaining({ replace: true }),
     )
   })
 
@@ -299,7 +303,7 @@ describe('useDrawer - closeDrawer', () => {
     })
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      expect.objectContaining({ replace: false })
+      expect.objectContaining({ replace: false }),
     )
   })
 })
@@ -311,7 +315,7 @@ describe('useDrawer - closeDrawer', () => {
 describe('useDrawer - permission checking', () => {
   it('allows opening drawer when user has permission (cached)', () => {
     // Setup cached permission data
-    mockGetQueryData.mockImplementation((key: string[]) => {
+    mockGetQueryData.mockImplementation((key: Array<string>) => {
       if (key[0] === 'properties') {
         return { portfolioId: 'portfolio_123' }
       }
@@ -333,7 +337,7 @@ describe('useDrawer - permission checking', () => {
 
   it('denies opening drawer when user lacks permission (cached)', () => {
     // Setup cached permission data - viewer can't access member-level drawer
-    mockGetQueryData.mockImplementation((key: string[]) => {
+    mockGetQueryData.mockImplementation((key: Array<string>) => {
       if (key[0] === 'properties') {
         return { portfolioId: 'portfolio_123' }
       }
@@ -355,7 +359,7 @@ describe('useDrawer - permission checking', () => {
 
   it('skips permission check when skipPermissionCheck is true', () => {
     // Setup cached permission data - viewer can't access member-level drawer
-    mockGetQueryData.mockImplementation((key: string[]) => {
+    mockGetQueryData.mockImplementation((key: Array<string>) => {
       if (key[0] === 'properties') {
         return { portfolioId: 'portfolio_123' }
       }
@@ -371,7 +375,7 @@ describe('useDrawer - permission checking', () => {
       result.current.openDrawer(
         'add-loan',
         { propertyId: 'prop_123' },
-        { skipPermissionCheck: true }
+        { skipPermissionCheck: true },
       )
     })
 
@@ -393,7 +397,7 @@ describe('useDrawer - permission checking', () => {
   })
 
   it('allows admin to access admin-level drawer', () => {
-    mockGetQueryData.mockImplementation((key: string[]) => {
+    mockGetQueryData.mockImplementation((key: Array<string>) => {
       if (key[0] === 'properties') {
         return { portfolioId: 'portfolio_123' }
       }
@@ -406,7 +410,9 @@ describe('useDrawer - permission checking', () => {
     const { result } = renderHook(() => useDrawer())
 
     act(() => {
-      result.current.openDrawer('connect-bank-account', { propertyId: 'prop_123' })
+      result.current.openDrawer('connect-bank-account', {
+        propertyId: 'prop_123',
+      })
     })
 
     expect(mockNavigate).toHaveBeenCalled()
@@ -414,7 +420,7 @@ describe('useDrawer - permission checking', () => {
   })
 
   it('denies member access to admin-level drawer', () => {
-    mockGetQueryData.mockImplementation((key: string[]) => {
+    mockGetQueryData.mockImplementation((key: Array<string>) => {
       if (key[0] === 'properties') {
         return { portfolioId: 'portfolio_123' }
       }
@@ -427,7 +433,9 @@ describe('useDrawer - permission checking', () => {
     const { result } = renderHook(() => useDrawer())
 
     act(() => {
-      result.current.openDrawer('connect-bank-account', { propertyId: 'prop_123' })
+      result.current.openDrawer('connect-bank-account', {
+        propertyId: 'prop_123',
+      })
     })
 
     expect(mockNavigate).not.toHaveBeenCalled()

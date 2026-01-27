@@ -21,8 +21,13 @@ const onboardingSchema = z
     ownership: z.enum(['Personal', 'LLC']).default('Personal'),
     llcName: z.string().optional(),
     freedomNumber: z.number().min(1000).max(100000).default(5000),
-    strategy: z.enum(['Cash Flow', 'Appreciation', 'BRRRR', 'Hybrid']).optional(),
-    markets: z.array(z.string().uuid()).max(3, 'Select at most 3 markets').optional(),
+    strategy: z
+      .enum(['Cash Flow', 'Appreciation', 'BRRRR', 'Hybrid'])
+      .optional(),
+    markets: z
+      .array(z.string().uuid())
+      .max(3, 'Select at most 3 markets')
+      .optional(),
   })
   .refine(
     (data) => {
@@ -64,4 +69,3 @@ export function useOnboardingForm(initialData?: Partial<OnboardingFormData>) {
 }
 
 export type OnboardingForm = ReturnType<typeof useOnboardingForm>
-

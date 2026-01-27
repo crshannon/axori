@@ -161,24 +161,27 @@ describe('calculateYearDepreciation', () => {
 describe('generateDepreciationSchedule', () => {
   it('generates complete depreciation schedule', () => {
     const schedule = generateDepreciationSchedule(275000, 27.5, '2024-01-15')
-    
+
     // Should have 28 years for 27.5-year property (first partial + full + last partial)
     expect(schedule.length).toBe(28)
-    
+
     // First year should be 2024
     expect(schedule[0].year).toBe(2024)
-    
+
     // First year depreciation should be less than annual (mid-month convention)
     expect(schedule[0].depreciation).toBeLessThan(10000)
-    
+
     // All depreciation should sum to the depreciable basis
-    const totalDepreciation = schedule.reduce((sum, item) => sum + item.depreciation, 0)
+    const totalDepreciation = schedule.reduce(
+      (sum, item) => sum + item.depreciation,
+      0,
+    )
     expect(totalDepreciation).toBeCloseTo(275000, 0)
   })
 
   it('tracks accumulated depreciation correctly', () => {
     const schedule = generateDepreciationSchedule(275000, 27.5, '2024-01-15')
-    
+
     // Each year's accumulated should be sum of all previous + current
     let expectedAccumulated = 0
     for (const item of schedule) {
@@ -189,7 +192,7 @@ describe('generateDepreciationSchedule', () => {
 
   it('tracks remaining basis correctly', () => {
     const schedule = generateDepreciationSchedule(275000, 27.5, '2024-01-15')
-    
+
     // Last year should have ~0 remaining
     const lastItem = schedule[schedule.length - 1]
     expect(lastItem.remainingBasis).toBeCloseTo(0, 0)
@@ -204,7 +207,7 @@ describe('generateDepreciationSchedule', () => {
 describe('calculateDepreciationSummary', () => {
   it('calculates current depreciation state', () => {
     const summary = calculateDepreciationSummary(275000, 27.5, '2020-01-15')
-    
+
     expect(summary).not.toBeNull()
     expect(summary!.annualDepreciation).toBe(10000)
     expect(summary!.monthlyDepreciation).toBeCloseTo(833.33, 0)
@@ -243,7 +246,7 @@ describe('calculateTaxShield', () => {
 describe('calculatePaperLossComparison', () => {
   it('calculates paper loss comparison correctly', () => {
     const result = calculatePaperLossComparison(5000, 10000, 0.24)
-    
+
     expect(result.actualCashFlow).toBe(5000)
     expect(result.paperLoss).toBe(10000)
     expect(result.taxableIncome).toBe(-5000) // 5000 - 10000
@@ -253,7 +256,7 @@ describe('calculatePaperLossComparison', () => {
 
   it('handles positive taxable income', () => {
     const result = calculatePaperLossComparison(15000, 10000, 0.24)
-    
+
     expect(result.taxableIncome).toBe(5000) // 15000 - 10000
   })
 })
@@ -289,12 +292,24 @@ describe('calculateCostSegFirstYearBenefit', () => {
     // 100k 5-year + 50k 7-year + 30k 15-year = 180k total
     // 80% bonus = 144k
     // 24% tax rate = 34,560 benefit
-    const benefit = calculateCostSegFirstYearBenefit(100000, 50000, 30000, 0.8, 0.24)
+    const benefit = calculateCostSegFirstYearBenefit(
+      100000,
+      50000,
+      30000,
+      0.8,
+      0.24,
+    )
     expect(benefit).toBeCloseTo(34560, 0)
   })
 
   it('returns 0 with no bonus depreciation', () => {
-    const benefit = calculateCostSegFirstYearBenefit(100000, 50000, 30000, 0, 0.24)
+    const benefit = calculateCostSegFirstYearBenefit(
+      100000,
+      50000,
+      30000,
+      0,
+      0.24,
+    )
     expect(benefit).toBe(0)
   })
 })
@@ -302,34 +317,42 @@ describe('calculateCostSegFirstYearBenefit', () => {
 describe('IRS Straight-Line Method Validation', () => {
   it('validates 27.5 year residential depreciation total matches basis', () => {
     const basis = 275000
-    const schedule = generateDepreciationSchedule(basis, RESIDENTIAL_DEPRECIATION_YEARS, '2024-01-15')
+    const schedule = generateDepreciationSchedule(
+      basis,
+      RESIDENTIAL_DEPRECIATION_YEARS,
+      '2024-01-15',
+    )
     const total = schedule.reduce((sum, item) => sum + item.depreciation, 0)
-    
+
     // Total depreciation should equal the depreciable basis (within rounding)
     expect(Math.abs(total - basis)).toBeLessThan(1)
   })
 
   it('validates 39 year commercial depreciation total matches basis', () => {
     const basis = 390000
-    const schedule = generateDepreciationSchedule(basis, COMMERCIAL_DEPRECIATION_YEARS, '2024-01-15')
+    const schedule = generateDepreciationSchedule(
+      basis,
+      COMMERCIAL_DEPRECIATION_YEARS,
+      '2024-01-15',
+    )
     const total = schedule.reduce((sum, item) => sum + item.depreciation, 0)
-    
+
     // Total depreciation should equal the depreciable basis (within rounding)
     expect(Math.abs(total - basis)).toBeLessThan(1)
   })
 
   it('validates mid-month convention for various months', () => {
     const basis = 275000
-    
+
     // Test January (should get most of first year)
     const janSchedule = generateDepreciationSchedule(basis, 27.5, '2024-01-15')
     expect(janSchedule[0].depreciation).toBeGreaterThan(9500) // ~11.5/12 of 10k
-    
+
     // Test July (should get about half)
     const julSchedule = generateDepreciationSchedule(basis, 27.5, '2024-07-15')
     expect(julSchedule[0].depreciation).toBeGreaterThan(4500)
     expect(julSchedule[0].depreciation).toBeLessThan(5000)
-    
+
     // Test December (should get least)
     const decSchedule = generateDepreciationSchedule(basis, 27.5, '2024-12-15')
     expect(decSchedule[0].depreciation).toBeLessThan(500) // ~0.5/12 of 10k

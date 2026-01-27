@@ -14,6 +14,7 @@
 
 import { describe, expect, it } from 'vitest'
 import {
+  PORTFOLIO_ROLES,
   canAdmin,
   canEdit,
   canView,
@@ -23,7 +24,6 @@ import {
   hasRequiredPermission,
   isOwner,
   isRoleAtLeast,
-  PORTFOLIO_ROLES,
 } from '../permission-helpers'
 import type { PortfolioRole } from '../permission-helpers'
 import type { DrawerPermission } from '../registry'
@@ -225,8 +225,15 @@ describe('hasRequiredPermission', () => {
 
   describe('edge cases', () => {
     it('handles unknown permission type by denying access', () => {
-      expect(hasRequiredPermission('owner', 'unknown' as DrawerPermission)).toBe(false)
-      expect(hasRequiredPermission('admin', 'invalid-permission' as DrawerPermission)).toBe(false)
+      expect(
+        hasRequiredPermission('owner', 'unknown' as DrawerPermission),
+      ).toBe(false)
+      expect(
+        hasRequiredPermission(
+          'admin',
+          'invalid-permission' as DrawerPermission,
+        ),
+      ).toBe(false)
     })
 
     it('handles empty string permission type by denying access', () => {
@@ -241,13 +248,21 @@ describe('hasRequiredPermission', () => {
 
 describe('hasAllRequiredPermissions (AND logic)', () => {
   it('returns true when all permissions are met', () => {
-    expect(hasAllRequiredPermissions('owner', ['viewer', 'member', 'admin'])).toBe(true)
-    expect(hasAllRequiredPermissions('admin', ['viewer', 'member', 'admin'])).toBe(true)
+    expect(
+      hasAllRequiredPermissions('owner', ['viewer', 'member', 'admin']),
+    ).toBe(true)
+    expect(
+      hasAllRequiredPermissions('admin', ['viewer', 'member', 'admin']),
+    ).toBe(true)
   })
 
   it('returns false when any permission is not met', () => {
-    expect(hasAllRequiredPermissions('member', ['viewer', 'member', 'admin'])).toBe(false)
-    expect(hasAllRequiredPermissions('viewer', ['viewer', 'member'])).toBe(false)
+    expect(
+      hasAllRequiredPermissions('member', ['viewer', 'member', 'admin']),
+    ).toBe(false)
+    expect(hasAllRequiredPermissions('viewer', ['viewer', 'member'])).toBe(
+      false,
+    )
   })
 
   it('returns true for empty permissions array', () => {
@@ -269,18 +284,24 @@ describe('hasAllRequiredPermissions (AND logic)', () => {
     // 'none' is always true, but others depend on role
     expect(hasAllRequiredPermissions('viewer', ['none', 'viewer'])).toBe(true)
     expect(hasAllRequiredPermissions('viewer', ['none', 'member'])).toBe(false)
-    expect(hasAllRequiredPermissions('admin', ['none', 'admin', 'member'])).toBe(true)
+    expect(
+      hasAllRequiredPermissions('admin', ['none', 'admin', 'member']),
+    ).toBe(true)
   })
 })
 
 describe('hasAnyRequiredPermission (OR logic)', () => {
   it('returns true when at least one permission is met', () => {
     expect(hasAnyRequiredPermission('member', ['viewer', 'admin'])).toBe(true) // has viewer+
-    expect(hasAnyRequiredPermission('admin', ['viewer', 'member', 'admin'])).toBe(true)
+    expect(
+      hasAnyRequiredPermission('admin', ['viewer', 'member', 'admin']),
+    ).toBe(true)
   })
 
   it('returns false when no permissions are met', () => {
-    expect(hasAnyRequiredPermission('viewer', ['member', 'admin', 'owner'])).toBe(false)
+    expect(
+      hasAnyRequiredPermission('viewer', ['member', 'admin', 'owner']),
+    ).toBe(false)
     expect(hasAnyRequiredPermission('member', ['admin', 'owner'])).toBe(false)
   })
 
@@ -301,7 +322,9 @@ describe('hasAnyRequiredPermission (OR logic)', () => {
 
   it('handles mixed permission levels', () => {
     // If any permission passes, return true
-    expect(hasAnyRequiredPermission('viewer', ['admin', 'owner', 'none'])).toBe(true)
+    expect(hasAnyRequiredPermission('viewer', ['admin', 'owner', 'none'])).toBe(
+      true,
+    )
     expect(hasAnyRequiredPermission('member', ['admin', 'viewer'])).toBe(true) // has viewer
   })
 })
@@ -311,15 +334,51 @@ describe('hasAnyRequiredPermission (OR logic)', () => {
 // =============================================================================
 
 describe('permission matrix', () => {
-  const roles: Array<PortfolioRole | null> = [null, 'viewer', 'member', 'admin', 'owner']
-  const permissions: DrawerPermission[] = ['none', 'viewer', 'member', 'admin', 'owner']
+  const roles: Array<PortfolioRole | null> = [
+    null,
+    'viewer',
+    'member',
+    'admin',
+    'owner',
+  ]
+  const permissions: Array<DrawerPermission> = [
+    'none',
+    'viewer',
+    'member',
+    'admin',
+    'owner',
+  ]
 
   // Expected access matrix: [role][permission] = true/false
   const expectedAccess: Record<string, Record<DrawerPermission, boolean>> = {
-    null: { none: true, viewer: false, member: false, admin: false, owner: false },
-    viewer: { none: true, viewer: true, member: false, admin: false, owner: false },
-    member: { none: true, viewer: true, member: true, admin: false, owner: false },
-    admin: { none: true, viewer: true, member: true, admin: true, owner: false },
+    null: {
+      none: true,
+      viewer: false,
+      member: false,
+      admin: false,
+      owner: false,
+    },
+    viewer: {
+      none: true,
+      viewer: true,
+      member: false,
+      admin: false,
+      owner: false,
+    },
+    member: {
+      none: true,
+      viewer: true,
+      member: true,
+      admin: false,
+      owner: false,
+    },
+    admin: {
+      none: true,
+      viewer: true,
+      member: true,
+      admin: true,
+      owner: false,
+    },
     owner: { none: true, viewer: true, member: true, admin: true, owner: true },
   }
 
@@ -327,7 +386,9 @@ describe('permission matrix', () => {
     for (const permission of permissions) {
       const roleStr = role ?? 'null'
       it(`role="${roleStr}" with permission="${permission}" should be ${expectedAccess[roleStr][permission] ? 'allowed' : 'denied'}`, () => {
-        expect(hasRequiredPermission(role, permission)).toBe(expectedAccess[roleStr][permission])
+        expect(hasRequiredPermission(role, permission)).toBe(
+          expectedAccess[roleStr][permission],
+        )
       })
     }
   }
@@ -372,6 +433,8 @@ describe('graceful failure handling', () => {
   })
 
   it('handles both undefined role and permission', () => {
-    expect(hasRequiredPermission(undefined as any, undefined as any)).toBe(false)
+    expect(hasRequiredPermission(undefined as any, undefined as any)).toBe(
+      false,
+    )
   })
 })

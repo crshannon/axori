@@ -41,7 +41,10 @@ export function usePropertyCompleteness(
   const missingFields: Array<MissingField> = []
 
   // Core property fields (Overview/Acquisition)
-  if (!property.acquisition?.purchasePrice && !property.valuation?.currentValue) {
+  if (
+    !property.acquisition?.purchasePrice &&
+    !property.valuation?.currentValue
+  ) {
     missingFields.push({
       label: 'Purchase Price or Current Value',
       route: getRoute('financials'),
@@ -66,7 +69,10 @@ export function usePropertyCompleteness(
     })
   }
 
-  if (!property.characteristics?.bedrooms && property.characteristics?.bedrooms !== 0) {
+  if (
+    !property.characteristics?.bedrooms &&
+    property.characteristics?.bedrooms !== 0
+  ) {
     missingFields.push({
       label: 'Bedrooms',
       route: getRoute(''),
@@ -74,7 +80,10 @@ export function usePropertyCompleteness(
     })
   }
 
-  if (!property.characteristics?.bathrooms && property.characteristics?.bathrooms !== 0) {
+  if (
+    !property.characteristics?.bathrooms &&
+    property.characteristics?.bathrooms !== 0
+  ) {
     missingFields.push({
       label: 'Bathrooms',
       route: getRoute(''),
@@ -128,7 +137,10 @@ export function usePropertyCompleteness(
       route: getRoute('management'),
       category: 'Management',
     })
-  } else if (!property.management.isSelfManaged && !property.management.companyName) {
+  } else if (
+    !property.management.isSelfManaged &&
+    !property.management.companyName
+  ) {
     missingFields.push({
       label: 'Management Company',
       route: getRoute('management'),
@@ -190,4 +202,3 @@ export function usePropertyCompleteness(
     fidelityLevel,
   }
 }
-

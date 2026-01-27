@@ -27,7 +27,7 @@ const createMockLoan = (overrides: Partial<Loan> = {}): Loan => ({
 describe('useLoanSummary', () => {
   it('should return zero values for empty loans array', () => {
     const { result } = renderHook(() => useLoanSummary([]))
-    
+
     expect(result.current.totalDebt).toBe(0)
     expect(result.current.weightedInterestRate).toBe(0)
     expect(result.current.totalMonthlyPayment).toBe(0)
@@ -37,7 +37,7 @@ describe('useLoanSummary', () => {
 
   it('should return zero values for undefined loans', () => {
     const { result } = renderHook(() => useLoanSummary(undefined))
-    
+
     expect(result.current.totalDebt).toBe(0)
     expect(result.current.weightedInterestRate).toBe(0)
     expect(result.current.totalMonthlyPayment).toBe(0)
@@ -48,11 +48,15 @@ describe('useLoanSummary', () => {
   it('should calculate total debt correctly', () => {
     const loans: Array<Loan> = [
       createMockLoan({ currentBalance: '280000', id: 'loan-1' }),
-      createMockLoan({ currentBalance: '50000', id: 'loan-2', isPrimary: false }),
+      createMockLoan({
+        currentBalance: '50000',
+        id: 'loan-2',
+        isPrimary: false,
+      }),
     ]
-    
+
     const { result } = renderHook(() => useLoanSummary(loans))
-    
+
     expect(result.current.totalDebt).toBe(330000)
     expect(result.current.loanCount).toBe(2)
   })
@@ -71,9 +75,9 @@ describe('useLoanSummary', () => {
         isPrimary: false,
       }),
     ]
-    
+
     const { result } = renderHook(() => useLoanSummary(loans))
-    
+
     // Weighted rate: (0.06 * 200000 + 0.08 * 100000) / 300000 = 0.06667 = 6.67%
     expect(result.current.weightedInterestRate).toBeCloseTo(6.67, 2)
   })
@@ -81,11 +85,15 @@ describe('useLoanSummary', () => {
   it('should calculate total monthly payment correctly', () => {
     const loans: Array<Loan> = [
       createMockLoan({ totalMonthlyPayment: '1896', id: 'loan-1' }),
-      createMockLoan({ totalMonthlyPayment: '500', id: 'loan-2', isPrimary: false }),
+      createMockLoan({
+        totalMonthlyPayment: '500',
+        id: 'loan-2',
+        isPrimary: false,
+      }),
     ]
-    
+
     const { result } = renderHook(() => useLoanSummary(loans))
-    
+
     expect(result.current.totalMonthlyPayment).toBe(2396)
   })
 
@@ -102,9 +110,9 @@ describe('useLoanSummary', () => {
         id: 'loan-2',
       }),
     ]
-    
+
     const { result } = renderHook(() => useLoanSummary(loans))
-    
+
     expect(result.current.primaryLoanBalance).toBe(280000)
   })
 
@@ -119,9 +127,9 @@ describe('useLoanSummary', () => {
         id: 'loan-1',
       }),
     ]
-    
+
     const { result } = renderHook(() => useLoanSummary(loans))
-    
+
     expect(result.current.totalDebt).toBe(0)
     expect(result.current.weightedInterestRate).toBe(0)
     expect(result.current.totalMonthlyPayment).toBe(0)
@@ -143,9 +151,9 @@ describe('useLoanSummary', () => {
         isPrimary: false,
       }),
     ]
-    
+
     const { result } = renderHook(() => useLoanSummary(loans))
-    
+
     // Loan 1: 1500 + 300 = 1800
     // Loan 2: 800 (no escrow)
     expect(result.current.totalMonthlyPayment).toBe(2600)
@@ -160,9 +168,9 @@ describe('useLoanSummary', () => {
         id: 'loan-1',
       }),
     ]
-    
+
     const { result } = renderHook(() => useLoanSummary(loans))
-    
+
     expect(result.current.totalMonthlyPayment).toBe(2000)
   })
 
@@ -190,9 +198,9 @@ describe('useLoanSummary', () => {
         isPrimary: false,
       }),
     ]
-    
+
     const { result } = renderHook(() => useLoanSummary(loans))
-    
+
     expect(result.current.totalDebt).toBe(450000)
     expect(result.current.totalMonthlyPayment).toBe(3300)
     expect(result.current.loanCount).toBe(3)
@@ -202,4 +210,3 @@ describe('useLoanSummary', () => {
     expect(result.current.weightedInterestRate).toBeCloseTo(6.22, 2)
   })
 })
-

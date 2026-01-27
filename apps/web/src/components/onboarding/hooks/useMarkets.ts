@@ -13,20 +13,38 @@ export interface UseMarketsOptions {
 }
 
 export function useMarkets(options: UseMarketsOptions = {}) {
-  const { search, state, investmentProfile, active = true, trending, ids } = options
+  const {
+    search,
+    state,
+    investmentProfile,
+    active = true,
+    trending,
+    ids,
+  } = options
 
   return useQuery({
-    queryKey: ['markets', search, state, investmentProfile, active, trending, ids],
+    queryKey: [
+      'markets',
+      search,
+      state,
+      investmentProfile,
+      active,
+      trending,
+      ids,
+    ],
     queryFn: async () => {
       const params = new URLSearchParams()
       if (search) params.append('search', search)
       if (state) params.append('state', state)
-      if (investmentProfile) params.append('investment_profile', investmentProfile)
+      if (investmentProfile)
+        params.append('investment_profile', investmentProfile)
       params.append('active', active.toString())
       if (trending) params.append('trending', 'true')
       if (ids && ids.length > 0) params.append('ids', ids.join(','))
 
-      const response = await fetch(`${API_BASE_URL}/api/markets?${params.toString()}`)
+      const response = await fetch(
+        `${API_BASE_URL}/api/markets?${params.toString()}`,
+      )
       if (!response.ok) {
         throw new Error('Failed to fetch markets')
       }
@@ -35,4 +53,3 @@ export function useMarkets(options: UseMarketsOptions = {}) {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   })
 }
-

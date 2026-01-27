@@ -52,7 +52,9 @@ function RouteComponent() {
         {canEdit && (
           <div className="flex gap-4">
             <button className="px-6 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest border-slate-200 hover:bg-slate-50 shadow-xs dark:border-white/10 dark:hover:bg-white/5">
-              {mgmtToggle === 'Self' ? 'Bulk Lease Send' : 'PM Performance Audit'}
+              {mgmtToggle === 'Self'
+                ? 'Bulk Lease Send'
+                : 'PM Performance Audit'}
             </button>
             <button className="px-6 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest bg-violet-600 text-white shadow-xl hover:scale-105 shadow-violet-200 dark:bg-[#E8FF4D] dark:text-black dark:shadow-none">
               {mgmtToggle === 'Self'

@@ -52,4 +52,3 @@ export function calculateNOI(
 export function calculateCashFlow(noi: number, debtService: number): number {
   return noi - debtService
 }
-

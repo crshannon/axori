@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Button, Card, Typography } from '@axori/ui'
 import { LearningHubButton } from './LearningHubButton'
-import type {DepreciationScheduleItem, DepreciationSummary} from '@/utils/finances';
+import type {
+  DepreciationScheduleItem,
+  DepreciationSummary,
+} from '@/utils/finances'
 import { useProperty } from '@/hooks/api/useProperties'
 import {
   DEFAULT_MARGINAL_TAX_RATE,
-  
-  
   RESIDENTIAL_DEPRECIATION_YEARS,
   calculateCostBasis,
   calculateDepreciationSummary,
@@ -15,7 +16,7 @@ import {
   convertDepreciationToCSV,
   generateDepreciationExportData,
   generateDepreciationSchedule,
-  getDepreciationSchedule
+  getDepreciationSchedule,
 } from '@/utils/finances'
 
 interface DepreciationScheduleProps {
@@ -26,7 +27,9 @@ interface DepreciationScheduleProps {
  * DepreciationSchedule component - Displays detailed depreciation information
  * Shows: Annual/Monthly depreciation, Accumulated depreciation, Tax shield value
  */
-export const DepreciationSchedule = ({ propertyId }: DepreciationScheduleProps) => {
+export const DepreciationSchedule = ({
+  propertyId,
+}: DepreciationScheduleProps) => {
   const { data: property, isLoading } = useProperty(propertyId)
   const [showFullSchedule, setShowFullSchedule] = useState(false)
 
@@ -73,7 +76,10 @@ export const DepreciationSchedule = ({ propertyId }: DepreciationScheduleProps) 
             Depreciation Schedule
           </Typography>
         </div>
-        <Typography variant="body" className="text-slate-500 dark:text-slate-400">
+        <Typography
+          variant="body"
+          className="text-slate-500 dark:text-slate-400"
+        >
           Add purchase price and acquisition date to view depreciation schedule.
         </Typography>
       </Card>
@@ -121,7 +127,8 @@ export const DepreciationSchedule = ({ propertyId }: DepreciationScheduleProps) 
   // Handle CSV export
   const handleExport = () => {
     const exportData = generateDepreciationExportData(
-      property.fullAddress || `${property.address}, ${property.city}, ${property.state} ${property.zipCode}`,
+      property.fullAddress ||
+        `${property.address}, ${property.city}, ${property.state} ${property.zipCode}`,
       propertyType || 'Unknown',
       purchasePrice,
       closingCosts,
@@ -147,15 +154,18 @@ export const DepreciationSchedule = ({ propertyId }: DepreciationScheduleProps) 
   const learningSnippets = [
     {
       title: 'What is Depreciation?',
-      content: 'Depreciation is a non-cash deduction that allows you to recover the cost of your rental property over time. The IRS allows you to deduct a portion of your property\'s value each year.',
+      content:
+        "Depreciation is a non-cash deduction that allows you to recover the cost of your rental property over time. The IRS allows you to deduct a portion of your property's value each year.",
     },
     {
       title: 'Mid-Month Convention',
-      content: 'The IRS uses the mid-month convention for rental property, meaning depreciation starts in the middle of the month you placed the property in service, regardless of the actual date.',
+      content:
+        'The IRS uses the mid-month convention for rental property, meaning depreciation starts in the middle of the month you placed the property in service, regardless of the actual date.',
     },
     {
       title: 'Tax Shield Value',
-      content: 'Your tax shield is the actual dollar amount you save on taxes due to depreciation. It equals your depreciation deduction multiplied by your marginal tax rate.',
+      content:
+        'Your tax shield is the actual dollar amount you save on taxes due to depreciation. It equals your depreciation deduction multiplied by your marginal tax rate.',
     },
   ]
 
@@ -257,7 +267,8 @@ export const DepreciationSchedule = ({ propertyId }: DepreciationScheduleProps) 
               variant="caption"
               className="text-indigo-500 uppercase tracking-widest font-black"
             >
-              {summary.yearsCompleted} of {Math.ceil(summary.totalDepreciableYears)} years
+              {summary.yearsCompleted} of{' '}
+              {Math.ceil(summary.totalDepreciableYears)} years
             </Typography>
           </div>
           <div className="h-2 w-full bg-black/10 dark:bg-white/5 rounded-full overflow-hidden">
@@ -273,7 +284,8 @@ export const DepreciationSchedule = ({ propertyId }: DepreciationScheduleProps) 
               variant="overline"
               className="text-slate-400 dark:text-slate-500"
             >
-              Accumulated: ${Math.round(summary.accumulatedDepreciation).toLocaleString()}
+              Accumulated: $
+              {Math.round(summary.accumulatedDepreciation).toLocaleString()}
             </Typography>
             <Typography
               variant="overline"
@@ -295,44 +307,80 @@ export const DepreciationSchedule = ({ propertyId }: DepreciationScheduleProps) 
         </Typography>
         <div className="space-y-2">
           <div className="flex justify-between">
-            <Typography variant="body-sm" className="text-slate-600 dark:text-slate-400">
+            <Typography
+              variant="body-sm"
+              className="text-slate-600 dark:text-slate-400"
+            >
               Purchase Price
             </Typography>
-            <Typography variant="body-sm" weight="bold" className="tabular-nums">
+            <Typography
+              variant="body-sm"
+              weight="bold"
+              className="tabular-nums"
+            >
               ${costBasis.purchasePrice.toLocaleString()}
             </Typography>
           </div>
           {costBasis.closingCosts > 0 && (
             <div className="flex justify-between">
-              <Typography variant="body-sm" className="text-slate-600 dark:text-slate-400">
+              <Typography
+                variant="body-sm"
+                className="text-slate-600 dark:text-slate-400"
+              >
                 Closing Costs
               </Typography>
-              <Typography variant="body-sm" weight="bold" className="tabular-nums">
+              <Typography
+                variant="body-sm"
+                weight="bold"
+                className="tabular-nums"
+              >
                 +${costBasis.closingCosts.toLocaleString()}
               </Typography>
             </div>
           )}
           <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-white/10">
-            <Typography variant="body-sm" className="text-slate-600 dark:text-slate-400">
+            <Typography
+              variant="body-sm"
+              className="text-slate-600 dark:text-slate-400"
+            >
               Total Cost Basis
             </Typography>
-            <Typography variant="body-sm" weight="bold" className="tabular-nums">
+            <Typography
+              variant="body-sm"
+              weight="bold"
+              className="tabular-nums"
+            >
               ${costBasis.totalCostBasis.toLocaleString()}
             </Typography>
           </div>
           <div className="flex justify-between">
-            <Typography variant="body-sm" className="text-slate-600 dark:text-slate-400">
+            <Typography
+              variant="body-sm"
+              className="text-slate-600 dark:text-slate-400"
+            >
               Land Value (Est. 20%)
             </Typography>
-            <Typography variant="body-sm" weight="bold" className="tabular-nums text-rose-500">
+            <Typography
+              variant="body-sm"
+              weight="bold"
+              className="tabular-nums text-rose-500"
+            >
               -${Math.round(costBasis.landValue).toLocaleString()}
             </Typography>
           </div>
           <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-white/10">
-            <Typography variant="body-sm" weight="bold" className="text-slate-900 dark:text-white">
+            <Typography
+              variant="body-sm"
+              weight="bold"
+              className="text-slate-900 dark:text-white"
+            >
               Depreciable Basis
             </Typography>
-            <Typography variant="body-sm" weight="black" className="tabular-nums text-indigo-500">
+            <Typography
+              variant="body-sm"
+              weight="black"
+              className="tabular-nums text-indigo-500"
+            >
               ${Math.round(costBasis.depreciableBasis).toLocaleString()}
             </Typography>
           </div>
@@ -342,11 +390,19 @@ export const DepreciationSchedule = ({ propertyId }: DepreciationScheduleProps) 
       {/* Depreciation Type Badge */}
       <div className="flex items-center gap-2 mb-6">
         <div className="px-3 py-1 bg-indigo-500/10 rounded-full">
-          <Typography variant="caption" className="text-indigo-500 uppercase tracking-widest font-black">
-            {depreciationYears === RESIDENTIAL_DEPRECIATION_YEARS ? 'Residential' : 'Commercial'}
+          <Typography
+            variant="caption"
+            className="text-indigo-500 uppercase tracking-widest font-black"
+          >
+            {depreciationYears === RESIDENTIAL_DEPRECIATION_YEARS
+              ? 'Residential'
+              : 'Commercial'}
           </Typography>
         </div>
-        <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
+        <Typography
+          variant="caption"
+          className="text-slate-500 dark:text-slate-400"
+        >
           {depreciationYears}-year schedule
         </Typography>
       </div>
@@ -357,22 +413,34 @@ export const DepreciationSchedule = ({ propertyId }: DepreciationScheduleProps) 
           <thead>
             <tr className="bg-slate-100 dark:bg-white/5">
               <th className="text-left py-3 px-4">
-                <Typography variant="caption" className="uppercase tracking-widest text-slate-500">
+                <Typography
+                  variant="caption"
+                  className="uppercase tracking-widest text-slate-500"
+                >
                   Year
                 </Typography>
               </th>
               <th className="text-right py-3 px-4">
-                <Typography variant="caption" className="uppercase tracking-widest text-slate-500">
+                <Typography
+                  variant="caption"
+                  className="uppercase tracking-widest text-slate-500"
+                >
                   Depreciation
                 </Typography>
               </th>
               <th className="text-right py-3 px-4 hidden sm:table-cell">
-                <Typography variant="caption" className="uppercase tracking-widest text-slate-500">
+                <Typography
+                  variant="caption"
+                  className="uppercase tracking-widest text-slate-500"
+                >
                   Accumulated
                 </Typography>
               </th>
               <th className="text-right py-3 px-4 hidden md:table-cell">
-                <Typography variant="caption" className="uppercase tracking-widest text-slate-500">
+                <Typography
+                  variant="caption"
+                  className="uppercase tracking-widest text-slate-500"
+                >
                   Remaining
                 </Typography>
               </th>
@@ -390,7 +458,11 @@ export const DepreciationSchedule = ({ propertyId }: DepreciationScheduleProps) 
               >
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-2">
-                    <Typography variant="body-sm" weight="bold" className="tabular-nums">
+                    <Typography
+                      variant="body-sm"
+                      weight="bold"
+                      className="tabular-nums"
+                    >
                       {item.year}
                     </Typography>
                     {item.year === currentYear && (
@@ -401,17 +473,27 @@ export const DepreciationSchedule = ({ propertyId }: DepreciationScheduleProps) 
                   </div>
                 </td>
                 <td className="text-right py-3 px-4">
-                  <Typography variant="body-sm" weight="bold" className="tabular-nums">
+                  <Typography
+                    variant="body-sm"
+                    weight="bold"
+                    className="tabular-nums"
+                  >
                     ${item.depreciation.toLocaleString()}
                   </Typography>
                 </td>
                 <td className="text-right py-3 px-4 hidden sm:table-cell">
-                  <Typography variant="body-sm" className="tabular-nums text-slate-500">
+                  <Typography
+                    variant="body-sm"
+                    className="tabular-nums text-slate-500"
+                  >
                     ${item.accumulatedDepreciation.toLocaleString()}
                   </Typography>
                 </td>
                 <td className="text-right py-3 px-4 hidden md:table-cell">
-                  <Typography variant="body-sm" className="tabular-nums text-slate-500">
+                  <Typography
+                    variant="body-sm"
+                    className="tabular-nums text-slate-500"
+                  >
                     ${item.remainingBasis.toLocaleString()}
                   </Typography>
                 </td>
@@ -429,9 +511,7 @@ export const DepreciationSchedule = ({ propertyId }: DepreciationScheduleProps) 
           onClick={() => setShowFullSchedule(!showFullSchedule)}
           className="w-full mt-4 text-indigo-500"
         >
-          {showFullSchedule
-            ? 'Show Less'
-            : `Show All ${schedule.length} Years`}
+          {showFullSchedule ? 'Show Less' : `Show All ${schedule.length} Years`}
         </Button>
       )}
     </Card>

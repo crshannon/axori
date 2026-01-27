@@ -8,9 +8,15 @@ interface UseWizardNavigationProps {
   isAddressSelected: boolean
   userId: string | null
   portfolioId: string | null
-  saveProperty: (formData: PropertyFormData, isAddressSelected: boolean) => Promise<string | null>
+  saveProperty: (
+    formData: PropertyFormData,
+    isAddressSelected: boolean,
+  ) => Promise<string | null>
   fetchRentcastData: (propertyId: string) => Promise<any>
-  completePropertyWizard: (formData: PropertyFormData, isAddressSelected: boolean) => Promise<boolean>
+  completePropertyWizard: (
+    formData: PropertyFormData,
+    isAddressSelected: boolean,
+  ) => Promise<boolean>
   formData: PropertyFormData
 }
 
@@ -128,4 +134,3 @@ export const useWizardNavigation = ({
     prevStep,
   }
 }
-

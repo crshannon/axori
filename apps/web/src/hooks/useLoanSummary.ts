@@ -11,7 +11,7 @@ export interface LoanSummary {
 
 /**
  * Calculate loan summary metrics from an array of loans
- * 
+ *
  * @param loans - Array of active loans
  * @returns Summary metrics including total debt, weighted interest rate, and total monthly payment
  */
@@ -36,17 +36,19 @@ export function useLoanSummary(loans: Array<Loan> | undefined): LoanSummary {
       // Convert numeric strings to numbers
       const balance = loan.currentBalance ? Number(loan.currentBalance) : 0
       const interestRate = loan.interestRate ? Number(loan.interestRate) : 0
-      
+
       // Calculate monthly payment with fallback logic (matches formatLoanData)
       const monthlyPAndI = loan.monthlyPrincipalInterest
         ? Number(loan.monthlyPrincipalInterest)
         : null
-      const monthlyEscrow = loan.monthlyEscrow ? Number(loan.monthlyEscrow) : null
+      const monthlyEscrow = loan.monthlyEscrow
+        ? Number(loan.monthlyEscrow)
+        : null
       const monthlyPayment = loan.totalMonthlyPayment
         ? Number(loan.totalMonthlyPayment)
         : monthlyPAndI && monthlyEscrow
           ? monthlyPAndI + monthlyEscrow
-          : monthlyPAndI ?? 0
+          : (monthlyPAndI ?? 0)
 
       totalDebt += balance
       totalMonthlyPayment += monthlyPayment
@@ -76,4 +78,3 @@ export function useLoanSummary(loans: Array<Loan> | undefined): LoanSummary {
     }
   }, [loans])
 }
-

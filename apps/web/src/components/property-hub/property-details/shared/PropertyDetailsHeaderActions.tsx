@@ -13,7 +13,7 @@ export const PropertyDetailsHeaderActions = ({
   // Determine the badge based on role
   const getRoleBadge = () => {
     if (!role) return { text: 'CLAIMED ASSET', variant: 'emerald' }
-    
+
     switch (role) {
       case 'owner':
         return { text: 'OWNER', variant: 'emerald' }
