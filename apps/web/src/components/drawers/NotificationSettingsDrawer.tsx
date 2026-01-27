@@ -14,13 +14,8 @@ export const NotificationSettingsDrawer = ({
   onClose,
   propertyId,
 }: NotificationSettingsDrawerProps) => {
-  const {
-    formData,
-    updateNotification,
-    saveSettings,
-    isSaving,
-    saveError,
-  } = usePropertySettings(propertyId)
+  const { formData, updateNotification, saveSettings, isSaving, saveError } =
+    usePropertySettings(propertyId)
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [localNotifications, setLocalNotifications] = useState({
@@ -55,10 +50,7 @@ export const NotificationSettingsDrawer = ({
     try {
       // Update notification settings via hook (for UI state consistency)
       Object.entries(localNotifications).forEach(([key, value]) => {
-        updateNotification(
-          key as keyof typeof localNotifications,
-          value,
-        )
+        updateNotification(key as keyof typeof localNotifications, value)
       })
 
       // Save settings with local notifications to avoid stale closure data
@@ -168,7 +160,9 @@ export const NotificationSettingsDrawer = ({
           <ErrorCard
             message={
               errors.submit ||
-              (saveError instanceof Error ? saveError.message : 'Failed to save')
+              (saveError instanceof Error
+                ? saveError.message
+                : 'Failed to save')
             }
           />
         )}

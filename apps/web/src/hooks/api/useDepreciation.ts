@@ -122,8 +122,12 @@ export function useUpdateDepreciation() {
       )
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['depreciation', variables.propertyId] })
-      queryClient.invalidateQueries({ queryKey: ['properties', variables.propertyId] })
+      queryClient.invalidateQueries({
+        queryKey: ['depreciation', variables.propertyId],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['properties', variables.propertyId],
+      })
     },
   })
 }
@@ -141,12 +145,11 @@ export function useImprovements(propertyId: string | null | undefined) {
         throw new Error('User not authenticated or property ID missing')
       }
 
-      const result = await apiFetch<{ improvements: Array<PropertyImprovement> }>(
-        `/api/properties/${propertyId}/improvements`,
-        {
-          clerkId: user.id,
-        },
-      )
+      const result = await apiFetch<{
+        improvements: Array<PropertyImprovement>
+      }>(`/api/properties/${propertyId}/improvements`, {
+        clerkId: user.id,
+      })
 
       return result.improvements
     },
@@ -181,8 +184,12 @@ export function useAddImprovement() {
       )
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['improvements', variables.propertyId] })
-      queryClient.invalidateQueries({ queryKey: ['depreciation', variables.propertyId] })
+      queryClient.invalidateQueries({
+        queryKey: ['improvements', variables.propertyId],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['depreciation', variables.propertyId],
+      })
     },
   })
 }
@@ -200,12 +207,11 @@ export function useCostSegStudies(propertyId: string | null | undefined) {
         throw new Error('User not authenticated or property ID missing')
       }
 
-      const result = await apiFetch<{ costSegStudies: Array<CostSegregationStudy> }>(
-        `/api/properties/${propertyId}/cost-segregation`,
-        {
-          clerkId: user.id,
-        },
-      )
+      const result = await apiFetch<{
+        costSegStudies: Array<CostSegregationStudy>
+      }>(`/api/properties/${propertyId}/cost-segregation`, {
+        clerkId: user.id,
+      })
 
       return result.costSegStudies
     },
@@ -240,8 +246,12 @@ export function useAddCostSegStudy() {
       )
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['cost-seg-studies', variables.propertyId] })
-      queryClient.invalidateQueries({ queryKey: ['depreciation', variables.propertyId] })
+      queryClient.invalidateQueries({
+        queryKey: ['cost-seg-studies', variables.propertyId],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['depreciation', variables.propertyId],
+      })
     },
   })
 }
@@ -259,12 +269,11 @@ export function useDepreciationRecords(propertyId: string | null | undefined) {
         throw new Error('User not authenticated or property ID missing')
       }
 
-      const result = await apiFetch<{ depreciationRecords: Array<AnnualDepreciationRecord> }>(
-        `/api/properties/${propertyId}/depreciation-records`,
-        {
-          clerkId: user.id,
-        },
-      )
+      const result = await apiFetch<{
+        depreciationRecords: Array<AnnualDepreciationRecord>
+      }>(`/api/properties/${propertyId}/depreciation-records`, {
+        clerkId: user.id,
+      })
 
       return result.depreciationRecords
     },
@@ -299,8 +308,12 @@ export function useAddDepreciationRecord() {
       )
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['depreciation-records', variables.propertyId] })
-      queryClient.invalidateQueries({ queryKey: ['depreciation', variables.propertyId] })
+      queryClient.invalidateQueries({
+        queryKey: ['depreciation-records', variables.propertyId],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['depreciation', variables.propertyId],
+      })
     },
   })
 }

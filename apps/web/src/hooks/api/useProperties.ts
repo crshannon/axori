@@ -256,7 +256,11 @@ export function useCreateProperty() {
   const { user } = useUser()
 
   return useMutation({
-    mutationFn: async (data: Omit<PropertyInsert, 'portfolioId' | 'addedBy'> & { portfolioId: string }) => {
+    mutationFn: async (
+      data: Omit<PropertyInsert, 'portfolioId' | 'addedBy'> & {
+        portfolioId: string
+      },
+    ) => {
       if (!user?.id) {
         throw new Error('User not authenticated')
       }
@@ -271,7 +275,9 @@ export function useCreateProperty() {
       })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['properties', 'drafts', 'me'] })
+      queryClient.invalidateQueries({
+        queryKey: ['properties', 'drafts', 'me'],
+      })
       queryClient.invalidateQueries({ queryKey: ['properties'] })
     },
   })
@@ -300,7 +306,9 @@ export function useUpdateProperty() {
       })
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['properties', 'drafts', 'me'] })
+      queryClient.invalidateQueries({
+        queryKey: ['properties', 'drafts', 'me'],
+      })
       queryClient.invalidateQueries({ queryKey: ['properties'] })
       // Invalidate specific property query to refresh finance page data (includes loans)
       queryClient.invalidateQueries({ queryKey: ['properties', variables.id] })
@@ -330,7 +338,9 @@ export function useCompleteProperty() {
       )
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['properties', 'drafts', 'me'] })
+      queryClient.invalidateQueries({
+        queryKey: ['properties', 'drafts', 'me'],
+      })
       queryClient.invalidateQueries({ queryKey: ['properties'] })
     },
   })
@@ -356,7 +366,9 @@ export function useDeleteProperty() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['properties'] })
-      queryClient.invalidateQueries({ queryKey: ['properties', 'drafts', 'me'] })
+      queryClient.invalidateQueries({
+        queryKey: ['properties', 'drafts', 'me'],
+      })
     },
   })
 }
@@ -388,4 +400,3 @@ export function useProperties(portfolioId?: string | null) {
     staleTime: 30 * 1000, // 30 seconds
   })
 }
-

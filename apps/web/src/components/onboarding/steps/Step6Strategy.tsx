@@ -97,4 +97,3 @@ export function Step6Strategy({
     </div>
   )
 }
-

@@ -44,7 +44,7 @@ function notifyListeners(): void {
 export function addToast(
   type: ToastType,
   message: string,
-  duration: number = 5000
+  duration: number = 5000,
 ): string {
   const id = `toast_${Date.now()}_${Math.random().toString(36).substring(7)}`
   const toast: Toast = { id, type, message, duration }
@@ -82,8 +82,12 @@ export function clearToasts(): void {
  * Convenience functions for different toast types
  */
 export const toast = {
-  success: (message: string, duration?: number) => addToast('success', message, duration),
-  error: (message: string, duration?: number) => addToast('error', message, duration),
-  warning: (message: string, duration?: number) => addToast('warning', message, duration),
-  info: (message: string, duration?: number) => addToast('info', message, duration),
+  success: (message: string, duration?: number) =>
+    addToast('success', message, duration),
+  error: (message: string, duration?: number) =>
+    addToast('error', message, duration),
+  warning: (message: string, duration?: number) =>
+    addToast('warning', message, duration),
+  info: (message: string, duration?: number) =>
+    addToast('info', message, duration),
 }

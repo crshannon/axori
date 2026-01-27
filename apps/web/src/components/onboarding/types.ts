@@ -1,4 +1,8 @@
-export type OnboardingPhase = 'Explorer' | 'Starting' | 'Building' | 'Optimizing'
+export type OnboardingPhase =
+  | 'Explorer'
+  | 'Starting'
+  | 'Building'
+  | 'Optimizing'
 
 export type OnboardingPersona =
   | 'House Hacker'
@@ -9,9 +13,16 @@ export type OnboardingPersona =
 
 export type OnboardingOwnership = 'Personal' | 'LLC'
 
-export type OnboardingStrategy = 'Cash Flow' | 'Appreciation' | 'BRRRR' | 'Hybrid'
+export type OnboardingStrategy =
+  | 'Cash Flow'
+  | 'Appreciation'
+  | 'BRRRR'
+  | 'Hybrid'
 
-export type MarketRelationshipType = 'owns_property' | 'watching' | 'target_market'
+export type MarketRelationshipType =
+  | 'owns_property'
+  | 'watching'
+  | 'target_market'
 
 export interface Market {
   id: string
@@ -72,4 +83,3 @@ export interface OnboardingUpdate {
   firstName?: string | null
   lastName?: string | null
 }
-

@@ -87,7 +87,10 @@ export const usePropertyFormData = ({
         city: existingProperty.city || '',
         state: existingProperty.state || '',
         zipCode: existingProperty.zipCode || '',
-        propertyType: existingProperty.propertyType || characteristics?.propertyType || 'Single Family',
+        propertyType:
+          existingProperty.propertyType ||
+          characteristics?.propertyType ||
+          'Single Family',
         latitude: existingProperty.latitude
           ? parseFloat(existingProperty.latitude)
           : null,
@@ -105,12 +108,15 @@ export const usePropertyFormData = ({
         lotSize: characteristics?.lotSize ?? prev.lotSize,
 
         // Step 2: Valuation data
-        purchasePrice: valuation?.purchasePrice?.toString() ?? prev.purchasePrice,
-        currentValue: valuation?.currentMarketValue?.toString() ?? prev.currentValue,
+        purchasePrice:
+          valuation?.purchasePrice?.toString() ?? prev.purchasePrice,
+        currentValue:
+          valuation?.currentMarketValue?.toString() ?? prev.currentValue,
 
         // Step 3: Acquisition data
         purchaseDate: acquisition?.purchaseDate ?? prev.purchaseDate,
-        closingCosts: acquisition?.closingCosts?.toString() ?? prev.closingCosts,
+        closingCosts:
+          acquisition?.closingCosts?.toString() ?? prev.closingCosts,
         entityType: acquisition?.entityType ?? prev.entityType,
         entityName: acquisition?.entityName ?? prev.entityName,
 
@@ -120,7 +126,11 @@ export const usePropertyFormData = ({
         interestRate: activeLoan?.interestRate?.toString() ?? prev.interestRate,
         loanTerm: activeLoan?.loanTerm?.toString() ?? prev.loanTerm,
         provider: activeLoan?.lenderName ?? prev.provider,
-        financeType: activeLoan ? (activeLoan.loanType === 'cash' ? 'Cash' : 'Mortgage') : prev.financeType,
+        financeType: activeLoan
+          ? activeLoan.loanType === 'cash'
+            ? 'Cash'
+            : 'Mortgage'
+          : prev.financeType,
 
         // Step 5: Rental income
         isRented: rentalIncome?.rentSource === 'lease' ? 'Yes' : 'No',
@@ -129,7 +139,11 @@ export const usePropertyFormData = ({
         leaseEnd: rentalIncome?.leaseEndDate ?? prev.leaseEnd,
 
         // Step 5: Management (from property_management table)
-        mgmtType: management?.isSelfManaged ? 'Self-Managed' : management?.companyName ? 'Property Manager' : prev.mgmtType,
+        mgmtType: management?.isSelfManaged
+          ? 'Self-Managed'
+          : management?.companyName
+            ? 'Property Manager'
+            : prev.mgmtType,
         pmCompany: management?.companyName ?? prev.pmCompany,
       }))
       setIsAddressSelected(!!existingProperty.address)
@@ -192,12 +206,30 @@ export const usePropertyFormData = ({
 
         return {
           ...prev,
-          beds: shouldUseBeds && rentcastData.bedrooms ? rentcastData.bedrooms : prev.beds,
-          baths: shouldUseBaths && rentcastData.bathrooms ? rentcastData.bathrooms : prev.baths,
-          sqft: shouldUseSqft && rentcastData.squareFootage ? rentcastData.squareFootage : prev.sqft,
-          lotSize: shouldUseLotSize && rentcastData.lotSize ? rentcastData.lotSize : prev.lotSize,
-          yearBuilt: shouldUseYearBuilt && rentcastData.yearBuilt ? rentcastData.yearBuilt : prev.yearBuilt,
-          propertyType: shouldUsePropertyType && rentcastData.propertyType ? rentcastData.propertyType : prev.propertyType,
+          beds:
+            shouldUseBeds && rentcastData.bedrooms
+              ? rentcastData.bedrooms
+              : prev.beds,
+          baths:
+            shouldUseBaths && rentcastData.bathrooms
+              ? rentcastData.bathrooms
+              : prev.baths,
+          sqft:
+            shouldUseSqft && rentcastData.squareFootage
+              ? rentcastData.squareFootage
+              : prev.sqft,
+          lotSize:
+            shouldUseLotSize && rentcastData.lotSize
+              ? rentcastData.lotSize
+              : prev.lotSize,
+          yearBuilt:
+            shouldUseYearBuilt && rentcastData.yearBuilt
+              ? rentcastData.yearBuilt
+              : prev.yearBuilt,
+          propertyType:
+            shouldUsePropertyType && rentcastData.propertyType
+              ? rentcastData.propertyType
+              : prev.propertyType,
         }
       })
     }
@@ -324,4 +356,3 @@ export const usePropertyFormData = ({
     formatCurrency,
   }
 }
-

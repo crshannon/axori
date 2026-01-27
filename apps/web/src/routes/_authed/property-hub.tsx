@@ -26,9 +26,7 @@ import {
 } from '@/hooks/api'
 import { PageHeader } from '@/components/layouts/PageHeader'
 import { DeletePropertyModal } from '@/components/property-hub/DeletePropertyModal'
-import { cn } from '@/utils/helpers'
 import { useOnboardingStatus } from '@/utils/onboarding'
-import { useTheme } from '@/utils/providers/theme-provider'
 import {
   ActivePropertiesGrid,
   ActivePropertiesList,
@@ -70,8 +68,6 @@ function RouteComponent() {
   const { isSignedIn, isLoaded } = useUser()
   const { completed: onboardingCompleted, isLoading: onboardingLoading } =
     useOnboardingStatus()
-  const { appTheme } = useTheme()
-  const isDark = appTheme === 'dark'
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchQuery, setSearchQuery] = useState('')
   const [deletePropertyId, setDeletePropertyId] = useState<string | null>(null)
@@ -90,17 +86,23 @@ function RouteComponent() {
   const { data: portfolio } = useDefaultPortfolio()
   const { data: properties = [] } = useProperties(portfolio?.id || null)
   const deleteProperty = useDeleteProperty()
-  
+
   // Get permissions for property-level access filtering
-  const { hasPropertyAccess, isLoading: permissionsLoading } = usePermissions(portfolio?.id || null)
+  const { hasPropertyAccess, isLoading: permissionsLoading } = usePermissions(
+    portfolio?.id || null,
+  )
 
   // Filter properties to only show those the user has access to (defense in depth)
   // The API already filters, but we add client-side filtering for added security
   const accessibleProperties = properties.filter((p) => hasPropertyAccess(p.id))
-  
+
   // Separate active and draft properties from accessible properties
-  const activeProperties = accessibleProperties.filter((p) => p.status === 'active')
-  const draftProperties = accessibleProperties.filter((p) => p.status === 'draft')
+  const activeProperties = accessibleProperties.filter(
+    (p) => p.status === 'active',
+  )
+  const draftProperties = accessibleProperties.filter(
+    (p) => p.status === 'draft',
+  )
 
   // Check if we're on a property detail route by checking if pathname matches pattern
   const isPropertyDetailRoute =
@@ -164,14 +166,7 @@ function RouteComponent() {
         title="Property Hub"
         rightContent={
           <div className="flex flex-wrap gap-4">
-            <button
-              className={cn(
-                'px-6 py-3 rounded-2xl flex items-center gap-3 transition-all font-black text-[10px] uppercase tracking-widest border',
-                isDark
-                  ? 'bg-white/5 border-white/5 hover:bg-white/10 text-white'
-                  : 'bg-white border-slate-200 hover:shadow-md text-slate-900',
-              )}
-            >
+            <button className="px-6 py-3 rounded-2xl flex items-center gap-3 transition-all font-black text-[10px] uppercase tracking-widest border bg-white border-slate-200 hover:shadow-md text-slate-900 dark:bg-white/5 dark:border-white/5 dark:hover:bg-white/10 dark:text-white">
               <svg
                 width="16"
                 height="16"
@@ -186,14 +181,7 @@ function RouteComponent() {
               </svg>
               Bulk Upload
             </button>
-            <button
-              className={cn(
-                'px-6 py-3 rounded-2xl flex items-center gap-3 transition-all font-black text-[10px] uppercase tracking-widest border',
-                isDark
-                  ? 'bg-white/5 border-white/5 hover:bg-white/10 text-white'
-                  : 'bg-white border-slate-200 hover:shadow-md text-slate-900',
-              )}
-            >
+            <button className="px-6 py-3 rounded-2xl flex items-center gap-3 transition-all font-black text-[10px] uppercase tracking-widest border bg-white border-slate-200 hover:shadow-md text-slate-900 dark:bg-white/5 dark:border-white/5 dark:hover:bg-white/10 dark:text-white">
               <svg
                 width="16"
                 height="16"
@@ -211,12 +199,7 @@ function RouteComponent() {
             <Link
               to="/property-hub/add"
               search={{ propertyId: undefined, step: undefined }}
-              className={cn(
-                'px-8 py-3 rounded-2xl flex items-center gap-3 transition-all font-black text-[10px] uppercase tracking-widest hover:scale-105',
-                isDark
-                  ? 'bg-[#E8FF4D] text-black'
-                  : 'bg-violet-600 text-white shadow-xl shadow-violet-200',
-              )}
+              className="px-8 py-3 rounded-2xl flex items-center gap-3 transition-all font-black text-[10px] uppercase tracking-widest hover:scale-105 bg-violet-600 text-white shadow-xl shadow-violet-200 dark:bg-[#E8FF4D] dark:text-black dark:shadow-none"
             >
               <Plus size={16} strokeWidth={3} />
               Add Property
@@ -227,34 +210,46 @@ function RouteComponent() {
 
       <div className="p-8 flex flex-col gap-10">
         <PortfolioStats activeProperties={activeProperties} />
-        <StrategicAlerts />
-        <div className={cn('h-px', isDark ? 'bg-white/10' : 'bg-slate-200')} />
-        <PropertyViewControls
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-        />
-        <DraftProperties
-          draftProperties={filteredDraftProps}
-          onDelete={handleDeleteProperty}
-        />
-        {viewMode === 'grid' && (
-          <ActivePropertiesGrid
-            properties={filteredActiveProps}
-            onPropertyClick={onNavigatePropertyAnalysis}
-            onAddRentalIncome={handleOpenRentalIncomeDrawer}
-            onAddCurrentValue={handleOpenValuationDrawer}
-          />
-        )}
-        {viewMode === 'list' && (
-          <ActivePropertiesList
-            properties={filteredActiveProps}
-            onPropertyClick={onNavigatePropertyAnalysis}
-            onAddRentalIncome={handleOpenRentalIncomeDrawer}
-            onAddCurrentValue={handleOpenValuationDrawer}
-          />
-        )}
+
+        {/* Two-column layout: Properties (2/3) | Strategic Alerts (1/3) */}
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Left column: Property controls and listings */}
+          <div className="flex-1 lg:w-2/3 flex flex-col gap-8">
+            <PropertyViewControls
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+            />
+            <DraftProperties
+              draftProperties={filteredDraftProps}
+              onDelete={handleDeleteProperty}
+            />
+            {viewMode === 'grid' && (
+              <ActivePropertiesGrid
+                properties={filteredActiveProps}
+                onPropertyClick={onNavigatePropertyAnalysis}
+                onAddRentalIncome={handleOpenRentalIncomeDrawer}
+                onAddCurrentValue={handleOpenValuationDrawer}
+              />
+            )}
+            {viewMode === 'list' && (
+              <ActivePropertiesList
+                properties={filteredActiveProps}
+                onPropertyClick={onNavigatePropertyAnalysis}
+                onAddRentalIncome={handleOpenRentalIncomeDrawer}
+                onAddCurrentValue={handleOpenValuationDrawer}
+              />
+            )}
+          </div>
+
+          {/* Right column: Strategic Alerts */}
+          <div className="lg:w-1/3">
+            <StrategicAlerts />
+          </div>
+        </div>
+
+        <div className="h-px bg-slate-200 dark:bg-white/10" />
         <ManagementTopology activeProperties={activeProperties} />
       </div>
 

@@ -25,4 +25,3 @@ export interface LearningSnippet {
   /** Link to full glossary entry for "Learn More" functionality */
   glossarySlug?: string
 }
-

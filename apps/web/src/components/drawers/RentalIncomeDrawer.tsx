@@ -92,7 +92,8 @@ export const RentalIncomeDrawer = ({
     // Validate required fields
     const validationErrors: Record<string, string> = {}
     if (!formData.monthlyRent || Number(formData.monthlyRent) <= 0) {
-      validationErrors.monthlyRent = 'Monthly rent is required and must be greater than 0'
+      validationErrors.monthlyRent =
+        'Monthly rent is required and must be greater than 0'
     }
 
     if (Object.keys(validationErrors).length > 0) {

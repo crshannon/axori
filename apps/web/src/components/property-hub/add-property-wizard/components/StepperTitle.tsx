@@ -17,4 +17,3 @@ export const StepperTitle = ({ title, subtitle }: StepperTitleProps) => (
     )}
   </div>
 )
-

@@ -51,11 +51,7 @@ export const Route = createFileRoute(
 function RouteComponent() {
   const { propertyId } = Route.useParams()
 
-  const {
-    isLoading,
-    hasError,
-    propertyError,
-  } = usePropertySettings(propertyId)
+  const { isLoading, hasError, propertyError } = usePropertySettings(propertyId)
 
   // Track selected DNA strategy locally (separate from form data for now)
   const selectedDna = 'Yield Maximization' // This would come from portfolio settings
@@ -90,7 +86,9 @@ function RouteComponent() {
             Failed to load property settings
           </h3>
           <p className="text-sm opacity-60">
-            {propertyError instanceof Error ? propertyError.message : 'Unknown error'}
+            {propertyError instanceof Error
+              ? propertyError.message
+              : 'Unknown error'}
           </p>
         </div>
       </div>
@@ -104,8 +102,14 @@ function RouteComponent() {
         <div className="lg:col-span-8 space-y-8">
           <AssetConfiguration propertyId={propertyId} />
           <AcquisitionMetadata propertyId={propertyId} />
-          <AssetDnaCalibration propertyId={propertyId} selectedDna={selectedDna} />
-          <StakeholderMatrix propertyId={propertyId} collaborators={collaborators} />
+          <AssetDnaCalibration
+            propertyId={propertyId}
+            selectedDna={selectedDna}
+          />
+          <StakeholderMatrix
+            propertyId={propertyId}
+            collaborators={collaborators}
+          />
         </div>
 
         {/* Sidebar: Engine Presumptions & Notifs */}

@@ -19,7 +19,9 @@ interface PaperLossComparisonProps {
  * PaperLossComparison component - Shows "paper loss" vs actual cash flow
  * Demonstrates how depreciation creates tax-advantaged income
  */
-export const PaperLossComparison = ({ propertyId }: PaperLossComparisonProps) => {
+export const PaperLossComparison = ({
+  propertyId,
+}: PaperLossComparisonProps) => {
   const { data: property, isLoading } = useProperty(propertyId)
 
   if (isLoading || !property) {
@@ -52,12 +54,18 @@ export const PaperLossComparison = ({ propertyId }: PaperLossComparisonProps) =>
 
   // Get operating expenses
   const opex = property.operatingExpenses
-  const propertyTax = opex?.propertyTaxAnnual ? Number(opex.propertyTaxAnnual) : 0
+  const propertyTax = opex?.propertyTaxAnnual
+    ? Number(opex.propertyTaxAnnual)
+    : 0
   const insurance = opex?.insuranceAnnual ? Number(opex.insuranceAnnual) : 0
   const hoaMonthly = opex?.hoaMonthly ? Number(opex.hoaMonthly) : 0
-  const managementRate = opex?.managementRate ? Number(opex.managementRate) : 0.1
+  const managementRate = opex?.managementRate
+    ? Number(opex.managementRate)
+    : 0.1
   const vacancyRate = opex?.vacancyRate ? Number(opex.vacancyRate) : 0.05
-  const maintenanceRate = opex?.maintenanceRate ? Number(opex.maintenanceRate) : 0.05
+  const maintenanceRate = opex?.maintenanceRate
+    ? Number(opex.maintenanceRate)
+    : 0.05
   const capexRate = opex?.capexRate || '0.05'
 
   // Calculate gross income (after vacancy)
@@ -103,7 +111,10 @@ export const PaperLossComparison = ({ propertyId }: PaperLossComparisonProps) =>
             Paper Loss Analysis
           </Typography>
         </div>
-        <Typography variant="body" className="text-slate-500 dark:text-slate-400">
+        <Typography
+          variant="body"
+          className="text-slate-500 dark:text-slate-400"
+        >
           Add purchase price and income data to analyze paper loss vs cash flow.
         </Typography>
       </Card>
@@ -129,15 +140,18 @@ export const PaperLossComparison = ({ propertyId }: PaperLossComparisonProps) =>
   const learningSnippets = [
     {
       title: 'What is Paper Loss?',
-      content: 'A paper loss occurs when your deductions (including depreciation) exceed your income on paper, even though you\'re receiving positive cash flow. This is one of real estate\'s unique tax advantages.',
+      content:
+        "A paper loss occurs when your deductions (including depreciation) exceed your income on paper, even though you're receiving positive cash flow. This is one of real estate's unique tax advantages.",
     },
     {
       title: 'Phantom Income Problem',
-      content: 'Without depreciation, you would pay taxes on all your rental income even though much of it goes to expenses. Depreciation helps offset this by creating a non-cash deduction.',
+      content:
+        'Without depreciation, you would pay taxes on all your rental income even though much of it goes to expenses. Depreciation helps offset this by creating a non-cash deduction.',
     },
     {
       title: 'Tax-Advantaged Cash Flow',
-      content: 'Your effective cash flow includes both the actual money you receive AND the tax savings from depreciation. This makes real estate income more valuable than ordinary income.',
+      content:
+        'Your effective cash flow includes both the actual money you receive AND the tax savings from depreciation. This makes real estate income more valuable than ordinary income.',
     },
   ]
 
@@ -181,7 +195,10 @@ export const PaperLossComparison = ({ propertyId }: PaperLossComparisonProps) =>
               >
                 Actual Cash Flow
               </Typography>
-              <Typography variant="body-sm" className="text-slate-500 dark:text-slate-400">
+              <Typography
+                variant="body-sm"
+                className="text-slate-500 dark:text-slate-400"
+              >
                 Money in your pocket
               </Typography>
             </div>
@@ -213,14 +230,14 @@ export const PaperLossComparison = ({ propertyId }: PaperLossComparisonProps) =>
               >
                 Paper Loss (Depreciation)
               </Typography>
-              <Typography variant="body-sm" className="text-cyan-500 dark:text-cyan-400">
+              <Typography
+                variant="body-sm"
+                className="text-cyan-500 dark:text-cyan-400"
+              >
                 Non-cash deduction
               </Typography>
             </div>
-            <Typography
-              variant="h3"
-              className="tabular-nums text-cyan-500"
-            >
+            <Typography variant="h3" className="tabular-nums text-cyan-500">
               ${Math.round(comparison.paperLoss).toLocaleString()}
             </Typography>
           </div>
@@ -241,8 +258,13 @@ export const PaperLossComparison = ({ propertyId }: PaperLossComparisonProps) =>
               >
                 Taxable Income
               </Typography>
-              <Typography variant="body-sm" className="text-slate-500 dark:text-slate-400">
-                {hasPaperLoss ? 'Creates a loss to offset other income' : 'Amount subject to taxes'}
+              <Typography
+                variant="body-sm"
+                className="text-slate-500 dark:text-slate-400"
+              >
+                {hasPaperLoss
+                  ? 'Creates a loss to offset other income'
+                  : 'Amount subject to taxes'}
               </Typography>
             </div>
             <Typography
@@ -269,7 +291,10 @@ export const PaperLossComparison = ({ propertyId }: PaperLossComparisonProps) =>
             >
               Annual Tax Savings
             </Typography>
-            <Typography variant="body-sm" className="text-emerald-600 dark:text-emerald-400">
+            <Typography
+              variant="body-sm"
+              className="text-emerald-600 dark:text-emerald-400"
+            >
               at {(DEFAULT_MARGINAL_TAX_RATE * 100).toFixed(0)}% marginal rate
             </Typography>
           </div>
@@ -292,7 +317,10 @@ export const PaperLossComparison = ({ propertyId }: PaperLossComparisonProps) =>
             >
               Effective Cash Flow
             </Typography>
-            <Typography variant="body-sm" className="text-indigo-600 dark:text-indigo-400">
+            <Typography
+              variant="body-sm"
+              className="text-indigo-600 dark:text-indigo-400"
+            >
               Actual cash + tax savings
             </Typography>
           </div>
@@ -314,9 +342,14 @@ export const PaperLossComparison = ({ propertyId }: PaperLossComparisonProps) =>
           >
             Paper Loss Created
           </Typography>
-          <Typography variant="body-sm" className="text-amber-600 dark:text-amber-400">
-            This ${Math.abs(Math.round(comparison.taxableIncome)).toLocaleString()} loss can offset 
-            other passive income or be carried forward (subject to passive activity rules).
+          <Typography
+            variant="body-sm"
+            className="text-amber-600 dark:text-amber-400"
+          >
+            This $
+            {Math.abs(Math.round(comparison.taxableIncome)).toLocaleString()}{' '}
+            loss can offset other passive income or be carried forward (subject
+            to passive activity rules).
           </Typography>
         </div>
       )}

@@ -6,4 +6,3 @@ export * from './useFinancialPulse'
 export * from './useOperatingCore'
 export * from './useAcquisitionIntel'
 export * from './useMonthlyMetrics'
-

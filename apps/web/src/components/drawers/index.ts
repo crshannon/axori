@@ -11,4 +11,3 @@ export { OperatingExpensesDrawer } from './OperatingExpensesDrawer'
 export { PropertyAcquisitionDrawer } from './PropertyAcqusitionDrawer'
 export { RentalIncomeDrawer } from './RentalIncomeDrawer'
 export { ValuationDrawer } from './ValuationDrawer'
-

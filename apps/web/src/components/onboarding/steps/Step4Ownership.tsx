@@ -6,11 +6,7 @@ interface Step4OwnershipProps {
   isDark: boolean
 }
 
-export function Step4Ownership({
-  form,
-  onNext,
-  isDark,
-}: Step4OwnershipProps) {
+export function Step4Ownership({ form, onNext, isDark }: Step4OwnershipProps) {
   return (
     <div className="animate-in fade-in duration-500">
       <h3 className="text-huge mb-12">Ownership Structure</h3>
@@ -19,7 +15,9 @@ export function Step4Ownership({
           <form.Field name="llcName">
             {(llcNameField) => {
               const isLLC = ownershipField.state.value === 'LLC'
-              const hasLLCName = llcNameField.state.value && llcNameField.state.value.trim().length > 0
+              const hasLLCName =
+                llcNameField.state.value &&
+                llcNameField.state.value.trim().length > 0
               const canProceed = !isLLC || hasLLCName
 
               return (
@@ -76,7 +74,9 @@ export function Step4Ownership({
                         id="llc-name"
                         type="text"
                         value={llcNameField.state.value || ''}
-                        onChange={(e) => llcNameField.handleChange(e.target.value)}
+                        onChange={(e) =>
+                          llcNameField.handleChange(e.target.value)
+                        }
                         placeholder="Enter your LLC name"
                         className={`w-full px-4 py-3 rounded-xl border font-medium bg-transparent ${
                           isDark
@@ -123,4 +123,3 @@ export function Step4Ownership({
     </div>
   )
 }
-

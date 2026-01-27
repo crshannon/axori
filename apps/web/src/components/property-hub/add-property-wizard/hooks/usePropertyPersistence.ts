@@ -19,7 +19,9 @@ export const usePropertyPersistence = ({
   userId,
   portfolioId,
 }: UsePropertyPersistenceProps) => {
-  const [propertyId, setPropertyId] = useState<string | null>(existingPropertyId || null)
+  const [propertyId, setPropertyId] = useState<string | null>(
+    existingPropertyId || null,
+  )
 
   const { data: existingProperty } = useProperty(existingPropertyId || null)
   const createProperty = useCreateProperty()
@@ -58,7 +60,7 @@ export const usePropertyPersistence = ({
 
         // Normalized table data (Step 2: Physical characteristics)
         characteristics: {
-        propertyType: formData.propertyType || null,
+          propertyType: formData.propertyType || null,
           bedrooms: formData.beds || null,
           bathrooms: formData.baths || null,
           squareFeet: formData.sqft || null,
@@ -85,42 +87,51 @@ export const usePropertyPersistence = ({
 
         // Loan data (Step 4: Financing)
         // Only create loan if we have required fields (loanAmount, interestRate, loanTerm, provider)
-        loan: formData.loanAmount && formData.loanAmount.trim() &&
-              formData.interestRate && formData.interestRate.trim() &&
-              formData.loanTerm && formData.loanTerm.trim() &&
-              formData.provider && formData.provider.trim() ? (() => {
-          const originalLoanAmount = parseFloat(formData.loanAmount.replace(/,/g, '')) || 0
-          const interestRate = parseFloat(formData.interestRate) || 0 // percentage 0-100
-          const termMonths = parseInt(formData.loanTerm) * 12
+        loan:
+          formData.loanAmount &&
+          formData.loanAmount.trim() &&
+          formData.interestRate &&
+          formData.interestRate.trim() &&
+          formData.loanTerm &&
+          formData.loanTerm.trim() &&
+          formData.provider &&
+          formData.provider.trim()
+            ? (() => {
+                const originalLoanAmount =
+                  parseFloat(formData.loanAmount.replace(/,/g, '')) || 0
+                const interestRate = parseFloat(formData.interestRate) || 0 // percentage 0-100
+                const termMonths = parseInt(formData.loanTerm) * 12
 
-          // Calculate monthly P&I payment using shared utility
-          const monthlyPrincipalInterest = calculateMonthlyPrincipalInterest(
-            originalLoanAmount,
-            interestRate,
-            termMonths,
-          )
+                // Calculate monthly P&I payment using shared utility
+                const monthlyPrincipalInterest =
+                  calculateMonthlyPrincipalInterest(
+                    originalLoanAmount,
+                    interestRate,
+                    termMonths,
+                  )
 
-          return {
-            loanType: (formData.loanType || 'conventional').toLowerCase(),
-            originalLoanAmount,
-            interestRate, // percentage as number (0-100)
-            termMonths,
-            currentBalance: originalLoanAmount, // Default to original amount for new loans
-            lenderName: formData.provider.trim(),
-            // Status and position (explicit defaults)
-            status: 'active' as const,
-            isPrimary: true,
-            loanPosition: 1, // First loan for this property
-            // Calculated payment fields
-            monthlyPrincipalInterest, // Store calculated P&I
-            totalMonthlyPayment: monthlyPrincipalInterest, // For new loans: P&I = total (no escrow/PMI yet)
-            // Explicit defaults for clarity (database has defaults, but explicit is better)
-            monthlyEscrow: 0,
-            monthlyPmi: 0,
-            monthlyMip: 0,
-            paymentDueDay: 1,
-          }
-        })() : undefined,
+                return {
+                  loanType: (formData.loanType || 'conventional').toLowerCase(),
+                  originalLoanAmount,
+                  interestRate, // percentage as number (0-100)
+                  termMonths,
+                  currentBalance: originalLoanAmount, // Default to original amount for new loans
+                  lenderName: formData.provider.trim(),
+                  // Status and position (explicit defaults)
+                  status: 'active' as const,
+                  isPrimary: true,
+                  loanPosition: 1, // First loan for this property
+                  // Calculated payment fields
+                  monthlyPrincipalInterest, // Store calculated P&I
+                  totalMonthlyPayment: monthlyPrincipalInterest, // For new loans: P&I = total (no escrow/PMI yet)
+                  // Explicit defaults for clarity (database has defaults, but explicit is better)
+                  monthlyEscrow: 0,
+                  monthlyPmi: 0,
+                  monthlyMip: 0,
+                  paymentDueDay: 1,
+                }
+              })()
+            : undefined,
 
         // Rental income data (Step 5: Revenue)
         // Convert rentAmount from comma-formatted string to numeric string for database
@@ -139,7 +150,10 @@ export const usePropertyPersistence = ({
         // Property management (Step 5: Management)
         management: {
           isSelfManaged: formData.mgmtType === 'Self-Managed',
-          companyName: formData.mgmtType === 'Property Manager' ? formData.pmCompany || null : null,
+          companyName:
+            formData.mgmtType === 'Property Manager'
+              ? formData.pmCompany || null
+              : null,
         },
       }
 
@@ -227,4 +241,3 @@ export const usePropertyPersistence = ({
     completePropertyWizard,
   }
 }
-

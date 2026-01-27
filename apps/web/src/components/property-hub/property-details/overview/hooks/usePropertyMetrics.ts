@@ -1,4 +1,12 @@
 import type { Property } from '@/hooks/api/useProperties'
+import {
+  calculateCapExReserve,
+  calculateCashFlow,
+  calculateGrossIncome,
+  calculateNOI,
+  calculateTotalDebtService,
+  calculateTotalFixedExpenses,
+} from '@/utils/finances'
 
 export type MetricStatus = 'success' | 'warning' | 'error' | 'incomplete'
 
@@ -88,7 +96,8 @@ export function usePropertyMetrics(
           id: 'monthlyCashFlow',
           label: 'Cash Flow',
           metric: emptyMetrics.monthlyCashFlow,
-          format: (val: number) => `${val >= 0 ? '+' : ''}$${val.toLocaleString()}`,
+          format: (val: number) =>
+            `${val >= 0 ? '+' : ''}$${val.toLocaleString()}`,
           sub: 'Net Monthly',
           route: getRoutePath('financials'),
         },
@@ -112,31 +121,30 @@ export function usePropertyMetrics(
     }
   }
 
-  // Get current value (from acquisition or valuation)
+  // Get current value (prefer valuation, fallback to acquisition)
   const currentValue =
-    property.acquisition?.currentValue ||
-    property.valuation?.currentValue ||
+    property.valuation?.currentValue ??
+    property.acquisition?.currentValue ??
     null
 
   // Get purchase price (for equity calculation)
-  const purchasePrice = property.acquisition?.purchasePrice || null
+  const purchasePrice = property.acquisition?.purchasePrice ?? null
 
-  // Calculate total loan amount from active primary loans
-  const activeLoan = property.loans?.find(
-    (loan) => loan.status === 'active' && loan.isPrimary,
-  )
-  const totalLoanAmount = activeLoan?.originalLoanAmount
-    ? Number(activeLoan.originalLoanAmount)
-    : 0
+  // Calculate total loan amount from active loans
+  const loans = property.loans ?? []
+  const activeLoans = loans.filter((loan) => loan.status === 'active')
+  const totalLoanAmount = activeLoans.reduce((sum, loan) => {
+    return sum + (loan.currentBalance ? Number(loan.currentBalance) : 0)
+  }, 0)
 
-  // Calculate equity (current value - loan balance, or purchase price - loan amount if no current value)
+  // Calculate equity (current value - loan balance)
   let equity: MetricWithStatus
-  if (currentValue !== null) {
+  if (currentValue !== null && currentValue > 0) {
     equity = {
       value: currentValue - totalLoanAmount,
       status: 'success',
     }
-  } else if (purchasePrice !== null) {
+  } else if (purchasePrice !== null && purchasePrice > 0) {
     equity = {
       value: purchasePrice - totalLoanAmount,
       status: 'incomplete',
@@ -150,48 +158,66 @@ export function usePropertyMetrics(
     }
   }
 
-  // Get monthly rent
-  const monthlyRent = property.rentalIncome?.monthlyRent
-    ? Number(property.rentalIncome.monthlyRent)
-    : 0
+  // Calculate gross income using shared utility
+  const transactions = property.transactions ?? []
+  const grossIncome = calculateGrossIncome(property.rentalIncome, transactions)
 
-  // Calculate monthly operating expenses
-  // Note: operatingExpenses type is currently {} in the interface
-  // For now, we'll compute with 0 expenses if not available
-  // TODO: Update Property interface with full operatingExpenses type
-  const monthlyExpenses = 0 // Will be calculated when operatingExpenses interface is updated
-  // TODO: Check hasOperatingExpenses when operatingExpenses interface is updated
+  // Check if we have rental income configured
+  const hasRentalIncome = grossIncome > 0
 
-  // Calculate monthly loan payment
-  const monthlyLoanPayment = activeLoan?.monthlyPrincipalInterest
-    ? Number(activeLoan.monthlyPrincipalInterest)
-    : activeLoan?.interestRate && totalLoanAmount > 0 && activeLoan.termMonths
-      ? (Number(activeLoan.interestRate) / 100 / 12) * totalLoanAmount +
-        totalLoanAmount / Number(activeLoan.termMonths)
-      : 0
+  // Calculate operating expenses using shared utility
+  const operatingExpenses = calculateTotalFixedExpenses(
+    property.operatingExpenses,
+    transactions,
+    grossIncome,
+  )
 
-  // Calculate monthly cash flow
-  const monthlyCashFlowValue = monthlyRent - monthlyExpenses - monthlyLoanPayment
+  // Check if operating expenses are configured
+  const hasOperatingExpenses =
+    operatingExpenses > 0 ||
+    !!(
+      property.operatingExpenses?.propertyTaxAnnual ||
+      property.operatingExpenses?.insuranceAnnual
+    )
+
+  // Calculate CapEx reserve
+  const capexReserve = calculateCapExReserve(
+    grossIncome,
+    property.operatingExpenses?.capexRate,
+  )
+
+  // Calculate NOI
+  const noi = calculateNOI(grossIncome, operatingExpenses, capexReserve)
+
+  // Calculate debt service
+  const debtService = calculateTotalDebtService(loans)
+
+  // Calculate cash flow
+  const monthlyCashFlowValue = calculateCashFlow(noi, debtService)
 
   // Determine cash flow status
   let monthlyCashFlow: MetricWithStatus
-  if (monthlyRent === 0) {
+  if (!hasRentalIncome) {
     monthlyCashFlow = {
       value: monthlyCashFlowValue,
       status: 'warning',
       message: 'Monthly rent not set',
     }
-  } else {
-    // hasOperatingExpenses is always false (hardcoded), so always incomplete for now
+  } else if (!hasOperatingExpenses) {
     monthlyCashFlow = {
       value: monthlyCashFlowValue,
       status: 'incomplete',
       message: 'Operating expenses not configured',
     }
+  } else {
+    monthlyCashFlow = {
+      value: monthlyCashFlowValue,
+      status: 'success',
+    }
   }
 
-  // Calculate annual NOI (Net Operating Income)
-  const annualNOI = (monthlyRent - monthlyExpenses) * 12
+  // Calculate annual NOI for cap rate
+  const annualNOI = noi * 12
 
   // Calculate cap rate (NOI / Current Value * 100)
   let capRate: MetricWithStatus
@@ -201,18 +227,22 @@ export function usePropertyMetrics(
       status: 'warning',
       message: 'Requires current property value',
     }
-  } else if (monthlyRent === 0) {
+  } else if (!hasRentalIncome) {
     capRate = {
       value: null,
       status: 'warning',
       message: 'Requires rental income data',
     }
-  } else {
-    // hasOperatingExpenses is always false (hardcoded), so always incomplete for now
+  } else if (!hasOperatingExpenses) {
     capRate = {
       value: (annualNOI / currentValue) * 100,
       status: 'incomplete',
       message: 'Operating expenses not configured',
+    }
+  } else {
+    capRate = {
+      value: (annualNOI / currentValue) * 100,
+      status: 'success',
     }
   }
 
@@ -227,7 +257,7 @@ export function usePropertyMetrics(
   } else {
     ltv = {
       value: (totalLoanAmount / currentValue) * 100,
-      status: totalLoanAmount === 0 ? 'success' : 'success',
+      status: 'success',
       message: totalLoanAmount === 0 ? 'No active loans' : undefined,
     }
   }
@@ -246,7 +276,7 @@ export function usePropertyMetrics(
       metric: metrics.equity,
       format: (val: number) => `$${val.toLocaleString()}`,
       sub: 'Unrealized Gain',
-      route: getRoutePath('financials'), // Purchase price, current value in Financials tab
+      route: getRoutePath('financials'),
     },
     {
       id: 'monthlyCashFlow',
@@ -254,7 +284,7 @@ export function usePropertyMetrics(
       metric: metrics.monthlyCashFlow,
       format: (val: number) => `${val >= 0 ? '+' : ''}$${val.toLocaleString()}`,
       sub: 'Net Monthly',
-      route: getRoutePath('financials'), // Rental income, operating expenses in Financials tab
+      route: getRoutePath('financials'),
     },
     {
       id: 'capRate',
@@ -262,7 +292,7 @@ export function usePropertyMetrics(
       metric: metrics.capRate,
       format: (val: number) => `${val.toFixed(1)}%`,
       sub: 'Current Yield',
-      route: getRoutePath('financials'), // Current value, rental income in Financials tab
+      route: getRoutePath('financials'),
     },
     {
       id: 'ltv',
@@ -270,7 +300,7 @@ export function usePropertyMetrics(
       metric: metrics.ltv,
       format: (val: number) => `${val.toFixed(1)}%`,
       sub: 'Debt/Value',
-      route: getRoutePath('financials'), // Current value, loan data in Financials tab
+      route: getRoutePath('financials'),
     },
   ]
 

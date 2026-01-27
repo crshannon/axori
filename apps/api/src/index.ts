@@ -79,6 +79,7 @@ import mapboxRouter from "./routes/mapbox";
 import portfoliosRouter from "./routes/portfolios";
 import permissionsRouter from "./routes/permissions";
 import portfolioMembersRouter from "./routes/portfolio-members";
+import bankAccountsRouter from "./routes/bank-accounts";
 app.route("/api/properties", propertiesRouter);
 app.route("/api/onboarding", onboardingRouter);
 app.route("/api/users", usersRouter);
@@ -87,6 +88,7 @@ app.route("/api/mapbox", mapboxRouter);
 app.route("/api/portfolios", portfoliosRouter);
 app.route("/api/permissions", permissionsRouter);
 app.route("/api/portfolio-members", portfolioMembersRouter);
+app.route("/api/bank-accounts", bankAccountsRouter);
 
 const port = Number(process.env.PORT) || 3001;
 
