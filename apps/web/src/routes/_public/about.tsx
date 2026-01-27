@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@axori/ui";
-import { PublicLayout } from "@/components/layouts/PublicLayout";
 import {
   Eye,
   Zap,
@@ -57,8 +56,7 @@ const STATS = [
  */
 function About() {
   return (
-    <PublicLayout>
-      <main className="relative flex-grow pt-12 overflow-hidden">
+    <main className="relative flex-grow pt-12 overflow-hidden">
         {/* Background Grid Pattern */}
         <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -311,6 +309,5 @@ function About() {
           </section>
         </div>
       </main>
-    </PublicLayout>
   );
 }
