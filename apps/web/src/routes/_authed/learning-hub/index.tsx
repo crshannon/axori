@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   BookOpen,
   ArrowRight,
   Clock,
   Zap,
   ChevronRight,
+  Bookmark,
+  History,
 } from "lucide-react";
 import { useLearningHubContext } from "../learning-hub";
 import * as LucideIcons from "lucide-react";
@@ -16,7 +18,13 @@ import {
 } from "@axori/shared";
 import { cn } from "@/utils/helpers";
 import { useTheme } from "@/utils/providers/theme-provider";
-import { allGlossaryTerms, getCategoryCounts } from "@/data/learning-hub/glossary";
+import { allGlossaryTerms, getTermBySlug } from "@/data/learning-hub/glossary";
+import {
+  getRecentlyViewed,
+  getBookmarksByType,
+  getLearningStats,
+} from "@/lib/learning-hub/progress";
+import { getQuickRecommendations } from "@/lib/learning-hub/recommendations";
 
 export const Route = createFileRoute("/_authed/learning-hub/")({
   component: LearningHubHome,
@@ -95,7 +103,18 @@ function LearningHubHome() {
   const isDark = appTheme === "dark";
   const { selectedJourney } = useLearningHubContext();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const categoryCounts = getCategoryCounts();
+
+  // Personalization state
+  const [recentlyViewed, setRecentlyViewed] = useState<ReturnType<typeof getRecentlyViewed>>([]);
+  const [bookmarks, setBookmarks] = useState<ReturnType<typeof getBookmarksByType>>([]);
+  const [stats, setStats] = useState<ReturnType<typeof getLearningStats> | null>(null);
+
+  // Load personalization data
+  useEffect(() => {
+    setRecentlyViewed(getRecentlyViewed(5));
+    setBookmarks(getBookmarksByType("term"));
+    setStats(getLearningStats());
+  }, []);
 
   // Get icon component by name
   const getIcon = (iconName: string) => {
@@ -110,8 +129,29 @@ function LearningHubHome() {
     return PROTOCOLS.filter((p) => p.category === selectedCategory);
   }, [selectedCategory]);
 
-  // Get recommended terms based on journey
+  // Get personalized recommendations based on journey and viewed terms
+  const recommendations = useMemo(() => {
+    const viewedSlugs = recentlyViewed
+      .filter((r) => r.contentType === "term")
+      .map((r) => r.slug);
+    return getQuickRecommendations(
+      selectedJourney as "builder" | "optimizer" | "explorer",
+      viewedSlugs,
+      5
+    );
+  }, [selectedJourney, recentlyViewed]);
+
+  // Get recommended terms based on journey (keeping existing logic as fallback)
   const recommendedTerms = useMemo(() => {
+    // Use recommendations if available, otherwise fall back to static mapping
+    if (recommendations.length > 0) {
+      return recommendations
+        .filter((r) => r.type === "term")
+        .map((r) => getTermBySlug(r.slug))
+        .filter((t): t is NonNullable<typeof t> => t !== undefined)
+        .slice(0, 5);
+    }
+
     const journeyTermMap: Record<string, string[]> = {
       builder: ["brrrr", "house-hacking", "dscr", "ltv", "cash-on-cash-return"],
       optimizer: ["cost-segregation", "1031-exchange", "depreciation", "cap-rate", "noi"],
@@ -121,7 +161,7 @@ function LearningHubHome() {
     return allGlossaryTerms
       .filter((t) => slugs.includes(t.slug))
       .slice(0, 5);
-  }, [selectedJourney]);
+  }, [selectedJourney, recommendations]);
 
   const journeyLabel = selectedJourney.charAt(0).toUpperCase() + selectedJourney.slice(1) + "s";
 
@@ -362,6 +402,169 @@ function LearningHubHome() {
         </div>
       </div>
 
+      {/* Recently Viewed Section */}
+      {recentlyViewed.length > 0 && (
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-6">
+            <History
+              className={isDark ? "text-[#E8FF4D]" : "text-violet-600"}
+              size={20}
+            />
+            <h2
+              className={cn(
+                "text-sm font-black uppercase tracking-widest",
+                isDark ? "text-white" : "text-slate-900"
+              )}
+            >
+              Continue Learning
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+            {recentlyViewed
+              .filter((item) => item.contentType === "term")
+              .map((item) => {
+                const term = getTermBySlug(item.slug);
+                if (!term) return null;
+                const Icon = getIcon(CATEGORY_ICONS[term.category]);
+                return (
+                  <Link
+                    key={item.slug}
+                    to="/learning-hub/glossary/$slug"
+                    params={{ slug: item.slug }}
+                    className={cn(
+                      "group p-4 rounded-xl border transition-all relative",
+                      isDark
+                        ? "bg-white/5 border-white/10 hover:bg-white/10"
+                        : "bg-white border-slate-200 hover:shadow-lg"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "absolute top-2 right-2 w-2 h-2 rounded-full",
+                        isDark ? "bg-[#E8FF4D]" : "bg-violet-600"
+                      )}
+                      title="Recently viewed"
+                    />
+                    <div className="flex items-center gap-2 mb-2">
+                      <Icon
+                        size={14}
+                        className={isDark ? "text-white/40" : "text-slate-400"}
+                      />
+                      <span
+                        className={cn(
+                          "text-[10px] font-bold uppercase tracking-wider",
+                          isDark ? "text-white/40" : "text-slate-400"
+                        )}
+                      >
+                        {CATEGORY_LABELS[term.category]}
+                      </span>
+                    </div>
+                    <h4
+                      className={cn(
+                        "font-bold text-sm mb-1",
+                        isDark ? "text-white" : "text-slate-900"
+                      )}
+                    >
+                      {term.term}
+                    </h4>
+                    <p
+                      className={cn(
+                        "text-xs line-clamp-2",
+                        isDark ? "text-white/50" : "text-slate-500"
+                      )}
+                    >
+                      {term.shortDefinition}
+                    </p>
+                  </Link>
+                );
+              })}
+          </div>
+        </div>
+      )}
+
+      {/* Bookmarks Section */}
+      {bookmarks.length > 0 && (
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Bookmark
+                className={isDark ? "text-[#E8FF4D]" : "text-violet-600"}
+                size={20}
+              />
+              <h2
+                className={cn(
+                  "text-sm font-black uppercase tracking-widest",
+                  isDark ? "text-white" : "text-slate-900"
+                )}
+              >
+                Your Saved Terms
+              </h2>
+            </div>
+            <span
+              className={cn(
+                "text-xs font-bold",
+                isDark ? "text-white/40" : "text-slate-400"
+              )}
+            >
+              {bookmarks.length} saved
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+            {bookmarks.slice(0, 5).map((bookmark) => {
+              const term = getTermBySlug(bookmark.slug);
+              if (!term) return null;
+              const Icon = getIcon(CATEGORY_ICONS[term.category]);
+              return (
+                <Link
+                  key={bookmark.slug}
+                  to="/learning-hub/glossary/$slug"
+                  params={{ slug: bookmark.slug }}
+                  className={cn(
+                    "group p-4 rounded-xl border transition-all",
+                    isDark
+                      ? "bg-[#E8FF4D]/5 border-[#E8FF4D]/20 hover:bg-[#E8FF4D]/10"
+                      : "bg-violet-50 border-violet-200 hover:shadow-lg"
+                  )}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon
+                      size={14}
+                      className={isDark ? "text-[#E8FF4D]/60" : "text-violet-400"}
+                    />
+                    <span
+                      className={cn(
+                        "text-[10px] font-bold uppercase tracking-wider",
+                        isDark ? "text-[#E8FF4D]/60" : "text-violet-400"
+                      )}
+                    >
+                      {CATEGORY_LABELS[term.category]}
+                    </span>
+                  </div>
+                  <h4
+                    className={cn(
+                      "font-bold text-sm mb-1",
+                      isDark ? "text-white" : "text-slate-900"
+                    )}
+                  >
+                    {term.term}
+                  </h4>
+                  <p
+                    className={cn(
+                      "text-xs line-clamp-2",
+                      isDark ? "text-white/50" : "text-slate-500"
+                    )}
+                  >
+                    {term.shortDefinition}
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Stats Bar */}
       <div
         className={cn(
@@ -370,10 +573,10 @@ function LearningHubHome() {
         )}
       >
         {[
-          { value: allGlossaryTerms.length, label: "Glossary Terms" },
-          { value: Object.keys(categoryCounts).length, label: "Categories" },
+          { value: stats?.totalTermsViewed || 0, label: "Terms Viewed" },
+          { value: stats?.totalBookmarks || 0, label: "Bookmarked" },
+          { value: allGlossaryTerms.length, label: "Total Terms" },
           { value: PROTOCOLS.length, label: "Protocols" },
-          { value: "100+", label: "Pro Tips" },
         ].map((stat) => (
           <div key={stat.label} className="text-center">
             <div

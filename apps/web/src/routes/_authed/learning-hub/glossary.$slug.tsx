@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useEffect } from "react";
 import {
   ArrowLeft,
   BookOpen,
@@ -18,6 +19,11 @@ import {
 import { cn } from "@/utils/helpers";
 import { useTheme } from "@/utils/providers/theme-provider";
 import { getTermBySlug, getRelatedTerms } from "@/data/learning-hub/glossary";
+import { BookmarkButton } from "@/components/learning-hub/BookmarkButton";
+import {
+  markTermViewed,
+  updateRecentlyViewedTitle,
+} from "@/lib/learning-hub/progress";
 
 export const Route = createFileRoute("/_authed/learning-hub/glossary/$slug")({
   component: TermDetailPage,
@@ -35,6 +41,12 @@ function TermDetailPage() {
   const isDark = appTheme === "dark";
   const { term } = Route.useLoaderData();
   const relatedTerms = getRelatedTerms(term);
+
+  // Track view when page loads
+  useEffect(() => {
+    markTermViewed(term.slug);
+    updateRecentlyViewedTitle("term", term.slug, term.term);
+  }, [term.slug, term.term]);
 
   // Get icon component by name
   const getIcon = (iconName: string) => {
@@ -119,14 +131,23 @@ function TermDetailPage() {
           </div>
         </div>
 
-        <h1
-          className={cn(
-            "text-3xl md:text-4xl font-black mb-4",
-            isDark ? "text-white" : "text-slate-900"
-          )}
-        >
-          {term.term}
-        </h1>
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <h1
+            className={cn(
+              "text-3xl md:text-4xl font-black",
+              isDark ? "text-white" : "text-slate-900"
+            )}
+          >
+            {term.term}
+          </h1>
+          <BookmarkButton
+            contentType="term"
+            slug={term.slug}
+            title={term.term}
+            size="lg"
+            showLabel
+          />
+        </div>
 
         {/* Short Definition */}
         <p
