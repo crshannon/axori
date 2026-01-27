@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import PropertyScoreGauge from './PropertyScoreGauge'
 import {
   Banknote,
@@ -6,62 +6,10 @@ import {
   Shield,
   Calculator,
   Clock,
+  ArrowRight,
 } from 'lucide-react'
 
-export enum ScoreDimension {
-  CashFlow = 'Cash Flow',
-  Equity = 'Equity',
-  Risk = 'Risk',
-  Tax = 'Tax',
-  Effort = 'Effort',
-}
-
-const dimensionIcons = {
-  [ScoreDimension.CashFlow]: Banknote,
-  [ScoreDimension.Equity]: TrendingUp,
-  [ScoreDimension.Risk]: Shield,
-  [ScoreDimension.Tax]: Calculator,
-  [ScoreDimension.Effort]: Clock,
-}
-
 const PropertyScoreSection: React.FC = () => {
-  const [activeDimension, setActiveDimension] = useState<ScoreDimension>(
-    ScoreDimension.CashFlow,
-  )
-
-  const dimensions = [
-    {
-      name: ScoreDimension.CashFlow,
-      val: 92,
-      desc: 'Direct rental yield minus all expenses including maintenance reserves.',
-      highlight: 'Monthly income after all costs',
-    },
-    {
-      name: ScoreDimension.Equity,
-      val: 84,
-      desc: 'Market appreciation potential based on local development and zip-code growth.',
-      highlight: 'Long-term wealth building',
-    },
-    {
-      name: ScoreDimension.Risk,
-      val: 75,
-      desc: 'Evaluation of neighborhood stability, vacancy rates, and structural age.',
-      highlight: 'Portfolio protection score',
-    },
-    {
-      name: ScoreDimension.Tax,
-      val: 98,
-      desc: 'Optimizing depreciation, cost segregation potential, and local tax benefits.',
-      highlight: 'Maximum deduction potential',
-    },
-    {
-      name: ScoreDimension.Effort,
-      val: 62,
-      desc: 'Quantifying the hours required to manage relative to portfolio size.',
-      highlight: 'Time investment required',
-    },
-  ]
-
   return (
     <section
       id="score"
@@ -90,82 +38,212 @@ const PropertyScoreSection: React.FC = () => {
       </div>
 
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 relative">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          {/* Left Side - Score Gauge */}
-          <div className="relative order-2 lg:order-1">
-            <div className="rounded-[2rem] md:rounded-[3rem] p-8 md:p-12 lg:p-16 flex flex-col items-center border shadow-2xl shadow-slate-200/50 relative overflow-hidden transition-colors duration-500 bg-white border-black/5 dark:bg-[#141417] dark:border-white/5 dark:shadow-black/30">
-              {/* Glow effect */}
-              <div className="absolute -top-24 -left-24 w-64 h-64 rounded-full blur-[100px] transition-colors duration-500 bg-violet-500/10 dark:bg-violet-500/5"></div>
-              <div className="absolute -bottom-24 -right-24 w-48 h-48 rounded-full blur-[80px] bg-[#E8FF4D]/10 dark:bg-[#E8FF4D]/5"></div>
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Left Side - Visual Journey Graphic */}
+          <div className="relative min-h-[500px] md:min-h-[600px] order-2 lg:order-1">
+            {/* Flowing SVG Path */}
+            <svg
+              className="absolute inset-0 w-full h-full"
+              viewBox="0 0 500 600"
+              fill="none"
+              preserveAspectRatio="xMidYMid meet"
+            >
+              {/* Main flowing path */}
+              <path
+                d="M250 50
+                   Q350 80 320 150
+                   Q280 220 180 200
+                   Q80 180 100 280
+                   Q120 380 220 360
+                   Q320 340 380 420
+                   Q440 500 320 550"
+                stroke="url(#flow-gradient)"
+                strokeWidth="2"
+                strokeDasharray="6 6"
+                fill="none"
+                className="opacity-40"
+              />
+              {/* Glow path */}
+              <path
+                d="M250 50
+                   Q350 80 320 150
+                   Q280 220 180 200
+                   Q80 180 100 280
+                   Q120 380 220 360
+                   Q320 340 380 420
+                   Q440 500 320 550"
+                stroke="url(#flow-gradient)"
+                strokeWidth="8"
+                fill="none"
+                className="opacity-10 blur-sm"
+              />
+              <defs>
+                <linearGradient id="flow-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#8B5CF6" />
+                  <stop offset="50%" stopColor="#E8FF4D" />
+                  <stop offset="100%" stopColor="#8B5CF6" />
+                </linearGradient>
+              </defs>
+            </svg>
 
-              <div className="score-glow relative z-10">
-                <PropertyScoreGauge score={82} />
-              </div>
+            {/* Floating Cards positioned along the path */}
 
-              <div className="mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 w-full relative z-10">
-                {dimensions.map((d) => {
-                  const isHigh = d.val > 80
-                  const isActive = activeDimension === d.name
-                  const Icon = dimensionIcons[d.name]
-
-                  return (
-                    <button
-                      key={d.name}
-                      onMouseEnter={() => setActiveDimension(d.name)}
-                      className={`group text-left p-4 md:p-5 rounded-2xl border transition-all duration-300 ${
-                        isActive
-                          ? 'bg-violet-600 border-violet-600 text-white shadow-xl shadow-violet-200/50 dark:bg-[#E8FF4D] dark:border-[#E8FF4D] dark:text-black dark:shadow-[#E8FF4D]/20'
-                          : 'bg-slate-50 border-black/5 text-slate-900 hover:border-black/20 dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:border-white/20'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center mb-2">
-                        <div className="flex items-center gap-2">
-                          <Icon className={`w-4 h-4 ${isActive ? '' : 'opacity-50'}`} />
-                          <span className="text-[10px] font-black uppercase tracking-widest opacity-70">
-                            {d.name}
-                          </span>
-                        </div>
-                        <span
-                          className={`text-sm font-black transition-colors ${
-                            isActive
-                              ? 'text-white dark:text-black'
-                              : isHigh
-                                ? 'text-violet-600 dark:text-[#E8FF4D]'
-                                : 'text-amber-500'
-                          }`}
-                        >
-                          {d.val}
-                        </span>
-                      </div>
-                      <div
-                        className={`w-full h-1.5 rounded-full overflow-hidden ${
-                          isActive
-                            ? 'bg-white/20 dark:bg-black/20'
-                            : 'bg-black/10 dark:bg-white/10'
-                        }`}
-                      >
-                        <div
-                          className={`h-full rounded-full transition-all duration-700 ${
-                            isActive
-                              ? 'bg-white dark:bg-black'
-                              : isHigh
-                                ? 'bg-violet-500 dark:bg-[#E8FF4D]'
-                                : 'bg-amber-500'
-                          }`}
-                          style={{ width: `${d.val}%` }}
-                        ></div>
-                      </div>
-                    </button>
-                  )
-                })}
+            {/* Cash Flow Card - Top */}
+            <div className="absolute top-[5%] left-[35%] transform -translate-x-1/2">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                  <Banknote className="w-6 h-6 text-white" />
+                </div>
+                <div className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/50 dark:border-white/10 shadow-xl">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/40 mb-1">
+                    Cash Flow
+                  </p>
+                  <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    92
+                  </p>
+                  <p className="text-[10px] text-slate-500 dark:text-white/50 mt-1">
+                    Monthly income after costs
+                  </p>
+                </div>
               </div>
             </div>
+
+            {/* Equity Card - Upper Right */}
+            <div className="absolute top-[20%] right-[5%]">
+              <div className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/50 dark:border-white/10 shadow-xl max-w-[180px]">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-white/50">
+                    Equity
+                  </span>
+                </div>
+                <p className="text-2xl font-black text-blue-600 dark:text-blue-400 tabular-nums">
+                  84
+                </p>
+                <p className="text-xs text-slate-500 dark:text-white/50 mt-1">
+                  Long-term wealth building potential
+                </p>
+              </div>
+            </div>
+
+            {/* Risk Card - Middle Left */}
+            <div className="absolute top-[35%] left-[2%]">
+              <div className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/50 dark:border-white/10 shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                    <Shield className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/40">
+                      Risk Assessment
+                    </p>
+                    <p className="text-xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
+                      75
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-white/50 mt-2">
+                  Portfolio protection score based on stability metrics
+                </p>
+              </div>
+            </div>
+
+            {/* Tax Card - Middle Right */}
+            <div className="absolute top-[55%] right-[8%]">
+              <div className="flex items-center gap-3">
+                <div className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/50 dark:border-white/10 shadow-xl">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/40 mb-1">
+                    Tax Benefits
+                  </p>
+                  <p className="text-2xl font-black text-violet-600 dark:text-[#E8FF4D] tabular-nums">
+                    98
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-white/50 mt-1">
+                    Maximum deduction potential
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 dark:from-[#E8FF4D] dark:to-lime-400 flex items-center justify-center shadow-lg shadow-violet-500/20 dark:shadow-[#E8FF4D]/20">
+                  <Calculator className="w-5 h-5 text-white dark:text-black" />
+                </div>
+              </div>
+            </div>
+
+            {/* Effort Card - Bottom */}
+            <div className="absolute bottom-[8%] left-[30%]">
+              <div className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/50 dark:border-white/10 shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/20">
+                    <Clock className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/40">
+                      Management Effort
+                    </p>
+                    <p className="text-xl font-black text-pink-600 dark:text-pink-400 tabular-nums">
+                      62
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-white/50 mt-2">
+                  Hours required relative to portfolio size
+                </p>
+              </div>
+            </div>
+
+            {/* Center Score Gauge - Small */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+              <div className="bg-white dark:bg-[#141417] rounded-3xl p-6 border border-slate-200/50 dark:border-white/10 shadow-2xl">
+                <div className="w-32 h-32 relative">
+                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="8"
+                      className="text-slate-200 dark:text-white/10"
+                    />
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="url(#gauge-gradient)"
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      strokeDasharray={`${82 * 2.51} 251`}
+                    />
+                    <defs>
+                      <linearGradient id="gauge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#8B5CF6" />
+                        <stop offset="100%" stopColor="#E8FF4D" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-3xl font-black text-slate-900 dark:text-white tabular-nums">
+                      82
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/40">
+                      Score
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Decorative dots */}
+            <div className="absolute top-[15%] left-[60%] w-2 h-2 rounded-full bg-violet-500 dark:bg-[#E8FF4D] animate-pulse" />
+            <div className="absolute top-[45%] left-[25%] w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" style={{ animationDelay: '0.5s' }} />
+            <div className="absolute top-[70%] right-[25%] w-2 h-2 rounded-full bg-blue-500 animate-pulse" style={{ animationDelay: '1s' }} />
           </div>
 
-          {/* Right Side - Journey Style Layout */}
+          {/* Right Side - Content */}
           <div className="relative order-1 lg:order-2">
-            {/* Header */}
-            <div className="mb-12 md:mb-16">
+            <div className="mb-8">
               <p className="mb-4 text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-[#E8FF4D]">
                 Investment Intelligence
               </p>
@@ -178,143 +256,45 @@ const PropertyScoreSection: React.FC = () => {
                 <br />
                 INVESTING.
               </h2>
-              <p className="text-base md:text-lg text-slate-500 dark:text-white/50 font-medium leading-relaxed max-w-md">
+              <p className="text-base md:text-lg text-slate-500 dark:text-white/50 font-medium leading-relaxed max-w-md mb-8">
                 Stop guessing. Start knowing. Our proprietary score analyzes
-                10,000+ data points per asset to give you absolute clarity.
+                10,000+ data points per asset to give you absolute clarity on
+                every investment decision.
               </p>
             </div>
 
-            {/* Journey Path with Cards */}
-            <div className="relative">
-              {/* Flowing SVG Path */}
-              <svg
-                className="absolute left-6 top-0 h-full w-20 hidden md:block"
-                viewBox="0 0 80 500"
-                fill="none"
-                preserveAspectRatio="none"
-              >
-                <path
-                  d="M40 0 Q60 50 40 100 Q20 150 40 200 Q60 250 40 300 Q20 350 40 400 Q60 450 40 500"
-                  stroke="url(#journey-gradient)"
-                  strokeWidth="2"
-                  strokeDasharray="4 4"
-                  fill="none"
-                  className="opacity-30"
-                />
-                <defs>
-                  <linearGradient id="journey-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#8B5CF6" />
-                    <stop offset="50%" stopColor="#E8FF4D" />
-                    <stop offset="100%" stopColor="#8B5CF6" />
-                  </linearGradient>
-                </defs>
-              </svg>
-
-              {/* Dimension Cards */}
-              <div className="space-y-4 md:space-y-5">
-                {dimensions.map((d, index) => {
-                  const isActive = activeDimension === d.name
-                  const Icon = dimensionIcons[d.name]
-
-                  return (
-                    <div
-                      key={d.name}
-                      onMouseEnter={() => setActiveDimension(d.name)}
-                      className={`relative md:ml-16 transition-all duration-500 cursor-pointer ${
-                        isActive
-                          ? 'opacity-100 translate-x-2'
-                          : 'opacity-40 hover:opacity-70'
-                      }`}
-                    >
-                      {/* Icon on the path */}
-                      <div
-                        className={`absolute -left-16 top-1/2 -translate-y-1/2 hidden md:flex w-10 h-10 rounded-xl items-center justify-center transition-all duration-300 ${
-                          isActive
-                            ? 'bg-violet-600 dark:bg-[#E8FF4D] shadow-lg shadow-violet-500/30 dark:shadow-[#E8FF4D]/30 scale-110'
-                            : 'bg-slate-200 dark:bg-white/10'
-                        }`}
-                      >
-                        <Icon
-                          className={`w-5 h-5 transition-colors ${
-                            isActive
-                              ? 'text-white dark:text-black'
-                              : 'text-slate-500 dark:text-white/50'
-                          }`}
-                        />
-                      </div>
-
-                      {/* Card */}
-                      <div
-                        className={`p-5 md:p-6 rounded-2xl border transition-all duration-300 ${
-                          isActive
-                            ? 'bg-white dark:bg-white/5 border-violet-200 dark:border-[#E8FF4D]/20 shadow-lg shadow-violet-100 dark:shadow-none'
-                            : 'bg-transparent border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10'
-                        }`}
-                      >
-                        <div className="flex items-start gap-4">
-                          {/* Mobile icon */}
-                          <div
-                            className={`md:hidden flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                              isActive
-                                ? 'bg-violet-600 dark:bg-[#E8FF4D]'
-                                : 'bg-slate-100 dark:bg-white/10'
-                            }`}
-                          >
-                            <Icon
-                              className={`w-5 h-5 transition-colors ${
-                                isActive
-                                  ? 'text-white dark:text-black'
-                                  : 'text-slate-500 dark:text-white/50'
-                              }`}
-                            />
-                          </div>
-
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <h3
-                                className={`text-lg font-black uppercase tracking-tight transition-colors ${
-                                  isActive
-                                    ? 'text-slate-900 dark:text-white'
-                                    : 'text-slate-600 dark:text-white/70'
-                                }`}
-                              >
-                                {d.name}
-                              </h3>
-                              <span
-                                className={`text-2xl font-black tabular-nums transition-colors ${
-                                  isActive
-                                    ? d.val > 80
-                                      ? 'text-violet-600 dark:text-[#E8FF4D]'
-                                      : 'text-amber-500'
-                                    : 'text-slate-400 dark:text-white/30'
-                                }`}
-                              >
-                                {d.val}
-                              </span>
-                            </div>
-                            <p
-                              className={`text-sm leading-relaxed mb-3 transition-colors ${
-                                isActive
-                                  ? 'text-slate-600 dark:text-white/60'
-                                  : 'text-slate-400 dark:text-white/40'
-                              }`}
-                            >
-                              {d.desc}
-                            </p>
-                            {isActive && (
-                              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-100 dark:bg-[#E8FF4D]/10 text-violet-700 dark:text-[#E8FF4D] text-xs font-bold">
-                                <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                                {d.highlight}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+            {/* Feature list */}
+            <div className="space-y-4 mb-10">
+              {[
+                { label: "5 Dimensions", desc: "Cash Flow, Equity, Risk, Tax, Effort" },
+                { label: "10,000+ Data Points", desc: "Institutional-grade analysis" },
+                { label: "Real-time Updates", desc: "Market conditions change, so do scores" },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-start gap-4 p-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-200/50 dark:border-white/10"
+                >
+                  <div className="w-2 h-2 rounded-full bg-violet-500 dark:bg-[#E8FF4D] mt-2 flex-shrink-0" />
+                  <div>
+                    <p className="font-bold text-slate-900 dark:text-white">
+                      {item.label}
+                    </p>
+                    <p className="text-sm text-slate-500 dark:text-white/50">
+                      {item.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
+
+            {/* CTA */}
+            <a
+              href="#waitlist"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-full font-bold uppercase tracking-wider text-sm bg-violet-600 text-white hover:bg-violet-700 dark:bg-[#E8FF4D] dark:text-black dark:hover:bg-[#d4eb45] transition-all hover:scale-105 shadow-lg shadow-violet-500/20 dark:shadow-[#E8FF4D]/20"
+            >
+              See It In Action
+              <ArrowRight className="w-4 h-4" />
+            </a>
           </div>
         </div>
       </div>
