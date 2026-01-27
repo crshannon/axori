@@ -48,6 +48,11 @@ function TermDetailPage() {
   const { term } = Route.useLoaderData();
   const relatedTerms = getRelatedTerms(term);
 
+  // Scroll to top when navigating to a new term
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [term.slug]);
+
   // Track view when page loads
   useEffect(() => {
     markTermViewed(term.slug);
