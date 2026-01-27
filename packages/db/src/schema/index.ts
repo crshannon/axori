@@ -1416,6 +1416,8 @@ export const propertyDocuments = pgTable("property_documents", {
   aiExtractedData: jsonb("ai_extracted_data"), // Structured data from document
   aiConfidence: numeric("ai_confidence", { precision: 4, scale: 3 }), // Confidence score 0-1
   aiError: text("ai_error"), // Error message if processing failed
+  aiAppliedData: jsonb("ai_applied_data"), // Data that was applied to property
+  aiAppliedAt: timestamp("ai_applied_at"), // When data was applied
 
   // Metadata
   description: text("description"),

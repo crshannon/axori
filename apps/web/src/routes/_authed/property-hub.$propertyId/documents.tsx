@@ -6,6 +6,7 @@ import { usePropertyPermissions } from '@/hooks/api'
 import { usePropertyDocuments, useDocumentStats } from '@/hooks/api/useDocuments'
 import { useDrawer, DRAWERS } from '@/lib/drawer'
 import { DocumentCard } from '@/components/property-hub/property-details/documents/DocumentCard'
+import { TaxExportPanel } from '@/components/property-hub/property-details/documents/TaxExportPanel'
 import { DOCUMENT_TYPE_LABELS } from '@axori/shared/src/validation'
 import type { DocumentType, ProcessingStatus } from '@axori/shared/src/validation'
 
@@ -96,7 +97,7 @@ function DocumentsPage() {
   )
 
   return (
-    <div className="p-8 w-full grid grid-cols-1 lg:grid-cols-4 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="p-8 w-full grid grid-cols-1 lg:grid-cols-5 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Sidebar */}
       <div className={`${cardClass} lg:col-span-1 flex flex-col gap-8`}>
         <div>
@@ -160,7 +161,7 @@ function DocumentsPage() {
         )}
 
         {/* Upload Button */}
-        <div className="mt-auto">
+        <div className="mt-auto pt-8 border-t border-slate-200 dark:border-white/10">
           {canEdit && (
             <button
               onClick={handleUploadClick}
@@ -171,6 +172,11 @@ function DocumentsPage() {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Tax Export Panel - Separate Card */}
+      <div className={`${cardClass} lg:col-span-1`}>
+        <TaxExportPanel propertyId={propertyId} />
       </div>
 
       {/* Main Content */}

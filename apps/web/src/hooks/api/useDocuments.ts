@@ -362,3 +362,210 @@ export function useProcessDocument() {
     },
   })
 }
+
+/**
+ * Upload document input type
+ */
+interface UploadDocumentInput {
+  propertyId: string
+  file: File
+  documentType: DocumentType
+  documentYear?: number | null
+  description?: string | null
+  tags?: string[]
+  enableAiProcessing?: boolean
+}
+
+/**
+ * Upload a document file with multipart form data
+ */
+export function useUploadDocument() {
+  const queryClient = useQueryClient()
+  const { user } = useUser()
+
+  return useMutation({
+    mutationFn: async (input: UploadDocumentInput) => {
+      if (!user?.id) {
+        throw new Error('User not authenticated')
+      }
+
+      // Create FormData for multipart upload
+      const formData = new FormData()
+      formData.append('file', input.file)
+      formData.append('propertyId', input.propertyId)
+      formData.append('documentType', input.documentType)
+
+      if (input.documentYear) {
+        formData.append('documentYear', String(input.documentYear))
+      }
+      if (input.description) {
+        formData.append('description', input.description)
+      }
+      if (input.tags && input.tags.length > 0) {
+        formData.append('tags', input.tags.join(','))
+      }
+      formData.append(
+        'enableAiProcessing',
+        String(input.enableAiProcessing ?? true),
+      )
+
+      // Use fetch directly for multipart form data
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/documents/upload`, {
+        method: 'POST',
+        headers: {
+          'x-clerk-user-id': user.id,
+        },
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Upload failed' }))
+        throw new Error(error.message || 'Failed to upload document')
+      }
+
+      return response.json() as Promise<{ document: PropertyDocument }>
+    },
+    onSuccess: (_data, variables) => {
+      // Invalidate documents list
+      queryClient.invalidateQueries({
+        queryKey: ['properties', variables.propertyId, 'documents'],
+      })
+    },
+  })
+}
+
+/**
+ * Get a signed download URL for a document
+ */
+export function useDocumentDownloadUrl(
+  documentId: string | null | undefined,
+  enabled: boolean = false,
+) {
+  const { user } = useUser()
+
+  return useQuery({
+    queryKey: ['documents', documentId, 'download-url'],
+    queryFn: async () => {
+      if (!user?.id || !documentId) {
+        throw new Error('User not authenticated or document ID missing')
+      }
+
+      const result = await apiFetch<{
+        url: string
+        expiresIn: number
+        filename: string
+        mimeType: string | null
+      }>(`/api/documents/${documentId}/download-url`, {
+        clerkId: user.id,
+      })
+
+      return result
+    },
+    enabled: !!user?.id && !!documentId && enabled,
+    staleTime: 30 * 60 * 1000, // 30 minutes (URL expires in 1 hour by default)
+  })
+}
+
+/**
+ * Fetch download URL on demand (not a hook, use for one-off downloads)
+ */
+export async function fetchDocumentDownloadUrl(
+  documentId: string,
+  clerkId: string,
+): Promise<{ url: string; filename: string }> {
+  const result = await apiFetch<{
+    url: string
+    expiresIn: number
+    filename: string
+    mimeType: string | null
+  }>(`/api/documents/${documentId}/download-url`, {
+    clerkId,
+  })
+
+  return { url: result.url, filename: result.filename }
+}
+
+/**
+ * Apply extracted data to property input type
+ */
+interface ApplyDocumentDataInput {
+  id: string
+  propertyId: string
+  selectedFields: string[]
+}
+
+/**
+ * Apply extracted data to property
+ */
+export function useApplyDocumentData() {
+  const queryClient = useQueryClient()
+  const { user } = useUser()
+
+  return useMutation({
+    mutationFn: async ({ id, propertyId: _propertyId, selectedFields }: ApplyDocumentDataInput) => {
+      if (!user?.id) {
+        throw new Error('User not authenticated')
+      }
+
+      void _propertyId
+
+      return await apiFetch<{
+        document: PropertyDocument
+        appliedData: Record<string, unknown>
+        actions: string[]
+        message: string
+      }>(`/api/documents/${id}/apply`, {
+        method: 'POST',
+        clerkId: user.id,
+        body: JSON.stringify({ selectedFields }),
+      })
+    },
+    onSuccess: (_data, variables) => {
+      // Invalidate specific document
+      queryClient.invalidateQueries({
+        queryKey: ['documents', variables.id],
+      })
+      // Invalidate list
+      queryClient.invalidateQueries({
+        queryKey: ['properties', variables.propertyId, 'documents'],
+      })
+    },
+  })
+}
+
+/**
+ * Field schema for extraction
+ */
+export interface ExtractionFieldSchema {
+  field: string
+  label: string
+  type: 'text' | 'email' | 'phone' | 'date' | 'currency' | 'number' | 'percent'
+}
+
+/**
+ * Get field schema for a document type
+ */
+export function useDocumentFieldSchema(documentType: DocumentType | null | undefined) {
+  const { user } = useUser()
+
+  return useQuery({
+    queryKey: ['documents', 'schema', documentType],
+    queryFn: async () => {
+      if (!user?.id || !documentType) {
+        throw new Error('User not authenticated or document type missing')
+      }
+
+      const result = await apiFetch<{
+        documentType: string
+        fields: ExtractionFieldSchema[]
+      }>(`/api/documents/schema/${documentType}`, {
+        clerkId: user.id,
+      })
+
+      return result.fields
+    },
+    enabled: !!user?.id && !!documentType,
+    staleTime: 60 * 60 * 1000, // 1 hour (schemas don't change)
+  })
+}

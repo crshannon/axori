@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { Upload, File, X, AlertCircle } from 'lucide-react'
-import { Drawer, ErrorCard, Input, Select, Textarea, Button } from '@axori/ui'
+import { Drawer, ErrorCard, Input, Select, Textarea } from '@axori/ui'
 import {
   DOCUMENT_TYPES,
   DOCUMENT_TYPE_LABELS,
@@ -10,7 +10,7 @@ import {
 } from '@axori/shared/src/validation'
 import type { DocumentType } from '@axori/shared/src/validation'
 import { DrawerSectionTitle } from './DrawerSectionTitle'
-import { useCreateDocument } from '@/hooks/api/useDocuments'
+import { useUploadDocument } from '@/hooks/api/useDocuments'
 
 interface DocumentUploadDrawerProps {
   isOpen: boolean
@@ -32,7 +32,7 @@ export const DocumentUploadDrawer = ({
   propertyId,
   onSuccess,
 }: DocumentUploadDrawerProps) => {
-  const createDocument = useCreateDocument()
+  const uploadDocument = useUploadDocument()
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isDragging, setIsDragging] = useState(false)
 
@@ -172,27 +172,16 @@ export const DocumentUploadDrawer = ({
     }
 
     try {
-      // TODO: Implement Supabase Storage upload here
-      // For now, we'll create a mock storage path
-      // In production, this would:
-      // 1. Upload file to Supabase Storage
-      // 2. Get the storage path back
-      // 3. Create the document record
-
-      const storagePath = `documents/${propertyId}/${Date.now()}_${selectedFile!.file.name}`
-
       // Parse tags
       const tags = formData.tags
         .split(',')
         .map((t) => t.trim())
         .filter((t) => t.length > 0)
 
-      await createDocument.mutateAsync({
+      // Upload file to Supabase Storage and create document record
+      await uploadDocument.mutateAsync({
         propertyId,
-        storagePath,
-        originalFilename: selectedFile!.file.name,
-        mimeType: selectedFile!.file.type,
-        sizeBytes: selectedFile!.file.size,
+        file: selectedFile!.file,
         documentType: formData.documentType as DocumentType,
         documentYear: formData.documentYear ? parseInt(formData.documentYear, 10) : null,
         description: formData.description || null,
@@ -228,7 +217,7 @@ export const DocumentUploadDrawer = ({
           <button
             type="button"
             onClick={handleClose}
-            disabled={createDocument.isPending}
+            disabled={uploadDocument.isPending}
             className="flex-1 py-4 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.2em] border transition-all hover:bg-slate-500/5 disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:text-white border-slate-200 text-slate-900"
           >
             Cancel
@@ -236,10 +225,10 @@ export const DocumentUploadDrawer = ({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={createDocument.isPending || !selectedFile || !formData.documentType}
+            disabled={uploadDocument.isPending || !selectedFile || !formData.documentType}
             className="flex-[2] py-4 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 dark:bg-[#E8FF4D] dark:text-black dark:shadow-xl dark:shadow-[#E8FF4D]/20 bg-violet-600 text-white shadow-xl shadow-violet-200"
           >
-            {createDocument.isPending ? 'Uploading...' : 'Upload Document'}
+            {uploadDocument.isPending ? 'Uploading...' : 'Upload Document'}
           </button>
         </div>
       }
@@ -369,14 +358,18 @@ export const DocumentUploadDrawer = ({
             rows={3}
           />
 
-          <Input
-            variant="rounded"
-            label="Tags (optional)"
-            value={formData.tags}
-            onChange={(e) => handleChange('tags', e.target.value)}
-            placeholder="Enter tags separated by commas"
-            helperText="e.g., urgent, needs-review, 2024-taxes"
-          />
+          <div>
+            <Input
+              variant="rounded"
+              label="Tags (optional)"
+              value={formData.tags}
+              onChange={(e) => handleChange('tags', e.target.value)}
+              placeholder="Enter tags separated by commas"
+            />
+            <p className="mt-1 text-xs text-slate-500 dark:text-white/60">
+              e.g., urgent, needs-review, 2024-taxes
+            </p>
+          </div>
         </section>
 
         {/* AI Processing Section */}
@@ -405,12 +398,12 @@ export const DocumentUploadDrawer = ({
         </section>
 
         {/* Error Message */}
-        {(errors.submit || createDocument.error) && (
+        {(errors.submit || uploadDocument.error) && (
           <ErrorCard
             message={
               errors.submit ||
-              (createDocument.error instanceof Error
-                ? createDocument.error.message
+              (uploadDocument.error instanceof Error
+                ? uploadDocument.error.message
                 : 'Failed to upload')
             }
           />
