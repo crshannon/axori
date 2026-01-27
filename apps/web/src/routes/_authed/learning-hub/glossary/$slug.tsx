@@ -15,6 +15,10 @@ import {
   LEVEL_LABELS,
   getCategoryColor,
   type GlossaryCategory,
+  type InvestorLevel,
+  type Formula,
+  type FormulaVariable,
+  type Example,
 } from "@axori/shared";
 import { cn } from "@/utils/helpers";
 import { useTheme } from "@/utils/providers/theme-provider";
@@ -55,9 +59,9 @@ function TermDetailPage() {
     return Icon || BookOpen;
   };
 
-  const categoryIcon = CATEGORY_ICONS[term.category];
+  const categoryIcon = CATEGORY_ICONS[term.category as GlossaryCategory];
   const CategoryIcon = getIcon(categoryIcon);
-  const categoryColor = getCategoryColor(term.category);
+  const categoryColor = getCategoryColor(term.category as GlossaryCategory);
 
   // Parse fullDefinition - can be string or PortableText array
   const definitionText =
@@ -126,7 +130,7 @@ function TermDetailPage() {
                     : "bg-violet-100 text-violet-700")
               )}
             >
-              {LEVEL_LABELS[term.investorLevel]}
+              {LEVEL_LABELS[term.investorLevel as InvestorLevel]}
             </span>
           </div>
         </div>
@@ -170,7 +174,7 @@ function TermDetailPage() {
             >
               Also known as:
             </span>
-            {term.synonyms.map((syn) => (
+            {term.synonyms.map((syn: string) => (
               <span
                 key={syn}
                 className={cn(
@@ -209,7 +213,7 @@ function TermDetailPage() {
             isDark ? "text-white/80 prose-invert" : "text-slate-700"
           )}
         >
-          {definitionText.split("\n\n").map((paragraph, i) => (
+          {definitionText.split("\n\n").map((paragraph: string, i: number) => (
             <p key={i} className="mb-4 last:mb-0 leading-relaxed">
               {paragraph}
             </p>
@@ -236,7 +240,7 @@ function TermDetailPage() {
             <Calculator size={20} />
             Formula
           </h2>
-          {term.formulas.map((formula, i) => (
+          {term.formulas.map((formula: Formula, i: number) => (
             <div key={i} className="space-y-4">
               <div
                 className={cn(
@@ -256,7 +260,7 @@ function TermDetailPage() {
                   >
                     Variables
                   </div>
-                  {formula.variables.map((v, vi) => (
+                  {formula.variables.map((v: FormulaVariable, vi: number) => (
                     <div
                       key={vi}
                       className={cn(
@@ -332,7 +336,7 @@ function TermDetailPage() {
           >
             Real-World Example
           </h2>
-          {term.examples.map((example, i) => (
+          {term.examples.map((example: Example, i: number) => (
             <div key={i} className="space-y-3">
               <h3
                 className={cn(
@@ -390,7 +394,7 @@ function TermDetailPage() {
             Pro Tips
           </h2>
           <ul className="space-y-3">
-            {term.proTips.map((tip, i) => (
+            {term.proTips.map((tip: string, i: number) => (
               <li
                 key={i}
                 className={cn(

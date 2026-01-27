@@ -27,7 +27,7 @@ interface GlossarySearchParams {
   q?: string;
 }
 
-export const Route = createFileRoute("/_authed/learning-hub/glossary")({
+export const Route = createFileRoute("/_authed/learning-hub/glossary/")({
   component: GlossaryPage,
   validateSearch: (search: Record<string, unknown>): GlossarySearchParams => {
     return {
