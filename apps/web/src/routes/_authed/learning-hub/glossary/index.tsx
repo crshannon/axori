@@ -1,24 +1,23 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
-import { Search, Filter, BookOpen, ChevronRight } from "lucide-react";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { BookOpen, Bookmark, ChevronRight, Filter, Search } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import {
-  CATEGORY_LABELS,
   CATEGORY_ICONS,
-  LEVEL_LABELS,
+  CATEGORY_LABELS,
   GLOSSARY_CATEGORIES,
   INVESTOR_LEVELS,
+  LEVEL_LABELS,
   getCategoryColor,
-  type GlossaryCategory,
-  type InvestorLevel,
-  type GlossaryTerm,
 } from "@axori/shared";
+import type { GlossaryCategory, GlossaryTerm, InvestorLevel } from "@axori/shared";
 import { cn } from "@/utils/helpers";
 import { useTheme } from "@/utils/providers/theme-provider";
 import {
   allGlossaryTerms,
   getTermsByLetter,
 } from "@/data/learning-hub/glossary";
+import { getBookmarksByType } from "@/lib/learning-hub/progress";
 
 // Search params for filtering
 interface GlossarySearchParams {
@@ -42,18 +41,31 @@ function GlossaryPage() {
   const { appTheme } = useTheme();
   const isDark = appTheme === "dark";
   const searchParams = Route.useSearch();
-  const [searchQuery, setSearchQuery] = useState(searchParams.q || "");
+  const [searchQuery, setSearchQuery] = useState(searchParams.q ?? "");
   const [selectedCategory, setSelectedCategory] = useState<GlossaryCategory | null>(
-    (searchParams.category as GlossaryCategory) || null
+    (searchParams.category as GlossaryCategory | undefined) ?? null
   );
   const [selectedLevel, setSelectedLevel] = useState<InvestorLevel | null>(
-    (searchParams.level as InvestorLevel) || null
+    (searchParams.level as InvestorLevel | undefined) ?? null
   );
   const [showFilters, setShowFilters] = useState(false);
+  const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
+  const [bookmarkedSlugs, setBookmarkedSlugs] = useState<Set<string>>(new Set());
+
+  // Load bookmarks
+  useEffect(() => {
+    const bookmarks = getBookmarksByType("term");
+    setBookmarkedSlugs(new Set(bookmarks.map((b) => b.slug)));
+  }, []);
 
   // Filter terms based on search and filters
   const filteredTerms = useMemo(() => {
     let terms = allGlossaryTerms;
+
+    // Filter by bookmarks
+    if (showBookmarksOnly) {
+      terms = terms.filter((t) => bookmarkedSlugs.has(t.slug));
+    }
 
     // Filter by category
     if (selectedCategory) {
@@ -78,19 +90,21 @@ function GlossaryPage() {
 
     // Sort alphabetically
     return terms.sort((a, b) => a.term.localeCompare(b.term));
-  }, [selectedCategory, selectedLevel, searchQuery]);
+  }, [selectedCategory, selectedLevel, searchQuery, showBookmarksOnly, bookmarkedSlugs]);
 
   // Group filtered terms by letter
   const termsByLetter = useMemo(() => {
-    const result: Record<string, GlossaryTerm[]> = {};
-    filteredTerms.forEach((term) => {
+    const result: Record<string, Array<GlossaryTerm> | undefined> = {};
+    for (const term of filteredTerms) {
       const letter = term.term.charAt(0).toUpperCase();
-      if (!result[letter]) {
-        result[letter] = [];
+      const existing = result[letter];
+      if (existing) {
+        existing.push(term);
+      } else {
+        result[letter] = [term];
       }
-      result[letter].push(term);
-    });
-    return result;
+    }
+    return result as Record<string, Array<GlossaryTerm>>;
   }, [filteredTerms]);
 
   // Get all available letters
@@ -99,9 +113,30 @@ function GlossaryPage() {
 
   // Get icon component by name
   const getIcon = (iconName: string) => {
-    const icons = LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>;
+    const icons = LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }> | undefined>;
     const Icon = icons[iconName];
-    return Icon || BookOpen;
+    return Icon ?? BookOpen;
+  };
+
+  // Get category colors as CSS values (Tailwind dynamic classes don't work)
+  const getCategoryStyles = (color: string, dark: boolean) => {
+    const colors: Record<string, { bg: string; bgDark: string; text: string; textDark: string }> = {
+      sky: { bg: "rgb(224 242 254)", bgDark: "rgba(14, 165, 233, 0.2)", text: "rgb(2 132 199)", textDark: "rgb(56 189 248)" },
+      indigo: { bg: "rgb(224 231 255)", bgDark: "rgba(99, 102, 241, 0.2)", text: "rgb(79 70 229)", textDark: "rgb(129 140 248)" },
+      slate: { bg: "rgb(241 245 249)", bgDark: "rgba(100, 116, 139, 0.2)", text: "rgb(71 85 105)", textDark: "rgb(148 163 184)" },
+      emerald: { bg: "rgb(209 250 229)", bgDark: "rgba(16, 185, 129, 0.2)", text: "rgb(4 120 87)", textDark: "rgb(52 211 153)" },
+      amber: { bg: "rgb(254 243 199)", bgDark: "rgba(245, 158, 11, 0.2)", text: "rgb(180 83 9)", textDark: "rgb(251 191 36)" },
+      rose: { bg: "rgb(255 228 230)", bgDark: "rgba(244, 63, 94, 0.2)", text: "rgb(190 18 60)", textDark: "rgb(251 113 133)" },
+      cyan: { bg: "rgb(207 250 254)", bgDark: "rgba(6, 182, 212, 0.2)", text: "rgb(14 116 144)", textDark: "rgb(34 211 238)" },
+      violet: { bg: "rgb(237 233 254)", bgDark: "rgba(139, 92, 246, 0.2)", text: "rgb(109 40 217)", textDark: "rgb(167 139 250)" },
+      orange: { bg: "rgb(255 237 213)", bgDark: "rgba(249, 115, 22, 0.2)", text: "rgb(194 65 12)", textDark: "rgb(251 146 60)" },
+      fuchsia: { bg: "rgb(250 232 255)", bgDark: "rgba(217, 70, 239, 0.2)", text: "rgb(162 28 175)", textDark: "rgb(232 121 249)" },
+    };
+    const c = colors[color] ?? colors.slate;
+    return {
+      backgroundColor: dark ? c.bgDark : c.bg,
+      color: dark ? c.textDark : c.text,
+    };
   };
 
   return (
@@ -128,6 +163,35 @@ function GlossaryPage() {
               )}
             />
           </div>
+          <button
+            onClick={() => setShowBookmarksOnly(!showBookmarksOnly)}
+            className={cn(
+              "px-4 py-3 rounded-xl border flex items-center gap-2 text-sm font-bold transition-all",
+              showBookmarksOnly
+                ? isDark
+                  ? "bg-[#E8FF4D]/20 border-[#E8FF4D]/50 text-[#E8FF4D]"
+                  : "bg-violet-100 border-violet-300 text-violet-700"
+                : isDark
+                  ? "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                  : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+            )}
+            title={showBookmarksOnly ? "Show all terms" : "Show bookmarked terms only"}
+          >
+            <Bookmark size={18} className={showBookmarksOnly ? "fill-current" : ""} />
+            Saved
+            {bookmarkedSlugs.size > 0 && (
+              <span
+                className={cn(
+                  "w-5 h-5 rounded-full flex items-center justify-center text-xs",
+                  showBookmarksOnly
+                    ? isDark ? "bg-[#E8FF4D] text-black" : "bg-violet-600 text-white"
+                    : isDark ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"
+                )}
+              >
+                {bookmarkedSlugs.size}
+              </span>
+            )}
+          </button>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
@@ -195,7 +259,7 @@ function GlossaryPage() {
                     key={cat}
                     onClick={() =>
                       setSelectedCategory(
-                        selectedCategory === cat ? null : (cat as GlossaryCategory)
+                        selectedCategory === cat ? null : (cat)
                       )
                     }
                     className={cn(
@@ -209,7 +273,7 @@ function GlossaryPage() {
                           : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
                     )}
                   >
-                    {CATEGORY_LABELS[cat as GlossaryCategory]}
+                    {CATEGORY_LABELS[cat]}
                   </button>
                 ))}
               </div>
@@ -246,7 +310,7 @@ function GlossaryPage() {
                     key={level}
                     onClick={() =>
                       setSelectedLevel(
-                        selectedLevel === level ? null : (level as InvestorLevel)
+                        selectedLevel === level ? null : (level)
                       )
                     }
                     className={cn(
@@ -260,7 +324,7 @@ function GlossaryPage() {
                           : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
                     )}
                   >
-                    {LEVEL_LABELS[level as InvestorLevel]}
+                    {LEVEL_LABELS[level]}
                   </button>
                 ))}
               </div>
@@ -276,12 +340,16 @@ function GlossaryPage() {
           )}
         >
           {filteredTerms.length} term{filteredTerms.length !== 1 ? "s" : ""} found
-          {(selectedCategory || selectedLevel || searchQuery) && (
+          {showBookmarksOnly && (
+            <span className="ml-1">(showing saved only)</span>
+          )}
+          {(selectedCategory || selectedLevel || searchQuery || showBookmarksOnly) && (
             <button
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCategory(null);
                 setSelectedLevel(null);
+                setShowBookmarksOnly(false);
               }}
               className={cn(
                 "ml-2 underline",
@@ -360,17 +428,8 @@ function GlossaryPage() {
                   >
                     <div className="flex items-start gap-3">
                       <div
-                        className={cn(
-                          "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
-                          isDark
-                            ? `bg-${categoryColor}-500/20 text-${categoryColor}-400`
-                            : `bg-${categoryColor}-100 text-${categoryColor}-600`
-                        )}
-                        style={{
-                          backgroundColor: isDark
-                            ? `rgb(var(--color-${categoryColor}-500) / 0.2)`
-                            : undefined,
-                        }}
+                        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={getCategoryStyles(categoryColor, isDark)}
                       >
                         <Icon size={18} />
                       </div>

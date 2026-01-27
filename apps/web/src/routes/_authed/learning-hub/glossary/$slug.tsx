@@ -1,28 +1,30 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect } from "react";
 import {
   ArrowLeft,
   BookOpen,
   Calculator,
-  Lightbulb,
-  ExternalLink,
   ChevronRight,
+  ExternalLink,
+  Lightbulb,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import {
-  CATEGORY_LABELS,
   CATEGORY_ICONS,
+  CATEGORY_LABELS,
   LEVEL_LABELS,
   getCategoryColor,
-  type GlossaryCategory,
-  type InvestorLevel,
-  type Formula,
-  type FormulaVariable,
-  type Example,
+} from "@axori/shared";
+import type {
+  Example,
+  Formula,
+  FormulaVariable,
+  GlossaryCategory,
+  InvestorLevel,
 } from "@axori/shared";
 import { cn } from "@/utils/helpers";
 import { useTheme } from "@/utils/providers/theme-provider";
-import { getTermBySlug, getRelatedTerms } from "@/data/learning-hub/glossary";
+import { getRelatedTerms, getTermBySlug } from "@/data/learning-hub/glossary";
 import { BookmarkButton } from "@/components/learning-hub/BookmarkButton";
 import {
   markTermViewed,
@@ -54,21 +56,42 @@ function TermDetailPage() {
 
   // Get icon component by name
   const getIcon = (iconName: string) => {
-    const icons = LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>;
+    const icons = LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }> | undefined>;
     const Icon = icons[iconName];
-    return Icon || BookOpen;
+    return Icon ?? BookOpen;
   };
 
-  const categoryIcon = CATEGORY_ICONS[term.category as GlossaryCategory];
+  // Get category colors as CSS values (Tailwind dynamic classes don't work)
+  const getCategoryStyles = (color: string, dark: boolean) => {
+    const colors: Record<string, { bg: string; bgDark: string; text: string; textDark: string }> = {
+      sky: { bg: "rgb(224 242 254)", bgDark: "rgba(14, 165, 233, 0.2)", text: "rgb(2 132 199)", textDark: "rgb(56 189 248)" },
+      indigo: { bg: "rgb(224 231 255)", bgDark: "rgba(99, 102, 241, 0.2)", text: "rgb(79 70 229)", textDark: "rgb(129 140 248)" },
+      slate: { bg: "rgb(241 245 249)", bgDark: "rgba(100, 116, 139, 0.2)", text: "rgb(71 85 105)", textDark: "rgb(148 163 184)" },
+      emerald: { bg: "rgb(209 250 229)", bgDark: "rgba(16, 185, 129, 0.2)", text: "rgb(4 120 87)", textDark: "rgb(52 211 153)" },
+      amber: { bg: "rgb(254 243 199)", bgDark: "rgba(245, 158, 11, 0.2)", text: "rgb(180 83 9)", textDark: "rgb(251 191 36)" },
+      rose: { bg: "rgb(255 228 230)", bgDark: "rgba(244, 63, 94, 0.2)", text: "rgb(190 18 60)", textDark: "rgb(251 113 133)" },
+      cyan: { bg: "rgb(207 250 254)", bgDark: "rgba(6, 182, 212, 0.2)", text: "rgb(14 116 144)", textDark: "rgb(34 211 238)" },
+      violet: { bg: "rgb(237 233 254)", bgDark: "rgba(139, 92, 246, 0.2)", text: "rgb(109 40 217)", textDark: "rgb(167 139 250)" },
+      orange: { bg: "rgb(255 237 213)", bgDark: "rgba(249, 115, 22, 0.2)", text: "rgb(194 65 12)", textDark: "rgb(251 146 60)" },
+      fuchsia: { bg: "rgb(250 232 255)", bgDark: "rgba(217, 70, 239, 0.2)", text: "rgb(162 28 175)", textDark: "rgb(232 121 249)" },
+    };
+    const c = colors[color] ?? colors.slate;
+    return {
+      backgroundColor: dark ? c.bgDark : c.bg,
+      color: dark ? c.textDark : c.text,
+    };
+  };
+
+  const categoryIcon = CATEGORY_ICONS[term.category];
   const CategoryIcon = getIcon(categoryIcon);
-  const categoryColor = getCategoryColor(term.category as GlossaryCategory);
+  const categoryColor = getCategoryColor(term.category);
 
   // Parse fullDefinition - can be string or PortableText array
   const definitionText =
     typeof term.fullDefinition === "string"
       ? term.fullDefinition
       : term.fullDefinition
-          ?.map((block: { children?: Array<{ text: string }> }) =>
+          .map((block: { children?: Array<{ text: string }> }) =>
             block.children?.map((child: { text: string }) => child.text).join("")
           )
           .join("\n\n") || "";
@@ -95,12 +118,8 @@ function TermDetailPage() {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
           <div
-            className={cn(
-              "w-12 h-12 rounded-xl flex items-center justify-center",
-              isDark
-                ? `bg-${categoryColor}-500/20 text-${categoryColor}-400`
-                : `bg-${categoryColor}-100 text-${categoryColor}-600`
-            )}
+            className="w-12 h-12 rounded-xl flex items-center justify-center"
+            style={getCategoryStyles(categoryColor, isDark)}
           >
             <CategoryIcon size={24} />
           </div>
@@ -111,7 +130,7 @@ function TermDetailPage() {
                 isDark ? "text-white/60" : "text-slate-500"
               )}
             >
-              {CATEGORY_LABELS[term.category as GlossaryCategory]}
+              {CATEGORY_LABELS[term.category]}
             </div>
             <span
               className={cn(
@@ -130,7 +149,7 @@ function TermDetailPage() {
                     : "bg-violet-100 text-violet-700")
               )}
             >
-              {LEVEL_LABELS[term.investorLevel as InvestorLevel]}
+              {LEVEL_LABELS[term.investorLevel]}
             </span>
           </div>
         </div>
@@ -250,7 +269,7 @@ function TermDetailPage() {
               >
                 {formula.expression}
               </div>
-              {formula.variables && (
+              {formula.variables.length > 0 && (
                 <div className="space-y-2">
                   <div
                     className={cn(

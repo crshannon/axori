@@ -1,28 +1,29 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useMemo, useEffect } from "react";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import {
-  BookOpen,
   ArrowRight,
-  Clock,
-  Zap,
-  ChevronRight,
+  BookOpen,
   Bookmark,
+  ChevronRight,
+  Clock,
   History,
+  Zap,
 } from "lucide-react";
-import { useLearningHubContext } from "../learning-hub";
 import * as LucideIcons from "lucide-react";
 import {
-  CATEGORY_LABELS,
   CATEGORY_ICONS,
-  type GlossaryCategory,
+  CATEGORY_LABELS
+  
 } from "@axori/shared";
+import { useLearningHubContext } from "../learning-hub";
+import type {GlossaryCategory} from "@axori/shared";
 import { cn } from "@/utils/helpers";
 import { useTheme } from "@/utils/providers/theme-provider";
 import { allGlossaryTerms, getTermBySlug } from "@/data/learning-hub/glossary";
 import {
-  getRecentlyViewed,
   getBookmarksByType,
   getLearningStats,
+  getRecentlyViewed,
 } from "@/lib/learning-hub/progress";
 import { getQuickRecommendations } from "@/lib/learning-hub/recommendations";
 
@@ -103,6 +104,7 @@ function LearningHubHome() {
   const isDark = appTheme === "dark";
   const { selectedJourney } = useLearningHubContext();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [showComingSoon, setShowComingSoon] = useState<string | null>(null);
 
   // Personalization state
   const [recentlyViewed, setRecentlyViewed] = useState<ReturnType<typeof getRecentlyViewed>>([]);
@@ -118,9 +120,9 @@ function LearningHubHome() {
 
   // Get icon component by name
   const getIcon = (iconName: string) => {
-    const icons = LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>;
+    const icons = LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }> | undefined>;
     const Icon = icons[iconName];
-    return Icon || BookOpen;
+    return Icon ?? BookOpen;
   };
 
   // Filter protocols by category
@@ -152,12 +154,13 @@ function LearningHubHome() {
         .slice(0, 5);
     }
 
-    const journeyTermMap: Record<string, string[]> = {
+    const journeyTermMap: Record<string, Array<string> | undefined> = {
       builder: ["brrrr", "house-hacking", "dscr", "ltv", "cash-on-cash-return"],
       optimizer: ["cost-segregation", "1031-exchange", "depreciation", "cap-rate", "noi"],
       explorer: ["cap-rate", "noi", "cash-flow", "appreciation", "equity"],
     };
-    const slugs = journeyTermMap[selectedJourney] || journeyTermMap.explorer;
+    const defaultSlugs = ["cap-rate", "noi", "cash-flow", "appreciation", "equity"];
+    const slugs = journeyTermMap[selectedJourney] ?? defaultSlugs;
     return allGlossaryTerms
       .filter((t) => slugs.includes(t.slug))
       .slice(0, 5);
@@ -217,13 +220,57 @@ function LearningHubHome() {
             return (
               <div
                 key={protocol.id}
+                onClick={() => {
+                  setShowComingSoon(protocol.id);
+                  setTimeout(() => setShowComingSoon(null), 2000);
+                }}
                 className={cn(
-                  "group p-6 rounded-2xl border transition-all cursor-pointer",
+                  "group p-6 rounded-2xl border transition-all cursor-pointer relative overflow-hidden",
                   isDark
                     ? "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
                     : "bg-white border-slate-200 hover:shadow-xl hover:border-violet-200"
                 )}
               >
+                {/* Coming Soon Badge */}
+                <div
+                  className={cn(
+                    "absolute top-3 right-3 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider",
+                    isDark
+                      ? "bg-white/10 text-white/40"
+                      : "bg-slate-100 text-slate-400"
+                  )}
+                >
+                  Coming Soon
+                </div>
+
+                {/* Coming Soon Toast */}
+                {showComingSoon === protocol.id && (
+                  <div
+                    className={cn(
+                      "absolute inset-0 flex items-center justify-center z-10 rounded-2xl",
+                      isDark ? "bg-black/80" : "bg-white/90"
+                    )}
+                  >
+                    <div className="text-center">
+                      <div
+                        className={cn(
+                          "text-lg font-black mb-1",
+                          isDark ? "text-[#E8FF4D]" : "text-violet-600"
+                        )}
+                      >
+                        Coming Soon
+                      </div>
+                      <div
+                        className={cn(
+                          "text-sm",
+                          isDark ? "text-white/60" : "text-slate-500"
+                        )}
+                      >
+                        Protocols are under development
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {/* Category & Read Time */}
                 <div className="flex items-center justify-between mb-4">
                   <div
