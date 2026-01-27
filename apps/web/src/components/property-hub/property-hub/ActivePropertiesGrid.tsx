@@ -40,7 +40,9 @@ const PropertyCardWrapper = ({
       image={getPropertyImage(property)}
       address={property.address}
       nickname={property.strategy?.investmentStrategy || undefined}
-      status={property.status.charAt(0).toUpperCase() + property.status.slice(1)}
+      status={
+        property.status.charAt(0).toUpperCase() + property.status.slice(1)
+      }
       score={metrics.score}
       cashFlow={formatCashFlow(metrics.cashFlow)}
       currentValue={formatPropertyValue(metrics.currentValue)}
@@ -71,7 +73,7 @@ export const ActivePropertiesGrid = ({
   const isDark = appTheme === 'dark'
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       {properties.map((property) => (
         <PropertyCardWrapper
           key={property.id}

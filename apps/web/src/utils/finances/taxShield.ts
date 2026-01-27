@@ -108,12 +108,21 @@ const MID_MONTH_FRACTIONS: Record<number, number> = {
  * @param propertyType - Property type string (e.g., "SFR", "Duplex", "Multifamily")
  * @returns Depreciation schedule in years (27.5 for residential, 39 for commercial)
  */
-export function getDepreciationSchedule(propertyType: string | null | undefined): number {
+export function getDepreciationSchedule(
+  propertyType: string | null | undefined,
+): number {
   if (!propertyType) {
     return RESIDENTIAL_DEPRECIATION_YEARS // Default to residential
   }
 
-  const residentialTypes = ['SFR', 'Duplex', 'Triplex', 'Fourplex', 'Condo', 'Townhouse']
+  const residentialTypes = [
+    'SFR',
+    'Duplex',
+    'Triplex',
+    'Fourplex',
+    'Condo',
+    'Townhouse',
+  ]
   const normalizedType = propertyType.trim()
 
   // Check if it's a residential type
@@ -145,7 +154,8 @@ export function calculateCostBasis(
   const totalCostBasis = purchasePrice + closingCosts + initialImprovements
 
   // If land value not provided, estimate using default ratio
-  const calculatedLandValue = landValue ?? totalCostBasis * DEFAULT_LAND_VALUE_RATIO
+  const calculatedLandValue =
+    landValue ?? totalCostBasis * DEFAULT_LAND_VALUE_RATIO
   const depreciableBasis = Math.max(0, totalCostBasis - calculatedLandValue)
 
   return {
@@ -224,7 +234,10 @@ export function calculateYearDepreciation(
     return 0
   }
 
-  const annualDepreciation = calculateAnnualDepreciation(depreciableBasis, depreciationYears)
+  const annualDepreciation = calculateAnnualDepreciation(
+    depreciableBasis,
+    depreciationYears,
+  )
   const totalYearsInt = Math.ceil(depreciationYears)
   const remainingBasis = depreciableBasis - accumulatedDepreciationBefore
 
@@ -243,7 +256,10 @@ export function calculateYearDepreciation(
   // For 39 years, year 40 gets remaining fraction
   if (yearNumber === totalYearsInt) {
     // Last year gets what's left, which is the complement of first year's fraction
-    return Math.min(remainingBasis, annualDepreciation * (1 - getMidMonthFraction(placedInServiceMonth)))
+    return Math.min(
+      remainingBasis,
+      annualDepreciation * (1 - getMidMonthFraction(placedInServiceMonth)),
+    )
   }
 
   // Middle years get full depreciation
@@ -272,16 +288,20 @@ export function generateDepreciationSchedule(
   // For 39 years, we need 40 years
   const totalYearsInt = Math.ceil(depreciationYears) + 1
   let accumulatedDepreciation = 0
-  const annualDepreciation = calculateAnnualDepreciation(depreciableBasis, depreciationYears)
+  const annualDepreciation = calculateAnnualDepreciation(
+    depreciableBasis,
+    depreciationYears,
+  )
 
   // Determine placed in service month (default to January)
   let placedInServiceMonth = 1
   let startYear = new Date().getFullYear()
 
   if (placedInServiceDate) {
-    const date = typeof placedInServiceDate === 'string'
-      ? new Date(placedInServiceDate)
-      : placedInServiceDate
+    const date =
+      typeof placedInServiceDate === 'string'
+        ? new Date(placedInServiceDate)
+        : placedInServiceDate
     placedInServiceMonth = date.getMonth() + 1 // JavaScript months are 0-indexed
     startYear = date.getFullYear()
   }
@@ -291,7 +311,7 @@ export function generateDepreciationSchedule(
 
   for (let i = 1; i <= totalYearsInt; i++) {
     const remainingBasisBefore = depreciableBasis - accumulatedDepreciation
-    
+
     // Stop if nothing left to depreciate
     if (remainingBasisBefore <= 0.01) break
 
@@ -302,7 +322,10 @@ export function generateDepreciationSchedule(
       yearDepreciation = annualDepreciation * firstYearFraction
     } else if (i === totalYearsInt) {
       // Last year: get the remaining fraction
-      yearDepreciation = Math.min(annualDepreciation * lastYearFraction, remainingBasisBefore)
+      yearDepreciation = Math.min(
+        annualDepreciation * lastYearFraction,
+        remainingBasisBefore,
+      )
     } else {
       // Middle years: full depreciation
       yearDepreciation = Math.min(annualDepreciation, remainingBasisBefore)
@@ -332,7 +355,8 @@ export function generateDepreciationSchedule(
       beginningBasis: Math.round(remainingBasisBefore * 100) / 100,
       depreciation: Math.round(yearDepreciation * 100) / 100,
       accumulatedDepreciation: Math.round(accumulatedDepreciation * 100) / 100,
-      remainingBasis: Math.round((depreciableBasis - accumulatedDepreciation) * 100) / 100,
+      remainingBasis:
+        Math.round((depreciableBasis - accumulatedDepreciation) * 100) / 100,
     })
   }
 
@@ -386,8 +410,14 @@ export function calculateDepreciationSummary(
   const yearsRemaining = Math.max(0, totalYearsInt - yearsCompleted)
 
   return {
-    annualDepreciation: calculateAnnualDepreciation(depreciableBasis, depreciationYears),
-    monthlyDepreciation: calculateMonthlyDepreciation(depreciableBasis, depreciationYears),
+    annualDepreciation: calculateAnnualDepreciation(
+      depreciableBasis,
+      depreciationYears,
+    ),
+    monthlyDepreciation: calculateMonthlyDepreciation(
+      depreciableBasis,
+      depreciationYears,
+    ),
     accumulatedDepreciation: Math.round(accumulatedDepreciation * 100) / 100,
     remainingBasis: Math.round(remainingBasis * 100) / 100,
     yearsRemaining,
@@ -419,7 +449,11 @@ export function calculateUnclaimedDepreciation(
   depreciationSchedule: number = RESIDENTIAL_DEPRECIATION_YEARS,
 ): number | null {
   // Return null if required data is missing
-  if (!purchaseDate || depreciationBasis === null || depreciationBasis === undefined) {
+  if (
+    !purchaseDate ||
+    depreciationBasis === null ||
+    depreciationBasis === undefined
+  ) {
     return null
   }
 
@@ -432,7 +466,9 @@ export function calculateUnclaimedDepreciation(
   }
 
   // Calculate months owned (using days for precision, then converting)
-  const daysDiff = Math.floor((now.getTime() - purchase.getTime()) / (1000 * 60 * 60 * 24))
+  const daysDiff = Math.floor(
+    (now.getTime() - purchase.getTime()) / (1000 * 60 * 60 * 24),
+  )
   const monthsOwned = daysDiff / 30.44 // Average days per month
 
   // Calculate annual depreciation
@@ -627,9 +663,10 @@ export function generateDepreciationExportData(
   placedInServiceDate: Date | string,
 ): DepreciationExportData {
   const depreciationYears = getDepreciationSchedule(propertyType)
-  const depreciationType = depreciationYears === RESIDENTIAL_DEPRECIATION_YEARS
-    ? 'residential' as const
-    : 'commercial' as const
+  const depreciationType =
+    depreciationYears === RESIDENTIAL_DEPRECIATION_YEARS
+      ? ('residential' as const)
+      : ('commercial' as const)
 
   const costBasis = calculateCostBasis(
     purchasePrice,
@@ -653,9 +690,10 @@ export function generateDepreciationExportData(
   const currentYear = new Date().getFullYear()
   const currentYearItem = schedule.find((item) => item.year === currentYear)
 
-  const dateStr = typeof placedInServiceDate === 'string'
-    ? placedInServiceDate
-    : placedInServiceDate.toISOString().split('T')[0]
+  const dateStr =
+    typeof placedInServiceDate === 'string'
+      ? placedInServiceDate
+      : placedInServiceDate.toISOString().split('T')[0]
 
   return {
     propertyAddress,
@@ -694,25 +732,37 @@ export function convertDepreciationToCSV(data: DepreciationExportData): string {
   lines.push('COST BASIS')
   lines.push(`Purchase Price,$${data.costBasis.purchasePrice.toLocaleString()}`)
   lines.push(`Closing Costs,$${data.costBasis.closingCosts.toLocaleString()}`)
-  lines.push(`Initial Improvements,$${data.costBasis.initialImprovements.toLocaleString()}`)
-  lines.push(`Total Cost Basis,$${data.costBasis.totalCostBasis.toLocaleString()}`)
-  lines.push(`Land Value (Non-Depreciable),$${data.costBasis.landValue.toLocaleString()}`)
-  lines.push(`Depreciable Basis,$${data.costBasis.depreciableBasis.toLocaleString()}`)
+  lines.push(
+    `Initial Improvements,$${data.costBasis.initialImprovements.toLocaleString()}`,
+  )
+  lines.push(
+    `Total Cost Basis,$${data.costBasis.totalCostBasis.toLocaleString()}`,
+  )
+  lines.push(
+    `Land Value (Non-Depreciable),$${data.costBasis.landValue.toLocaleString()}`,
+  )
+  lines.push(
+    `Depreciable Basis,$${data.costBasis.depreciableBasis.toLocaleString()}`,
+  )
   lines.push('')
 
   // Depreciation Schedule
   lines.push('ANNUAL DEPRECIATION SCHEDULE')
-  lines.push('Year,Months,Beginning Basis,Depreciation,Accumulated Depreciation,Remaining Basis')
+  lines.push(
+    'Year,Months,Beginning Basis,Depreciation,Accumulated Depreciation,Remaining Basis',
+  )
 
   for (const item of data.schedule) {
-    lines.push([
-      item.year,
-      item.monthsDepreciated,
-      `$${item.beginningBasis.toLocaleString()}`,
-      `$${item.depreciation.toLocaleString()}`,
-      `$${item.accumulatedDepreciation.toLocaleString()}`,
-      `$${item.remainingBasis.toLocaleString()}`,
-    ].join(','))
+    lines.push(
+      [
+        item.year,
+        item.monthsDepreciated,
+        `$${item.beginningBasis.toLocaleString()}`,
+        `$${item.depreciation.toLocaleString()}`,
+        `$${item.accumulatedDepreciation.toLocaleString()}`,
+        `$${item.remainingBasis.toLocaleString()}`,
+      ].join(','),
+    )
   }
 
   lines.push('')

@@ -4,11 +4,10 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { Body, Caption, Card, Overline, Typography } from '@axori/ui'
+import { Body, Caption, Card } from '@axori/ui'
 import { formatCashFlow, formatPropertyValue } from './utils'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import type { Property } from '@/hooks/api/useProperties'
-import { useTheme } from '@/utils/providers/theme-provider'
 import { cn } from '@/utils/helpers'
 
 interface ActivePropertiesListProps {
@@ -39,8 +38,6 @@ export const ActivePropertiesList = ({
   onAddRentalIncome,
   onAddCurrentValue,
 }: ActivePropertiesListProps) => {
-  const { appTheme } = useTheme()
-  const isDark = appTheme === 'dark'
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'address', desc: false },
   ])
@@ -116,32 +113,17 @@ export const ActivePropertiesList = ({
     () => [
       {
         accessorKey: 'address',
-        header: 'Asset Profile',
+        header: 'Property',
         cell: ({ row }) => (
           <div>
-            <Overline
-              className={cn(
-                'mb-1',
-                isDark ? 'text-white/60' : 'text-slate-500',
-              )}
-            >
-              {row.original.strategy || '—'}
-            </Overline>
             <Body
-              weight="black"
-              className={cn(
-                'text-base tracking-tight',
-                isDark ? 'text-white' : 'text-slate-900',
-              )}
+              size="sm"
+              weight="bold"
+              className="tracking-tight text-slate-900 dark:text-white"
             >
               {row.original.address}
             </Body>
-            <Caption
-              className={cn(
-                'text-xs opacity-60',
-                isDark ? 'text-white/60' : 'text-slate-500',
-              )}
-            >
+            <Caption className="text-slate-500 dark:text-white/50">
               {row.original.city}, {row.original.state}
             </Caption>
           </div>
@@ -149,22 +131,28 @@ export const ActivePropertiesList = ({
       },
       {
         accessorKey: 'strategy',
-        header: 'Strategy / Status',
+        header: 'Strategy',
         cell: ({ row }) => (
-          <div className="flex flex-col gap-1">
-            <span className="opacity-40">
-              {row.original.strategy || '—'}
-            </span>
-            <span
-              className={
-                row.original.status === 'Active'
-                  ? 'text-emerald-500'
-                  : 'text-amber-500'
-              }
-            >
-              {row.original.status}
-            </span>
-          </div>
+          <Body size="sm" className="text-slate-600 dark:text-white/70">
+            {row.original.strategy || '—'}
+          </Body>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => (
+          <Body
+            size="sm"
+            weight="semibold"
+            className={
+              row.original.status === 'Active'
+                ? 'text-emerald-500'
+                : 'text-amber-500'
+            }
+          >
+            {row.original.status}
+          </Body>
         ),
       },
       {
@@ -173,22 +161,18 @@ export const ActivePropertiesList = ({
         cell: ({ row }) => {
           const score = row.original.score
           return (
-            <div className="flex items-center gap-3">
-              <Typography
-                variant="h3"
+            <div className="flex items-center gap-2">
+              <Body
+                size="sm"
+                weight="bold"
                 className={cn(
-                  'text-2xl font-black tabular-nums tracking-tighter',
+                  'tabular-nums',
                   score > 80 ? 'text-emerald-500' : 'text-amber-500',
                 )}
               >
                 {score}
-              </Typography>
-              <div
-                className={cn(
-                  'h-1.5 w-16 rounded-full overflow-hidden',
-                  isDark ? 'bg-white/10' : 'bg-slate-500/10',
-                )}
-              >
+              </Body>
+              <div className="h-1 w-12 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10">
                 <div
                   className={cn(
                     'h-full',
@@ -217,34 +201,25 @@ export const ActivePropertiesList = ({
                   e.stopPropagation()
                   onAddRentalIncome(row.original.id)
                 }}
-                className={cn(
-                  'text-sm font-black tracking-tight uppercase transition-colors flex items-center gap-2',
-                  isDark
-                    ? 'text-amber-400 hover:text-amber-300'
-                    : 'text-amber-600 hover:text-amber-700',
-                )}
+                className="text-xs font-bold tracking-tight uppercase transition-colors flex items-center gap-1.5 text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
               >
-                <span
-                  className={cn(
-                    'w-1.5 h-1.5 rounded-full',
-                    isDark ? 'bg-amber-400' : 'bg-amber-500',
-                  )}
-                />
+                <span className="w-1 h-1 rounded-full bg-amber-500 dark:bg-amber-400" />
                 Add Rent
               </button>
             )
           }
 
           return (
-            <Typography
-              variant="h3"
+            <Body
+              size="sm"
+              weight="bold"
               className={cn(
-                'text-xl font-black tabular-nums tracking-tighter',
+                'tabular-nums',
                 cashFlow >= 0 ? 'text-emerald-500' : 'text-red-500',
               )}
             >
               {formatted}
-            </Typography>
+            </Body>
           )
         },
       },
@@ -263,19 +238,9 @@ export const ActivePropertiesList = ({
                     e.stopPropagation()
                     onAddCurrentValue(row.original.id)
                   }}
-                  className={cn(
-                    'text-sm font-black tracking-tight uppercase transition-colors flex items-center gap-2 ml-auto',
-                    isDark
-                      ? 'text-amber-400 hover:text-amber-300'
-                      : 'text-amber-600 hover:text-amber-700',
-                  )}
+                  className="text-xs font-bold tracking-tight uppercase transition-colors flex items-center gap-1.5 ml-auto text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
                 >
-                  <span
-                    className={cn(
-                      'w-1.5 h-1.5 rounded-full',
-                      isDark ? 'bg-amber-400' : 'bg-amber-500',
-                    )}
-                  />
+                  <span className="w-1 h-1 rounded-full bg-amber-500 dark:bg-amber-400" />
                   Add Value
                 </button>
               </div>
@@ -283,20 +248,18 @@ export const ActivePropertiesList = ({
           }
 
           return (
-            <Typography
-              variant="h3"
-              className={cn(
-                'text-xl font-black tabular-nums tracking-tighter text-right',
-                isDark ? 'text-white' : 'text-slate-900',
-              )}
+            <Body
+              size="sm"
+              weight="bold"
+              className="tabular-nums text-right text-slate-900 dark:text-white"
             >
               {row.original.currentValue}
-            </Typography>
+            </Body>
           )
         },
       },
     ],
-    [isDark],
+    [],
   )
 
   // Initialize TanStack Table
@@ -312,9 +275,9 @@ export const ActivePropertiesList = ({
   return (
     <Card
       variant="rounded"
-      padding="md"
-      radius="lg"
-      className="p-0 overflow-hidden"
+      padding="sm"
+      radius="sm"
+      className="overflow-hidden"
     >
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
@@ -322,17 +285,13 @@ export const ActivePropertiesList = ({
             {table.getHeaderGroups().map((headerGroup) => (
               <tr
                 key={headerGroup.id}
-                className={cn(
-                  'border-b',
-                  isDark ? 'border-white/5' : 'border-slate-100',
-                )}
+                className="border-b border-slate-100 dark:border-white/5"
               >
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
                     className={cn(
-                      'p-6 text-[9px] font-black uppercase tracking-[0.3em]',
-                      isDark ? 'text-white/60' : 'text-slate-500',
+                      'px-4 py-6 text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/50',
                       header.id === 'currentValue' && 'text-right',
                     )}
                   >
@@ -360,20 +319,15 @@ export const ActivePropertiesList = ({
               </tr>
             ))}
           </thead>
-          <tbody className="text-xs font-black uppercase">
+          <tbody>
             {table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
                 onClick={() => onPropertyClick(row.original.id)}
-                className={cn(
-                  'border-b last:border-0 cursor-pointer transition-all duration-300',
-                  isDark
-                    ? 'border-white/5 hover:bg-white/[0.02]'
-                    : 'border-slate-100 hover:bg-slate-50',
-                )}
+                className="border-b last:border-0 cursor-pointer transition-all duration-200 border-slate-100 hover:bg-slate-50 dark:border-white/5 dark:hover:bg-white/[0.02]"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="p-6">
+                  <td key={cell.id} className="px-4 py-3">
                     {typeof cell.column.columnDef.cell === 'function'
                       ? cell.column.columnDef.cell(cell.getContext())
                       : null}

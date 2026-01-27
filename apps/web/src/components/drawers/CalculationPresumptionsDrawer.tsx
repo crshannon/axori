@@ -14,13 +14,8 @@ export const CalculationPresumptionsDrawer = ({
   onClose,
   propertyId,
 }: CalculationPresumptionsDrawerProps) => {
-  const {
-    formData,
-    updateField,
-    saveSettings,
-    isSaving,
-    saveError,
-  } = usePropertySettings(propertyId)
+  const { formData, updateField, saveSettings, isSaving, saveError } =
+    usePropertySettings(propertyId)
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [localFormData, setLocalFormData] = useState({
@@ -69,8 +64,16 @@ export const CalculationPresumptionsDrawer = ({
     }
 
     validateRate('vacancyRate', localFormData.vacancyRate, 'Vacancy rate')
-    validateRate('maintenanceRate', localFormData.maintenanceRate, 'Maintenance rate')
-    validateRate('expenseInflation', localFormData.expenseInflation, 'Expense inflation')
+    validateRate(
+      'maintenanceRate',
+      localFormData.maintenanceRate,
+      'Maintenance rate',
+    )
+    validateRate(
+      'expenseInflation',
+      localFormData.expenseInflation,
+      'Expense inflation',
+    )
     validateRate('capexSinking', localFormData.capexSinking, 'CapEx sinking')
 
     if (Object.keys(validationErrors).length > 0) {
@@ -155,7 +158,9 @@ export const CalculationPresumptionsDrawer = ({
                   variant="rounded"
                   label="Maintenance Reserve (%)"
                   value={localFormData.maintenanceRate}
-                  onChange={(e) => handleChange('maintenanceRate', e.target.value)}
+                  onChange={(e) =>
+                    handleChange('maintenanceRate', e.target.value)
+                  }
                   placeholder="8.0"
                   error={errors.maintenanceRate}
                 />
@@ -172,7 +177,9 @@ export const CalculationPresumptionsDrawer = ({
                   variant="rounded"
                   label="Expense Inflation (%)"
                   value={localFormData.expenseInflation}
-                  onChange={(e) => handleChange('expenseInflation', e.target.value)}
+                  onChange={(e) =>
+                    handleChange('expenseInflation', e.target.value)
+                  }
                   placeholder="3.0"
                   error={errors.expenseInflation}
                 />
@@ -204,7 +211,9 @@ export const CalculationPresumptionsDrawer = ({
           <ErrorCard
             message={
               errors.submit ||
-              (saveError instanceof Error ? saveError.message : 'Failed to save')
+              (saveError instanceof Error
+                ? saveError.message
+                : 'Failed to save')
             }
           />
         )}

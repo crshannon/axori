@@ -49,4 +49,3 @@ export const ProgressHeader = ({ step, totalSteps }: ProgressHeaderProps) => (
     ))}
   </div>
 )
-

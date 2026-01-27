@@ -22,8 +22,8 @@ export const WizardFooter = ({
       <button
         onClick={onBack}
         className={cn(
-          "px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity",
-          step === 1 ? "invisible" : ""
+          'px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity',
+          step === 1 ? 'invisible' : '',
         )}
       >
         ← Back
@@ -60,7 +60,11 @@ export const WizardFooter = ({
             ></path>
           </svg>
         )}
-        {isSaving ? 'Saving...' : step === totalSteps ? 'Finalize Portfolio Sync' : 'Continue'}
+        {isSaving
+          ? 'Saving...'
+          : step === totalSteps
+            ? 'Finalize Portfolio Sync'
+            : 'Continue'}
       </button>
     </div>
   )

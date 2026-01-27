@@ -15,13 +15,8 @@ export const AssetConfigurationDrawer = ({
   onClose,
   propertyId,
 }: AssetConfigurationDrawerProps) => {
-  const {
-    formData,
-    updateField,
-    saveSettings,
-    isSaving,
-    saveError,
-  } = usePropertySettings(propertyId)
+  const { formData, updateField, saveSettings, isSaving, saveError } =
+    usePropertySettings(propertyId)
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [localFormData, setLocalFormData] = useState({
@@ -247,7 +242,9 @@ export const AssetConfigurationDrawer = ({
                 variant="rounded"
                 label="Tax Jurisdiction"
                 value={localFormData.taxJurisdiction}
-                onChange={(e) => handleChange('taxJurisdiction', e.target.value)}
+                onChange={(e) =>
+                  handleChange('taxJurisdiction', e.target.value)
+                }
                 placeholder="e.g., Travis County CAD"
                 error={errors.taxJurisdiction}
               />
@@ -258,7 +255,9 @@ export const AssetConfigurationDrawer = ({
                 variant="rounded"
                 label="Currency Override"
                 value={localFormData.currencyOverride}
-                onChange={(e) => handleChange('currencyOverride', e.target.value)}
+                onChange={(e) =>
+                  handleChange('currencyOverride', e.target.value)
+                }
                 error={errors.currencyOverride}
                 disabled
               >
@@ -280,7 +279,9 @@ export const AssetConfigurationDrawer = ({
           <ErrorCard
             message={
               errors.submit ||
-              (saveError instanceof Error ? saveError.message : 'Failed to save')
+              (saveError instanceof Error
+                ? saveError.message
+                : 'Failed to save')
             }
           />
         )}

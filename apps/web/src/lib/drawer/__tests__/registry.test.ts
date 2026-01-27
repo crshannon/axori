@@ -242,7 +242,12 @@ describe('drawer permissions', () => {
   })
 
   it('all financials drawers require member permission', () => {
-    const financialDrawers = ['add-loan', 'add-transaction', 'operating-expenses', 'rental-income']
+    const financialDrawers = [
+      'add-loan',
+      'add-transaction',
+      'operating-expenses',
+      'rental-income',
+    ]
     for (const name of financialDrawers) {
       const entry = getDrawerEntry(name)
       expect(entry?.permission).toBe('member')
@@ -459,8 +464,14 @@ describe('validateDrawerParams edge cases', () => {
   })
 
   it('handles case sensitivity correctly', () => {
-    expect(validateDrawerParams('ASSET-CONFIG' as any, { propertyId: 'prop_123' })).toBeNull()
-    expect(validateDrawerParams('Asset-Config' as any, { propertyId: 'prop_123' })).toBeNull()
-    expect(validateDrawerParams('asset-config', { propertyId: 'prop_123' })).not.toBeNull()
+    expect(
+      validateDrawerParams('ASSET-CONFIG' as any, { propertyId: 'prop_123' }),
+    ).toBeNull()
+    expect(
+      validateDrawerParams('Asset-Config' as any, { propertyId: 'prop_123' }),
+    ).toBeNull()
+    expect(
+      validateDrawerParams('asset-config', { propertyId: 'prop_123' }),
+    ).not.toBeNull()
   })
 })

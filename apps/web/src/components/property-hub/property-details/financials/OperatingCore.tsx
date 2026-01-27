@@ -1,12 +1,11 @@
 import { Button, Card, Typography } from '@axori/ui'
 import { LearningHubButton } from './LearningHubButton'
-import { generateOperatingCoreLearning } from '@/data/learning-hub/operating-core-snippets'
+import { usePropertyPermissions } from '@/hooks/api'
+import { useProperty } from '@/hooks/api/useProperties'
 import { useFinancialPulse } from '@/hooks/computed/useFinancialPulse'
 import { useOperatingCore } from '@/hooks/computed/useOperatingCore'
-import { useProperty } from '@/hooks/api/useProperties'
-import { usePropertyPermissions } from '@/hooks/api'
-import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
 import { DRAWERS, useDrawer } from '@/lib/drawer'
+import { generateOperatingCoreLearning } from '@/data/learning-hub/operating-core-snippets'
 
 interface OperatingCoreProps {
   propertyId: string
@@ -23,37 +22,23 @@ export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
   const { data: property, isLoading } = useProperty(propertyId)
   const metrics = useFinancialPulse(propertyId)
   const operatingMetrics = useOperatingCore(propertyId)
-  const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)
-
-  // Get current property value for learning context
-  const currentValue =
-    property?.acquisition?.currentValue !== null &&
-    property?.acquisition?.currentValue !== undefined
-      ? Number(property.acquisition.currentValue)
-      : null
-
-  // Generate learning snippets based on operating metrics
-  const learningSnippets = generateOperatingCoreLearning(
-    operatingMetrics.noi,
-    operatingMetrics.grossIncome,
-    operatingMetrics.margin,
-    currentValue,
-  )
+  const { canEdit } = usePropertyPermissions(propertyId)
 
   const handleManageExpenses = () => {
     openDrawer(DRAWERS.OPERATING_EXPENSES, { propertyId })
   }
 
-  const handleManageRentalIncome = () => {
-    openDrawer(DRAWERS.RENTAL_INCOME, { propertyId })
-  }
+  // Check if there are active leases
+  const hasActiveLeases =
+    property?.rentalIncome?.monthlyRent &&
+    Number(property.rentalIncome.monthlyRent) > 0
 
   if (isLoading || !property) {
     return (
-      <Card variant="rounded" padding="lg" radius="xl">
-        <div className="animate-pulse space-y-6">
-          <div className="h-6 w-48 bg-slate-200 dark:bg-white/5 rounded" />
-          <div className="h-8 w-32 bg-slate-200 dark:bg-white/5 rounded" />
+      <Card variant="rounded" padding="lg" radius="xl" className="h-full">
+        <div className="animate-pulse space-y-4">
+          <div className="h-5 w-32 bg-slate-200 dark:bg-white/5 rounded" />
+          <div className="h-20 bg-slate-200 dark:bg-white/5 rounded-xl" />
         </div>
       </Card>
     )
@@ -64,257 +49,173 @@ export const OperatingCore = ({ propertyId }: OperatingCoreProps) => {
       variant="rounded"
       padding="lg"
       radius="xl"
-      className="h-full flex flex-col gap-10 bg-slate-50/50 dark:bg-[#151518] relative overflow-hidden"
+      className="h-full flex flex-col"
     >
       {/* Header */}
-      <div className="flex justify-between items-center mb-2 relative z-10">
-        <div>
-          <Typography variant="h5" className="mb-1">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-5 bg-emerald-500 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.5)]" />
+          <Typography
+            variant="h6"
+            className="uppercase tracking-widest text-slate-900 dark:text-white"
+          >
             Operating Core
           </Typography>
-          <Typography variant="overline" className="text-slate-400">
-            Verified Forecast Protocol
-          </Typography>
-        </div>
-        <div className="flex items-center gap-3">
           <LearningHubButton
-            snippets={learningSnippets}
-            title="Operating Core Learning Hub"
-            subtitle="Strategic insights for property operations"
+            snippets={generateOperatingCoreLearning(
+              operatingMetrics.noi,
+              operatingMetrics.grossIncome,
+              operatingMetrics.margin,
+              property.valuation?.currentValue
+                ? Number(property.valuation.currentValue)
+                : null,
+            )}
+            title="Operating Core"
+            subtitle="Income, Expenses & NOI Analysis"
             componentKey="operating-core"
           />
-          {isReadOnly && <ReadOnlyBanner variant="badge" />}
         </div>
+        <span
+          className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-lg border ${
+            hasActiveLeases
+              ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
+              : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+          }`}
+        >
+          {hasActiveLeases ? 'Active_Engine' : 'NO_LEASES'}
+        </span>
       </div>
 
-      <div className="space-y-6 relative z-10">
-        {/* Lease Income Information Section */}
-        <div className="p-6 rounded-[2rem] bg-violet-500/5 border border-violet-500/10">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex-1">
-              <Typography
-                variant="caption"
-                className="text-violet-600/70 dark:text-violet-500/70 mb-2"
-              >
-                Lease Income Information
-              </Typography>
-              {property.rentalIncome?.monthlyRent ? (
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Typography variant="overline" className="text-slate-400">
-                      Monthly Rent
-                    </Typography>
-                    <Typography
-                      variant="h4"
-                      className="tabular-nums text-violet-500 dark:text-violet-400"
-                    >
-                      ${Number(property.rentalIncome.monthlyRent).toLocaleString()}
-                    </Typography>
-                  </div>
-                  {property.rentalIncome.rentSource && (
-                    <Typography variant="overline" className="text-slate-400 text-[9px]">
-                      Source: {property.rentalIncome.rentSource.charAt(0).toUpperCase() + property.rentalIncome.rentSource.slice(1)}
-                    </Typography>
-                  )}
-                  {(property.rentalIncome.leaseStartDate || property.rentalIncome.leaseEndDate) && (
-                    <div className="flex gap-4 mt-2">
-                      {property.rentalIncome.leaseStartDate && (
-                        <Typography variant="overline" className="text-slate-400 text-[9px]">
-                          Start: {new Date(property.rentalIncome.leaseStartDate).toLocaleDateString()}
-                        </Typography>
-                      )}
-                      {property.rentalIncome.leaseEndDate && (
-                        <Typography variant="overline" className="text-slate-400 text-[9px]">
-                          End: {new Date(property.rentalIncome.leaseEndDate).toLocaleDateString()}
-                        </Typography>
-                      )}
-                    </div>
-                  )}
-                  {/* Calculate total other income */}
-                  {(() => {
-                    const otherIncome = [
-                      property.rentalIncome.parkingIncomeMonthly,
-                      property.rentalIncome.laundryIncomeMonthly,
-                      property.rentalIncome.petRentMonthly,
-                      property.rentalIncome.storageIncomeMonthly,
-                      property.rentalIncome.utilityReimbursementMonthly,
-                      property.rentalIncome.otherIncomeMonthly,
-                    ]
-                      .filter(Boolean)
-                      .reduce((sum, val) => sum + Number(val || 0), 0)
-                    return otherIncome > 0 ? (
-                      <Typography variant="overline" className="text-slate-400 text-[9px]">
-                        Other Income: +${otherIncome.toLocaleString()}/mo
-                      </Typography>
-                    ) : null
-                  })()}
-                </div>
-              ) : (
-                <Typography variant="overline" className="text-slate-400">
-                  No lease income data configured
-                </Typography>
-              )}
-            </div>
-            {canEdit && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="ml-4 py-2 px-4 rounded-xl bg-violet-500/10 border-violet-500/20 text-violet-600 dark:text-violet-400 dark:bg-violet-500/5 dark:border-violet-500/10 dark:hover:bg-violet-500/10 font-black text-[9px] uppercase tracking-widest transition-all hover:bg-violet-500/20 dark:hover:bg-violet-500/10"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleManageRentalIncome()
-                }}
-              >
-                Configure
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Expected Inflow Card */}
-        <div className="p-6 rounded-[2rem] bg-emerald-500/5 border border-emerald-500/10">
-          <div className="flex justify-between items-center mb-1">
-            <Typography
-              variant="caption"
-              className="text-emerald-600/70 dark:text-emerald-500/70"
-            >
-              Expected Inflow
-            </Typography>
-            <Typography
-              variant="h3"
-              className="tabular-nums text-emerald-500 dark:text-emerald-500"
-            >
-              +${operatingMetrics.grossIncome.toLocaleString()}
-            </Typography>
-          </div>
-          <Typography variant="overline" className="text-slate-400">
-            Market Adjusted Base Rent
-          </Typography>
-        </div>
-
-        {/* Expenses List */}
-        <div className="space-y-3 px-2">
-          {operatingMetrics.fixedExpenses
-            .filter((exp) => exp.amount > 0)
-            .map((exp) => (
-              <div
-                key={exp.id}
-                className="flex justify-between items-center group"
-              >
-                <Typography
-                  variant="body-sm"
-                  weight="bold"
-                  className="opacity-40 group-hover:opacity-100 transition-all uppercase tracking-tight"
-                >
-                  {exp.label}
-                </Typography>
-                <Typography
-                  variant="body-sm"
-                  weight="black"
-                  className="tabular-nums"
-                >
-                  -${exp.amount.toLocaleString()}
-                </Typography>
-              </div>
-            ))}
-
-          {/* Visual separator before financing costs */}
-          <div className="pt-2 border-t border-slate-200/50 dark:border-white/5 mt-3" />
-
-          {/* Loan Payment - Financing Cost (not included in NOI) */}
-          <div className="flex justify-between items-center group">
-            <div className="flex items-center gap-2">
-              <Typography
-                variant="body-sm"
-                weight="bold"
-                className="opacity-40 uppercase tracking-tight"
-              >
-                Loan Payment
-              </Typography>
-              <Typography
-                variant="overline"
-                className="text-slate-400 opacity-60 text-[9px]"
-                title="Financing cost - not included in NOI (Net Operating Income)"
-              >
-                (Financing)
-              </Typography>
-            </div>
-            <Typography
-              variant="body-sm"
-              weight="black"
-              className="tabular-nums"
-            >
-              -${Math.round(metrics.totalDebtService).toLocaleString()}
-            </Typography>
-          </div>
-          <div className="flex justify-between items-center group">
+      <div className="space-y-0">
+        {/* Gross Income */}
+        <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-white/5">
+          <div>
             <Typography
               variant="body-sm"
               weight="bold"
-              className="opacity-40 uppercase tracking-tight"
+              className="text-slate-900 dark:text-white"
             >
-              CapEx Accrual
+              Gross Income
             </Typography>
             <Typography
-              variant="body-sm"
-              weight="black"
-              className="tabular-nums"
+              variant="caption"
+              className="text-slate-500 dark:text-slate-400"
             >
-              -${Math.round(operatingMetrics.capexReserve).toLocaleString()}
+              {property.rentalIncome?.monthlyRent
+                ? `$${Number(property.rentalIncome.monthlyRent).toLocaleString()}/mo rent`
+                : 'No rent configured'}
             </Typography>
           </div>
+          <Typography variant="h4" className="tabular-nums text-emerald-500">
+            +${operatingMetrics.grossIncome.toLocaleString()}
+          </Typography>
+        </div>
+
+        {/* Fixed Expenses */}
+        {operatingMetrics.fixedExpenses
+          .filter((exp) => exp.amount > 0)
+          .map((exp) => (
+            <div
+              key={exp.id}
+              className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-white/5"
+            >
+              <Typography
+                variant="body-sm"
+                className="text-slate-600 dark:text-slate-400"
+              >
+                {exp.label}
+              </Typography>
+              <Typography
+                variant="body-sm"
+                weight="bold"
+                className="tabular-nums text-slate-900 dark:text-white"
+              >
+                -${exp.amount.toLocaleString()}
+              </Typography>
+            </div>
+          ))}
+
+        {/* Debt Service */}
+        <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-white/5">
+          <Typography
+            variant="body-sm"
+            className="text-slate-600 dark:text-slate-400"
+          >
+            Debt Service
+          </Typography>
+          <Typography
+            variant="body-sm"
+            weight="bold"
+            className="tabular-nums text-slate-900 dark:text-white"
+          >
+            -${Math.round(metrics.totalDebtService).toLocaleString()}
+          </Typography>
+        </div>
+
+        {/* CapEx Accrual */}
+        <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-white/5">
+          <Typography
+            variant="body-sm"
+            className="text-slate-600 dark:text-slate-400"
+          >
+            CapEx Accrual
+          </Typography>
+          <Typography
+            variant="body-sm"
+            weight="bold"
+            className="tabular-nums text-slate-900 dark:text-white"
+          >
+            -${Math.round(operatingMetrics.capexReserve).toLocaleString()}
+          </Typography>
         </div>
 
         {/* NOI Summary */}
-        <div className="pt-6 border-t border-slate-500/10 dark:border-white/5 flex justify-between items-end">
+        <div className="flex justify-between items-end pt-6">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Typography variant="caption" className="text-slate-500">
-                Projected NOI
-              </Typography>
-              <Typography
-                variant="overline"
-                className="text-slate-400 opacity-70 text-[9px]"
-                title="Net Operating Income = Gross Income - Operating Expenses - CapEx. Excludes financing costs (loan payments)."
-              >
-                (Excludes Financing)
-              </Typography>
-            </div>
             <Typography
-              variant="h1"
-              className="tabular-nums tracking-tighter leading-none"
+              variant="caption"
+              className="text-slate-500 dark:text-slate-400 mb-1 block"
+            >
+              Projected NOI
+            </Typography>
+            <Typography
+              variant="h3"
+              className="tabular-nums text-slate-900 dark:text-white tracking-tighter"
             >
               ${Math.round(operatingMetrics.noi).toLocaleString()}
             </Typography>
           </div>
           <div className="text-right">
-            <Typography variant="caption" className="text-slate-500 mb-1">
-              Yield Eff.
+            <Typography
+              variant="caption"
+              className="text-slate-500 dark:text-slate-400 mb-1 block"
+            >
+              Margin
             </Typography>
             <Typography
               variant="h4"
-              className="tabular-nums text-sky-500 dark:text-sky-400"
+              className="tabular-nums text-slate-900 dark:text-white"
             >
               {operatingMetrics.margin.toFixed(1)}%
             </Typography>
           </div>
         </div>
-
-        {/* Manage Button - only show for users with edit permission */}
-        {canEdit && (
-          <Button
-            variant="outline"
-            size="lg"
-            className="w-full py-4 mt-8 rounded-2xl bg-slate-900 text-white dark:bg-white/5 dark:border dark:border-white/10 dark:text-white dark:hover:bg-white/10 font-black text-[10px] uppercase tracking-widest transition-all hover:bg-violet-600 dark:hover:bg-[#E8FF4D] dark:hover:text-black"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleManageExpenses()
-            }}
-          >
-            Configure Operating Expenses
-          </Button>
-        )}
       </div>
+
+      {/* Configure Button */}
+      {canEdit && (
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full py-4 mt-auto pt-6 rounded-2xl bg-slate-900 text-white dark:bg-white/5 dark:border dark:border-white/10 dark:text-white dark:hover:bg-white/10 font-black text-[10px] uppercase tracking-widest transition-all"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleManageExpenses()
+          }}
+        >
+          Configure Expenses
+        </Button>
+      )}
     </Card>
   )
 }

@@ -63,14 +63,17 @@ export function useValidateInvitation(token: string | null) {
         `${API_BASE_URL}/api/portfolio-members/validate-invitation?token=${encodeURIComponent(token)}`,
         {
           credentials: 'include',
-        }
+        },
       )
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({
           error: response.statusText,
         }))
-        return { valid: false, error: errorData.error || 'Failed to validate invitation' }
+        return {
+          valid: false,
+          error: errorData.error || 'Failed to validate invitation',
+        }
       }
 
       return response.json()
@@ -100,7 +103,7 @@ export function useAcceptInvitation() {
           method: 'POST',
           clerkId: user.id,
           body: JSON.stringify({ token }),
-        }
+        },
       )
     },
     onSuccess: () => {

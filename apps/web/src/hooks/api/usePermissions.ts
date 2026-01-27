@@ -91,15 +91,12 @@ export interface UsePermissionsResult {
  * - The hook caches results for 5 minutes to avoid excessive API calls
  * - When portfolioId is null, all permissions default to false
  */
-export function usePermissions(portfolioId: string | null): UsePermissionsResult {
+export function usePermissions(
+  portfolioId: string | null,
+): UsePermissionsResult {
   const { user } = useUser()
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['permissions', portfolioId],
     queryFn: async () => {
       if (!user?.id || !portfolioId) {
@@ -110,7 +107,7 @@ export function usePermissions(portfolioId: string | null): UsePermissionsResult
         `/api/permissions/${portfolioId}`,
         {
           clerkId: user.id,
-        }
+        },
       )
     },
     enabled: !!user?.id && !!portfolioId,
@@ -138,6 +135,8 @@ export function usePermissions(portfolioId: string | null): UsePermissionsResult
     hasPropertyAccess,
     isLoading: portfolioId ? isLoading : false,
     error: error,
-    refetch: () => { refetch() },
+    refetch: () => {
+      refetch()
+    },
   }
 }

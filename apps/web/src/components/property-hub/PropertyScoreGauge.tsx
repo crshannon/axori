@@ -62,7 +62,10 @@ export const PropertyScoreGauge = ({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className={cn('transition-all duration-1000 ease-out', getScoreColor(score))}
+          className={cn(
+            'transition-all duration-1000 ease-out',
+            getScoreColor(score),
+          )}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -82,4 +85,3 @@ export const PropertyScoreGauge = ({
     </div>
   )
 }
-

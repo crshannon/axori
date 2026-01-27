@@ -14,13 +14,8 @@ export const AcquisitionMetadataDrawer = ({
   onClose,
   propertyId,
 }: AcquisitionMetadataDrawerProps) => {
-  const {
-    formData,
-    updateField,
-    saveSettings,
-    isSaving,
-    saveError,
-  } = usePropertySettings(propertyId)
+  const { formData, updateField, saveSettings, isSaving, saveError } =
+    usePropertySettings(propertyId)
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [localFormData, setLocalFormData] = useState({
@@ -172,7 +167,9 @@ export const AcquisitionMetadataDrawer = ({
           <ErrorCard
             message={
               errors.submit ||
-              (saveError instanceof Error ? saveError.message : 'Failed to save')
+              (saveError instanceof Error
+                ? saveError.message
+                : 'Failed to save')
             }
           />
         )}

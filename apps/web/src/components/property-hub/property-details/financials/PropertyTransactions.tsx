@@ -7,6 +7,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type {
   ColumnDef,
   ColumnFiltersState,
@@ -18,6 +19,8 @@ import { useTheme } from '@/utils/providers/theme-provider'
 import { cn } from '@/utils/helpers/cn'
 import { ReadOnlyBanner } from '@/components/property-hub/ReadOnlyBanner'
 import { DRAWERS, useDrawer } from '@/lib/drawer'
+
+type ViewMode = 'month' | 'all'
 
 interface PropertyTransactionsProps {
   propertyId: string
@@ -59,6 +62,13 @@ export const PropertyTransactions = ({
   ])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
+  // View mode: 'month' (default) or 'all'
+  const [viewMode, setViewMode] = useState<ViewMode>('month')
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  })
+
   // Fetch transactions data
   const {
     data: transactionsData,
@@ -86,28 +96,85 @@ export const PropertyTransactions = ({
       source: tx.source || 'manual',
       documentId: tx.documentId,
       notes: tx.notes || null,
-      reviewStatus: (tx.reviewStatus ||
-        'pending'),
+      reviewStatus: tx.reviewStatus || 'pending',
       isExcluded: tx.isExcluded || false,
       taxCategory: tx.taxCategory,
     }))
   }, [transactionsData])
 
-  // Filter transactions based on search query
-  const filteredTransactions = useMemo(() => {
-    if (!searchQuery) return transactions
-
-    const query = searchQuery.toLowerCase()
-    return transactions.filter((t) => {
-      return (
-        t.payee.toLowerCase().includes(query) ||
-        t.description.toLowerCase().includes(query) ||
-        t.category.toLowerCase().includes(query) ||
-        (t.subcategory && t.subcategory.toLowerCase().includes(query)) ||
-        (t.notes && t.notes.toLowerCase().includes(query))
-      )
+  // Get available months from transactions for the dropdown
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>()
+    transactions.forEach((t) => {
+      const [year, month] = t.date.split('-')
+      months.add(`${year}-${month}`)
     })
-  }, [transactions, searchQuery])
+    return Array.from(months).sort().reverse()
+  }, [transactions])
+
+  // Filter transactions based on search query and month
+  const filteredTransactions = useMemo(() => {
+    let filtered = transactions
+
+    // Apply month filter if in month view mode
+    if (viewMode === 'month') {
+      filtered = filtered.filter((t) => {
+        const [year, month] = t.date.split('-')
+        return `${year}-${month}` === selectedMonth
+      })
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter((t) => {
+        return (
+          t.payee.toLowerCase().includes(query) ||
+          t.description.toLowerCase().includes(query) ||
+          t.category.toLowerCase().includes(query) ||
+          (t.subcategory && t.subcategory.toLowerCase().includes(query)) ||
+          (t.notes && t.notes.toLowerCase().includes(query))
+        )
+      })
+    }
+
+    return filtered
+  }, [transactions, searchQuery, viewMode, selectedMonth])
+
+  // Calculate month totals for the summary
+  const monthTotals = useMemo(() => {
+    const income = filteredTransactions
+      .filter((t) => t.type === 'income' && !t.isExcluded)
+      .reduce((sum, t) => sum + t.amount, 0)
+    const expenses = filteredTransactions
+      .filter((t) => t.type === 'expense' && !t.isExcluded)
+      .reduce((sum, t) => sum + t.amount, 0)
+    return { income, expenses, net: income - expenses }
+  }, [filteredTransactions])
+
+  // Navigate between months
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    const [year, month] = selectedMonth.split('-').map(Number)
+    let newYear = year
+    let newMonth = direction === 'prev' ? month - 1 : month + 1
+
+    if (newMonth < 1) {
+      newMonth = 12
+      newYear -= 1
+    } else if (newMonth > 12) {
+      newMonth = 1
+      newYear += 1
+    }
+
+    setSelectedMonth(`${newYear}-${String(newMonth).padStart(2, '0')}`)
+  }
+
+  // Format month for display
+  const formatMonth = (monthKey: string): string => {
+    const [year, month] = monthKey.split('-').map(Number)
+    const date = new Date(year, month - 1, 1)
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  }
 
   // Define columns
   const columns = useMemo<Array<ColumnDef<TransactionRow>>>(
@@ -345,29 +412,32 @@ export const PropertyTransactions = ({
       variant="rounded"
       padding="lg"
       radius="xl"
-      className="lg:col-span-12 flex flex-col gap-12"
+      className="flex flex-col gap-6"
     >
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-        <div className="flex items-center gap-4">
-          <div>
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="flex items-center justify-between w-full md:w-auto">
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-4 bg-violet-500 rounded-full" />
             <Typography
-              variant="h3"
-              className="text-3xl font-black uppercase tracking-tighter"
+              variant="h6"
+              className="uppercase tracking-widest text-slate-900 dark:text-white"
             >
               Historical P&L Registry
             </Typography>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-2 italic">
-              Institutional Transcript — Audit Proof
-            </p>
           </div>
-          {isReadOnly && <ReadOnlyBanner variant="badge" />}
+          <div className="flex items-center gap-2 md:ml-4">
+            <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded bg-violet-500/20 text-violet-400">
+              AUDIT_READY
+            </span>
+            {isReadOnly && <ReadOnlyBanner variant="badge" />}
+          </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <div className="relative flex-grow">
             <svg
-              className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"
-              width="16"
-              height="16"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -378,10 +448,10 @@ export const PropertyTransactions = ({
             </svg>
             <Input
               type="text"
-              placeholder="Filter by payee, category or text..."
+              placeholder="Filter..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-80 pl-14 pr-8 py-4 rounded-3xl text-[10px] font-black uppercase"
+              className="w-full sm:w-48 pl-10 pr-4 py-2 rounded-xl text-[10px] font-black uppercase"
             />
           </div>
           <div className="flex gap-2">
@@ -390,31 +460,163 @@ export const PropertyTransactions = ({
               size="sm"
               onClick={handleRefresh}
               disabled={isLoading}
-              className="px-8 py-4 rounded-3xl font-black text-[10px] uppercase tracking-widest"
+              className="px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest"
             >
-              {isLoading ? 'Refreshing...' : 'Refresh'}
+              Filter
             </Button>
             {canEdit && (
               <Button
-                variant="primary"
+                variant="outline"
                 size="sm"
                 onClick={handleAddTransaction}
-                className="px-8 py-4 rounded-3xl font-black text-[10px] uppercase tracking-widest shadow-xl"
+                className="px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest"
               >
-                Add Transaction
+                + Add
               </Button>
             )}
             <Button
               variant="outline"
               size="sm"
               onClick={handleExport}
-              className="px-8 py-4 rounded-3xl font-black text-[10px] uppercase tracking-widest"
+              className="px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest"
             >
               Export Ledger
             </Button>
           </div>
         </div>
       </header>
+
+      {/* Month Navigation and View Toggle */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-white/10">
+        {/* View Toggle */}
+        <div className="flex items-center gap-2">
+          <div
+            className={cn(
+              'flex rounded-2xl p-1',
+              isDark ? 'bg-white/5' : 'bg-slate-100',
+            )}
+          >
+            <button
+              onClick={() => setViewMode('month')}
+              className={cn(
+                'px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+                viewMode === 'month'
+                  ? isDark
+                    ? 'bg-[#E8FF4D] text-black'
+                    : 'bg-violet-600 text-white'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-white',
+              )}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setViewMode('all')}
+              className={cn(
+                'px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+                viewMode === 'all'
+                  ? isDark
+                    ? 'bg-[#E8FF4D] text-black'
+                    : 'bg-violet-600 text-white'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-white',
+              )}
+            >
+              All Time
+            </button>
+          </div>
+        </div>
+
+        {/* Month Navigator (only visible in month view) */}
+        {viewMode === 'month' && (
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigateMonth('prev')}
+              className={cn(
+                'p-2 rounded-xl transition-all',
+                isDark
+                  ? 'hover:bg-white/5 text-slate-400 hover:text-white'
+                  : 'hover:bg-slate-100 text-slate-400 hover:text-slate-900',
+              )}
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div className="min-w-[160px] text-center">
+              <Typography
+                variant="h4"
+                className="text-lg font-black tracking-tight"
+              >
+                {formatMonth(selectedMonth)}
+              </Typography>
+            </div>
+            <button
+              onClick={() => navigateMonth('next')}
+              className={cn(
+                'p-2 rounded-xl transition-all',
+                isDark
+                  ? 'hover:bg-white/5 text-slate-400 hover:text-white'
+                  : 'hover:bg-slate-100 text-slate-400 hover:text-slate-900',
+              )}
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        )}
+
+        {/* Month Summary */}
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <Typography
+              variant="caption"
+              className="text-[9px] font-black uppercase tracking-widest text-slate-400"
+            >
+              Income
+            </Typography>
+            <Typography
+              variant="body"
+              weight="bold"
+              className="text-emerald-500 tabular-nums"
+            >
+              +${monthTotals.income.toLocaleString()}
+            </Typography>
+          </div>
+          <div className="text-right">
+            <Typography
+              variant="caption"
+              className="text-[9px] font-black uppercase tracking-widest text-slate-400"
+            >
+              Expenses
+            </Typography>
+            <Typography variant="body" weight="bold" className="tabular-nums">
+              -${monthTotals.expenses.toLocaleString()}
+            </Typography>
+          </div>
+          <div
+            className={cn(
+              'text-right px-4 py-2 rounded-xl',
+              monthTotals.net >= 0
+                ? 'bg-emerald-50 dark:bg-emerald-500/10'
+                : 'bg-rose-50 dark:bg-rose-500/10',
+            )}
+          >
+            <Typography
+              variant="caption"
+              className="text-[9px] font-black uppercase tracking-widest text-slate-400"
+            >
+              Net
+            </Typography>
+            <Typography
+              variant="body"
+              weight="bold"
+              className={cn(
+                'tabular-nums',
+                monthTotals.net >= 0 ? 'text-emerald-500' : 'text-rose-500',
+              )}
+            >
+              {monthTotals.net >= 0 ? '+' : '-'}$
+              {Math.abs(monthTotals.net).toLocaleString()}
+            </Typography>
+          </div>
+        </div>
+      </div>
 
       <div className="overflow-x-auto">
         {isLoading ? (
@@ -428,7 +630,9 @@ export const PropertyTransactions = ({
           <div className="py-20 text-center opacity-30 italic font-medium">
             {searchQuery
               ? `No records matching "${searchQuery}" found in registry.`
-              : 'No transactions found.'}
+              : viewMode === 'month'
+                ? `No transactions found for ${formatMonth(selectedMonth)}.`
+                : 'No transactions found.'}
           </div>
         ) : (
           <>

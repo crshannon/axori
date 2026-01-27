@@ -80,9 +80,7 @@ export function usePropertyGridMetrics(
         const grossIncome = calculateGrossIncome(rentalIncome, [])
 
         // Calculate debt service using shared utility
-        const totalDebtService = calculateTotalDebtService(
-          property.loans || [],
-        )
+        const totalDebtService = calculateTotalDebtService(property.loans || [])
 
         // Calculate total fixed expenses using shared utility
         const totalFixedExpenses = calculateTotalFixedExpenses(
@@ -126,12 +124,11 @@ export function usePropertyGridMetrics(
     const purchasePrice = property.acquisition?.purchasePrice
       ? Number(property.acquisition.purchasePrice)
       : null
-    const activeLoan = property.loans?.find(
-      (loan) => loan.status === 'active' && loan.isPrimary,
-    )
-    const totalLoanAmount = activeLoan?.originalLoanAmount
-      ? Number(activeLoan.originalLoanAmount)
-      : 0
+    const loans = property.loans || []
+    const activeLoans = loans.filter((loan) => loan.status === 'active')
+    const totalLoanAmount = activeLoans.reduce((sum, loan) => {
+      return sum + (loan.currentBalance ? Number(loan.currentBalance) : 0)
+    }, 0)
 
     // Ensure currentValue is a valid number (not NaN, not 0 if it was originally null/undefined)
     const currentValueNum =
@@ -149,14 +146,29 @@ export function usePropertyGridMetrics(
           ? purchasePrice - totalLoanAmount
           : null
 
-    // Calculate cap rate
-    const monthlyRent = Number(property.rentalIncome?.monthlyRent || 0)
-    const monthlyExpenses = 0 // Simplified
-    const annualNOI = (monthlyRent - monthlyExpenses) * 12
+    // Calculate cap rate using proper NOI calculation
+    // Reuse grossIncome, totalFixedExpenses, capexReserve from above if available
+    const grossIncomeForCapRate = calculateGrossIncome(rentalIncome, [])
+    const fixedExpensesForCapRate = calculateTotalFixedExpenses(
+      operatingExpenses,
+      [],
+      grossIncomeForCapRate,
+    )
+    const capexReserveForCapRate = calculateCapExReserve(
+      grossIncomeForCapRate,
+      operatingExpenses?.capexRate,
+    )
+    const noiForCapRate = calculateNOI(
+      grossIncomeForCapRate,
+      fixedExpensesForCapRate,
+      capexReserveForCapRate,
+    )
+    const annualNOI = noiForCapRate * 12
+
     const capRate =
       currentValueNum !== null &&
       currentValueNum > 0 &&
-      monthlyRent > 0
+      grossIncomeForCapRate > 0
         ? (annualNOI / currentValueNum) * 100
         : null
 

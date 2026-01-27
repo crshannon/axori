@@ -45,8 +45,9 @@ export function useOperatingCore(propertyId: string): OperatingCoreMetrics {
   const operatingMetrics = useMemo(() => {
     const rentalIncome = property?.rentalIncome
     const operatingExpenses = property?.operatingExpenses
-    const activeTransactions =
-      (transactionsData?.transactions || []).filter((t) => !t.isExcluded)
+    const activeTransactions = (transactionsData?.transactions || []).filter(
+      (t) => !t.isExcluded,
+    )
 
     // Calculate gross income using shared utility
     const grossIncome = calculateGrossIncome(rentalIncome, activeTransactions)
@@ -54,22 +55,31 @@ export function useOperatingCore(propertyId: string): OperatingCoreMetrics {
     // Calculate fixed expenses - combine structured data and transactions
     const fixedExpenses: Array<FixedExpense> = []
 
+    // Check if primary loan has escrow (tax/insurance included in loan payment)
+    const primaryLoan = (property?.loans || []).find(
+      (l) => l.isPrimary && l.status === 'active',
+    )
+    const hasEscrow = primaryLoan?.hasEscrow ?? false
+
     // Add structured expenses from operatingExpenses table
     if (operatingExpenses) {
       // Annual expenses converted to monthly
-      if (operatingExpenses.propertyTaxAnnual) {
-        fixedExpenses.push({
-          id: 'property-tax',
-          label: 'Property Tax',
-          amount: parseFloat(operatingExpenses.propertyTaxAnnual) / 12,
-        })
-      }
-      if (operatingExpenses.insuranceAnnual) {
-        fixedExpenses.push({
-          id: 'insurance',
-          label: 'Insurance',
-          amount: parseFloat(operatingExpenses.insuranceAnnual) / 12,
-        })
+      // Skip if hasEscrow is true (tax/insurance are paid through loan escrow)
+      if (!hasEscrow) {
+        if (operatingExpenses.propertyTaxAnnual) {
+          fixedExpenses.push({
+            id: 'property-tax',
+            label: 'Property Tax',
+            amount: parseFloat(operatingExpenses.propertyTaxAnnual) / 12,
+          })
+        }
+        if (operatingExpenses.insuranceAnnual) {
+          fixedExpenses.push({
+            id: 'insurance',
+            label: 'Insurance',
+            amount: parseFloat(operatingExpenses.insuranceAnnual) / 12,
+          })
+        }
       }
 
       // Monthly expenses
@@ -191,7 +201,9 @@ export function useOperatingCore(propertyId: string): OperatingCoreMetrics {
           t.isRecurring &&
           t.recurrenceFrequency === 'monthly' &&
           // Exclude management transactions if we already have structured management
-          !(hasManagementExpense && t.category.toLowerCase() === 'management') &&
+          !(
+            hasManagementExpense && t.category.toLowerCase() === 'management'
+          ) &&
           // Exclude loan payments (financing costs, not operating expenses)
           !(
             t.category.toLowerCase() === 'other' &&
@@ -217,13 +229,14 @@ export function useOperatingCore(propertyId: string): OperatingCoreMetrics {
       })
 
     // Convert grouped expenses to array
-    const transactionExpenses = Array.from(transactionExpensesMap.entries()).map(
-      ([category, amount]) => ({
-        id: `transaction-${category}`,
-        label: category.charAt(0).toUpperCase() + category.slice(1).replace(/_/g, ' '),
-        amount,
-      }),
-    )
+    const transactionExpenses = Array.from(
+      transactionExpensesMap.entries(),
+    ).map(([category, amount]) => ({
+      id: `transaction-${category}`,
+      label:
+        category.charAt(0).toUpperCase() + category.slice(1).replace(/_/g, ' '),
+      amount,
+    }))
 
     // Combine structured and transaction expenses
     fixedExpenses.push(...transactionExpenses)
@@ -249,7 +262,8 @@ export function useOperatingCore(propertyId: string): OperatingCoreMetrics {
     const noi = calculateNOI(grossIncome, totalFixedExpenses, capexReserve)
 
     // Calculate margin (net cash flow as percentage of gross income)
-    const margin = grossIncome === 0 ? 0 : (metrics.netCashFlow / grossIncome) * 100
+    const margin =
+      grossIncome === 0 ? 0 : (metrics.netCashFlow / grossIncome) * 100
 
     return {
       grossIncome,
@@ -262,4 +276,3 @@ export function useOperatingCore(propertyId: string): OperatingCoreMetrics {
 
   return operatingMetrics
 }
-

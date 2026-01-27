@@ -98,15 +98,27 @@ export const AddLoanDrawer = ({
 
   // Calculate monthly payment in real-time as user changes inputs
   const calculatedMonthlyPayment = useMemo(() => {
-    const principal = Number(formData.currentBalance) || Number(formData.originalLoanAmount) || 0
+    const principal =
+      Number(formData.currentBalance) ||
+      Number(formData.originalLoanAmount) ||
+      0
     const interestRate = Number(formData.interestRate) || 0
     const termMonths = Number(formData.termMonths) || 0
 
     if (principal > 0 && interestRate > 0 && termMonths > 0) {
-      return calculateMonthlyPrincipalInterest(principal, interestRate, termMonths)
+      return calculateMonthlyPrincipalInterest(
+        principal,
+        interestRate,
+        termMonths,
+      )
     }
     return null
-  }, [formData.currentBalance, formData.originalLoanAmount, formData.interestRate, formData.termMonths])
+  }, [
+    formData.currentBalance,
+    formData.originalLoanAmount,
+    formData.interestRate,
+    formData.termMonths,
+  ])
 
   const handleChange = (field: string, value: string | number | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -152,7 +164,8 @@ export const AddLoanDrawer = ({
 
     try {
       // Calculate monthly P&I payment
-      const principal = Number(formData.currentBalance) || Number(formData.originalLoanAmount)
+      const principal =
+        Number(formData.currentBalance) || Number(formData.originalLoanAmount)
       const interestRate = Number(formData.interestRate)
       const termMonths = Number(formData.termMonths)
       const monthlyPrincipalInterest = calculateMonthlyPrincipalInterest(
@@ -190,8 +203,14 @@ export const AddLoanDrawer = ({
           loanId,
         })
         console.log('[Loan Drawer] Update API response:', result)
-        console.log('[Loan Drawer] Updated loan monthlyPrincipalInterest:', result.loan.monthlyPrincipalInterest)
-        console.log('[Loan Drawer] Updated loan totalMonthlyPayment:', result.loan.totalMonthlyPayment)
+        console.log(
+          '[Loan Drawer] Updated loan monthlyPrincipalInterest:',
+          result.loan.monthlyPrincipalInterest,
+        )
+        console.log(
+          '[Loan Drawer] Updated loan totalMonthlyPayment:',
+          result.loan.totalMonthlyPayment,
+        )
       } else {
         console.log('[Loan Drawer] Creating loan:', {
           propertyId,

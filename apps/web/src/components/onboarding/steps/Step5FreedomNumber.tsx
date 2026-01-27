@@ -67,9 +67,7 @@ export function Step5FreedomNumber({
               <button
                 type="button"
                 onClick={() =>
-                  field.handleChange(
-                    Math.min(100000, field.state.value + 1000),
-                  )
+                  field.handleChange(Math.min(100000, field.state.value + 1000))
                 }
                 className={`p-4 rounded-2xl border font-black uppercase text-xs ${
                   isDark
@@ -96,4 +94,3 @@ export function Step5FreedomNumber({
     </div>
   )
 }
-

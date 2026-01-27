@@ -1,7 +1,7 @@
 import { Card, Typography } from '@axori/ui'
 import { LearningHubButton } from './LearningHubButton'
 import { useProperty } from '@/hooks/api/useProperties'
-import { generateTaxShieldLearning } from '@/data/learning-hub/tax-shield-snippets'
+import { cn } from '@/utils/helpers/cn'
 import {
   DEFAULT_MARGINAL_TAX_RATE,
   calculateCostBasis,
@@ -10,24 +10,27 @@ import {
   calculateTaxShield,
   getDepreciationSchedule,
 } from '@/utils/finances'
+import { generateTaxShieldLearning } from '@/data/learning-hub/tax-shield-snippets'
 
 interface TaxShieldIntelProps {
   propertyId: string
 }
 
 /**
- * TaxShieldIntel component - Displays tax shield metrics and depreciation information
- * Shows: Annual Depreciation, Tax Shield Value, Cost Segregation Potential
+ * TaxShieldIntel component - Tax Shield Node display
+ *
+ * Shows: Annual Savings, Depreciation Burn, CPA Recommendation
  */
 export const TaxShieldIntel = ({ propertyId }: TaxShieldIntelProps) => {
   const { data: property, isLoading } = useProperty(propertyId)
 
   if (isLoading || !property) {
     return (
-      <Card variant="rounded" padding="lg" radius="xl">
-        <div className="animate-pulse space-y-6">
-          <div className="h-6 w-48 bg-slate-200 dark:bg-white/5 rounded" />
-          <div className="h-8 w-32 bg-slate-200 dark:bg-white/5 rounded" />
+      <Card variant="rounded" padding="lg" radius="xl" className="h-full">
+        <div className="animate-pulse space-y-4">
+          <div className="h-5 w-32 bg-slate-200 dark:bg-white/5 rounded" />
+          <div className="h-10 w-24 bg-slate-200 dark:bg-white/5 rounded" />
+          <div className="h-20 bg-slate-200 dark:bg-white/5 rounded-xl" />
         </div>
       </Card>
     )
@@ -36,7 +39,7 @@ export const TaxShieldIntel = ({ propertyId }: TaxShieldIntelProps) => {
   // Get property data for calculations
   const acquisition = property.acquisition
   const propertyType = property.characteristics?.propertyType
-  
+
   // Get cost basis components
   const purchasePrice = acquisition?.purchasePrice
     ? Number(acquisition.purchasePrice)
@@ -56,9 +59,14 @@ export const TaxShieldIntel = ({ propertyId }: TaxShieldIntelProps) => {
   const depreciableBasis = costBasis?.depreciableBasis || null
 
   // Calculate depreciation summary
-  const summary = depreciableBasis && placedInServiceDate
-    ? calculateDepreciationSummary(depreciableBasis, depreciationYears, placedInServiceDate)
-    : null
+  const summary =
+    depreciableBasis && placedInServiceDate
+      ? calculateDepreciationSummary(
+          depreciableBasis,
+          depreciationYears,
+          placedInServiceDate,
+        )
+      : null
 
   // Calculate tax shield
   const taxShield = summary
@@ -71,209 +79,151 @@ export const TaxShieldIntel = ({ propertyId }: TaxShieldIntelProps) => {
 
   // Calculate cost segregation potential
   const costSeg = calculateCostSegPotential(depreciableBasis)
-  const costSegPotential = costSeg?.level ?? 'Low'
-  const costSegPercentage = costSeg?.percentage ?? 0
 
-  // Generate learning snippets based on tax shield metrics
-  const learningSnippets = generateTaxShieldLearning(
-    summary?.accumulatedDepreciation || 0,
-    costSeg?.potentialValue || null,
-    depreciableBasis,
-  )
+  // Determine if optimized
+  const isOptimized =
+    summary && summary.yearsCompleted < summary.totalDepreciableYears
 
   return (
     <Card
       variant="rounded"
       padding="lg"
       radius="xl"
-      className="bg-gradient-to-br from-amber-500/10 to-transparent"
+      className="h-full flex flex-col"
     >
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <Typography
-          variant="h5"
-          className="uppercase tracking-tighter text-amber-500"
-        >
-          Tax Shield Intel
-        </Typography>
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-5 bg-amber-500 rounded-full shadow-[0_0_12px_rgba(245,158,11,0.5)]" />
+          <Typography
+            variant="h6"
+            className="uppercase tracking-widest text-slate-900 dark:text-white"
+          >
+            Tax Shield Node
+          </Typography>
           <LearningHubButton
-            snippets={learningSnippets}
-            title="Tax Shield Learning Hub"
-            subtitle="Strategic insights for tax optimization"
-            componentKey="tax-shield-intel"
+            snippets={generateTaxShieldLearning(
+              summary?.remainingBasis ?? null,
+              costSeg?.potentialValue ?? null,
+              depreciableBasis,
+            )}
+            title="Tax Shield Node"
+            subtitle="Depreciation & Tax Strategy"
+            componentKey="tax-shield"
           />
         </div>
+        <span
+          className={cn(
+            'px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-lg border',
+            isOptimized
+              ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
+              : 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+          )}
+        >
+          {isOptimized ? 'Optimized' : 'PENDING'}
+        </span>
       </div>
-      
-      <div className="space-y-6">
-        {/* Annual Depreciation */}
-        {summary ? (
-          <div>
-            <Typography
-              variant="caption"
-              className="text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-widest font-black"
-            >
-              Annual Depreciation
-            </Typography>
-            <Typography
-              variant="h1"
-              className="tabular-nums tracking-tighter text-slate-900 dark:text-white"
-            >
-              ${Math.round(summary.annualDepreciation).toLocaleString()}
-            </Typography>
-            <Typography
-              variant="overline"
-              className="text-slate-400 dark:text-slate-500 mt-1"
-            >
-              ${Math.round(summary.monthlyDepreciation).toLocaleString()}/mo over {depreciationYears} years
-            </Typography>
-          </div>
-        ) : (
-          <div>
-            <Typography
-              variant="caption"
-              className="text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-widest font-black"
-            >
-              Annual Depreciation
-            </Typography>
-            <Typography
-              variant="body"
-              className="text-slate-500 dark:text-slate-400"
-            >
-              Add purchase data to calculate
-            </Typography>
-          </div>
-        )}
 
-        {/* Tax Shield Value */}
+      {/* Annual Savings */}
+      <div className="mb-6">
+        <Typography
+          variant="caption"
+          className="text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2"
+        >
+          Annual Savings
+        </Typography>
+        <Typography
+          variant="h2"
+          className="tabular-nums text-emerald-500 tracking-tighter"
+        >
+          {taxShield
+            ? `$${Math.round(taxShield.annualTaxShield).toLocaleString()}`
+            : '$0'}
+        </Typography>
         {taxShield && (
-          <div>
-            <Typography
-              variant="caption"
-              className="text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-widest font-black"
-            >
-              Annual Tax Shield
-            </Typography>
-            <Typography
-              variant="h2"
-              className="tabular-nums tracking-tighter text-emerald-500 dark:text-emerald-400"
-            >
-              ${Math.round(taxShield.annualTaxShield).toLocaleString()}
-            </Typography>
-            <Typography
-              variant="overline"
-              className="text-slate-400 dark:text-slate-500 mt-1"
-            >
-              at {(taxShield.marginalTaxRate * 100).toFixed(0)}% marginal rate
-            </Typography>
-          </div>
+          <Typography
+            variant="caption"
+            className="text-slate-400 dark:text-slate-500 mt-1 block"
+          >
+            at {(taxShield.marginalTaxRate * 100).toFixed(0)}% marginal rate
+          </Typography>
         )}
+      </div>
 
-        {/* Accumulated Depreciation Progress */}
-        {summary && (
-          <div className="pt-4 border-t border-slate-200 dark:border-white/5">
-            <div className="flex justify-between items-center mb-2">
-              <Typography
-                variant="caption"
-                className="text-slate-500 dark:text-slate-400 uppercase tracking-widest"
-              >
-                Depreciation Progress
-              </Typography>
-              <Typography
-                variant="caption"
-                className="text-amber-500 uppercase tracking-widest font-black"
-              >
-                {summary.yearsCompleted}/{Math.ceil(summary.totalDepreciableYears)} yrs
-              </Typography>
-            </div>
-            <div className="h-2 w-full bg-black/10 dark:bg-white/5 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                style={{
-                  width: `${(summary.yearsCompleted / Math.ceil(summary.totalDepreciableYears)) * 100}%`,
-                }}
-              />
-            </div>
-            <div className="flex justify-between mt-2">
-              <Typography
-                variant="overline"
-                className="text-slate-400 dark:text-slate-500"
-              >
-                ${Math.round(summary.accumulatedDepreciation).toLocaleString()} claimed
-              </Typography>
-              <Typography
-                variant="overline"
-                className="text-slate-400 dark:text-slate-500"
-              >
-                ${Math.round(summary.remainingBasis).toLocaleString()} remaining
-              </Typography>
-            </div>
-          </div>
-        )}
-
-        {/* Cost Seg Potential */}
-        <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/5">
+      {/* Depreciation Burn */}
+      {summary && (
+        <div className="flex-1 space-y-3">
           <div className="flex justify-between items-center">
             <Typography
               variant="caption"
-              className="text-slate-500 dark:text-slate-400 opacity-40 uppercase tracking-widest font-black"
+              className="text-slate-500 dark:text-slate-400 uppercase tracking-wider"
             >
-              Cost Seg Potential
+              Depreciation Burn
             </Typography>
             <Typography
               variant="caption"
-              className={`uppercase tracking-widest font-black ${
-                costSegPotential === 'High Alpha'
-                  ? 'text-emerald-500'
-                  : costSegPotential === 'Medium'
-                  ? 'text-amber-500'
-                  : 'text-slate-500'
-              }`}
+              className="text-amber-400 uppercase tracking-wider font-black"
             >
-              {costSegPotential}
+              {summary.yearsCompleted}/
+              {Math.ceil(summary.totalDepreciableYears)} yrs
             </Typography>
           </div>
-          <div className="h-1.5 w-full bg-black/10 dark:bg-white/5 rounded-full overflow-hidden">
+          <div className="h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full ${
-                costSegPotential === 'High Alpha'
-                  ? 'bg-emerald-500'
-                  : costSegPotential === 'Medium'
-                  ? 'bg-amber-500'
-                  : 'bg-slate-500'
-              }`}
-              style={{ width: `${costSegPercentage}%` }}
+              className="h-full bg-amber-500 rounded-full transition-all"
+              style={{
+                width: `${(summary.yearsCompleted / Math.ceil(summary.totalDepreciableYears)) * 100}%`,
+              }}
             />
           </div>
-          {costSeg?.potentialValue && (
-            <Typography
-              variant="overline"
-              className="text-slate-400 dark:text-slate-500"
-            >
-              ~${costSeg.potentialValue.toLocaleString()} acceleratable
-            </Typography>
-          )}
-        </div>
-
-        {/* Depreciation Type */}
-        <div className="flex items-center gap-2">
-          <div className="px-2 py-1 bg-amber-500/10 rounded-full">
+          <div className="flex justify-between text-xs">
             <Typography
               variant="caption"
-              className="text-amber-500 uppercase tracking-widest font-black"
+              className="text-slate-400 dark:text-slate-500"
             >
-              {depreciationYears === 27.5 ? 'Residential' : 'Commercial'}
+              ${Math.round(summary.accumulatedDepreciation).toLocaleString()}{' '}
+              claimed
+            </Typography>
+            <Typography
+              variant="caption"
+              className="text-slate-400 dark:text-slate-500"
+            >
+              ${Math.round(summary.remainingBasis).toLocaleString()} left
             </Typography>
           </div>
+        </div>
+      )}
+
+      {/* CPA Recommendation */}
+      {costSeg?.potentialValue && costSeg.potentialValue > 10000 && (
+        <div className="mt-6 p-4 rounded-xl bg-gradient-to-br from-violet-500/10 to-indigo-500/10 border border-violet-500/20">
           <Typography
             variant="caption"
-            className="text-slate-400 dark:text-slate-500"
+            className="text-violet-400 uppercase tracking-wider font-black block mb-1"
           >
-            {depreciationYears}-year schedule
+            CPA Recommendation
+          </Typography>
+          <Typography
+            variant="body-sm"
+            className="text-slate-600 dark:text-slate-300"
+          >
+            Cost segregation study may accelerate ~$
+            {costSeg.potentialValue.toLocaleString()} in deductions
           </Typography>
         </div>
-      </div>
+      )}
+
+      {/* No Data State */}
+      {!summary && (
+        <div className="flex-1 flex items-center justify-center">
+          <Typography
+            variant="body-sm"
+            className="text-slate-500 dark:text-slate-400 text-center"
+          >
+            Add purchase data to calculate tax shield metrics
+          </Typography>
+        </div>
+      )}
     </Card>
   )
 }

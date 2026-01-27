@@ -74,7 +74,7 @@ export const NAV_ITEMS: Array<NavItem> = [
     icon: Compass,
     enabled: true,
     featureFlag: 'nav-explore',
-  }
+  },
 ] as const
 
 /**
@@ -131,9 +131,7 @@ export function getNavItemById(id: string): NavItem | undefined {
 /**
  * Get a navigation item by its path
  */
-export function getNavItemByPath(
-  path: string,
-): NavItem | undefined {
+export function getNavItemByPath(path: string): NavItem | undefined {
   return NAV_ITEMS.find((item) => item.path === path)
 }
 
@@ -278,4 +276,3 @@ export function getPropertyDetailTabs(
     icon: item.icon,
   }))
 }
-

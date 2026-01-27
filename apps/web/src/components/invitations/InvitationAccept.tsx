@@ -4,10 +4,9 @@ import { useState } from 'react'
 import { Button } from '@axori/ui'
 import {
   PORTFOLIO_ROLE_DESCRIPTIONS,
-  PORTFOLIO_ROLE_LABELS
-
+  PORTFOLIO_ROLE_LABELS,
 } from '@axori/permissions'
-import type {PortfolioRole} from '@axori/permissions';
+import type { PortfolioRole } from '@axori/permissions'
 import type { InvitationValidationResult } from '@/hooks/api/useInvitations'
 import {
   useAcceptInvitation,
@@ -57,7 +56,8 @@ export function InvitationAccept({ token }: InvitationAcceptProps) {
         navigate({ to: '/dashboard' })
       }, 2000)
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to accept invitation'
+      const message =
+        err instanceof Error ? err.message : 'Failed to accept invitation'
       setError(message)
     }
   }
@@ -109,7 +109,9 @@ export function InvitationAccept({ token }: InvitationAcceptProps) {
     return (
       <InvitationErrorState
         title="Invalid Invitation"
-        message={validationResult.error || 'This invitation is no longer valid.'}
+        message={
+          validationResult.error || 'This invitation is no longer valid.'
+        }
       />
     )
   }
@@ -155,11 +157,18 @@ export function InvitationAccept({ token }: InvitationAcceptProps) {
         </div>
 
         <div className="relative z-10">
-          <Link to="/" className="flex items-center gap-2 group mb-20 outline-none">
+          <Link
+            to="/"
+            className="flex items-center gap-2 group mb-20 outline-none"
+          >
             <div className="w-8 h-8 rounded flex items-center justify-center transition-all group-hover:rotate-12 dark:bg-black bg-white">
-              <span className="font-black italic dark:text-white text-black">A</span>
+              <span className="font-black italic dark:text-white text-black">
+                A
+              </span>
             </div>
-            <span className="text-xl font-black tracking-tighter uppercase">AXORI</span>
+            <span className="text-xl font-black tracking-tighter uppercase">
+              AXORI
+            </span>
           </Link>
 
           <h1 className="text-[clamp(3rem,8vw,6rem)] leading-[0.9] tracking-[-0.04em] font-extrabold uppercase leading-none mb-8">
@@ -170,7 +179,8 @@ export function InvitationAccept({ token }: InvitationAcceptProps) {
             <span className="opacity-30">INVITED</span>.
           </h1>
           <p className="max-w-md text-xl font-medium opacity-60 italic leading-relaxed">
-            Join forces with fellow investors and gain access to shared portfolio intelligence.
+            Join forces with fellow investors and gain access to shared
+            portfolio intelligence.
           </p>
         </div>
 
@@ -220,7 +230,9 @@ export function InvitationAccept({ token }: InvitationAcceptProps) {
 
             {error && (
               <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
-                <p className="text-sm font-bold text-red-600 dark:text-red-400">{error}</p>
+                <p className="text-sm font-bold text-red-600 dark:text-red-400">
+                  {error}
+                </p>
               </div>
             )}
 
@@ -253,10 +265,10 @@ export function InvitationAccept({ token }: InvitationAcceptProps) {
                 </p>
                 {invitation?.role &&
                   PORTFOLIO_ROLE_DESCRIPTIONS[invitation.role] && (
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {PORTFOLIO_ROLE_DESCRIPTIONS[invitation.role]}
-                  </p>
-                )}
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                      {PORTFOLIO_ROLE_DESCRIPTIONS[invitation.role]}
+                    </p>
+                  )}
               </div>
 
               {/* Inviter Info */}
@@ -268,7 +280,9 @@ export function InvitationAccept({ token }: InvitationAcceptProps) {
                   <p className="text-lg font-bold dark:text-white text-slate-900">
                     {getInviterName(inviter)}
                   </p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{inviter.email}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {inviter.email}
+                  </p>
                 </div>
               )}
             </div>
@@ -283,7 +297,9 @@ export function InvitationAccept({ token }: InvitationAcceptProps) {
                   onClick={handleAccept}
                   disabled={acceptInvitation.isPending}
                 >
-                  {acceptInvitation.isPending ? 'Joining...' : 'Accept & Join Portfolio'}
+                  {acceptInvitation.isPending
+                    ? 'Joining...'
+                    : 'Accept & Join Portfolio'}
                 </Button>
                 <button
                   type="button"
@@ -384,8 +400,8 @@ function InvitationSuccessState({ portfolioName }: { portfolioName: string }) {
             Welcome to the Team!
           </h1>
           <p className="text-slate-500 dark:text-slate-400">
-            You've successfully joined <strong>{portfolioName}</strong>. Redirecting you to
-            your dashboard...
+            You've successfully joined <strong>{portfolioName}</strong>.
+            Redirecting you to your dashboard...
           </p>
         </div>
         <div className="animate-pulse">

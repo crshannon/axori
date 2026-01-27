@@ -33,11 +33,11 @@ export function useCreateLoan() {
     },
     onSuccess: (data, variables) => {
       // Invalidate and immediately refetch the property query to get new loan data
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: ['properties', variables.propertyId],
         refetchType: 'active', // Immediately refetch active queries
       })
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: ['properties'],
         refetchType: 'active',
       })
@@ -82,28 +82,30 @@ export function useUpdateLoan() {
       return response
     },
     onSuccess: async (data, variables) => {
-      console.log('[useUpdateLoan] onSuccess - invalidating queries for property:', variables.propertyId)
+      console.log(
+        '[useUpdateLoan] onSuccess - invalidating queries for property:',
+        variables.propertyId,
+      )
       console.log('[useUpdateLoan] Updated loan data:', {
         monthlyPrincipalInterest: data.loan.monthlyPrincipalInterest,
         totalMonthlyPayment: data.loan.totalMonthlyPayment,
       })
-      
+
       // Invalidate and immediately refetch the property query to get updated loan data
-      await queryClient.invalidateQueries({ 
+      await queryClient.invalidateQueries({
         queryKey: ['properties', variables.propertyId],
         refetchType: 'active', // Immediately refetch active queries
       })
-      await queryClient.invalidateQueries({ 
+      await queryClient.invalidateQueries({
         queryKey: ['properties'],
         refetchType: 'active',
       })
-      
+
       // Force a refetch to ensure fresh data
-      const refetchResult = await queryClient.refetchQueries({ 
+      const refetchResult = await queryClient.refetchQueries({
         queryKey: ['properties', variables.propertyId],
       })
       console.log('[useUpdateLoan] Refetch result:', refetchResult)
     },
   })
 }
-

@@ -47,7 +47,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
         'flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg min-w-[300px] max-w-[400px]',
         'transform transition-all duration-300 ease-out',
         isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
-        TOAST_STYLES[toast.type]
+        TOAST_STYLES[toast.type],
       )}
       role="alert"
     >
@@ -92,6 +92,6 @@ export function ToastContainer() {
         />
       ))}
     </div>,
-    document.body
+    document.body,
   )
 }

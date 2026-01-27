@@ -34,7 +34,9 @@ const missingEnvVars = REQUIRED_ENV_VARS.filter((v) => !process.env[v])
 if (missingEnvVars.length > 0) {
   console.log('\n')
   console.log('╔' + '═'.repeat(62) + '╗')
-  console.log('║' + '  ❌ E2E TESTS CANNOT RUN - Missing Configuration'.padEnd(62) + '║')
+  console.log(
+    '║' + '  ❌ E2E TESTS CANNOT RUN - Missing Configuration'.padEnd(62) + '║',
+  )
   console.log('╚' + '═'.repeat(62) + '╝')
   console.log('')
   console.log('Missing required environment variables:')
@@ -46,14 +48,16 @@ if (missingEnvVars.length > 0) {
   console.log('      cp .env.local.example .env.local')
   console.log('')
   console.log('   2. Edit .env.local and add the missing values:')
-  console.log('      - VITE_CLERK_PUBLISHABLE_KEY: Get from Clerk Dashboard → API Keys')
+  console.log(
+    '      - VITE_CLERK_PUBLISHABLE_KEY: Get from Clerk Dashboard → API Keys',
+  )
   console.log('')
   console.log('   3. Re-run the tests:')
   console.log('      pnpm --filter @axori/web test:e2e')
   console.log('')
   console.log('📖 See tests/e2e/SETUP.md for detailed instructions')
   console.log('')
-  
+
   // Exit early - don't try to start servers
   process.exit(1)
 }
@@ -110,13 +114,13 @@ export default defineConfig({
     },
   ],
 
-  /* Run your local dev server before starting the tests 
-   * 
+  /* Run your local dev server before starting the tests
+   *
    * IMPORTANT: These tests require proper environment configuration:
    * 1. Copy .env.local.example to .env.local
    * 2. Fill in VITE_CLERK_PUBLISHABLE_KEY (get from Clerk dashboard)
    * 3. Fill in DATABASE_URL (get from Supabase)
-   * 
+   *
    * For CI, ensure these secrets are configured in GitHub Actions.
    */
   webServer: [
@@ -138,4 +142,3 @@ export default defineConfig({
     },
   ],
 })
-

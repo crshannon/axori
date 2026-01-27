@@ -37,7 +37,10 @@ export function getRoleRank(role: PortfolioRole): number {
 /**
  * Check if role is at least the minimum required role
  */
-export function isRoleAtLeast(role: PortfolioRole, minimumRole: PortfolioRole): boolean {
+export function isRoleAtLeast(
+  role: PortfolioRole,
+  minimumRole: PortfolioRole,
+): boolean {
   return getRoleRank(role) >= getRoleRank(minimumRole)
 }
 
@@ -85,7 +88,7 @@ export function isOwner(role: PortfolioRole): boolean {
  */
 export function hasRequiredPermission(
   userRole: PortfolioRole | null,
-  required: DrawerPermission
+  required: DrawerPermission,
 ): boolean {
   // 'none' means any authenticated user can access (still need to be authenticated)
   if (required === 'none') {
@@ -122,14 +125,14 @@ export function hasRequiredPermission(
  */
 export function hasAllRequiredPermissions(
   userRole: PortfolioRole | null,
-  requiredPermissions: DrawerPermission[]
+  requiredPermissions: Array<DrawerPermission>,
 ): boolean {
   if (requiredPermissions.length === 0) {
     return true
   }
 
   return requiredPermissions.every((permission) =>
-    hasRequiredPermission(userRole, permission)
+    hasRequiredPermission(userRole, permission),
   )
 }
 
@@ -142,13 +145,13 @@ export function hasAllRequiredPermissions(
  */
 export function hasAnyRequiredPermission(
   userRole: PortfolioRole | null,
-  requiredPermissions: DrawerPermission[]
+  requiredPermissions: Array<DrawerPermission>,
 ): boolean {
   if (requiredPermissions.length === 0) {
     return true
   }
 
   return requiredPermissions.some((permission) =>
-    hasRequiredPermission(userRole, permission)
+    hasRequiredPermission(userRole, permission),
   )
 }

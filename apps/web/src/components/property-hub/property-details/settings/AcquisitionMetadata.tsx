@@ -15,7 +15,9 @@ interface AcquisitionMetadataProps {
  *
  * @see AXO-93 - Uses drawer factory for opening edit drawer
  */
-export const AcquisitionMetadata = ({ propertyId }: AcquisitionMetadataProps) => {
+export const AcquisitionMetadata = ({
+  propertyId,
+}: AcquisitionMetadataProps) => {
   const { openDrawer } = useDrawer()
   const { formData, isLoading } = usePropertySettings(propertyId)
   const { canEdit, isReadOnly } = usePropertyPermissions(propertyId)

@@ -61,10 +61,7 @@ export const PortfolioStats = ({ activeProperties }: PortfolioStatsProps) => {
       ].map((stat, i) => (
         <Card key={i} variant="rounded" padding="md" radius="lg">
           <Overline
-            className={cn(
-              'mb-2',
-              isDark ? 'text-white/60' : 'text-slate-500',
-            )}
+            className={cn('mb-2', isDark ? 'text-white/60' : 'text-slate-500')}
           >
             {stat.l}
           </Overline>

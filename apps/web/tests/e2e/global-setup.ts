@@ -56,17 +56,17 @@ async function globalSetup(config: FullConfig) {
 
   // Check for required environment variables
   const missingRequired = REQUIRED_ENV_VARS.filter(
-    (envVar) => !process.env[envVar.name]
+    (envVar) => !process.env[envVar.name],
   )
 
   const missingRecommended = RECOMMENDED_ENV_VARS.filter(
-    (envVar) => !process.env[envVar.name]
+    (envVar) => !process.env[envVar.name],
   )
 
   // Show status of required variables
   console.log('Required Environment Variables:')
   console.log('─'.repeat(64))
-  
+
   for (const envVar of REQUIRED_ENV_VARS) {
     const isSet = !!process.env[envVar.name]
     const status = isSet ? '✅' : '❌'
@@ -82,7 +82,7 @@ async function globalSetup(config: FullConfig) {
   if (missingRecommended.length > 0) {
     console.log('Recommended Environment Variables:')
     console.log('─'.repeat(64))
-    
+
     for (const envVar of RECOMMENDED_ENV_VARS) {
       const isSet = !!process.env[envVar.name]
       const status = isSet ? '✅' : '⚠️'
@@ -97,7 +97,13 @@ async function globalSetup(config: FullConfig) {
   // If required variables are missing, fail with helpful instructions
   if (missingRequired.length > 0) {
     console.log('╔' + '═'.repeat(62) + '╗')
-    console.log('║' + '  ❌ E2E TESTS CANNOT RUN - Missing Required Configuration'.padEnd(62) + '║')
+    console.log(
+      '║' +
+        '  ❌ E2E TESTS CANNOT RUN - Missing Required Configuration'.padEnd(
+          62,
+        ) +
+        '║',
+    )
     console.log('╚' + '═'.repeat(62) + '╝')
     console.log('')
     console.log('📝 To fix this:')
@@ -117,14 +123,16 @@ async function globalSetup(config: FullConfig) {
 
     // Throw error to stop test execution
     throw new Error(
-      `E2E tests require environment configuration. Missing: ${missingRequired.map(v => v.name).join(', ')}. ` +
-      `See tests/e2e/SETUP.md for instructions.`
+      `E2E tests require environment configuration. Missing: ${missingRequired.map((v) => v.name).join(', ')}. ` +
+        `See tests/e2e/SETUP.md for instructions.`,
     )
   }
 
   // All required variables are set
   console.log('╔' + '═'.repeat(62) + '╗')
-  console.log('║' + '  ✅ Environment configured - Starting tests...'.padEnd(62) + '║')
+  console.log(
+    '║' + '  ✅ Environment configured - Starting tests...'.padEnd(62) + '║',
+  )
   console.log('╚' + '═'.repeat(62) + '╝')
   console.log('')
 }

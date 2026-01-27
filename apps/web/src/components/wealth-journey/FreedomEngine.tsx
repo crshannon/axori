@@ -30,24 +30,14 @@ export const FreedomEngine = ({
   )
 
   return (
-    <div
-      className={cn(
-        cardClass,
-        'h-full relative overflow-hidden group p-8',
-      )}
-    >
+    <div className={cn(cardClass, 'h-full relative overflow-hidden group p-8')}>
       <div
         className={cn(
           'absolute top-0 right-0 p-12 opacity-5 scale-150 rotate-12 transition-transform duration-1000 group-hover:rotate-45 pointer-events-none',
           isDark ? 'text-white' : 'text-slate-900',
         )}
       >
-        <svg
-          width="200"
-          height="200"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-        >
+        <svg width="200" height="200" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
         </svg>
       </div>
@@ -156,4 +146,3 @@ export const FreedomEngine = ({
     </div>
   )
 }
-

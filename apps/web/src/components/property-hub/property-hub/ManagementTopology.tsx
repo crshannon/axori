@@ -33,10 +33,7 @@ export const ManagementTopology = ({
     <section>
       <div className="flex items-center gap-4 mb-10">
         <div
-          className={cn(
-            'w-12 h-1',
-            isDark ? 'bg-violet-500' : 'bg-violet-600',
-          )}
+          className={cn('w-12 h-1', isDark ? 'bg-violet-500' : 'bg-violet-600')}
         ></div>
         <Heading
           level={3}

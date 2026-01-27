@@ -30,4 +30,3 @@ export function useMapboxSearch(query: string | null) {
     staleTime: 5 * 60 * 1000, // 5 minutes cache for searches
   })
 }
-
