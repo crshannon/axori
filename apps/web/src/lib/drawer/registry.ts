@@ -71,6 +71,7 @@ export const DRAWERS = {
   OPERATING_EXPENSES: 'operating-expenses',
   RENTAL_INCOME: 'rental-income',
   CONNECT_BANK_ACCOUNT: 'connect-bank-account',
+  BANK_ALLOCATION: 'bank-allocation',
   PROPERTY_ACQUISITION: 'property-acquisition',
   VALUATION: 'valuation',
 } as const
@@ -132,6 +133,7 @@ export const DRAWER_NAMES = [
   'operating-expenses',
   'rental-income',
   'connect-bank-account',
+  'bank-allocation',
   'property-acquisition',
   'valuation',
 ] as const
@@ -252,6 +254,17 @@ export const DRAWER_REGISTRY: Record<DrawerName, DrawerRegistryEntry<any>> = {
     paramsSchema: bankAccountDrawerParamsSchema,
     permission: 'admin',
     displayName: 'Connect Bank Account',
+  },
+
+  'bank-allocation': {
+    component: lazy(() =>
+      import('@/components/drawers/BankAllocationDrawer').then((m) => ({
+        default: m.BankAllocationDrawer,
+      })),
+    ),
+    paramsSchema: bankAccountDrawerParamsSchema,
+    permission: 'member',
+    displayName: 'Bank Allocation Settings',
   },
 
   'property-acquisition': {

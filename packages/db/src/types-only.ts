@@ -32,6 +32,8 @@ export type {
   PropertyTransactionInsert,
   ApiCache,
   ApiCacheInsert,
+  PropertyBankAccount,
+  PropertyBankAccountInsert,
 } from "./types";
 
 // Re-export schema types (these are just type definitions, no runtime code)

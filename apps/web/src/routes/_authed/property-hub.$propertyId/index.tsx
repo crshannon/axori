@@ -7,6 +7,7 @@ import { DataCompleteness } from '@/components/property-hub/property-details/ove
 import { CashFlowSummaryCard } from '@/components/property-hub/property-details/overview/CashFlowSummaryCard'
 import { usePropertyMetrics } from '@/components/property-hub/property-details/overview/hooks/usePropertyMetrics'
 import { AsyncLoader } from '@/components/loader/async-loader'
+import { AxoriSuggestions } from '@/components/property-hub/AxoriSuggestions'
 
 export const Route = createFileRoute('/_authed/property-hub/$propertyId/')({
   component: PropertyOverviewPage,
@@ -186,6 +187,11 @@ function PropertyOverviewPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
         <CashFlowSummaryCard propertyId={propertyId} />
         <DataCompleteness propertyId={propertyId} />
+      </div>
+
+      {/* Axori Suggestions */}
+      <div className="mb-12">
+        <AxoriSuggestions propertyId={propertyId} maxItems={4} compact />
       </div>
 
       {/* Operational Alpha Drivers */}

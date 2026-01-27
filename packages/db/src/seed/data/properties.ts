@@ -97,10 +97,15 @@ export const sampleManagement = {
  * For $265k purchase with $60k down = $205k loan (increased down payment for better cash flow)
  * At 6.5% for 30 years, P&I = ~$1,295/month
  *
- * NOTE: For cash flow calculations, we only use P&I (not escrow) because
- * property tax and insurance are already counted in operating expenses.
- * The escrow is just a pass-through account that pays those same expenses.
- * Setting monthlyEscrow to null/0 prevents double-counting in cash flow calcs.
+ * This loan has escrow enabled (hasEscrow: true), meaning property tax and insurance
+ * are collected as part of the monthly mortgage payment. When hasEscrow is true,
+ * the calculation logic skips propertyTaxAnnual and insuranceAnnual from operatingExpenses
+ * to avoid double-counting - they're already included in the escrow portion of the payment.
+ *
+ * Escrow breakdown:
+ * - Property Tax: $3,900/year = $325/month
+ * - Insurance: $1,500/year = $125/month
+ * - Total Escrow: $450/month
  */
 export const sampleLoan = {
   loanType: "conventional" as const,
@@ -112,8 +117,9 @@ export const sampleLoan = {
   termMonths: 360, // 30 years
   currentBalance: "201500", // Slightly paid down
   monthlyPrincipalInterest: "1295", // P&I payment for $201.5k @ 6.5% for 30 years
-  monthlyEscrow: null, // Not used for cash flow (taxes/insurance already in operating expenses)
-  totalMonthlyPayment: "1295", // Just P&I for cash flow (escrow handled via operating expenses)
+  monthlyEscrow: "450", // Tax ($325) + Insurance ($125) = $450/month
+  hasEscrow: true, // Indicates tax/insurance are paid through loan escrow
+  totalMonthlyPayment: "1745", // P&I ($1,295) + Escrow ($450) = $1,745/month
   startDate: "2023-06-15",
   maturityDate: "2053-06-15",
   status: "active" as const,
@@ -234,6 +240,123 @@ export const sparseDataLoan = {
     .toISOString()
     .split("T")[0],
   maturityDate: new Date(new Date().getFullYear() + 30, new Date().getMonth() - 1, 15)
+    .toISOString()
+    .split("T")[0],
+  status: "active" as const,
+  isPrimary: true,
+  loanPosition: 1,
+};
+
+/**
+ * =====================================================
+ * FRESH ONBOARDED PROPERTY - Just completed onboarding
+ * =====================================================
+ * This property has all data filled in but NO transactions yet.
+ * Simulates a property that just completed the onboarding wizard.
+ */
+
+/**
+ * Fresh onboarded property characteristics - duplex
+ */
+export const freshOnboardedCharacteristics = {
+  propertyType: "Multi-Family",
+  bedrooms: 4, // 2 units x 2 bedrooms each
+  bathrooms: "2",
+  squareFeet: 1800,
+  lotSizeSqft: 5000,
+  yearBuilt: 1985,
+};
+
+/**
+ * Fresh onboarded property valuation
+ */
+export const freshOnboardedValuation = {
+  currentValue: "225000",
+  taxAssessedValue: "210000",
+  lastAppraisalValue: "220000",
+};
+
+/**
+ * Fresh onboarded property acquisition - just closed
+ */
+export const freshOnboardedAcquisition = {
+  purchasePrice: "215000",
+  purchaseDate: new Date().toISOString().split("T")[0], // Today
+  acquisitionMethod: "traditional",
+  closingCostsTotal: "7200",
+  downPaymentAmount: "43000", // 20% down
+  downPaymentSource: "savings",
+  earnestMoney: "4000",
+  sellerCredits: "3000",
+  buyerAgentCommission: "6450",
+};
+
+/**
+ * Fresh onboarded property rental income - duplex
+ */
+export const freshOnboardedRentalIncome = {
+  monthlyRent: "2200", // $1,100 per unit
+  marketRentEstimate: "2100",
+  otherIncomeMonthly: "0",
+  parkingIncomeMonthly: "0",
+  laundryIncomeMonthly: "40", // Shared laundry
+  petRentMonthly: "0",
+  storageIncomeMonthly: "0",
+  utilityReimbursementMonthly: "0",
+};
+
+/**
+ * Fresh onboarded property operating expenses
+ */
+export const freshOnboardedOperatingExpenses = {
+  propertyTaxAnnual: "3200",
+  insuranceAnnual: "1800", // Higher for multi-family
+  hoaMonthly: "0",
+  waterSewerMonthly: "80", // Landlord pays water
+  electricMonthly: "0", // Tenants pay
+  gasMonthly: "0", // Tenants pay
+  lawnCareMonthly: "50",
+  pestControlMonthly: "30",
+  otherExpensesMonthly: "75",
+  vacancyRate: "0.08", // 8% for duplex
+  managementRate: "0.08", // 8% management fee
+  maintenanceRate: "0.05", // 5% older property
+  capexRate: "0.07", // 7% older property
+};
+
+/**
+ * Fresh onboarded property management - using manager
+ */
+export const freshOnboardedManagement = {
+  isSelfManaged: false,
+  companyName: "Midwest Property Partners",
+  contactName: "Mike Thompson",
+  contactEmail: "mike@midwestpp.com",
+  contactPhone: "317-555-0234",
+  contractStartDate: new Date().toISOString().split("T")[0],
+  feePercentage: "0.08",
+};
+
+/**
+ * Fresh onboarded property loan
+ * For $215k purchase with $43k down = $172k loan
+ * At 7.25% for 30 years, P&I = ~$1,173/month
+ */
+export const freshOnboardedLoan = {
+  loanType: "conventional" as const,
+  lenderName: "Rocket Mortgage",
+  servicerName: "Rocket Mortgage",
+  loanNumber: "RM-2025-FRESH",
+  originalLoanAmount: "172000", // $215k - $43k down
+  interestRate: "0.0725", // 7.25%
+  termMonths: 360,
+  currentBalance: "172000", // Brand new
+  monthlyPrincipalInterest: "1173",
+  monthlyEscrow: "417", // Tax ($267) + Insurance ($150)
+  hasEscrow: true,
+  totalMonthlyPayment: "1590", // P&I + Escrow
+  startDate: new Date().toISOString().split("T")[0],
+  maturityDate: new Date(new Date().getFullYear() + 30, new Date().getMonth(), new Date().getDate())
     .toISOString()
     .split("T")[0],
   status: "active" as const,

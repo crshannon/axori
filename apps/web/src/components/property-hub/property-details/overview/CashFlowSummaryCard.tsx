@@ -52,8 +52,7 @@ export const CashFlowSummaryCard = ({
       previousMonths.length
 
     if (previousAvg !== 0) {
-      trendPercent =
-        ((recentAvg - previousAvg) / Math.abs(previousAvg)) * 100
+      trendPercent = ((recentAvg - previousAvg) / Math.abs(previousAvg)) * 100
       trendDirection =
         trendPercent > 2 ? 'up' : trendPercent < -2 ? 'down' : 'flat'
     }

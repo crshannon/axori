@@ -64,19 +64,25 @@ export function generateSampleTransactions(
       createdBy: userId,
     });
 
-    // Primary loan payment (P&I) - 1st of each month
+    // Primary loan payment (P&I + Escrow) - 1st of each month
+    // This property has escrow enabled (hasEscrow: true), so tax and insurance
+    // are collected as part of this payment. We record the full payment amount.
+    // The escrow breakdown:
+    // - P&I: $1,295/month
+    // - Escrow (Tax + Insurance): $450/month ($325 tax + $125 insurance)
+    // - Total: $1,745/month
     transactions.push({
       propertyId,
       type: "expense",
       transactionDate: new Date(monthYear, monthMonth, 1).toISOString().split("T")[0],
-      amount: "1295", // Matches loan seed data
+      amount: "1745", // P&I ($1,295) + Escrow ($450) = Total mortgage payment
       category: "other",
       subcategory: "loan_payment",
       vendor: "First National Bank",
-      description: "Primary mortgage payment (P&I)",
+      description: "Primary mortgage payment (P&I + Escrow)",
       isRecurring: true,
       recurrenceFrequency: "monthly",
-      isTaxDeductible: false,
+      isTaxDeductible: false, // P&I not deductible; tax portion handled separately for tax reporting
       source: "plaid",
       reviewStatus: "approved",
       isExcluded: false,
@@ -103,43 +109,10 @@ export function generateSampleTransactions(
       createdBy: userId,
     });
 
-    // Property tax (paid monthly from escrow) - monthly payments
-    transactions.push({
-      propertyId,
-      type: "expense",
-      transactionDate: new Date(monthYear, monthMonth, 15).toISOString().split("T")[0],
-      amount: "325", // Monthly: $3,900 annual / 12 = $325 (lower TN taxes)
-      category: "property_tax",
-      vendor: "County Tax Assessor",
-      description: "Property tax (monthly escrow)",
-      isRecurring: true,
-      recurrenceFrequency: "monthly",
-      isTaxDeductible: true,
-      taxCategory: "Property Tax",
-      source: "plaid",
-      reviewStatus: "approved",
-      isExcluded: false,
-      createdBy: userId,
-    });
-
-    // Insurance (paid monthly from escrow)
-    transactions.push({
-      propertyId,
-      type: "expense",
-      transactionDate: new Date(monthYear, monthMonth, 10).toISOString().split("T")[0],
-      amount: "125", // Monthly: $1,500 annual / 12 = $125
-      category: "insurance",
-      vendor: "State Farm Insurance",
-      description: "Property insurance (monthly escrow)",
-      isRecurring: true,
-      recurrenceFrequency: "monthly",
-      isTaxDeductible: true,
-      taxCategory: "Insurance",
-      source: "plaid",
-      reviewStatus: "approved",
-      isExcluded: false,
-      createdBy: userId,
-    });
+    // NOTE: Property tax and insurance are NOT recorded as separate transactions
+    // because this property has escrow enabled (hasEscrow: true on the loan).
+    // Tax and insurance are paid through the mortgage escrow account as part
+    // of the monthly mortgage payment above.
 
     // Management fee (if not self-managed) - monthly
     // Note: Property is self-managed, so no management fee transactions

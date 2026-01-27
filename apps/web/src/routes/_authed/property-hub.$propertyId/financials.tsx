@@ -1,12 +1,8 @@
 /**
- * Financials Page
+ * Financials Page - AI Studio Inspired Design
  *
- * Property financial metrics and transaction management. Drawers are handled
- * by the DrawerProvider at the root level - this page only needs to render
- * the financial components.
- *
- * Drawer opening is handled by individual components using the useDrawer hook
- * or navigate to add ?drawer=<name>&propertyId=<id> to the URL.
+ * 12-column grid layout with financial intelligence components.
+ * Drawer opening is handled by individual components using the useDrawer hook.
  *
  * @see AXO-93 - URL-Based Drawer Factory
  */
@@ -17,11 +13,11 @@ import { FinancialPulse } from '@/components/property-hub/property-details/finan
 import { Liquidity } from '@/components/property-hub/property-details/financials/Liquidity'
 import { OperatingCore } from '@/components/property-hub/property-details/financials/OperatingCore'
 import { DebtLogic } from '@/components/property-hub/property-details/financials/DebtLogic'
-import { AcquisitionIntel } from '@/components/property-hub/property-details/financials/AcquisitionIntel'
 import { TaxShieldIntel } from '@/components/property-hub/property-details/financials/TaxShieldIntel'
-import { IncomeExpenseChart } from '@/components/property-hub/property-details/financials/IncomeExpenseChart'
-import { CashFlowPerformanceChart } from '@/components/property-hub/property-details/financials/CashFlowPerformanceChart'
 import { PropertyTransactions } from '@/components/property-hub/property-details/financials/PropertyTransactions'
+import { ReserveTracker } from '@/components/property-hub/property-details/financials/ReserveTracker'
+import { EquityVelocity } from '@/components/property-hub/property-details/financials/EquityVelocity'
+import { IntelFeed } from '@/components/property-hub/property-details/financials/IntelFeed'
 import { useProperty } from '@/hooks/api/useProperties'
 import { AsyncLoader } from '@/components/loader/async-loader'
 
@@ -86,38 +82,44 @@ function FinancialsPage() {
   }
 
   return (
-    <div className="p-8 w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Financial Pulse & Liquidity - Top Metrics Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+    <div className="p-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* 12-Column Grid Layout */}
+      <div className="grid grid-cols-12 gap-6">
+        {/* Row 1: Financial Pulse (8 cols) | Intel Feed (4 cols) */}
+        <div className="col-span-12 lg:col-span-8">
           <FinancialPulse propertyId={propertyId} />
         </div>
-        <div className="lg:col-span-1">
+        <div className="col-span-12 lg:col-span-4">
+          <IntelFeed propertyId={propertyId} />
+        </div>
+
+        {/* Row 2: Historical P&L Registry (6 cols) | Operating Core (6 cols) */}
+        <div className="col-span-12 lg:col-span-8">
+          <PropertyTransactions propertyId={propertyId} />
+        </div>
+        <div className="col-span-12 lg:col-span-4">
+          <OperatingCore propertyId={propertyId} />
+        </div>
+
+        {/* Row 3: Debt Architecture (4 cols) | Equity Velocity (4 cols) | Tax Shield (4 cols) */}
+        <div className="col-span-12 md:col-span-6 lg:col-span-4">
+          <DebtLogic propertyId={propertyId} />
+        </div>
+        <div className="col-span-12 md:col-span-6 lg:col-span-4">
+          <EquityVelocity propertyId={propertyId} />
+        </div>
+        <div className="col-span-12 lg:col-span-4">
+          <TaxShieldIntel propertyId={propertyId} />
+        </div>
+
+        {/* Row 4: Reserve Nodes (6 cols) | Liquidity Reservoir (6 cols) */}
+        <div className="col-span-12 lg:col-span-6">
+          <ReserveTracker propertyId={propertyId} />
+        </div>
+        <div className="col-span-12 lg:col-span-6">
           <Liquidity propertyId={propertyId} />
         </div>
       </div>
-
-      {/* Second Row: Operating Core, Acquisition Intel (with Tax Shield below), Debt Architecture */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <OperatingCore propertyId={propertyId} />
-        <div className="space-y-8">
-          <AcquisitionIntel propertyId={propertyId} />
-          <TaxShieldIntel propertyId={propertyId} />
-        </div>
-        <DebtLogic propertyId={propertyId} />
-      </div>
-
-      {/* Income vs Expenses & Cash Flow Performance Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <IncomeExpenseChart propertyId={propertyId} />
-        <CashFlowPerformanceChart propertyId={propertyId} />
-      </div>
-
-      {/* Historical P&L Registry */}
-      <div className="w-full">
-        <PropertyTransactions propertyId={propertyId} />
-      </div>
     </div>
-    /* Drawers are rendered by DrawerProvider at root level based on URL params */
   )
 }

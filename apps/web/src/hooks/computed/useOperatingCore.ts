@@ -55,22 +55,31 @@ export function useOperatingCore(propertyId: string): OperatingCoreMetrics {
     // Calculate fixed expenses - combine structured data and transactions
     const fixedExpenses: Array<FixedExpense> = []
 
+    // Check if primary loan has escrow (tax/insurance included in loan payment)
+    const primaryLoan = (property?.loans || []).find(
+      (l) => l.isPrimary && l.status === 'active',
+    )
+    const hasEscrow = primaryLoan?.hasEscrow ?? false
+
     // Add structured expenses from operatingExpenses table
     if (operatingExpenses) {
       // Annual expenses converted to monthly
-      if (operatingExpenses.propertyTaxAnnual) {
-        fixedExpenses.push({
-          id: 'property-tax',
-          label: 'Property Tax',
-          amount: parseFloat(operatingExpenses.propertyTaxAnnual) / 12,
-        })
-      }
-      if (operatingExpenses.insuranceAnnual) {
-        fixedExpenses.push({
-          id: 'insurance',
-          label: 'Insurance',
-          amount: parseFloat(operatingExpenses.insuranceAnnual) / 12,
-        })
+      // Skip if hasEscrow is true (tax/insurance are paid through loan escrow)
+      if (!hasEscrow) {
+        if (operatingExpenses.propertyTaxAnnual) {
+          fixedExpenses.push({
+            id: 'property-tax',
+            label: 'Property Tax',
+            amount: parseFloat(operatingExpenses.propertyTaxAnnual) / 12,
+          })
+        }
+        if (operatingExpenses.insuranceAnnual) {
+          fixedExpenses.push({
+            id: 'insurance',
+            label: 'Insurance',
+            amount: parseFloat(operatingExpenses.insuranceAnnual) / 12,
+          })
+        }
       }
 
       // Monthly expenses

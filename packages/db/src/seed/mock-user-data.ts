@@ -32,6 +32,13 @@ import {
   sparseDataOperatingExpenses,
   sparseDataManagement,
   sparseDataLoan,
+  freshOnboardedCharacteristics,
+  freshOnboardedValuation,
+  freshOnboardedAcquisition,
+  freshOnboardedRentalIncome,
+  freshOnboardedOperatingExpenses,
+  freshOnboardedManagement,
+  freshOnboardedLoan,
 } from "./data/properties";
 
 /**
@@ -40,7 +47,9 @@ import {
  * Creates:
  * 1. Completed onboarding data
  * 2. One property with only address (empty state)
- * 3. One fully implemented property with all data
+ * 3. One fully implemented property with all data (12 months transactions)
+ * 4. One sparse data property (1 month transactions)
+ * 5. One fresh onboarded property (all data, no transactions yet)
  *
  * @param identifier - The Clerk user ID or database user ID (UUID) to seed data for
  */
@@ -374,6 +383,73 @@ export async function seedMockUserData(identifier: string) {
       `✅ Added ${insertedSparseTransactions.length} sparse transactions (${sparseIncomeCount} income, ${sparseExpenseCount} expenses)`
     );
 
+    // 5. Create fresh onboarded property (all data but no transactions)
+    // Simulates a property that just completed the onboarding wizard
+    const [freshProperty] = await db
+      .insert(properties)
+      .values({
+        portfolioId: portfolio.id,
+        userId: user.id,
+        addedBy: user.id,
+        address: "321 Maple Court",
+        city: "Indianapolis",
+        state: "IN",
+        zipCode: "46220",
+        status: "active",
+      })
+      .returning();
+
+    console.log(`✅ Created fresh onboarded property: ${freshProperty.id} (${freshProperty.address})`);
+
+    // Add characteristics for fresh property
+    await db.insert(propertyCharacteristics).values({
+      propertyId: freshProperty.id,
+      ...freshOnboardedCharacteristics,
+    });
+
+    // Add valuation for fresh property
+    await db.insert(propertyValuation).values({
+      propertyId: freshProperty.id,
+      ...freshOnboardedValuation,
+    });
+
+    // Add acquisition for fresh property
+    await db.insert(propertyAcquisition).values({
+      propertyId: freshProperty.id,
+      ...freshOnboardedAcquisition,
+    });
+
+    // Add rental income for fresh property
+    await db.insert(propertyRentalIncome).values({
+      propertyId: freshProperty.id,
+      ...freshOnboardedRentalIncome,
+    });
+
+    // Add operating expenses for fresh property
+    await db.insert(propertyOperatingExpenses).values({
+      propertyId: freshProperty.id,
+      ...freshOnboardedOperatingExpenses,
+    });
+
+    // Add management for fresh property
+    await db.insert(propertyManagement).values({
+      propertyId: freshProperty.id,
+      ...freshOnboardedManagement,
+    });
+
+    // Add loan for fresh property
+    const [freshLoan] = await db
+      .insert(loans)
+      .values({
+        propertyId: freshProperty.id,
+        ...freshOnboardedLoan,
+      })
+      .returning();
+
+    console.log(`✅ Added fresh property loan: ${freshLoan.id}`);
+
+    // NOTE: No transactions for fresh property - simulates just completed onboarding
+
     console.log(`\n✅ Successfully seeded mock data for user ${identifier}`);
     console.log(`\n📊 Summary:`);
     console.log(`   - User: ${user.email} (ID: ${user.id})`);
@@ -381,11 +457,14 @@ export async function seedMockUserData(identifier: string) {
     console.log(`   - Empty Property: ${emptyProperty.id} - ${emptyProperty.address}`);
     console.log(`   - Full Property: ${fullProperty.id} - ${fullProperty.address}`);
     console.log(`   - Sparse Data Property: ${sparseProperty.id} - ${sparseProperty.address} (1 month data)`);
+    console.log(`   - Fresh Onboarded Property: ${freshProperty.id} - ${freshProperty.address} (no transactions)`);
     console.log(`   - Primary Loan: ${loan.id} - $${loan.originalLoanAmount} @ ${(parseFloat(loan.interestRate) * 100).toFixed(2)}% (${loan.loanType})`);
     console.log(`   - HELOC: ${helocLoan.id} - $${helocLoan.originalLoanAmount} @ ${(parseFloat(helocLoan.interestRate) * 100).toFixed(2)}% (Current Balance: $${helocLoan.currentBalance})`);
     console.log(`   - Sparse Loan: ${sparseLoan.id} - $${sparseLoan.originalLoanAmount} @ ${(parseFloat(sparseLoan.interestRate) * 100).toFixed(2)}%`);
+    console.log(`   - Fresh Loan: ${freshLoan.id} - $${freshLoan.originalLoanAmount} @ ${(parseFloat(freshLoan.interestRate) * 100).toFixed(2)}%`);
     console.log(`   - Full Property Transactions: ${insertedTransactions.length} (12 months)`);
     console.log(`   - Sparse Property Transactions: ${insertedSparseTransactions.length} (1 month only)`);
+    console.log(`   - Fresh Property Transactions: 0 (just onboarded)`);
 
     return {
       user,
@@ -393,9 +472,11 @@ export async function seedMockUserData(identifier: string) {
       emptyProperty,
       fullProperty,
       sparseProperty,
+      freshProperty,
       loan,
       helocLoan,
       sparseLoan,
+      freshLoan,
     };
   } catch (error) {
     console.error("❌ Error seeding mock user data:", error);

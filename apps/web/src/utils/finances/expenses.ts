@@ -45,10 +45,12 @@ interface Transaction {
  * Calculates total fixed expenses from structured operating expenses data
  *
  * @param operatingExpenses - Operating expenses data object from property
+ * @param hasEscrow - If true, skip property tax and insurance (they're included in loan escrow)
  * @returns Total monthly fixed expenses
  */
 export function calculateFixedExpensesFromStructured(
   operatingExpenses: OperatingExpensesData | null | undefined,
+  hasEscrow?: boolean,
 ): number {
   if (!operatingExpenses) {
     return 0
@@ -57,11 +59,14 @@ export function calculateFixedExpensesFromStructured(
   let total = 0
 
   // Annual expenses converted to monthly
-  if (operatingExpenses.propertyTaxAnnual) {
-    total += parseFloat(operatingExpenses.propertyTaxAnnual) / 12
-  }
-  if (operatingExpenses.insuranceAnnual) {
-    total += parseFloat(operatingExpenses.insuranceAnnual) / 12
+  // Skip if hasEscrow is true (tax/insurance are paid through loan escrow)
+  if (!hasEscrow) {
+    if (operatingExpenses.propertyTaxAnnual) {
+      total += parseFloat(operatingExpenses.propertyTaxAnnual) / 12
+    }
+    if (operatingExpenses.insuranceAnnual) {
+      total += parseFloat(operatingExpenses.insuranceAnnual) / 12
+    }
   }
 
   // Monthly expenses
@@ -176,15 +181,18 @@ export function calculateRecurringExpensesFromTransactions(
  * @param operatingExpenses - Operating expenses data object from property
  * @param transactions - Array of property transactions
  * @param grossIncome - Gross monthly income (for management fee calculation)
+ * @param hasEscrow - If true, skip property tax and insurance (they're included in loan escrow)
  * @returns Total monthly fixed expenses
  */
 export function calculateTotalFixedExpenses(
   operatingExpenses: OperatingExpensesData | null | undefined,
   transactions: Array<Transaction>,
   grossIncome: number,
+  hasEscrow?: boolean,
 ): number {
   // Start with structured expenses (excluding management, added separately)
-  let total = calculateFixedExpensesFromStructured(operatingExpenses)
+  // Pass hasEscrow to skip tax/insurance if they're paid through loan escrow
+  let total = calculateFixedExpensesFromStructured(operatingExpenses, hasEscrow)
 
   // Add management fee (can be flat fee or percentage-based)
   const hasManagementExpense = !!(

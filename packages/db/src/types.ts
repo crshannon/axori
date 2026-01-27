@@ -21,6 +21,7 @@ import {
   annualDepreciationRecords,
   permissionAuditLog,
   invitationTokens,
+  propertyBankAccounts,
 } from './schema'
 
 // Re-export property access types for external use
@@ -337,3 +338,19 @@ export type InvitationToken = InferSelectModel<typeof invitationTokens>
  * Used when creating new invitation tokens
  */
 export type InvitationTokenInsert = InferInsertModel<typeof invitationTokens>
+
+// ============================================================================
+// Property Bank Accounts (Liquidity & Allocation Tracking)
+// ============================================================================
+
+/**
+ * Property Bank Account type inferred from Drizzle schema (for read operations)
+ * Represents a connected bank account for tracking liquidity and fund allocations
+ */
+export type PropertyBankAccount = InferSelectModel<typeof propertyBankAccounts>
+
+/**
+ * Property Bank Account insert type inferred from Drizzle schema (for insert operations)
+ * Used when creating new bank account connections
+ */
+export type PropertyBankAccountInsert = InferInsertModel<typeof propertyBankAccounts>

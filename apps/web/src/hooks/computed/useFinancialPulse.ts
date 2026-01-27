@@ -84,12 +84,20 @@ export function useFinancialPulse(propertyId: string): FinancialMetrics {
     totalDebtService = calculateTotalDebtService(property?.loans || [])
     interestRate = getPrimaryLoanInterestRate(property?.loans || [])
 
+    // Check if primary loan has escrow (tax/insurance included in loan payment)
+    const primaryLoan = (property?.loans || []).find(
+      (l) => l.isPrimary && l.status === 'active',
+    )
+    const hasEscrow = primaryLoan?.hasEscrow ?? false
+
     // Calculate total fixed expenses using shared utility
     // This combines structured expenses + recurring transactions, excluding duplicates and loan payments
+    // Pass hasEscrow to skip tax/insurance if they're paid through loan escrow
     const totalFixedExpenses = calculateTotalFixedExpenses(
       operatingExpenses,
       activeTransactions,
       grossIncome,
+      hasEscrow,
     )
 
     // Calculate NOI directly from structured data (to avoid circular dependency with useOperatingCore)
