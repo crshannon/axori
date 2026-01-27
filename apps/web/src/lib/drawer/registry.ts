@@ -74,6 +74,8 @@ export const DRAWERS = {
   BANK_ALLOCATION: 'bank-allocation',
   PROPERTY_ACQUISITION: 'property-acquisition',
   VALUATION: 'valuation',
+  // Account Settings Drawers
+  PLAN_SELECTION: 'plan-selection',
 } as const
 
 // =============================================================================
@@ -111,6 +113,11 @@ export const bankAccountDrawerParamsSchema = z.object({
   bankAccountId: z.string().optional(),
 })
 
+/**
+ * Schema for drawers that don't require params
+ */
+export const emptyDrawerParamsSchema = z.object({})
+
 // =============================================================================
 // DRAWER NAMES (for type safety)
 // =============================================================================
@@ -136,6 +143,8 @@ export const DRAWER_NAMES = [
   'bank-allocation',
   'property-acquisition',
   'valuation',
+  // Account Settings Drawers
+  'plan-selection',
 ] as const
 
 export type DrawerName = (typeof DRAWER_NAMES)[number]
@@ -287,6 +296,20 @@ export const DRAWER_REGISTRY: Record<DrawerName, DrawerRegistryEntry<any>> = {
     paramsSchema: propertyDrawerParamsSchema,
     permission: 'member',
     displayName: 'Property Valuation',
+  },
+
+  // ==========================================================================
+  // Account Settings Drawers
+  // ==========================================================================
+  'plan-selection': {
+    component: lazy(() =>
+      import('@/components/drawers/PlanSelectionDrawer').then((m) => ({
+        default: m.PlanSelectionDrawer,
+      })),
+    ),
+    paramsSchema: emptyDrawerParamsSchema,
+    permission: 'none',
+    displayName: 'Plan Selection',
   },
 }
 

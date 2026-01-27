@@ -9,6 +9,7 @@ export * from "./components/Menu";
 export * from "./components/IconButton";
 export * from "./components/Input";
 export * from "./components/Modal";
+export * from "./components/ConfirmationDialog";
 export * from "./components/Select";
 export * from "./components/Textarea";
 export * from "./components/Text";

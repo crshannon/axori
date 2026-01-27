@@ -10,6 +10,7 @@ import {
   MessageCircle,
   Settings,
   ShieldCheck,
+  User,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { FileRouteTypes } from '../routeTree.gen'
@@ -20,7 +21,7 @@ import type { FileRouteTypes } from '../routeTree.gen'
  */
 type NavRoutePath = Extract<
   FileRouteTypes['fullPaths'],
-  '/dashboard' | '/wealth-journey' | '/explore' | '/property-hub'
+  '/dashboard' | '/wealth-journey' | '/explore' | '/property-hub' | '/account'
 >
 
 /**
@@ -74,6 +75,14 @@ export const NAV_ITEMS: Array<NavItem> = [
     icon: Compass,
     enabled: true,
     featureFlag: 'nav-explore',
+  },
+  {
+    id: 'account',
+    path: '/account',
+    icon: User,
+    enabled: true,
+    featureFlag: 'nav-account',
+    label: 'Account',
   },
 ] as const
 
