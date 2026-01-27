@@ -133,7 +133,7 @@ export function EmailCaptureForm({
   // Hero variant - side by side on desktop
   if (variant === "hero") {
     return (
-      <form onSubmit={handleSubmit} className="w-full max-w-xl">
+      <form onSubmit={handleSubmit} className="w-full max-w-2xl">
         <div className="flex flex-col gap-3 sm:flex-row">
           <Input
             type="text"
@@ -142,7 +142,7 @@ export function EmailCaptureForm({
             onChange={(e) => setForm({ ...form, firstName: e.target.value })}
             variant="rounded"
             required
-            className="flex-1"
+            className="flex-1 sm:max-w-[160px]"
             disabled={submitState === "submitting"}
           />
           <Input
@@ -152,7 +152,7 @@ export function EmailCaptureForm({
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             variant="rounded"
             required
-            className="flex-1"
+            className="flex-[2]"
             disabled={submitState === "submitting"}
           />
           <button

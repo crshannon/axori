@@ -387,7 +387,7 @@ export function ComingSoonHero() {
           </p>
 
           {/* Email Capture Form */}
-          <div className="w-full max-w-lg">
+          <div className="w-full max-w-2xl">
             <EmailCaptureForm source="hero" variant="hero" />
 
             {/* Trust indicators */}
