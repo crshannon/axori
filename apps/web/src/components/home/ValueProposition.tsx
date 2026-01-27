@@ -438,7 +438,7 @@ export function ValueProposition() {
               { icon: LineChart, value: "$2.1B", label: "Assets Managed" },
               { icon: Shield, value: "99.9%", label: "Uptime SLA" },
               { icon: PieChart, value: "18.4%", label: "Avg. ROI Boost" },
-            ].map((stat, i) => (
+            ].map((stat) => (
               <div key={stat.label} className="text-center group">
                 <div className="flex items-center justify-center gap-1 mb-3">
                   <stat.icon className="w-5 h-5 text-violet-500 dark:text-[#E8FF4D] group-hover:scale-110 transition-transform" />
