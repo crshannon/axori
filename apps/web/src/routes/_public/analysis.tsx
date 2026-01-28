@@ -1,5 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { AlertTriangle, MapPin, TrendingUp } from 'lucide-react'
+import { Button } from '@axori/ui'
 import PropertyScoreGauge from '@/components/home/PropertyScoreGauge'
+import { RadarChart } from '@/components/charts/RadarChart'
 
 export const Route = createFileRoute('/_public/analysis')({
   component: Analysis,
@@ -10,93 +13,6 @@ function Analysis() {
   const accentBgClass = 'bg-violet-600 dark:bg-[#E8FF4D]'
   const cardClass =
     'p-12 rounded-[4rem] border transition-all duration-700 bg-white border-black/5 shadow-sm hover:shadow-2xl dark:bg-[#1A1A1A] dark:border-white/5'
-
-  // Performance DNA Radar Chart Helper
-  const RadarChart = () => {
-    const points = [
-      { label: 'Financial', val: 88, angle: 0 },
-      { label: 'Market', val: 72, angle: 72 },
-      { label: 'Ops', val: 94, angle: 144 },
-      { label: 'Risk', val: 68, angle: 216 },
-      { label: 'Goal', val: 82, angle: 288 },
-    ]
-
-    const size = 260
-    const center = size / 2
-    const getCoord = (val: number, angle: number) => {
-      const r = (val / 100) * (size / 2 - 40)
-      const rad = (angle - 90) * (Math.PI / 180)
-      return {
-        x: center + r * Math.cos(rad),
-        y: center + r * Math.sin(rad),
-      }
-    }
-
-    const pathData = points
-      .map((p) => {
-        const { x, y } = getCoord(p.val, p.angle)
-        return `${x},${y}`
-      })
-      .join(' ')
-
-    return (
-      <div className="relative flex items-center justify-center p-4">
-        <svg width={size} height={size} className="overflow-visible">
-          {/* Background circles */}
-          {[25, 50, 75, 100].map((r) => (
-            <circle
-              key={r}
-              cx={center}
-              cy={center}
-              r={(r / 100) * (size / 2 - 40)}
-              fill="none"
-              stroke="currentColor"
-              className="opacity-10"
-            />
-          ))}
-          {/* Axis lines */}
-          {points.map((p) => {
-            const { x, y } = getCoord(100, p.angle)
-            return (
-              <line
-                key={p.label}
-                x1={center}
-                y1={center}
-                x2={x}
-                y2={y}
-                stroke="currentColor"
-                className="opacity-10"
-              />
-            )
-          })}
-          {/* Data shape */}
-          <polygon
-            points={pathData}
-            fill="#8B5CF6"
-            fillOpacity="0.25"
-            stroke="#8B5CF6"
-            strokeWidth="4"
-            className="filter drop-shadow-xl dark:fill-[#E8FF4D] dark:stroke-[#E8FF4D]"
-          />
-          {/* Labels */}
-          {points.map((p) => {
-            const { x, y } = getCoord(118, p.angle)
-            return (
-              <text
-                key={p.label}
-                x={x}
-                y={y}
-                textAnchor="middle"
-                className="text-[10px] font-black uppercase tracking-widest fill-current opacity-60"
-              >
-                {p.label}
-              </text>
-            )
-          })}
-        </svg>
-      </div>
-    )
-  }
 
   return (
     <main className="flex-grow pt-12 pb-40">
@@ -133,17 +49,7 @@ function Analysis() {
           <div className="hidden lg:block p-8 rounded-[3rem] border border-white/5 bg-white/5 backdrop-blur-md">
             <div className="flex gap-6 items-center">
               <div className="w-12 h-12 rounded-full border border-emerald-500/50 flex items-center justify-center text-emerald-500">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                >
-                  <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-                  <polyline points="16 7 22 7 22 13" />
-                </svg>
+                <TrendingUp className="w-6 h-6" strokeWidth={3} />
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">
@@ -313,14 +219,7 @@ function Analysis() {
             className={`${cardClass} md:col-span-6 border-none text-white overflow-hidden relative group bg-slate-900 shadow-xl shadow-slate-200 dark:bg-[#121212] dark:shadow-black/30`}
           >
             <div className="absolute top-0 right-0 p-12 opacity-5 scale-150 group-hover:rotate-12 transition-transform duration-1000">
-              <svg
-                width="240"
-                height="240"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z" />
-              </svg>
+              <MapPin className="w-60 h-60" fill="currentColor" />
             </div>
             <p className="text-[11px] font-black uppercase tracking-widest opacity-40 mb-12">
               LOCATIONAL ANALYSIS
@@ -365,18 +264,7 @@ function Analysis() {
                 ASSESSMENT
               </h3>
               <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 transform group-hover:rotate-12 transition-transform">
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                >
-                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                  <line x1="12" y1="9" x2="12" y2="13" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
+                <AlertTriangle className="w-7 h-7" strokeWidth={3} />
               </div>
             </div>
             <div className="space-y-5">
@@ -456,9 +344,11 @@ function Analysis() {
               Unlock the operating system built for the next decade of real
               estate wealth.
             </p>
-            <button className="px-20 py-8 rounded-full font-black uppercase tracking-widest text-sm transition-all hover:scale-110 shadow-2xl shadow-slate-200/50 bg-white text-violet-600 dark:bg-black dark:text-white dark:shadow-black/30">
-              GET THE FULL ANALYSIS
-            </button>
+            <Link to="/sign-up">
+              <Button className="px-20 py-8 rounded-full font-black uppercase tracking-widest text-sm transition-all hover:scale-110 shadow-2xl shadow-slate-200/50 bg-white text-violet-600 dark:bg-black dark:text-white dark:shadow-black/30">
+                GET THE FULL ANALYSIS
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

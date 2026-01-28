@@ -1,5 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
+import { Check } from 'lucide-react'
+import { Button } from '@axori/ui'
 
 export const Route = createFileRoute('/_public/pricing')({
   component: Pricing,
@@ -136,31 +138,25 @@ function Pricing() {
                           : 'bg-slate-500/10 text-slate-500'
                       }`}
                     >
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      >
-                        <path d="m5 12 5 5L20 7" />
-                      </svg>
+                      <Check className="w-3 h-3" strokeWidth={4} />
                     </div>
                     {feat}
                   </li>
                 ))}
               </ul>
 
-              <button
-                className={`mt-12 w-full py-6 rounded-3xl font-black text-xs uppercase tracking-widest transition-all relative z-10 ${
-                  hoverPlan === i
-                    ? 'bg-slate-900 text-white hover:scale-105 shadow-2xl shadow-slate-200 dark:bg-white dark:text-black dark:shadow-xl dark:shadow-black/20'
-                    : 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-white/40'
-                }`}
-              >
-                {plan.cta}
-              </button>
+              <Link to="/sign-up" className="mt-12 relative z-10 block">
+                <Button
+                  fullWidth
+                  className={`py-6 rounded-3xl font-black text-xs uppercase tracking-widest transition-all ${
+                    hoverPlan === i
+                      ? 'bg-slate-900 text-white hover:scale-105 shadow-2xl shadow-slate-200 dark:bg-white dark:text-black dark:shadow-xl dark:shadow-black/20'
+                      : 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-white/40'
+                  }`}
+                >
+                  {plan.cta}
+                </Button>
+              </Link>
             </div>
           ))}
         </div>
