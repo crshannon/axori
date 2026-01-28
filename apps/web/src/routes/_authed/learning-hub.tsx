@@ -48,8 +48,16 @@ function LearningHubLayout() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const tabs = [
-    { path: "/learning-hub", label: "PROTOCOLS", exact: true },
+    { path: "/learning-hub", label: "HOME", exact: true },
     { path: "/learning-hub/glossary", label: "GLOSSARY" },
+    { path: "/learning-hub/paths", label: "PATHS" },
+    { path: "/learning-hub/articles", label: "ARTICLES" },
+    { path: "/learning-hub/calculators", label: "CALCULATORS" },
+    { path: "/learning-hub/analyzer", label: "ANALYZER" },
+    { path: "/learning-hub/scenarios", label: "SCENARIOS" },
+    { path: "/learning-hub/freedom", label: "FREEDOM" },
+    { path: "/learning-hub/checklists", label: "CHECKLISTS" },
+    { path: "/learning-hub/achievements", label: "ACHIEVEMENTS" },
   ];
 
   const isActive = (path: string, exact?: boolean) => {
@@ -210,7 +218,7 @@ function LearningHubLayout() {
           </div>
 
           {/* Tab Navigation */}
-          <nav className="flex gap-2">
+          <nav className="flex gap-2 overflow-x-auto pb-2 -mb-2 scrollbar-hide">
             {tabs.map((tab) => {
               const active = isActive(tab.path, tab.exact);
               return (
@@ -218,7 +226,7 @@ function LearningHubLayout() {
                   key={tab.path}
                   to={tab.path}
                   className={cn(
-                    "px-6 py-2.5 rounded-full text-sm font-bold uppercase tracking-wider transition-all",
+                    "px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0",
                     active
                       ? isDark
                         ? "bg-white text-black"
