@@ -17,100 +17,57 @@ import {
   Download,
   ExternalLink,
   FileText,
+  Loader2,
+  Settings,
   Sparkles,
   Zap,
 } from "lucide-react"
+import type { PlanResponse } from "@/hooks/api/useBilling"
+import {
+  useCreateCheckoutSession,
+  useCreatePortalSession,
+  useInvoices,
+  usePaymentMethods,
+  usePlans,
+  useSubscription,
+  useUpcomingInvoice,
+} from "@/hooks/api/useBilling"
 
 export const Route = createFileRoute("/_authed/account/billing")({
   component: BillingPage,
 })
 
-// Plan definitions (will come from API/Stripe in production)
-const PLANS = [
-  {
-    id: "free",
-    name: "Free",
-    price: 0,
-    interval: "month",
-    icon: Zap,
-    features: ["1 Property", "Basic Analytics", "Email Support"],
-    current: true,
-    color: "slate",
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: 24,
-    interval: "month",
-    icon: Sparkles,
-    features: [
-      "5 Properties",
-      "Advanced Analytics",
-      "Priority Support",
-      "Data Export",
-    ],
-    popular: true,
-    color: "violet",
-  },
-  {
-    id: "portfolio",
-    name: "Portfolio",
-    price: 49,
-    interval: "month",
-    icon: Building,
-    features: [
-      "25 Properties",
-      "Team Collaboration",
-      "API Access",
-      "Custom Reports",
-    ],
-    color: "blue",
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    price: 99,
-    interval: "month",
-    icon: Crown,
-    features: [
-      "Unlimited Properties",
-      "Dedicated Support",
-      "Custom Integrations",
-      "SLA",
-    ],
-    color: "amber",
-  },
-]
-
-// Mock invoice data (will come from Stripe API)
-const MOCK_INVOICES = [
-  {
-    id: "inv_1",
-    date: "2024-01-15",
-    amount: 24.0,
-    status: "paid",
-    description: "Pro Plan - January 2024",
-  },
-  {
-    id: "inv_2",
-    date: "2023-12-15",
-    amount: 24.0,
-    status: "paid",
-    description: "Pro Plan - December 2023",
-  },
-  {
-    id: "inv_3",
-    date: "2023-11-15",
-    amount: 24.0,
-    status: "paid",
-    description: "Pro Plan - November 2023",
-  },
-]
+// Plan icon mapping
+const PLAN_ICONS: Partial<Record<string, typeof Zap>> = {
+  free: Zap,
+  pro: Sparkles,
+  portfolio: Building,
+  enterprise: Crown,
+}
 
 function BillingPage() {
   const { isLoaded } = useUser()
 
-  if (!isLoaded) {
+  // Fetch real data from API
+  const { data: subscription, isLoading: subscriptionLoading } =
+    useSubscription()
+  const { data: plans, isLoading: plansLoading } = usePlans()
+  const { data: invoices, isLoading: invoicesLoading } = useInvoices()
+  const { data: upcomingInvoice } = useUpcomingInvoice()
+  const { data: paymentMethods, isLoading: paymentMethodsLoading } =
+    usePaymentMethods()
+
+  const createCheckout = useCreateCheckoutSession()
+  const createPortal = useCreatePortalSession()
+
+  const isLoading =
+    !isLoaded ||
+    subscriptionLoading ||
+    plansLoading ||
+    invoicesLoading ||
+    paymentMethodsLoading
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loading size="lg" />
@@ -118,10 +75,36 @@ function BillingPage() {
     )
   }
 
-  // TODO: Fetch actual subscription from API
-  const currentPlan = PLANS[0]
-  const nextInvoiceDate = new Date()
-  nextInvoiceDate.setMonth(nextInvoiceDate.getMonth() + 1)
+  const currentPlanSlug = subscription?.plan || "free"
+  const currentPlan = plans?.find((p) => p.slug === currentPlanSlug) || {
+    id: "free",
+    name: "Free",
+    slug: "free",
+    amount: 0,
+    interval: "month" as const,
+    features: ["1 Property", "Basic Analytics", "Email Support"],
+    propertyLimit: 1,
+    teamMemberLimit: 1,
+    isPopular: false,
+  }
+
+  const handleUpgrade = (plan: PlanResponse) => {
+    if (plan.slug === currentPlanSlug) return
+    // Use the stripePriceId from the plan config
+    createCheckout.mutate({
+      priceId: `price_${plan.slug}`, // This should match your Stripe price IDs
+      successUrl: `${window.location.origin}/account/billing?success=true`,
+      cancelUrl: `${window.location.origin}/account/billing?canceled=true`,
+    })
+  }
+
+  const handleManageSubscription = () => {
+    createPortal.mutate({
+      returnUrl: `${window.location.origin}/account/billing`,
+    })
+  }
+
+  const defaultPaymentMethod = paymentMethods?.find((pm) => pm.isDefault)
 
   return (
     <div className="px-6 lg:px-12 py-10">
@@ -152,29 +135,67 @@ function BillingPage() {
             </span>
 
             <div className="mt-6 flex flex-col items-center text-center">
-              <div className="size-20 rounded-2xl bg-white/20 dark:bg-black/10 flex items-center justify-center mb-6">
-                <currentPlan.icon className="size-10 text-white dark:text-black" />
-              </div>
+              {(() => {
+                const PlanIcon = PLAN_ICONS[currentPlan.slug] || Zap
+                return (
+                  <div className="size-20 rounded-2xl bg-white/20 dark:bg-black/10 flex items-center justify-center mb-6">
+                    <PlanIcon className="size-10 text-white dark:text-black" />
+                  </div>
+                )
+              })()}
 
               <h3 className="text-3xl font-black text-white dark:text-black">
                 {currentPlan.name}
               </h3>
               <p className="text-4xl font-black mt-2 text-white dark:text-black">
-                ${currentPlan.price}
+                ${currentPlan.amount}
                 <span className="text-lg font-medium text-white/60 dark:text-black/50">
-                  /mo
+                  /{currentPlan.interval === "year" ? "yr" : "mo"}
                 </span>
               </p>
 
-              <div className="w-full mt-8 pt-8 border-t border-white/20 dark:border-black/10">
+              {subscription?.cancelAtPeriodEnd && (
+                <p className="mt-2 text-sm text-white/80 dark:text-black/70">
+                  Cancels at period end
+                </p>
+              )}
+
+              <div className="w-full mt-8 pt-8 border-t border-white/20 dark:border-black/10 space-y-3">
+                {currentPlan.slug !== "free" && (
+                  <button
+                    onClick={handleManageSubscription}
+                    disabled={createPortal.isPending}
+                    className={cn(
+                      "w-full px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2",
+                      "bg-white/20 text-white hover:bg-white/30",
+                      "dark:bg-black/20 dark:text-black dark:hover:bg-black/30",
+                      "disabled:opacity-50 disabled:cursor-not-allowed"
+                    )}
+                  >
+                    {createPortal.isPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Settings className="size-4" />
+                    )}
+                    Manage Subscription
+                  </button>
+                )}
                 <button
+                  onClick={() => {
+                    const upgradePlan = plans?.find(
+                      (p) => p.slug === "pro" && p.slug !== currentPlanSlug
+                    )
+                    if (upgradePlan) handleUpgrade(upgradePlan)
+                  }}
+                  disabled={createCheckout.isPending}
                   className={cn(
                     "w-full px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-wider transition-all",
                     "bg-white text-violet-700 hover:bg-white/90",
-                    "dark:bg-black dark:text-[#E8FF4D] dark:hover:bg-black/80"
+                    "dark:bg-black dark:text-[#E8FF4D] dark:hover:bg-black/80",
+                    "disabled:opacity-50 disabled:cursor-not-allowed"
                   )}
                 >
-                  Upgrade Plan
+                  {createCheckout.isPending ? "Loading..." : "Upgrade Plan"}
                 </button>
               </div>
             </div>
@@ -207,16 +228,22 @@ function BillingPage() {
                     Next Invoice
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-white/50">
-                    {nextInvoiceDate.toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                    {upcomingInvoice?.nextPaymentAttempt
+                      ? new Date(
+                          upcomingInvoice.nextPaymentAttempt
+                        ).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : currentPlan.slug === "free"
+                        ? "No upcoming invoice"
+                        : "Not scheduled"}
                   </p>
                 </div>
               </div>
               <p className="text-3xl font-black text-slate-900 dark:text-white">
-                ${currentPlan.price}
+                ${upcomingInvoice?.amount ?? currentPlan.amount}
                 <span className="text-sm font-medium text-slate-400 dark:text-white/40">
                   .00
                 </span>
@@ -252,42 +279,62 @@ function BillingPage() {
                   </p>
                 </div>
               </div>
-              <button className="text-sm font-medium text-violet-600 hover:text-violet-700 dark:text-[#E8FF4D] dark:hover:text-[#d4eb45] transition-colors">
+              <button
+                onClick={handleManageSubscription}
+                className="text-sm font-medium text-violet-600 hover:text-violet-700 dark:text-[#E8FF4D] dark:hover:text-[#d4eb45] transition-colors"
+              >
                 + Add New
               </button>
             </div>
 
-            <div
-              className={cn(
-                "flex items-center justify-between p-4 rounded-2xl",
-                "bg-slate-50 dark:bg-white/5"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-9 rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 flex items-center justify-center">
-                  <span className="text-white text-[10px] font-black">
-                    VISA
-                  </span>
-                </div>
-                <div>
-                  <p className="font-medium text-sm text-slate-900 dark:text-white">
-                    •••• •••• •••• 4242
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-white/50">
-                    Expires 12/25
-                  </p>
-                </div>
-              </div>
-              <span
+            {defaultPaymentMethod ? (
+              <div
                 className={cn(
-                  "px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full",
-                  "bg-violet-100 text-violet-700",
-                  "dark:bg-[#E8FF4D]/10 dark:text-[#E8FF4D]"
+                  "flex items-center justify-between p-4 rounded-2xl",
+                  "bg-slate-50 dark:bg-white/5"
                 )}
               >
-                Default
-              </span>
-            </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-9 rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 flex items-center justify-center">
+                    <span className="text-white text-[10px] font-black uppercase">
+                      {defaultPaymentMethod.brand || "Card"}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm text-slate-900 dark:text-white">
+                      •••• •••• •••• {defaultPaymentMethod.last4 || "****"}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-white/50">
+                      Expires{" "}
+                      {defaultPaymentMethod.expMonth
+                        ?.toString()
+                        .padStart(2, "0")}
+                      /{defaultPaymentMethod.expYear?.toString().slice(-2)}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  className={cn(
+                    "px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full",
+                    "bg-violet-100 text-violet-700",
+                    "dark:bg-[#E8FF4D]/10 dark:text-[#E8FF4D]"
+                  )}
+                >
+                  Default
+                </span>
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  "flex items-center justify-center p-6 rounded-2xl",
+                  "bg-slate-50 dark:bg-white/5"
+                )}
+              >
+                <p className="text-sm text-slate-500 dark:text-white/50">
+                  No payment method on file
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -305,9 +352,9 @@ function BillingPage() {
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {PLANS.map((plan) => {
-                const Icon = plan.icon
-                const isCurrent = plan.id === currentPlan.id
+              {(plans || []).map((plan) => {
+                const Icon = PLAN_ICONS[plan.slug] || Zap
+                const isCurrent = plan.slug === currentPlanSlug
 
                 return (
                   <div
@@ -317,12 +364,12 @@ function BillingPage() {
                       isCurrent
                         ? "border-violet-500 bg-violet-50 dark:border-[#E8FF4D] dark:bg-[#E8FF4D]/5"
                         : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20",
-                      plan.popular &&
+                      plan.isPopular &&
                         !isCurrent &&
                         "border-purple-300 dark:border-purple-500/30"
                     )}
                   >
-                    {plan.popular && !isCurrent && (
+                    {plan.isPopular && !isCurrent && (
                       <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-[9px] font-black uppercase tracking-wider rounded-full bg-purple-500 text-white">
                         Popular
                       </span>
@@ -347,9 +394,9 @@ function BillingPage() {
                         {plan.name}
                       </h4>
                       <p className="text-2xl font-black mt-1 text-slate-900 dark:text-white">
-                        ${plan.price}
+                        ${plan.amount}
                         <span className="text-sm font-normal text-slate-400 dark:text-white/40">
-                          /mo
+                          /{plan.interval === "year" ? "yr" : "mo"}
                         </span>
                       </p>
                     </div>
@@ -369,15 +416,21 @@ function BillingPage() {
                     </ul>
 
                     <button
-                      disabled={isCurrent}
+                      onClick={() => handleUpgrade(plan)}
+                      disabled={isCurrent || createCheckout.isPending}
                       className={cn(
                         "w-full py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-colors",
                         isCurrent
                           ? "bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed"
-                          : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100"
+                          : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100",
+                        "disabled:opacity-50 disabled:cursor-not-allowed"
                       )}
                     >
-                      {isCurrent ? "Current" : "Select"}
+                      {isCurrent
+                        ? "Current"
+                        : createCheckout.isPending
+                          ? "Loading..."
+                          : "Select"}
                     </button>
                   </div>
                 )
@@ -415,82 +468,117 @@ function BillingPage() {
                   </p>
                 </div>
               </div>
-              <button className="flex items-center gap-1 text-sm font-medium text-violet-600 hover:text-violet-700 dark:text-[#E8FF4D] dark:hover:text-[#d4eb45] transition-colors">
+              <button
+                onClick={handleManageSubscription}
+                className="flex items-center gap-1 text-sm font-medium text-violet-600 hover:text-violet-700 dark:text-[#E8FF4D] dark:hover:text-[#d4eb45] transition-colors"
+              >
                 View All
                 <ExternalLink className="size-3" />
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-100 dark:border-white/5">
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40">
-                      Invoice
-                    </th>
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40">
-                      Date
-                    </th>
-                    <th className="pb-3 text-left text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40">
-                      Status
-                    </th>
-                    <th className="pb-3 text-right text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40">
-                      Amount
-                    </th>
-                    <th className="pb-3 text-right text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40">
-                      Download
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                  {MOCK_INVOICES.map((invoice) => (
-                    <tr key={invoice.id}>
-                      <td className="py-4">
-                        <span className="font-medium text-sm text-slate-900 dark:text-white">
-                          {invoice.description}
-                        </span>
-                      </td>
-                      <td className="py-4">
-                        <span className="text-sm text-slate-500 dark:text-white/50">
-                          {new Date(invoice.date).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </td>
-                      <td className="py-4">
-                        <span
-                          className={cn(
-                            "px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full",
-                            invoice.status === "paid"
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-                              : "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
-                          )}
-                        >
-                          {invoice.status}
-                        </span>
-                      </td>
-                      <td className="py-4 text-right">
-                        <span className="font-bold text-sm text-slate-900 dark:text-white">
-                          ${invoice.amount.toFixed(2)}
-                        </span>
-                      </td>
-                      <td className="py-4 text-right">
-                        <button
-                          className={cn(
-                            "p-2 rounded-lg transition-colors",
-                            "hover:bg-slate-100 dark:hover:bg-white/5"
-                          )}
-                        >
-                          <Download className="size-4 text-slate-400 dark:text-white/40" />
-                        </button>
-                      </td>
+            {invoices && invoices.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-100 dark:border-white/5">
+                      <th className="pb-3 text-left text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40">
+                        Invoice
+                      </th>
+                      <th className="pb-3 text-left text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40">
+                        Date
+                      </th>
+                      <th className="pb-3 text-left text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40">
+                        Status
+                      </th>
+                      <th className="pb-3 text-right text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40">
+                        Amount
+                      </th>
+                      <th className="pb-3 text-right text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40">
+                        Download
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {invoices.map((invoice) => (
+                      <tr key={invoice.id}>
+                        <td className="py-4">
+                          <span className="font-medium text-sm text-slate-900 dark:text-white">
+                            {invoice.description}
+                          </span>
+                        </td>
+                        <td className="py-4">
+                          <span className="text-sm text-slate-500 dark:text-white/50">
+                            {new Date(invoice.createdAt).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              }
+                            )}
+                          </span>
+                        </td>
+                        <td className="py-4">
+                          <span
+                            className={cn(
+                              "px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full",
+                              invoice.status === "paid"
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                : "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+                            )}
+                          >
+                            {invoice.status}
+                          </span>
+                        </td>
+                        <td className="py-4 text-right">
+                          <span className="font-bold text-sm text-slate-900 dark:text-white">
+                            ${invoice.amount.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="py-4 text-right">
+                          {invoice.invoicePdf ? (
+                            <a
+                              href={invoice.invoicePdf}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={cn(
+                                "p-2 rounded-lg transition-colors inline-block",
+                                "hover:bg-slate-100 dark:hover:bg-white/5"
+                              )}
+                            >
+                              <Download className="size-4 text-slate-400 dark:text-white/40" />
+                            </a>
+                          ) : (
+                            <button
+                              disabled
+                              className="p-2 rounded-lg opacity-30 cursor-not-allowed"
+                            >
+                              <Download className="size-4 text-slate-400 dark:text-white/40" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  "flex flex-col items-center justify-center py-12 rounded-2xl",
+                  "bg-slate-50 dark:bg-white/5"
+                )}
+              >
+                <FileText className="size-8 text-slate-300 dark:text-white/20 mb-3" />
+                <p className="text-sm text-slate-500 dark:text-white/50">
+                  No invoices yet
+                </p>
+                <p className="text-xs text-slate-400 dark:text-white/30 mt-1">
+                  Your billing history will appear here
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

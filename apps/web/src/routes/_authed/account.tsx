@@ -11,7 +11,7 @@ import {
   useLocation,
   useNavigate,
 } from "@tanstack/react-router"
-import { ArrowLeft, Bell, CreditCard, Shield, User } from "lucide-react"
+import { ArrowLeft, Bell, CreditCard, Database, Shield, User } from "lucide-react"
 import { cn } from "@axori/ui"
 
 export const Route = createFileRoute("/_authed/account")({
@@ -54,6 +54,13 @@ const ACCOUNT_TABS: Array<AccountTab> = [
     path: "/account/notifications",
     icon: Bell,
     description: "Email & alert preferences",
+  },
+  {
+    id: "data",
+    label: "Data & Privacy",
+    path: "/account/data",
+    icon: Database,
+    description: "Export data & delete account",
   },
 ]
 
