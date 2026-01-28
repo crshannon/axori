@@ -1,8 +1,11 @@
 import { Link, Outlet, createFileRoute, useLocation } from "@tanstack/react-router";
-import { ChevronDown, Search } from "lucide-react";
-import { createContext, useContext, useState } from "react";
+import { BookOpen, Bookmark, ChevronDown, GraduationCap, Search, Trophy } from "lucide-react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { cn } from "@/utils/helpers";
 import { useTheme } from "@/utils/providers/theme-provider";
+import { getLearningStats } from "@/lib/learning-hub/progress";
+import { allGlossaryTerms } from "@/data/learning-hub/glossary";
+import { allLearningPaths } from "@/data/learning-hub/paths";
 
 export const Route = createFileRoute("/_authed/learning-hub")({
   component: LearningHubLayout,
@@ -46,6 +49,12 @@ function LearningHubLayout() {
   const [selectedJourney, setSelectedJourney] = useState<string>("builder");
   const [journeyDropdownOpen, setJourneyDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [stats, setStats] = useState<ReturnType<typeof getLearningStats> | null>(null);
+
+  // Load learning stats
+  useEffect(() => {
+    setStats(getLearningStats());
+  }, [location.pathname]); // Refresh stats when navigating
 
   const tabs = [
     { path: "/learning-hub", label: "HOME", exact: true },
@@ -214,6 +223,54 @@ function LearningHubLayout() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Stats Utility Bar */}
+          <div
+            className={cn(
+              "flex items-center gap-6 py-4 px-5 rounded-2xl mb-6",
+              isDark ? "bg-white/5" : "bg-white border border-slate-200"
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <BookOpen size={16} className={isDark ? "text-[#E8FF4D]" : "text-violet-600"} />
+              <span className={cn("text-sm", isDark ? "text-white/60" : "text-slate-500")}>
+                <span className={cn("font-bold", isDark ? "text-white" : "text-slate-900")}>
+                  {stats?.totalTermsViewed || 0}
+                </span>{" "}
+                terms viewed
+              </span>
+            </div>
+            <div className={cn("w-px h-4", isDark ? "bg-white/10" : "bg-slate-200")} />
+            <div className="flex items-center gap-2">
+              <Bookmark size={16} className={isDark ? "text-[#E8FF4D]" : "text-violet-600"} />
+              <span className={cn("text-sm", isDark ? "text-white/60" : "text-slate-500")}>
+                <span className={cn("font-bold", isDark ? "text-white" : "text-slate-900")}>
+                  {stats?.totalBookmarks || 0}
+                </span>{" "}
+                saved
+              </span>
+            </div>
+            <div className={cn("w-px h-4", isDark ? "bg-white/10" : "bg-slate-200")} />
+            <div className="flex items-center gap-2">
+              <GraduationCap size={16} className={isDark ? "text-[#E8FF4D]" : "text-violet-600"} />
+              <span className={cn("text-sm", isDark ? "text-white/60" : "text-slate-500")}>
+                <span className={cn("font-bold", isDark ? "text-white" : "text-slate-900")}>
+                  {allGlossaryTerms.length}
+                </span>{" "}
+                terms
+              </span>
+            </div>
+            <div className={cn("w-px h-4", isDark ? "bg-white/10" : "bg-slate-200")} />
+            <div className="flex items-center gap-2">
+              <Trophy size={16} className={isDark ? "text-[#E8FF4D]" : "text-violet-600"} />
+              <span className={cn("text-sm", isDark ? "text-white/60" : "text-slate-500")}>
+                <span className={cn("font-bold", isDark ? "text-white" : "text-slate-900")}>
+                  {allLearningPaths.filter((p) => p.status === "published").length}
+                </span>{" "}
+                paths
+              </span>
             </div>
           </div>
 

@@ -28,7 +28,6 @@ import {
 } from "@/data/learning-hub/paths";
 import {
   getBookmarksByType,
-  getLearningStats,
   getPathsInProgress,
   getRecentlyViewed,
 } from "@/lib/learning-hub/progress";
@@ -116,14 +115,12 @@ function LearningHubHome() {
   // Personalization state
   const [recentlyViewed, setRecentlyViewed] = useState<ReturnType<typeof getRecentlyViewed>>([]);
   const [bookmarks, setBookmarks] = useState<ReturnType<typeof getBookmarksByType>>([]);
-  const [stats, setStats] = useState<ReturnType<typeof getLearningStats> | null>(null);
   const [pathsInProgress, setPathsInProgress] = useState<ReturnType<typeof getPathsInProgress>>([]);
 
   // Load personalization data
   useEffect(() => {
     setRecentlyViewed(getRecentlyViewed(5));
     setBookmarks(getBookmarksByType("term"));
-    setStats(getLearningStats());
     setPathsInProgress(getPathsInProgress());
   }, []);
 
@@ -789,40 +786,6 @@ function LearningHubHome() {
           </div>
         </div>
       )}
-
-      {/* Stats Bar */}
-      <div
-        className={cn(
-          "p-6 rounded-2xl border flex flex-wrap gap-8 items-center justify-center",
-          isDark ? "bg-white/5 border-white/10" : "bg-white border-slate-200"
-        )}
-      >
-        {[
-          { value: stats?.totalTermsViewed || 0, label: "Terms Viewed" },
-          { value: stats?.totalBookmarks || 0, label: "Bookmarked" },
-          { value: allGlossaryTerms.length, label: "Total Terms" },
-          { value: allLearningPaths.length, label: "Learning Paths" },
-        ].map((stat) => (
-          <div key={stat.label} className="text-center">
-            <div
-              className={cn(
-                "text-3xl font-black",
-                isDark ? "text-[#E8FF4D]" : "text-violet-600"
-              )}
-            >
-              {stat.value}
-            </div>
-            <div
-              className={cn(
-                "text-xs font-bold uppercase tracking-wider",
-                isDark ? "text-white/40" : "text-slate-400"
-              )}
-            >
-              {stat.label}
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
