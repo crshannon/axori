@@ -13,12 +13,14 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@axori/db": "workspace:*",
     "@axori/permissions": "workspace:*",
     "@axori/shared": "workspace:*",
     "@clerk/clerk-sdk-node": "^5.0.0",
     "@hono/node-server": "^1.8.0",
     "@react-email/render": "^2.0.4",
+    "archiver": "^7.0.1",
     "dotenv": "^16.0.0",
     "hono": "^4.0.0",
     "resend": "^6.8.0",
@@ -26,6 +28,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/archiver": "^7.0.0",
     "@types/node": "^20.19.27",
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",

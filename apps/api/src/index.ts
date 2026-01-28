@@ -82,6 +82,7 @@ import portfolioMembersRouter from "./routes/portfolio-members";
 import bankAccountsRouter from "./routes/bank-accounts";
 import billingRouter from "./routes/billing";
 import stripeWebhookRouter from "./routes/webhooks/stripe";
+import documentsRouter from "./routes/documents";
 app.route("/api/properties", propertiesRouter);
 app.route("/api/onboarding", onboardingRouter);
 app.route("/api/users", usersRouter);
@@ -93,6 +94,7 @@ app.route("/api/portfolio-members", portfolioMembersRouter);
 app.route("/api/bank-accounts", bankAccountsRouter);
 app.route("/api/billing", billingRouter);
 app.route("/api/webhooks/stripe", stripeWebhookRouter);
+app.route("/api/documents", documentsRouter);
 
 const port = Number(process.env.PORT) || 3001;
 

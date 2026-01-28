@@ -22,6 +22,7 @@ import {
   permissionAuditLog,
   invitationTokens,
   propertyBankAccounts,
+  propertyDocuments,
 } from './schema'
 
 // Re-export property access types for external use
@@ -354,3 +355,19 @@ export type PropertyBankAccount = InferSelectModel<typeof propertyBankAccounts>
  * Used when creating new bank account connections
  */
 export type PropertyBankAccountInsert = InferInsertModel<typeof propertyBankAccounts>
+
+// ============================================================================
+// Property Documents (Document Management & AI Extraction)
+// ============================================================================
+
+/**
+ * Property Document type inferred from Drizzle schema (for read operations)
+ * Represents a document uploaded for a property with optional AI-extracted data
+ */
+export type PropertyDocument = InferSelectModel<typeof propertyDocuments>
+
+/**
+ * Property Document insert type inferred from Drizzle schema (for insert operations)
+ * Used when creating new document records
+ */
+export type PropertyDocumentInsert = InferInsertModel<typeof propertyDocuments>
