@@ -23,6 +23,9 @@ import {
   invitationTokens,
   propertyBankAccounts,
   propertyDocuments,
+  propertyCommunications,
+  propertyContacts,
+  communicationTemplates,
 } from './schema'
 
 // Re-export property access types for external use
@@ -371,3 +374,51 @@ export type PropertyDocument = InferSelectModel<typeof propertyDocuments>
  * Used when creating new document records
  */
 export type PropertyDocumentInsert = InferInsertModel<typeof propertyDocuments>
+
+// ============================================================================
+// Property Communications (Communication Log & Tracking)
+// ============================================================================
+
+/**
+ * Property Communication type inferred from Drizzle schema (for read operations)
+ * Represents a communication log entry for a property
+ */
+export type PropertyCommunication = InferSelectModel<typeof propertyCommunications>
+
+/**
+ * Property Communication insert type inferred from Drizzle schema (for insert operations)
+ * Used when creating new communication log entries
+ */
+export type PropertyCommunicationInsert = InferInsertModel<typeof propertyCommunications>
+
+// ============================================================================
+// Property Contacts (Contact Directory)
+// ============================================================================
+
+/**
+ * Property Contact type inferred from Drizzle schema (for read operations)
+ * Represents a contact associated with a property
+ */
+export type PropertyContact = InferSelectModel<typeof propertyContacts>
+
+/**
+ * Property Contact insert type inferred from Drizzle schema (for insert operations)
+ * Used when creating new contacts
+ */
+export type PropertyContactInsert = InferInsertModel<typeof propertyContacts>
+
+// ============================================================================
+// Communication Templates (Reusable Communication Templates)
+// ============================================================================
+
+/**
+ * Communication Template type inferred from Drizzle schema (for read operations)
+ * Represents a reusable template for common communications
+ */
+export type CommunicationTemplate = InferSelectModel<typeof communicationTemplates>
+
+/**
+ * Communication Template insert type inferred from Drizzle schema (for insert operations)
+ * Used when creating new communication templates
+ */
+export type CommunicationTemplateInsert = InferInsertModel<typeof communicationTemplates>

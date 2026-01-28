@@ -1446,3 +1446,230 @@ export const propertyDocumentsRelations = relations(propertyDocuments, ({ one })
     references: [users.id],
   }),
 }));
+
+// =============================================================================
+// PROPERTY COMMUNICATIONS
+// =============================================================================
+
+// Communication type enum
+export const communicationTypeEnum = pgEnum("communication_type", [
+  "email",
+  "phone_call",
+  "text_message",
+  "in_person",
+  "note",
+  "formal_notice",
+  "portal_message",
+]);
+
+// Communication direction enum
+export const communicationDirectionEnum = pgEnum("communication_direction", [
+  "inbound",
+  "outbound",
+  "internal",
+]);
+
+// Communication category enum
+export const communicationCategoryEnum = pgEnum("communication_category", [
+  "maintenance",
+  "lease",
+  "payment",
+  "general",
+  "urgent",
+  "move_in_out",
+  "inspection",
+  "violation",
+  "renewal",
+]);
+
+// Communication status enum
+export const communicationStatusEnum = pgEnum("communication_status", [
+  "draft",
+  "sent",
+  "delivered",
+  "acknowledged",
+  "requires_response",
+  "resolved",
+]);
+
+// Contact type enum
+export const contactTypeEnum = pgEnum("contact_type", [
+  "tenant",
+  "property_manager",
+  "contractor",
+  "vendor",
+  "hoa_contact",
+  "utility_company",
+  "emergency",
+  "other",
+]);
+
+// Property Communications - Communication log entries
+export const propertyCommunications = pgTable(
+  "property_communications",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    propertyId: uuid("property_id")
+      .notNull()
+      .references(() => properties.id, { onDelete: "cascade" }),
+
+    // Core fields
+    type: communicationTypeEnum("type").notNull(),
+    direction: communicationDirectionEnum("direction").notNull(),
+    category: communicationCategoryEnum("category").notNull().default("general"),
+    status: communicationStatusEnum("status").notNull().default("sent"),
+
+    // Communication details
+    subject: text("subject").notNull(),
+    summary: text("summary"),
+    content: text("content"),
+
+    // Date tracking
+    communicationDate: timestamp("communication_date").notNull().defaultNow(),
+
+    // Contact information (denormalized for flexibility)
+    contactName: text("contact_name"),
+    contactEmail: text("contact_email"),
+    contactPhone: text("contact_phone"),
+    contactRole: text("contact_role"),
+
+    // Linkable entities
+    contactId: uuid("contact_id"),
+    transactionId: uuid("transaction_id").references(() => propertyTransactions.id, { onDelete: "set null" }),
+
+    // For formal notices
+    deliveryMethod: text("delivery_method"),
+    acknowledgmentRequired: boolean("acknowledgment_required").default(false),
+    acknowledgedAt: timestamp("acknowledged_at"),
+
+    // Metadata
+    attachmentUrls: text("attachment_urls").array(),
+    tags: text("tags").array(),
+    isPinned: boolean("is_pinned").default(false),
+
+    // Audit
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    propertyIdIdx: index("idx_property_communications_property_id").on(table.propertyId),
+    communicationDateIdx: index("idx_property_communications_date").on(table.communicationDate),
+    categoryIdx: index("idx_property_communications_category").on(table.category),
+    typeIdx: index("idx_property_communications_type").on(table.type),
+    statusIdx: index("idx_property_communications_status").on(table.status),
+    contactIdIdx: index("idx_property_communications_contact_id").on(table.contactId),
+    propertyDateIdx: index("idx_property_communications_property_date").on(
+      table.propertyId,
+      table.communicationDate
+    ),
+  })
+);
+
+// Property Contacts - Contact directory for properties
+export const propertyContacts = pgTable(
+  "property_contacts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    propertyId: uuid("property_id")
+      .notNull()
+      .references(() => properties.id, { onDelete: "cascade" }),
+
+    // Contact info
+    name: text("name").notNull(),
+    company: text("company"),
+    type: contactTypeEnum("type").notNull(),
+    role: text("role"),
+
+    // Contact methods
+    email: text("email"),
+    phone: text("phone"),
+    alternatePhone: text("alternate_phone"),
+    preferredContactMethod: text("preferred_contact_method"),
+
+    // Address
+    address: text("address"),
+    city: text("city"),
+    state: text("state"),
+    zipCode: text("zip_code"),
+
+    // Notes
+    notes: text("notes"),
+    hoursAvailable: text("hours_available"),
+
+    // Status
+    isActive: boolean("is_active").default(true),
+    isPrimary: boolean("is_primary").default(false),
+
+    // Audit
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    propertyIdIdx: index("idx_property_contacts_property_id").on(table.propertyId),
+    typeIdx: index("idx_property_contacts_type").on(table.type),
+    isActiveIdx: index("idx_property_contacts_is_active").on(table.isActive),
+  })
+);
+
+// Property Communications Relations
+export const propertyCommunicationsRelations = relations(propertyCommunications, ({ one }) => ({
+  property: one(properties, {
+    fields: [propertyCommunications.propertyId],
+    references: [properties.id],
+  }),
+  contact: one(propertyContacts, {
+    fields: [propertyCommunications.contactId],
+    references: [propertyContacts.id],
+  }),
+  transaction: one(propertyTransactions, {
+    fields: [propertyCommunications.transactionId],
+    references: [propertyTransactions.id],
+  }),
+  createdByUser: one(users, {
+    fields: [propertyCommunications.createdBy],
+    references: [users.id],
+  }),
+}));
+
+// Property Contacts Relations
+export const propertyContactsRelations = relations(propertyContacts, ({ one, many }) => ({
+  property: one(properties, {
+    fields: [propertyContacts.propertyId],
+    references: [properties.id],
+  }),
+  communications: many(propertyCommunications),
+}));
+
+// Communication Templates - Reusable templates for common communications
+export const communicationTemplates = pgTable(
+  "communication_templates",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+
+    // Template info
+    name: text("name").notNull(),
+    type: communicationTypeEnum("type").notNull(),
+    category: communicationCategoryEnum("category").notNull().default("general"),
+
+    // Content
+    subject: text("subject"),
+    content: text("content").notNull(),
+
+    // Metadata
+    isDefault: boolean("is_default").default(false),
+    usageCount: integer("usage_count").default(0),
+
+    // Audit
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index("idx_communication_templates_user_id").on(table.userId),
+    typeIdx: index("idx_communication_templates_type").on(table.type),
+    categoryIdx: index("idx_communication_templates_category").on(table.category),
+  })
+);
+
