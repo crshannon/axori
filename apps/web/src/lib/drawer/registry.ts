@@ -78,6 +78,8 @@ export const DRAWERS = {
   UPLOAD_DOCUMENT: 'upload-document',
   DOCUMENT_DETAIL: 'document-detail',
   TAX_EXPORT: 'tax-export',
+  // Account Settings Drawers
+  PLAN_SELECTION: 'plan-selection',
 } as const
 
 // =============================================================================
@@ -114,6 +116,11 @@ export const bankAccountDrawerParamsSchema = z.object({
   propertyId: z.string().min(1, 'Property ID is required'),
   bankAccountId: z.string().optional(),
 })
+
+/**
+ * Schema for drawers that don't require params
+ */
+export const emptyDrawerParamsSchema = z.object({})
 
 /**
  * Schema for document drawer (property + optional documentId for detail view)
@@ -160,6 +167,8 @@ export const DRAWER_NAMES = [
   'upload-document',
   'document-detail',
   'tax-export',
+  // Account Settings Drawers
+  'plan-selection',
 ] as const
 
 export type DrawerName = (typeof DRAWER_NAMES)[number]
@@ -347,6 +356,20 @@ export const DRAWER_REGISTRY: Record<DrawerName, DrawerRegistryEntry<any>> = {
     paramsSchema: taxExportDrawerParamsSchema,
     permission: 'member',
     displayName: 'Tax Export',
+  },
+
+  // ==========================================================================
+  // Account Settings Drawers
+  // ==========================================================================
+  'plan-selection': {
+    component: lazy(() =>
+      import('@/components/drawers/PlanSelectionDrawer').then((m) => ({
+        default: m.PlanSelectionDrawer,
+      })),
+    ),
+    paramsSchema: emptyDrawerParamsSchema,
+    permission: 'none',
+    displayName: 'Plan Selection',
   },
 }
 
