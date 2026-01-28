@@ -19,6 +19,15 @@ export type {
   PropertyBankAccountInsert,
   PropertyDocument,
   PropertyDocumentInsert,
+  // Strategy types
+  PropertyStrategy,
+  PropertyStrategyInsert,
+  BRRRRPhaseRecord,
+  BRRRRPhaseRecordInsert,
+  BRRRRPhaseHistory,
+  BRRRRPhaseHistoryInsert,
+  RehabScopeItem,
+  RehabScopeItemInsert,
 } from "@axori/db/types";
 
 // Export Zod-inferred types for runtime parsing and validation

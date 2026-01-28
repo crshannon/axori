@@ -36,6 +36,15 @@ export type {
   PropertyBankAccountInsert,
   PropertyDocument,
   PropertyDocumentInsert,
+  // Strategy types
+  PropertyStrategy,
+  PropertyStrategyInsert,
+  BRRRRPhaseRecord,
+  BRRRRPhaseRecordInsert,
+  BRRRRPhaseHistory,
+  BRRRRPhaseHistoryInsert,
+  RehabScopeItem,
+  RehabScopeItemInsert,
 } from "./types";
 
 // Re-export schema types (these are just type definitions, no runtime code)

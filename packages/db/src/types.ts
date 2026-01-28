@@ -23,6 +23,11 @@ import {
   invitationTokens,
   propertyBankAccounts,
   propertyDocuments,
+  // Strategy tables
+  propertyStrategies,
+  brrrrPhases,
+  brrrrPhaseHistory,
+  rehabScopeItems,
 } from './schema'
 
 // Re-export property access types for external use
@@ -371,3 +376,67 @@ export type PropertyDocument = InferSelectModel<typeof propertyDocuments>
  * Used when creating new document records
  */
 export type PropertyDocumentInsert = InferInsertModel<typeof propertyDocuments>
+
+// ============================================================================
+// Property Strategy (Investment Strategy Configuration)
+// ============================================================================
+
+/**
+ * Property Strategy type inferred from Drizzle schema (for read operations)
+ * Represents the investment strategy configuration for a property
+ */
+export type PropertyStrategy = InferSelectModel<typeof propertyStrategies>
+
+/**
+ * Property Strategy insert type inferred from Drizzle schema (for insert operations)
+ * Used when creating or updating property strategy configurations
+ */
+export type PropertyStrategyInsert = InferInsertModel<typeof propertyStrategies>
+
+// ============================================================================
+// BRRRR Phase Tracking
+// ============================================================================
+
+/**
+ * BRRRR Phase type inferred from Drizzle schema (for read operations)
+ * Tracks the current phase and metrics for BRRRR strategy properties
+ */
+export type BRRRRPhaseRecord = InferSelectModel<typeof brrrrPhases>
+
+/**
+ * BRRRR Phase insert type inferred from Drizzle schema (for insert operations)
+ * Used when initializing BRRRR tracking for a property
+ */
+export type BRRRRPhaseRecordInsert = InferInsertModel<typeof brrrrPhases>
+
+// ============================================================================
+// BRRRR Phase History
+// ============================================================================
+
+/**
+ * BRRRR Phase History type inferred from Drizzle schema (for read operations)
+ * Represents a single phase transition in the BRRRR lifecycle
+ */
+export type BRRRRPhaseHistory = InferSelectModel<typeof brrrrPhaseHistory>
+
+/**
+ * BRRRR Phase History insert type inferred from Drizzle schema (for insert operations)
+ * Used when recording a phase transition
+ */
+export type BRRRRPhaseHistoryInsert = InferInsertModel<typeof brrrrPhaseHistory>
+
+// ============================================================================
+// Rehab Scope Items
+// ============================================================================
+
+/**
+ * Rehab Scope Item type inferred from Drizzle schema (for read operations)
+ * Represents a single item in the rehab scope for BRRRR or value-add properties
+ */
+export type RehabScopeItem = InferSelectModel<typeof rehabScopeItems>
+
+/**
+ * Rehab Scope Item insert type inferred from Drizzle schema (for insert operations)
+ * Used when adding items to the rehab scope
+ */
+export type RehabScopeItemInsert = InferInsertModel<typeof rehabScopeItems>

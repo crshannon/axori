@@ -81,6 +81,7 @@ import permissionsRouter from "./routes/permissions";
 import portfolioMembersRouter from "./routes/portfolio-members";
 import bankAccountsRouter from "./routes/bank-accounts";
 import documentsRouter from "./routes/documents";
+import strategyRouter from "./routes/strategy";
 app.route("/api/properties", propertiesRouter);
 app.route("/api/onboarding", onboardingRouter);
 app.route("/api/users", usersRouter);
@@ -91,6 +92,7 @@ app.route("/api/permissions", permissionsRouter);
 app.route("/api/portfolio-members", portfolioMembersRouter);
 app.route("/api/bank-accounts", bankAccountsRouter);
 app.route("/api/documents", documentsRouter);
+app.route("/api/strategy", strategyRouter);
 
 const port = Number(process.env.PORT) || 3001;
 

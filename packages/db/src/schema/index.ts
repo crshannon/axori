@@ -103,6 +103,79 @@ export const transactionReviewStatusEnum = pgEnum("transaction_review_status", [
   "excluded", // Excluded from calculations (but still shown)
 ]);
 
+// =============================================================================
+// PROPERTY STRATEGY ENUMS
+// =============================================================================
+
+// Primary investment strategy enum
+export const primaryStrategyEnum = pgEnum("primary_strategy", [
+  "primary_residence", // Living in it
+  "house_hack", // Live in + rent out portions
+  "buy_and_hold", // Traditional long-term rental
+  "brrrr", // Buy, Rehab, Rent, Refinance, Repeat
+  "short_term_rental", // Airbnb / VRBO
+  "fix_and_flip", // Renovate and sell
+  "value_add", // Renovate and hold
+  "midterm_rental", // 30+ day furnished rentals
+]);
+
+// Exit method enum
+export const exitMethodEnum = pgEnum("exit_method", [
+  "hold_forever", // Never selling
+  "sell", // Traditional sale
+  "1031_exchange", // Tax-deferred exchange
+  "refinance_hold", // Cash out and keep
+  "seller_finance", // Sell with owner financing
+  "convert_primary", // Move back in
+  "gift_inherit", // Transfer to family
+  "undecided", // No decision yet
+]);
+
+// Hold period enum
+export const holdPeriodEnum = pgEnum("hold_period", [
+  "indefinite", // No specific timeline
+  "short", // < 2 years
+  "medium", // 2-5 years
+  "long", // 5-10 years
+  "specific", // User sets specific year
+]);
+
+// BRRRR phase enum
+export const brrrrPhaseEnum = pgEnum("brrrr_phase", [
+  "acquisition", // Just purchased, planning rehab
+  "rehab", // Active renovation
+  "rent", // Tenant placement
+  "refinance", // Preparing for or in refinance
+  "stabilized", // Cycle complete, holding
+]);
+
+// Rehab item category enum
+export const rehabCategoryEnum = pgEnum("rehab_category", [
+  "kitchen",
+  "bathroom",
+  "flooring",
+  "paint",
+  "roof",
+  "hvac",
+  "electrical",
+  "plumbing",
+  "exterior",
+  "landscaping",
+  "windows",
+  "appliances",
+  "structural",
+  "permits",
+  "other",
+]);
+
+// Rehab item status enum
+export const rehabStatusEnum = pgEnum("rehab_status", [
+  "planned",
+  "in_progress",
+  "complete",
+  "cancelled",
+]);
+
 export const properties = pgTable("properties", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id")
@@ -1105,6 +1178,16 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
     fields: [properties.id],
     references: [propertyDepreciation.propertyId],
   }),
+  // Strategy (1:1)
+  strategy: one(propertyStrategies, {
+    fields: [properties.id],
+    references: [propertyStrategies.propertyId],
+  }),
+  // BRRRR Phase (1:1 for BRRRR properties)
+  brrrrPhase: one(brrrrPhases, {
+    fields: [properties.id],
+    references: [brrrrPhases.propertyId],
+  }),
   loans: many(loans),
   history: many(propertyHistory),
   transactions: many(propertyTransactions),
@@ -1113,6 +1196,10 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
   depreciationRecords: many(annualDepreciationRecords),
   bankAccounts: many(propertyBankAccounts),
   documents: many(propertyDocuments),
+  // Rehab items (1:many for BRRRR/value-add)
+  rehabItems: many(rehabScopeItems),
+  // BRRRR phase history (1:many)
+  brrrrPhaseHistory: many(brrrrPhaseHistory),
 }));
 
 export const propertyCharacteristicsRelations = relations(propertyCharacteristics, ({ one }) => ({
@@ -1444,5 +1531,187 @@ export const propertyDocumentsRelations = relations(propertyDocuments, ({ one })
   uploadedByUser: one(users, {
     fields: [propertyDocuments.uploadedBy],
     references: [users.id],
+  }),
+}));
+
+// =============================================================================
+// PROPERTY STRATEGY
+// =============================================================================
+
+// Property Strategy - Investment strategy configuration (1:1 with properties)
+export const propertyStrategies = pgTable("property_strategies", {
+  propertyId: uuid("property_id")
+    .references(() => properties.id, { onDelete: "cascade" })
+    .primaryKey(), // 1:1 relationship - propertyId is the primary key
+
+  // Strategy selection
+  primaryStrategy: primaryStrategyEnum("primary_strategy").notNull(),
+  strategyVariant: text("strategy_variant"),
+
+  // Hold timeline
+  holdPeriod: holdPeriodEnum("hold_period").default("indefinite"),
+  targetExitYear: integer("target_exit_year"),
+  holdYearsMin: integer("hold_years_min"),
+  holdYearsMax: integer("hold_years_max"),
+
+  // Exit strategy
+  exitMethod: exitMethodEnum("exit_method").default("undecided"),
+  exitPriceTarget: numeric("exit_price_target", { precision: 12, scale: 2 }),
+  exitEquityTarget: numeric("exit_equity_target", { precision: 12, scale: 2 }),
+  exitCapRateFloor: numeric("exit_cap_rate_floor", { precision: 5, scale: 3 }),
+  exitCashFlowFloor: numeric("exit_cash_flow_floor", { precision: 10, scale: 2 }),
+  exitLifeEvent: text("exit_life_event"),
+
+  // 1031 exchange tracking
+  is1031Replacement: boolean("is_1031_replacement").default(false),
+  sourcePropertyId: uuid("source_property_id").references(() => properties.id),
+  exchangeDeadline: date("exchange_deadline"),
+  identificationDeadline: date("identification_deadline"),
+
+  // Future rental intent (for primary residence)
+  futureRentalIntent: boolean("future_rental_intent").default(false),
+  plannedConversionDate: date("planned_conversion_date"),
+
+  // Property-specific targets
+  targetMonthlyCashFlow: numeric("target_monthly_cash_flow", { precision: 10, scale: 2 }),
+  targetEquity: numeric("target_equity", { precision: 12, scale: 2 }),
+  targetCashOnCash: numeric("target_cash_on_cash", { precision: 5, scale: 3 }),
+  targetPayoffDate: date("target_payoff_date"),
+
+  // Score weight overrides (NULL = use strategy defaults)
+  weightFinancialPerformance: integer("weight_financial_performance"),
+  weightEquityVelocity: integer("weight_equity_velocity"),
+  weightOperationalHealth: integer("weight_operational_health"),
+  weightMarketPosition: integer("weight_market_position"),
+  weightRiskFactors: integer("weight_risk_factors"),
+
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// BRRRR Phase Tracking (1:1 for BRRRR strategy properties)
+export const brrrrPhases = pgTable("brrrr_phases", {
+  propertyId: uuid("property_id")
+    .references(() => properties.id, { onDelete: "cascade" })
+    .primaryKey(),
+
+  // Current phase
+  currentPhase: brrrrPhaseEnum("current_phase").notNull().default("acquisition"),
+  phaseStartDate: date("phase_start_date").notNull().default(sql`CURRENT_DATE`),
+
+  // Acquisition data
+  arvEstimate: numeric("arv_estimate", { precision: 12, scale: 2 }),
+  rehabBudget: numeric("rehab_budget", { precision: 10, scale: 2 }),
+  allInCost: numeric("all_in_cost", { precision: 12, scale: 2 }),
+  targetEquityCapture: numeric("target_equity_capture", { precision: 12, scale: 2 }),
+
+  // Rehab data
+  rehabStartDate: date("rehab_start_date"),
+  rehabTargetEndDate: date("rehab_target_end_date"),
+  rehabActualEndDate: date("rehab_actual_end_date"),
+  rehabBudgetSpent: numeric("rehab_budget_spent", { precision: 10, scale: 2 }).default("0"),
+  holdingCosts: numeric("holding_costs", { precision: 10, scale: 2 }).default("0"),
+
+  // Rent data
+  listedDate: date("listed_date"),
+  leasedDate: date("leased_date"),
+  achievedRent: numeric("achieved_rent", { precision: 8, scale: 2 }),
+  marketRentAtLease: numeric("market_rent_at_lease", { precision: 8, scale: 2 }),
+
+  // Refinance data
+  appraisalDate: date("appraisal_date"),
+  appraisalValue: numeric("appraisal_value", { precision: 12, scale: 2 }),
+  newLoanAmount: numeric("new_loan_amount", { precision: 12, scale: 2 }),
+  cashOutAmount: numeric("cash_out_amount", { precision: 12, scale: 2 }),
+  newInterestRate: numeric("new_interest_rate", { precision: 5, scale: 3 }),
+  newMonthlyPayment: numeric("new_monthly_payment", { precision: 8, scale: 2 }),
+  capitalLeftInDeal: numeric("capital_left_in_deal", { precision: 12, scale: 2 }),
+  refinanceCloseDate: date("refinance_close_date"),
+
+  // Stabilized (calculated on phase transition)
+  cycleCompleteDate: date("cycle_complete_date"),
+  totalInvested: numeric("total_invested", { precision: 12, scale: 2 }),
+  totalReturned: numeric("total_returned", { precision: 12, scale: 2 }),
+  finalCashOnCash: numeric("final_cash_on_cash", { precision: 5, scale: 3 }),
+  cycleDurationDays: integer("cycle_duration_days"),
+
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// BRRRR Phase Transition History (1:many)
+export const brrrrPhaseHistory = pgTable("brrrr_phase_history", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  propertyId: uuid("property_id")
+    .references(() => properties.id, { onDelete: "cascade" })
+    .notNull(),
+
+  fromPhase: brrrrPhaseEnum("from_phase"),
+  toPhase: brrrrPhaseEnum("to_phase").notNull(),
+  transitionedAt: timestamp("transitioned_at").defaultNow().notNull(),
+  notes: text("notes"),
+}, (table) => ({
+  propertyIdIdx: index("idx_brrrr_phase_history_property_id").on(table.propertyId),
+}));
+
+// Rehab Scope Items (1:many - for BRRRR and value-add strategies)
+export const rehabScopeItems = pgTable("rehab_scope_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  propertyId: uuid("property_id")
+    .references(() => properties.id, { onDelete: "cascade" })
+    .notNull(),
+
+  category: rehabCategoryEnum("category").notNull(),
+  description: text("description").notNull(),
+  estimatedCost: numeric("estimated_cost", { precision: 10, scale: 2 }).notNull(),
+  actualCost: numeric("actual_cost", { precision: 10, scale: 2 }),
+  status: rehabStatusEnum("status").notNull().default("planned"),
+  completedDate: date("completed_date"),
+  contractorName: text("contractor_name"),
+  notes: text("notes"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  propertyIdIdx: index("idx_rehab_scope_items_property_id").on(table.propertyId),
+}));
+
+// =============================================================================
+// PROPERTY STRATEGY RELATIONS
+// =============================================================================
+
+export const propertyStrategiesRelations = relations(propertyStrategies, ({ one }) => ({
+  property: one(properties, {
+    fields: [propertyStrategies.propertyId],
+    references: [properties.id],
+  }),
+  sourceProperty: one(properties, {
+    fields: [propertyStrategies.sourcePropertyId],
+    references: [properties.id],
+    relationName: "exchange1031Source",
+  }),
+}));
+
+export const brrrrPhasesRelations = relations(brrrrPhases, ({ one, many }) => ({
+  property: one(properties, {
+    fields: [brrrrPhases.propertyId],
+    references: [properties.id],
+  }),
+  history: many(brrrrPhaseHistory),
+}));
+
+export const brrrrPhaseHistoryRelations = relations(brrrrPhaseHistory, ({ one }) => ({
+  property: one(properties, {
+    fields: [brrrrPhaseHistory.propertyId],
+    references: [properties.id],
+  }),
+}));
+
+export const rehabScopeItemsRelations = relations(rehabScopeItems, ({ one }) => ({
+  property: one(properties, {
+    fields: [rehabScopeItems.propertyId],
+    references: [properties.id],
   }),
 }));

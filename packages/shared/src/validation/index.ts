@@ -49,6 +49,17 @@ export {
   propertyDocumentSelectSchema,
 } from "./base/documents";
 
+export {
+  propertyStrategyInsertSchema,
+  propertyStrategySelectSchema,
+  brrrrPhaseInsertSchema,
+  brrrrPhaseSelectSchema,
+  brrrrPhaseHistoryInsertSchema,
+  brrrrPhaseHistorySelectSchema,
+  rehabScopeItemInsertSchema,
+  rehabScopeItemSelectSchema,
+} from "./base/strategy";
+
 // ============================================================================
 // ENHANCED SCHEMAS (Phase 4)
 // ============================================================================
@@ -57,6 +68,7 @@ export * from "./enhanced/loans";
 export * from "./enhanced/transactions";
 export * from "./enhanced/properties";
 export * from "./enhanced/documents";
+export * from "./enhanced/strategy";
 
 // ============================================================================
 // DEPRECATED SCHEMAS (Phase 8 Cleanup)
