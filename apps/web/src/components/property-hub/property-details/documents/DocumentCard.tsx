@@ -1,14 +1,14 @@
 import {
-  FileText,
-  File,
-  Image,
+  AlertCircle,
   CheckCircle2,
   Clock,
-  AlertCircle,
+  File,
+  FileText,
+  Image,
   Loader2,
 } from 'lucide-react'
-import type { PropertyDocument } from '@axori/shared'
 import { DOCUMENT_TYPE_LABELS } from '@axori/shared/src/validation'
+import type { PropertyDocument } from '@axori/shared'
 
 interface DocumentCardProps {
   document: PropertyDocument

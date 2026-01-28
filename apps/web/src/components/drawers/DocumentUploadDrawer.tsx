@@ -1,15 +1,15 @@
 import { useCallback, useState } from 'react'
-import { Upload, File, X, AlertCircle } from 'lucide-react'
+import { AlertCircle, File, Upload, X } from 'lucide-react'
 import { Drawer, ErrorCard, Input, Select, Textarea } from '@axori/ui'
 import {
+  ALLOWED_MIME_TYPES,
   DOCUMENT_TYPES,
   DOCUMENT_TYPE_LABELS,
-  ALLOWED_MIME_TYPES,
-  MAX_FILE_SIZE_PDF,
   MAX_FILE_SIZE_IMAGE,
+  MAX_FILE_SIZE_PDF,
 } from '@axori/shared/src/validation'
-import type { DocumentType } from '@axori/shared/src/validation'
 import { DrawerSectionTitle } from './DrawerSectionTitle'
+import type { DocumentType } from '@axori/shared/src/validation'
 import { useUploadDocument } from '@/hooks/api/useDocuments'
 
 interface DocumentUploadDrawerProps {

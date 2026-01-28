@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { DOCUMENT_TYPES, type DocumentType } from "@axori/shared/src/validation";
+import { type DocumentType } from "@axori/shared/src/validation";
 
 // Lazy initialization of Anthropic client
 let anthropicClient: Anthropic | null = null;

@@ -8,11 +8,7 @@ import {
   propertyDocuments,
   eq,
   and,
-  desc,
-  asc,
-  sql,
 } from "@axori/db";
-import { ilike } from "drizzle-orm";
 import {
   documentUploadSchema,
   documentUpdateSchema,

@@ -1,36 +1,36 @@
 import { useState } from 'react'
 import {
-  Download,
-  Trash2,
-  RefreshCw,
-  Calendar,
-  FileText,
-  Tag,
-  Clock,
-  CheckCircle2,
   AlertCircle,
-  Loader2,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Download,
   ExternalLink,
   Eye,
+  FileText,
+  Loader2,
+  RefreshCw,
+  Tag,
+  Trash2,
 } from 'lucide-react'
-import { Drawer, ErrorCard, Select, Input, Textarea, DeleteConfirmationCard } from '@axori/ui'
+import { DeleteConfirmationCard, Drawer, ErrorCard, Input, Select, Textarea } from '@axori/ui'
 import {
   DOCUMENT_TYPES,
   DOCUMENT_TYPE_LABELS,
 } from '@axori/shared/src/validation'
-import type { DocumentType } from '@axori/shared/src/validation'
+import { useUser } from '@clerk/clerk-react'
 import { DrawerSectionTitle } from './DrawerSectionTitle'
+import type { DocumentType } from '@axori/shared/src/validation'
 import {
-  useDocument,
-  useUpdateDocument,
-  useDeleteDocument,
-  useProcessDocument,
-  useDocumentDownloadUrl,
   fetchDocumentDownloadUrl,
   useApplyDocumentData,
+  useDeleteDocument,
+  useDocument,
+  useDocumentDownloadUrl,
   useDocumentFieldSchema,
+  useProcessDocument,
+  useUpdateDocument,
 } from '@/hooks/api/useDocuments'
-import { useUser } from '@clerk/clerk-react'
 import { cn } from '@/utils/helpers'
 
 interface DocumentDetailDrawerProps {
@@ -57,7 +57,7 @@ export const DocumentDetailDrawer = ({
 
   // Get field schema for this document type
   const { data: fieldSchema } = useDocumentFieldSchema(
-    document?.documentType as DocumentType | undefined
+    document?.documentType
   )
 
   // Get signed URL for preview (enabled when drawer is open and we have a document)
@@ -69,7 +69,7 @@ export const DocumentDetailDrawer = ({
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showApplyPanel, setShowApplyPanel] = useState(false)
-  const [selectedFieldsToApply, setSelectedFieldsToApply] = useState<string[]>([])
+  const [selectedFieldsToApply, setSelectedFieldsToApply] = useState<Array<string>>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isDownloading, setIsDownloading] = useState(false)
 
@@ -124,11 +124,11 @@ export const DocumentDetailDrawer = ({
 
       setIsEditing(false)
       onSuccess?.()
-    } catch (error) {
+    } catch (updateError) {
       setErrors({
         submit:
-          error instanceof Error
-            ? error.message
+          updateError instanceof Error
+            ? updateError.message
             : 'Failed to update document',
       })
     }
@@ -141,11 +141,11 @@ export const DocumentDetailDrawer = ({
       await deleteDocument.mutateAsync({ id: documentId, propertyId })
       onSuccess?.()
       onClose()
-    } catch (error) {
+    } catch (deleteError) {
       setErrors({
         delete:
-          error instanceof Error
-            ? error.message
+          deleteError instanceof Error
+            ? deleteError.message
             : 'Failed to delete document',
       })
     }
@@ -157,11 +157,11 @@ export const DocumentDetailDrawer = ({
     try {
       await processDocument.mutateAsync({ id: documentId, propertyId })
       onSuccess?.()
-    } catch (error) {
+    } catch (processError) {
       setErrors({
         process:
-          error instanceof Error
-            ? error.message
+          processError instanceof Error
+            ? processError.message
             : 'Failed to start processing',
       })
     }
@@ -182,11 +182,11 @@ export const DocumentDetailDrawer = ({
       window.document.body.appendChild(link)
       link.click()
       window.document.body.removeChild(link)
-    } catch (error) {
+    } catch (downloadError) {
       setErrors({
         download:
-          error instanceof Error
-            ? error.message
+          downloadError instanceof Error
+            ? downloadError.message
             : 'Failed to download document',
       })
     } finally {
@@ -548,9 +548,9 @@ export const DocumentDetailDrawer = ({
                             })
                             setShowApplyPanel(false)
                             onSuccess?.()
-                          } catch (error) {
+                          } catch (applyError) {
                             setErrors({
-                              apply: error instanceof Error ? error.message : 'Failed to apply data',
+                              apply: applyError instanceof Error ? applyError.message : 'Failed to apply data',
                             })
                           }
                         }}
@@ -717,17 +717,13 @@ export const DocumentDetailDrawer = ({
             <div>
               <p className="text-slate-500 dark:text-white/60">Uploaded</p>
               <p className="font-medium text-slate-900 dark:text-white">
-                {document.uploadedAt
-                  ? new Date(document.uploadedAt).toLocaleString()
-                  : 'Unknown'}
+                {new Date(document.uploadedAt).toLocaleString()}
               </p>
             </div>
             <div>
               <p className="text-slate-500 dark:text-white/60">Last Updated</p>
               <p className="font-medium text-slate-900 dark:text-white">
-                {document.updatedAt
-                  ? new Date(document.updatedAt).toLocaleString()
-                  : 'Unknown'}
+                {new Date(document.updatedAt).toLocaleString()}
               </p>
             </div>
           </div>

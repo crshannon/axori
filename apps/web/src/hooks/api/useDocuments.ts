@@ -22,7 +22,7 @@ interface DocumentFilters {
  * Document list response
  */
 interface DocumentListResponse {
-  documents: PropertyDocument[]
+  documents: Array<PropertyDocument>
   pagination: {
     page: number
     limit: number
@@ -61,7 +61,7 @@ interface CreateDocumentInput {
   documentType: DocumentType
   documentYear?: number | null
   description?: string | null
-  tags?: string[]
+  tags?: Array<string>
   enableAiProcessing?: boolean
 }
 
@@ -74,7 +74,7 @@ interface UpdateDocumentInput {
   documentType?: DocumentType
   documentYear?: number | null
   description?: string | null
-  tags?: string[]
+  tags?: Array<string>
 }
 
 /**
@@ -190,9 +190,9 @@ export function useTaxYearDocuments(
 
       const result = await apiFetch<{
         year: number
-        documents: PropertyDocument[]
-        byType: Record<string, PropertyDocument[]>
-        missingTypes: string[]
+        documents: Array<PropertyDocument>
+        byType: Record<string, Array<PropertyDocument>>
+        missingTypes: Array<string>
         summary: {
           totalDocuments: number
           processedCount: number
@@ -372,7 +372,7 @@ interface UploadDocumentInput {
   documentType: DocumentType
   documentYear?: number | null
   description?: string | null
-  tags?: string[]
+  tags?: Array<string>
   enableAiProcessing?: boolean
 }
 
@@ -492,7 +492,7 @@ export async function fetchDocumentDownloadUrl(
 interface ApplyDocumentDataInput {
   id: string
   propertyId: string
-  selectedFields: string[]
+  selectedFields: Array<string>
 }
 
 /**
@@ -513,7 +513,7 @@ export function useApplyDocumentData() {
       return await apiFetch<{
         document: PropertyDocument
         appliedData: Record<string, unknown>
-        actions: string[]
+        actions: Array<string>
         message: string
       }>(`/api/documents/${id}/apply`, {
         method: 'POST',
@@ -558,7 +558,7 @@ export function useDocumentFieldSchema(documentType: DocumentType | null | undef
 
       const result = await apiFetch<{
         documentType: string
-        fields: ExtractionFieldSchema[]
+        fields: Array<ExtractionFieldSchema>
       }>(`/api/documents/schema/${documentType}`, {
         clerkId: user.id,
       })
@@ -567,5 +567,53 @@ export function useDocumentFieldSchema(documentType: DocumentType | null | undef
     },
     enabled: !!user?.id && !!documentType,
     staleTime: 60 * 60 * 1000, // 1 hour (schemas don't change)
+  })
+}
+
+/**
+ * Export tax documents for a specific year
+ */
+export function useTaxExport() {
+  const queryClient = useQueryClient()
+  const { user } = useUser()
+
+  return useMutation({
+    mutationFn: async ({
+      propertyId,
+      year,
+    }: {
+      propertyId: string
+      year: number
+    }) => {
+      if (!user?.id) {
+        throw new Error('User not authenticated')
+      }
+
+      // Use fetch for blob response (apiFetch expects JSON)
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(
+        `${apiUrl}/api/documents/property/${propertyId}/export/${year}`,
+        {
+          method: 'POST',
+          headers: {
+            'x-clerk-user-id': user.id,
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Export failed' }))
+        throw new Error(error.message || 'Failed to export documents')
+      }
+
+      return response.blob()
+    },
+    onSuccess: (_data, variables) => {
+      // Invalidate tax year queries
+      queryClient.invalidateQueries({
+        queryKey: ['properties', variables.propertyId, 'documents', 'tax-year'],
+      })
+    },
   })
 }

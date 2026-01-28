@@ -74,6 +74,8 @@ CREATE TABLE IF NOT EXISTS "property_documents" (
   "ai_extracted_data" jsonb,
   "ai_confidence" numeric(4, 3),
   "ai_error" text,
+  "ai_applied_data" jsonb,
+  "ai_applied_at" timestamp,
 
   -- Metadata
   "description" text,
