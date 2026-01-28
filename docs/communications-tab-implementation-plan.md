@@ -288,19 +288,74 @@ export type CommunicationTemplateInsert = InferInsertModel<typeof communicationT
 
 ### 2.1 Base Schemas (Drizzle-Zod Generated)
 
+> **Pattern Reference**: See `.claude/patterns/validation-schemas.md` for full three-tier pattern
+
 ```typescript
 // packages/shared/src/validation/base/communications.ts
 import { createInsertSchema, createSelectSchema } from "drizzle-zod"
-import { propertyCommunications, propertyContacts } from "@axori/db/src/schema"
+import { propertyCommunications, propertyContacts, communicationTemplates } from "@axori/db/src/schema"
 
 export const propertyCommunicationInsertSchema = createInsertSchema(propertyCommunications)
 export const propertyCommunicationSelectSchema = createSelectSchema(propertyCommunications)
 
 export const propertyContactInsertSchema = createInsertSchema(propertyContacts)
 export const propertyContactSelectSchema = createSelectSchema(propertyContacts)
+
+export const communicationTemplateInsertSchema = createInsertSchema(communicationTemplates)
+export const communicationTemplateSelectSchema = createSelectSchema(communicationTemplates)
 ```
 
-### 2.2 Form Schemas
+### 2.2 Enhanced API Schemas
+
+```typescript
+// packages/shared/src/validation/enhanced/communications.ts
+import { z } from "zod"
+import { propertyCommunicationInsertSchema, propertyContactInsertSchema } from "../base/communications"
+
+// Communication API schema - extends base with business logic
+export const propertyCommunicationInsertApiSchema = propertyCommunicationInsertSchema.extend({
+  // Ensure propertyId is always required for API
+  propertyId: z.string().uuid("Property ID must be a valid UUID"),
+
+  // User-friendly validation messages
+  subject: z.string().min(1, "Subject is required").max(200, "Subject must be less than 200 characters"),
+  category: z.enum([
+    "maintenance", "lease", "payment", "general", "urgent",
+    "move_in_out", "inspection", "violation", "renewal"
+  ], { errorMap: () => ({ message: "Please select a valid category" }) }),
+
+  // Tags validation
+  tags: z.array(z.string().max(50, "Tag must be less than 50 characters")).max(10, "Maximum 10 tags allowed").optional(),
+})
+
+export const propertyCommunicationUpdateApiSchema = propertyCommunicationInsertApiSchema
+  .partial()
+  .extend({
+    id: z.string().uuid("Invalid communication ID"),
+  })
+
+// Contact API schema
+export const propertyContactInsertApiSchema = propertyContactInsertSchema.extend({
+  propertyId: z.string().uuid("Property ID must be a valid UUID"),
+  name: z.string().min(1, "Contact name is required").max(100, "Name must be less than 100 characters"),
+  email: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
+  phone: z.string().regex(/^[\d\s\-\(\)\+]*$/, "Please enter a valid phone number").optional().or(z.literal("")),
+})
+
+export const propertyContactUpdateApiSchema = propertyContactInsertApiSchema
+  .partial()
+  .extend({
+    id: z.string().uuid("Invalid contact ID"),
+  })
+
+// Type exports (inferred from Zod)
+export type PropertyCommunicationInsertApi = z.infer<typeof propertyCommunicationInsertApiSchema>
+export type PropertyCommunicationUpdateApi = z.infer<typeof propertyCommunicationUpdateApiSchema>
+export type PropertyContactInsertApi = z.infer<typeof propertyContactInsertApiSchema>
+export type PropertyContactUpdateApi = z.infer<typeof propertyContactUpdateApiSchema>
+```
+
+### 2.3 Form Schemas
 
 ```typescript
 // packages/shared/src/validation/form/communications.ts
@@ -717,58 +772,231 @@ interface AddCommunicationDrawerProps extends DrawerComponentProps {
 
 ## 5. State Management (TanStack Query)
 
-### 5.1 Query Hooks
+> **Pattern Reference**: See `.claude/patterns/feature-checklist.md` Section 5 for standard hook patterns
+
+### 5.1 Query Key Factories
 
 ```typescript
 // apps/web/src/hooks/api/useCommunications.ts
 
+/**
+ * Query key factory for communications
+ * Following standard pattern from useTransactions.ts
+ */
+export const communicationKeys = {
+  all: ["communications"] as const,
+  lists: () => [...communicationKeys.all, "list"] as const,
+  list: (propertyId: string, filters?: CommunicationFilters) =>
+    [...communicationKeys.lists(), propertyId, filters] as const,
+  details: () => [...communicationKeys.all, "detail"] as const,
+  detail: (propertyId: string, communicationId: string) =>
+    [...communicationKeys.details(), propertyId, communicationId] as const,
+  stats: (propertyId: string) =>
+    [...communicationKeys.all, "stats", propertyId] as const,
+}
+
+export const contactKeys = {
+  all: ["contacts"] as const,
+  lists: () => [...contactKeys.all, "list"] as const,
+  list: (propertyId: string, filters?: ContactFilters) =>
+    [...contactKeys.lists(), propertyId, filters] as const,
+  details: () => [...contactKeys.all, "detail"] as const,
+  detail: (propertyId: string, contactId: string) =>
+    [...contactKeys.details(), propertyId, contactId] as const,
+  grouped: (propertyId: string) =>
+    [...contactKeys.all, "grouped", propertyId] as const,
+}
+```
+
+### 5.2 Query Hooks
+
+```typescript
+// apps/web/src/hooks/api/useCommunications.ts
+import { useQuery } from '@tanstack/react-query'
+import { useUser } from '@clerk/clerk-react'
+import { apiFetch } from '@/lib/api/client'
+
 // List communications with filters
 export function usePropertyCommunications(
-  propertyId: string | null,
+  propertyId: string | null | undefined,
   filters?: CommunicationFilters
-)
+) {
+  const { user } = useUser()
+
+  return useQuery({
+    queryKey: communicationKeys.list(propertyId!, filters),
+    queryFn: async () => {
+      // Build query params from filters
+      const params = new URLSearchParams()
+      if (filters?.type) params.append('type', filters.type)
+      if (filters?.category) params.append('category', filters.category)
+      // ... more filter handling
+
+      return apiFetch<CommunicationsResponse>(
+        `/api/properties/${propertyId}/communications?${params}`,
+        { clerkId: user!.id }
+      )
+    },
+    enabled: !!user?.id && !!propertyId,
+    staleTime: 30 * 1000, // 30 seconds
+  })
+}
 
 // Single communication
 export function usePropertyCommunication(
-  propertyId: string | null,
-  communicationId: string | null
-)
+  propertyId: string | null | undefined,
+  communicationId: string | null | undefined
+) {
+  const { user } = useUser()
+
+  return useQuery({
+    queryKey: communicationKeys.detail(propertyId!, communicationId!),
+    queryFn: async () => {
+      return apiFetch<{ communication: PropertyCommunication }>(
+        `/api/properties/${propertyId}/communications/${communicationId}`,
+        { clerkId: user!.id }
+      )
+    },
+    enabled: !!user?.id && !!propertyId && !!communicationId,
+    staleTime: 30 * 1000,
+  })
+}
 
 // Communication summary/stats
-export function useCommunicationStats(propertyId: string | null)
+export function useCommunicationStats(propertyId: string | null | undefined) {
+  const { user } = useUser()
 
-// apps/web/src/hooks/api/useContacts.ts
-
-// List contacts
-export function usePropertyContacts(
-  propertyId: string | null,
-  filters?: ContactFilters
-)
-
-// Single contact
-export function usePropertyContact(
-  propertyId: string | null,
-  contactId: string | null
-)
-
-// Grouped contacts (optimized for directory view)
-export function usePropertyContactsGrouped(propertyId: string | null)
+  return useQuery({
+    queryKey: communicationKeys.stats(propertyId!),
+    queryFn: async () => {
+      return apiFetch<CommunicationStats>(
+        `/api/properties/${propertyId}/communications/stats`,
+        { clerkId: user!.id }
+      )
+    },
+    enabled: !!user?.id && !!propertyId,
+    staleTime: 60 * 1000, // 1 minute
+  })
+}
 ```
 
-### 5.2 Mutation Hooks
+### 5.3 Mutation Hooks
 
 ```typescript
-// Communications mutations
-export function useCreateCommunication()
-export function useUpdateCommunication()
-export function useDeleteCommunication()
-export function usePinCommunication()
-export function useAcknowledgeCommunication()
+// Communications mutations with cache invalidation
+export function useCreateCommunication() {
+  const queryClient = useQueryClient()
+  const { user } = useUser()
 
-// Contacts mutations
-export function useCreateContact()
-export function useUpdateContact()
-export function useDeleteContact()
+  return useMutation({
+    mutationFn: async ({
+      propertyId,
+      ...data
+    }: PropertyCommunicationInsertApi & { propertyId: string }) => {
+      return apiFetch<{ communication: PropertyCommunication }>(
+        `/api/properties/${propertyId}/communications`,
+        {
+          method: 'POST',
+          clerkId: user!.id,
+          body: JSON.stringify(data),
+        }
+      )
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate list queries for this property
+      queryClient.invalidateQueries({
+        queryKey: communicationKeys.list(variables.propertyId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: communicationKeys.stats(variables.propertyId),
+      })
+    },
+  })
+}
+
+export function useUpdateCommunication() {
+  const queryClient = useQueryClient()
+  const { user } = useUser()
+
+  return useMutation({
+    mutationFn: async ({
+      propertyId,
+      communicationId,
+      ...data
+    }: PropertyCommunicationUpdateApi & { propertyId: string; communicationId: string }) => {
+      return apiFetch<{ communication: PropertyCommunication }>(
+        `/api/properties/${propertyId}/communications/${communicationId}`,
+        {
+          method: 'PUT',
+          clerkId: user!.id,
+          body: JSON.stringify(data),
+        }
+      )
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: communicationKeys.detail(variables.propertyId, variables.communicationId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: communicationKeys.list(variables.propertyId),
+      })
+    },
+  })
+}
+
+export function useDeleteCommunication() {
+  const queryClient = useQueryClient()
+  const { user } = useUser()
+
+  return useMutation({
+    mutationFn: async ({ propertyId, communicationId }: { propertyId: string; communicationId: string }) => {
+      return apiFetch<{ success: boolean }>(
+        `/api/properties/${propertyId}/communications/${communicationId}`,
+        { method: 'DELETE', clerkId: user!.id }
+      )
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: communicationKeys.list(variables.propertyId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: communicationKeys.stats(variables.propertyId),
+      })
+    },
+  })
+}
+
+export function usePinCommunication() {
+  const queryClient = useQueryClient()
+  const { user } = useUser()
+
+  return useMutation({
+    mutationFn: async ({
+      propertyId,
+      communicationId,
+      isPinned,
+    }: { propertyId: string; communicationId: string; isPinned: boolean }) => {
+      return apiFetch<{ communication: PropertyCommunication }>(
+        `/api/properties/${propertyId}/communications/${communicationId}`,
+        {
+          method: 'PUT',
+          clerkId: user!.id,
+          body: JSON.stringify({ isPinned }),
+        }
+      )
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: communicationKeys.list(variables.propertyId),
+      })
+    },
+  })
+}
+
+// Contacts mutations follow same pattern
+export function useCreateContact() { /* ... */ }
+export function useUpdateContact() { /* ... */ }
+export function useDeleteContact() { /* ... */ }
 ```
 
 ### 5.3 Form Hooks
@@ -969,26 +1197,116 @@ packages/
 
 ### Cross-Feature Integration Required
 
-> **⚠️ IMPORTANT: Document Tab Integration**
+> **✅ RESOLVED: Document Tab Integration**
 >
-> The **Documents Tab** feature is being developed separately. Communication attachments
-> (email attachments, formal notices, lease documents referenced in communications) should
-> integrate with the Documents system rather than creating a parallel storage mechanism.
->
-> **Action Items:**
-> 1. Review Documents Tab schema once available
-> 2. Ensure `email_attachments` can link to document records
-> 3. Communication attachments should appear in both:
->    - The communication detail view (contextual)
->    - The Documents tab (consolidated property documents)
-> 4. Consider shared upload component between features
-> 5. Align file categorization/tagging between systems
->
-> **Temporary Approach (if Documents not ready):**
-> - Store attachments in Supabase Storage with `communications/` prefix
-> - Track in `email_attachments` table as planned
-> - Add `documentId` nullable field for future linking
-> - Plan migration to link existing attachments when Documents feature ships
+> The **Documents Tab** feature has shipped. Communication attachments should integrate
+> with the existing `property_documents` system.
+
+#### Documents Schema Reference (from `packages/db/src/schema/index.ts`)
+
+```typescript
+// Existing document types - consider adding "communication_attachment" or "email_attachment"
+documentTypeEnum: [
+  "lease", "tax_bill", "insurance_policy", "insurance_claim",
+  "closing_disclosure", "deed", "title_policy", "appraisal",
+  "inspection", "mortgage_statement", "hoa_statement", "utility_bill",
+  "receipt", "contractor_invoice", "permit", "year_end_report",
+  "rent_roll", "1099", "w9", "other"
+]
+
+// Existing property_documents table structure
+propertyDocuments = {
+  id: uuid,
+  propertyId: uuid (FK to properties),
+  storagePath: text,           // Path in Supabase Storage
+  originalFilename: text,
+  mimeType: text,
+  sizeBytes: integer,
+  documentType: documentTypeEnum,
+  documentYear: integer,       // For annual docs
+  processingStatus: enum,      // pending, processing, completed, failed
+  aiExtractedData: jsonb,      // AI-extracted structured data
+  aiConfidence: numeric,
+  description: text,
+  tags: text[],
+  uploadedBy: uuid,
+  uploadedAt: timestamp,
+}
+```
+
+#### Integration Strategy
+
+**Option A: Extend `property_documents` (Recommended)**
+
+Add new document types for communications:
+```typescript
+// Add to documentTypeEnum
+"email_attachment",      // Attachments from forwarded emails
+"formal_notice",         // Notices sent to tenants
+"communication_record",  // Saved communication records
+```
+
+Add linking field to `email_attachments`:
+```typescript
+export const emailAttachments = pgTable("email_attachments", {
+  // ... existing fields ...
+
+  // Link to property_documents for unified document management
+  documentId: uuid("document_id").references(() => propertyDocuments.id, { onDelete: "set null" }),
+})
+```
+
+**Option B: Separate Tables with Cross-Reference**
+
+Keep `email_attachments` separate but create `property_documents` entries for visibility:
+- On email ingestion: create `property_documents` entry with `documentType: "email_attachment"`
+- Store `email_attachments.documentId` reference
+- Documents Tab shows all documents including email attachments
+- Communication detail view links to document
+
+#### Storage Integration
+
+Use existing Supabase Storage patterns from `packages/shared/src/integrations/supabase/storage.ts`:
+
+```typescript
+import { uploadDocument, generateStoragePath, DOCUMENTS_BUCKET } from '@axori/shared'
+
+// For email attachments, use same storage bucket
+const storagePath = generateStoragePath(
+  userId,           // User who forwarded the email
+  propertyId,
+  attachmentId,     // Use attachment ID, not document ID initially
+  originalFilename
+)
+
+// Upload to same bucket as other documents
+await uploadDocument(file, storagePath, contentType)
+```
+
+#### Shared Components to Reuse
+
+From Documents Tab implementation:
+- `DocumentUploadDrawer` - For manual attachment uploads
+- `DocumentDetailDrawer` - For viewing attachment details
+- `DocumentCard` - For displaying in lists
+- `useDocuments` hooks - Query patterns
+
+#### Action Items for Implementation
+
+1. **Schema Migration**:
+   - Add `"email_attachment"`, `"formal_notice"` to `documentTypeEnum`
+   - Add `documentId` field to `email_attachments` table
+   - Add `communicationId` field to `property_documents` table (optional back-link)
+
+2. **Processing Pipeline Update**:
+   - When email attachment is saved, also create `property_documents` entry
+   - Link the two via `email_attachments.documentId`
+   - Use existing AI extraction service for OCR (already in `documentExtraction.ts`)
+
+3. **UI Integration**:
+   - Communication detail view: show attachments with link to Document detail
+   - Documents Tab: filter option for "Communication Attachments"
+   - Shared tag/category system between features
 
 ### Technical Clarifications Needed
 
