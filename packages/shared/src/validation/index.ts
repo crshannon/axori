@@ -49,6 +49,15 @@ export {
   propertyDocumentSelectSchema,
 } from "./base/documents";
 
+export {
+  propertyCommunicationInsertSchema,
+  propertyCommunicationSelectSchema,
+  propertyContactInsertSchema,
+  propertyContactSelectSchema,
+  communicationTemplateInsertSchema,
+  communicationTemplateSelectSchema,
+} from "./base/communications";
+
 // ============================================================================
 // ENHANCED SCHEMAS (Phase 4)
 // ============================================================================
@@ -57,6 +66,7 @@ export * from "./enhanced/loans";
 export * from "./enhanced/transactions";
 export * from "./enhanced/properties";
 export * from "./enhanced/documents";
+export * from "./enhanced/communications";
 
 // ============================================================================
 // DEPRECATED SCHEMAS (Phase 8 Cleanup)
