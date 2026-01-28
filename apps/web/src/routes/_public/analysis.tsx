@@ -55,7 +55,9 @@ function Analysis() {
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40 mb-1">
                   Avg. Yield Lift
                 </p>
-                <p className="text-3xl font-black tabular-nums text-slate-900 dark:text-white">+2.4%</p>
+                <p className="text-3xl font-black tabular-nums text-slate-900 dark:text-white">
+                  +2.4%
+                </p>
               </div>
             </div>
           </div>
@@ -177,6 +179,7 @@ function Analysis() {
                   label: 'Gross Potential Rent',
                   val: '$14,200',
                   labelColor: 'text-slate-400 dark:text-white/40',
+                  color: 'text-emerald-500',
                 },
                 {
                   label: 'Projected Expenses',
@@ -194,7 +197,9 @@ function Analysis() {
                 <div
                   key={i}
                   className={`flex justify-between items-center ${
-                    row.bold ? 'pt-6 border-t border-slate-200 dark:border-white/10 mt-2' : ''
+                    row.bold
+                      ? 'pt-6 border-t border-slate-200 dark:border-white/10 mt-2'
+                      : ''
                   }`}
                 >
                   <span
@@ -345,7 +350,7 @@ function Analysis() {
               estate wealth.
             </p>
             <Link to="/sign-up">
-              <Button className="px-20 py-8 rounded-full font-black uppercase tracking-widest text-sm transition-all hover:scale-110 shadow-2xl shadow-slate-200/50 bg-white text-violet-600 dark:bg-black dark:text-white dark:shadow-black/30">
+              <Button className="px-20 py-8 rounded-full font-black uppercase tracking-widest text-sm transition-all hover:scale-110 shadow-2xl shadow-slate-200/50 bg-white text-violet-600 dark:bg-black dark:text-white dark:shadow-black/30 hover:bg-violet-100 dark:hover:bg-black dark:hover:text-white">
                 GET THE FULL ANALYSIS
               </Button>
             </Link>

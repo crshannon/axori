@@ -17,7 +17,10 @@ const defaultPoints: Array<RadarDataPoint> = [
   { label: 'Goal', val: 82, angle: 288 },
 ]
 
-export function RadarChart({ points = defaultPoints, size = 260 }: RadarChartProps) {
+export function RadarChart({
+  points = defaultPoints,
+  size = 260,
+}: RadarChartProps) {
   const center = size / 2
 
   const getCoord = (val: number, angle: number) => {
@@ -84,7 +87,7 @@ export function RadarChart({ points = defaultPoints, size = 260 }: RadarChartPro
               x={x}
               y={y}
               textAnchor="middle"
-              className="text-[10px] font-black uppercase tracking-widest fill-current opacity-60"
+              className="text-[10px] font-black uppercase tracking-widest fill-current opacity-60 dark:text-white/40"
             >
               {p.label}
             </text>
