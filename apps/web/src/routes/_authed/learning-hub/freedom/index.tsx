@@ -184,7 +184,7 @@ function FreedomTrackerPage() {
       {isLoading ? (
         <div
           className={cn(
-            "p-12 rounded-xl border text-center",
+            "p-12 rounded-2xl border text-center",
             isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200"
           )}
         >
@@ -199,7 +199,7 @@ function FreedomTrackerPage() {
           {/* Freedom Number Calculator */}
           <div
             className={cn(
-              "rounded-xl border p-6",
+              "rounded-2xl border p-6",
               isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200"
             )}
           >
@@ -267,7 +267,7 @@ function FreedomTrackerPage() {
                       setMonthlyExpenses(parseInt(e.target.value.replace(/\D/g, "")) || 0)
                     }
                     className={cn(
-                      "w-full py-3 pl-8 pr-4 rounded-xl border text-lg font-bold outline-none transition-colors",
+                      "w-full py-3 pl-8 pr-4 rounded-2xl border text-lg font-bold outline-none transition-colors",
                       isDark
                         ? "bg-white/10 border-white/20 text-white focus:border-[#E8FF4D]/50"
                         : "bg-white border-slate-200 text-slate-900 focus:border-violet-300"
@@ -300,7 +300,7 @@ function FreedomTrackerPage() {
                       setTargetCushion(parseInt(e.target.value.replace(/\D/g, "")) || 0)
                     }
                     className={cn(
-                      "w-full py-3 px-4 pr-8 rounded-xl border text-lg font-bold outline-none transition-colors",
+                      "w-full py-3 px-4 pr-8 rounded-2xl border text-lg font-bold outline-none transition-colors",
                       isDark
                         ? "bg-white/10 border-white/20 text-white focus:border-[#E8FF4D]/50"
                         : "bg-white border-slate-200 text-slate-900 focus:border-violet-300"
@@ -357,7 +357,7 @@ function FreedomTrackerPage() {
               {/* Main Progress */}
               <div
                 className={cn(
-                  "rounded-xl border p-6",
+                  "rounded-2xl border p-6",
                   isDark
                     ? "bg-white/[0.02] border-white/10"
                     : "bg-white border-slate-200"
@@ -496,7 +496,7 @@ function FreedomTrackerPage() {
               {!freedomMetrics.isFree && (
                 <div
                   className={cn(
-                    "rounded-xl border p-6",
+                    "rounded-2xl border p-6",
                     isDark
                       ? "bg-white/[0.02] border-white/10"
                       : "bg-white border-slate-200"
@@ -605,7 +605,7 @@ function FreedomTrackerPage() {
           {portfolioMetrics?.propertyCount === 0 && (
             <div
               className={cn(
-                "text-center py-12 rounded-xl border",
+                "text-center py-12 rounded-2xl border",
                 isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200"
               )}
             >

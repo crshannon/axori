@@ -180,7 +180,7 @@ function AchievementsPage() {
         {/* Level */}
         <div
           className={cn(
-            "p-4 rounded-xl border",
+            "p-4 rounded-2xl border",
             isDark ? "bg-white/5 border-white/10" : "bg-white border-slate-200"
           )}
         >
@@ -243,7 +243,7 @@ function AchievementsPage() {
         {/* Total XP */}
         <div
           className={cn(
-            "p-4 rounded-xl border",
+            "p-4 rounded-2xl border",
             isDark ? "bg-white/5 border-white/10" : "bg-white border-slate-200"
           )}
         >
@@ -282,7 +282,7 @@ function AchievementsPage() {
         {/* Achievements Unlocked */}
         <div
           className={cn(
-            "p-4 rounded-xl border",
+            "p-4 rounded-2xl border",
             isDark ? "bg-white/5 border-white/10" : "bg-white border-slate-200"
           )}
         >
@@ -329,7 +329,7 @@ function AchievementsPage() {
         {/* Current Streak */}
         <div
           className={cn(
-            "p-4 rounded-xl border",
+            "p-4 rounded-2xl border",
             isDark ? "bg-white/5 border-white/10" : "bg-white border-slate-200"
           )}
         >
@@ -416,7 +416,7 @@ function AchievementsPage() {
                     <div
                       key={achievement.id}
                       className={cn(
-                        "p-4 rounded-xl border transition-all",
+                        "p-4 rounded-2xl border transition-all",
                         isUnlocked
                           ? cn(rarity.bg, rarity.border)
                           : isDark

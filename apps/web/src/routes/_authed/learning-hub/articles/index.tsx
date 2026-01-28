@@ -324,10 +324,10 @@ function ArticlesPage() {
               to="/learning-hub/articles/$slug"
               params={{ slug: article.slug }}
               className={cn(
-                "group p-5 rounded-xl border transition-all",
+                "group p-6 rounded-2xl border transition-all duration-300",
                 isDark
                   ? "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
-                  : "bg-white border-slate-200 hover:shadow-lg hover:border-violet-200"
+                  : "bg-white border-slate-200 hover:shadow-xl hover:border-violet-200"
               )}
             >
               {/* Category & Read Time */}

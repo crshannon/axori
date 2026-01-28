@@ -71,7 +71,7 @@ function ScenariosPage() {
       {/* Base Property Inputs */}
       <div
         className={cn(
-          "rounded-xl border p-6 mb-8",
+          "rounded-2xl border p-6 mb-8",
           isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200"
         )}
       >
@@ -346,7 +346,7 @@ function RateChangeScenario({
   return (
     <div
       className={cn(
-        "rounded-xl border p-6",
+        "rounded-2xl border p-6",
         isDark ? "bg-white/[0.02] border-white/10" : "bg-white border-slate-200"
       )}
     >
@@ -601,7 +601,7 @@ function VacancyScenario({
   return (
     <div
       className={cn(
-        "rounded-xl border p-6",
+        "rounded-2xl border p-6",
         isDark ? "bg-white/[0.02] border-white/10" : "bg-white border-slate-200"
       )}
     >
@@ -772,7 +772,7 @@ function AppreciationScenario({
   return (
     <div
       className={cn(
-        "rounded-xl border p-6",
+        "rounded-2xl border p-6",
         isDark ? "bg-white/[0.02] border-white/10" : "bg-white border-slate-200"
       )}
     >
@@ -961,7 +961,7 @@ function RefinanceScenario({
   return (
     <div
       className={cn(
-        "rounded-xl border p-6",
+        "rounded-2xl border p-6",
         isDark ? "bg-white/[0.02] border-white/10" : "bg-white border-slate-200"
       )}
     >

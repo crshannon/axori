@@ -428,28 +428,28 @@ function LearningHubHome() {
                   to="/learning-hub/paths/$slug"
                   params={{ slug: path.slug }}
                   className={cn(
-                    "group p-5 rounded-xl border transition-all",
+                    "group p-6 rounded-2xl border transition-all duration-300",
                     isDark
                       ? "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
-                      : "bg-white border-slate-200 hover:shadow-lg hover:border-violet-200"
+                      : "bg-white border-slate-200 hover:shadow-xl hover:border-violet-200"
                   )}
                 >
                   <div className="flex items-start gap-4">
                     <div
                       className={cn(
-                        "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0",
+                        "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 border",
                         path.investorLevel === "beginner" &&
                           (isDark
-                            ? "bg-emerald-500/20 text-emerald-400"
-                            : "bg-emerald-100 text-emerald-600"),
+                            ? "bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border-emerald-500/20 text-emerald-400"
+                            : "bg-gradient-to-br from-emerald-100 to-emerald-50 border-emerald-200 text-emerald-600"),
                         path.investorLevel === "intermediate" &&
                           (isDark
-                            ? "bg-amber-500/20 text-amber-400"
-                            : "bg-amber-100 text-amber-600"),
+                            ? "bg-gradient-to-br from-amber-500/20 to-amber-500/5 border-amber-500/20 text-amber-400"
+                            : "bg-gradient-to-br from-amber-100 to-amber-50 border-amber-200 text-amber-600"),
                         path.investorLevel === "advanced" &&
                           (isDark
-                            ? "bg-violet-500/20 text-violet-400"
-                            : "bg-violet-100 text-violet-600")
+                            ? "bg-gradient-to-br from-violet-500/20 to-violet-500/5 border-violet-500/20 text-violet-400"
+                            : "bg-gradient-to-br from-violet-100 to-violet-50 border-violet-200 text-violet-600")
                       )}
                     >
                       <PathIcon size={22} />
@@ -585,10 +585,10 @@ function LearningHubHome() {
                 to="/learning-hub/glossary/$slug"
                 params={{ slug: term.slug }}
                 className={cn(
-                  "group p-4 rounded-xl border transition-all",
+                  "group p-4 rounded-2xl border transition-all duration-300",
                   isDark
-                    ? "bg-white/5 border-white/10 hover:bg-white/10"
-                    : "bg-white border-slate-200 hover:shadow-lg"
+                    ? "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
+                    : "bg-white border-slate-200 hover:shadow-xl hover:border-violet-200"
                 )}
               >
                 <div className="flex items-center gap-2 mb-2">
@@ -658,10 +658,10 @@ function LearningHubHome() {
                     to="/learning-hub/glossary/$slug"
                     params={{ slug: item.slug }}
                     className={cn(
-                      "group p-4 rounded-xl border transition-all relative",
+                      "group p-4 rounded-2xl border transition-all duration-300 relative",
                       isDark
-                        ? "bg-white/5 border-white/10 hover:bg-white/10"
-                        : "bg-white border-slate-200 hover:shadow-lg"
+                        ? "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
+                        : "bg-white border-slate-200 hover:shadow-xl hover:border-violet-200"
                     )}
                   >
                     <div
@@ -747,10 +747,10 @@ function LearningHubHome() {
                   to="/learning-hub/glossary/$slug"
                   params={{ slug: bookmark.slug }}
                   className={cn(
-                    "group p-4 rounded-xl border transition-all",
+                    "group p-4 rounded-2xl border transition-all duration-300",
                     isDark
-                      ? "bg-[#E8FF4D]/5 border-[#E8FF4D]/20 hover:bg-[#E8FF4D]/10"
-                      : "bg-violet-50 border-violet-200 hover:shadow-lg"
+                      ? "bg-[#E8FF4D]/5 border-[#E8FF4D]/20 hover:bg-[#E8FF4D]/10 hover:border-[#E8FF4D]/30"
+                      : "bg-violet-50 border-violet-200 hover:shadow-xl hover:border-violet-300"
                   )}
                 >
                   <div className="flex items-center gap-2 mb-2">

@@ -110,7 +110,7 @@ function CalculatorsPage() {
               key={calc.id}
               id={calc.id}
               className={cn(
-                "rounded-xl border overflow-hidden",
+                "rounded-2xl border overflow-hidden transition-all duration-300",
                 isDark ? "border-white/10" : "border-slate-200"
               )}
             >
@@ -128,10 +128,10 @@ function CalculatorsPage() {
               >
                 <div
                   className={cn(
-                    "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0",
+                    "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 border",
                     isDark
-                      ? "bg-[#E8FF4D]/20 text-[#E8FF4D]"
-                      : "bg-violet-100 text-violet-600"
+                      ? "bg-gradient-to-br from-[#E8FF4D]/20 to-[#E8FF4D]/5 border-[#E8FF4D]/20 text-[#E8FF4D]"
+                      : "bg-gradient-to-br from-violet-100 to-violet-50 border-violet-200 text-violet-600"
                   )}
                 >
                   <Icon size={24} />

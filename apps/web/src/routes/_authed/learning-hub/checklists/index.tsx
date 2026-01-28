@@ -686,7 +686,7 @@ function ChecklistsPage() {
                     key={template.id}
                     onClick={() => createChecklist(template)}
                     className={cn(
-                      "w-full p-4 rounded-xl border text-left transition-all group",
+                      "w-full p-4 rounded-2xl border text-left transition-all group",
                       isDark
                         ? "bg-white/5 border-white/10 hover:bg-white/10"
                         : "bg-white border-slate-200 hover:border-violet-200 hover:shadow-md"
@@ -828,7 +828,7 @@ function ChecklistsPage() {
           {activeChecklist && activeTemplate ? (
             <div
               className={cn(
-                "rounded-xl border",
+                "rounded-2xl border",
                 isDark ? "bg-white/[0.02] border-white/10" : "bg-white border-slate-200"
               )}
             >
@@ -1050,7 +1050,7 @@ function ChecklistsPage() {
           ) : (
             <div
               className={cn(
-                "rounded-xl border p-12 text-center",
+                "rounded-2xl border p-12 text-center",
                 isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200"
               )}
             >

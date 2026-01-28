@@ -223,7 +223,7 @@ function AnalyzerPage() {
         {isLoading ? (
           <div
             className={cn(
-              "p-8 rounded-xl border text-center",
+              "p-8 rounded-2xl border text-center",
               isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200"
             )}
           >
@@ -239,7 +239,7 @@ function AnalyzerPage() {
         ) : activeProperties.length === 0 ? (
           <div
             className={cn(
-              "p-8 rounded-xl border text-center",
+              "p-8 rounded-2xl border text-center",
               isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200"
             )}
           >
@@ -286,7 +286,7 @@ function AnalyzerPage() {
                 key={property.id}
                 onClick={() => setSelectedPropertyId(property.id)}
                 className={cn(
-                  "p-4 rounded-xl border text-left transition-all",
+                  "p-4 rounded-2xl border text-left transition-all",
                   selectedPropertyId === property.id
                     ? isDark
                       ? "bg-[#E8FF4D]/20 border-[#E8FF4D]/50"
@@ -527,7 +527,7 @@ function AnalyzerPage() {
           {/* Calculator Links */}
           <div
             className={cn(
-              "p-6 rounded-xl border",
+              "p-6 rounded-2xl border",
               isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200"
             )}
           >
@@ -616,7 +616,7 @@ function AnalysisSection({
   return (
     <div
       className={cn(
-        "rounded-xl border p-6",
+        "rounded-2xl border p-6",
         isDark ? "bg-white/[0.02] border-white/10" : "bg-white border-slate-200"
       )}
     >
