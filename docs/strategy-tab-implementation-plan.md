@@ -1,6 +1,7 @@
 # Axori Strategy Tab - Implementation Plan
 
 > **Updated based on codebase analysis - January 2026**
+> **Audited against `.claude/patterns/` - January 2026**
 >
 > This document provides the implementation plan for the Strategy Tab feature, aligned with actual Axori codebase patterns and structure.
 
@@ -12,12 +13,15 @@
 2. [Feature Overview](#feature-overview)
 3. [Strategy Taxonomy](#strategy-taxonomy)
 4. [Database Schema](#database-schema)
-5. [API Routes](#api-routes)
-6. [UI Components](#ui-components)
-7. [Hooks & State Management](#hooks--state-management)
-8. [Implementation Phases](#implementation-phases)
-9. [Files to Create/Modify](#files-to-createmodify)
-10. [Open Questions](#open-questions)
+5. [Type Exports](#type-exports)
+6. [Validation Schemas](#validation-schemas)
+7. [API Routes](#api-routes)
+8. [API Hooks](#api-hooks)
+9. [Drawer Registration](#drawer-registration)
+10. [UI Components](#ui-components)
+11. [Implementation Phases](#implementation-phases)
+12. [Files to Create/Modify](#files-to-createmodify)
+13. [Open Questions](#open-questions)
 
 ---
 
@@ -422,9 +426,306 @@ export const rehabScopeItemsRelations = relations(rehabScopeItems, ({ one }) => 
 
 ---
 
+## Type Exports
+
+> **Pattern**: Follow existing pattern in `packages/db/src/types.ts`
+> **Reference**: `.claude/patterns/feature-checklist.md` Step 2
+
+All types must be inferred from Drizzle schema using `InferSelectModel`/`InferInsertModel`.
+
+### Add to `packages/db/src/types.ts`
+
+```typescript
+import {
+  propertyStrategies,
+  brrrrPhases,
+  brrrrPhaseHistory,
+  rehabScopeItems,
+} from './schema';
+
+// ============================================================================
+// Property Strategy (Investment Strategy Configuration)
+// ============================================================================
+
+/**
+ * Property Strategy type inferred from Drizzle schema (for read operations)
+ * Represents the investment strategy configuration for a property
+ */
+export type PropertyStrategy = InferSelectModel<typeof propertyStrategies>;
+
+/**
+ * Property Strategy insert type inferred from Drizzle schema (for insert operations)
+ */
+export type PropertyStrategyInsert = InferInsertModel<typeof propertyStrategies>;
+
+// ============================================================================
+// BRRRR Phase Tracking
+// ============================================================================
+
+/**
+ * BRRRR Phase type inferred from Drizzle schema (for read operations)
+ * Tracks the current phase and metrics for BRRRR strategy properties
+ */
+export type BRRRRPhaseRecord = InferSelectModel<typeof brrrrPhases>;
+
+/**
+ * BRRRR Phase insert type inferred from Drizzle schema (for insert operations)
+ */
+export type BRRRRPhaseRecordInsert = InferInsertModel<typeof brrrrPhases>;
+
+// ============================================================================
+// BRRRR Phase History
+// ============================================================================
+
+/**
+ * BRRRR Phase History type inferred from Drizzle schema (for read operations)
+ */
+export type BRRRRPhaseHistory = InferSelectModel<typeof brrrrPhaseHistory>;
+
+/**
+ * BRRRR Phase History insert type inferred from Drizzle schema (for insert operations)
+ */
+export type BRRRRPhaseHistoryInsert = InferInsertModel<typeof brrrrPhaseHistory>;
+
+// ============================================================================
+// Rehab Scope Items
+// ============================================================================
+
+/**
+ * Rehab Scope Item type inferred from Drizzle schema (for read operations)
+ */
+export type RehabScopeItem = InferSelectModel<typeof rehabScopeItems>;
+
+/**
+ * Rehab Scope Item insert type inferred from Drizzle schema (for insert operations)
+ */
+export type RehabScopeItemInsert = InferInsertModel<typeof rehabScopeItems>;
+```
+
+### Update `packages/db/src/types-only.ts`
+
+Add re-exports for client-safe type imports:
+
+```typescript
+export type {
+  PropertyStrategy,
+  PropertyStrategyInsert,
+  BRRRRPhaseRecord,
+  BRRRRPhaseRecordInsert,
+  BRRRRPhaseHistory,
+  BRRRRPhaseHistoryInsert,
+  RehabScopeItem,
+  RehabScopeItemInsert,
+} from './types';
+```
+
+---
+
+## Validation Schemas
+
+> **Pattern**: Three-tier validation architecture
+> **Reference**: `.claude/patterns/validation-schemas.md`
+
+### Tier 1: Base Schemas (drizzle-zod)
+
+Create `packages/shared/src/validation/base/strategy.ts`:
+
+```typescript
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import {
+  propertyStrategies,
+  brrrrPhases,
+  brrrrPhaseHistory,
+  rehabScopeItems,
+} from "@axori/db";
+
+// Property Strategy schemas
+export const propertyStrategyInsertSchema = createInsertSchema(propertyStrategies);
+export const propertyStrategySelectSchema = createSelectSchema(propertyStrategies);
+
+// BRRRR Phase schemas
+export const brrrrPhaseInsertSchema = createInsertSchema(brrrrPhases);
+export const brrrrPhaseSelectSchema = createSelectSchema(brrrrPhases);
+
+// BRRRR Phase History schemas
+export const brrrrPhaseHistoryInsertSchema = createInsertSchema(brrrrPhaseHistory);
+export const brrrrPhaseHistorySelectSchema = createSelectSchema(brrrrPhaseHistory);
+
+// Rehab Scope Item schemas
+export const rehabScopeItemInsertSchema = createInsertSchema(rehabScopeItems);
+export const rehabScopeItemSelectSchema = createSelectSchema(rehabScopeItems);
+```
+
+### Tier 2: Enhanced API Schemas
+
+Create `packages/shared/src/validation/enhanced/strategy.ts`:
+
+```typescript
+import { z } from "zod";
+import {
+  propertyStrategyInsertSchema,
+  brrrrPhaseInsertSchema,
+  rehabScopeItemInsertSchema,
+} from "../base/strategy";
+
+// =============================================================================
+// Property Strategy API Schemas
+// =============================================================================
+
+export const propertyStrategyInsertApiSchema = propertyStrategyInsertSchema.extend({
+  // Override numeric strings → numbers for API
+  exitPriceTarget: z.number().min(0, "Exit price target must be positive").optional(),
+  exitEquityTarget: z.number().min(0, "Exit equity target must be positive").optional(),
+  exitCapRateFloor: z.number().min(0).max(100, "Cap rate must be 0-100%").optional(),
+  exitCashFlowFloor: z.number().min(0, "Cash flow floor must be positive").optional(),
+  targetMonthlyCashFlow: z.number().min(0, "Target cash flow must be positive").optional(),
+  targetEquity: z.number().min(0, "Target equity must be positive").optional(),
+  targetCashOnCash: z.number().min(0).max(100, "Cash on cash must be 0-100%").optional(),
+  // Weight validation
+  weightFinancialPerformance: z.number().int().min(0).max(100).optional(),
+  weightEquityVelocity: z.number().int().min(0).max(100).optional(),
+  weightOperationalHealth: z.number().int().min(0).max(100).optional(),
+  weightMarketPosition: z.number().int().min(0).max(100).optional(),
+  weightRiskFactors: z.number().int().min(0).max(100).optional(),
+}).refine(
+  (data) => {
+    // If any weight is set, they must all sum to 100
+    const weights = [
+      data.weightFinancialPerformance,
+      data.weightEquityVelocity,
+      data.weightOperationalHealth,
+      data.weightMarketPosition,
+      data.weightRiskFactors,
+    ];
+    const hasAnyWeight = weights.some((w) => w !== undefined && w !== null);
+    if (!hasAnyWeight) return true;
+    const sum = weights.reduce((acc, w) => acc + (w ?? 0), 0);
+    return sum === 100;
+  },
+  { message: "Score weights must sum to 100" }
+);
+
+export const propertyStrategyUpdateApiSchema = propertyStrategyInsertApiSchema.partial();
+
+// =============================================================================
+// BRRRR Phase API Schemas
+// =============================================================================
+
+export const brrrrPhaseInsertApiSchema = brrrrPhaseInsertSchema.extend({
+  // Override numeric strings → numbers for API
+  arvEstimate: z.number().min(0, "ARV must be positive").optional(),
+  rehabBudget: z.number().min(0, "Rehab budget must be positive").optional(),
+  allInCost: z.number().min(0, "All-in cost must be positive").optional(),
+  targetEquityCapture: z.number().min(0, "Target equity capture must be positive").optional(),
+  rehabBudgetSpent: z.number().min(0).optional(),
+  holdingCosts: z.number().min(0).optional(),
+  achievedRent: z.number().min(0).optional(),
+  marketRentAtLease: z.number().min(0).optional(),
+  appraisalValue: z.number().min(0).optional(),
+  newLoanAmount: z.number().min(0).optional(),
+  cashOutAmount: z.number().min(0).optional(),
+  newInterestRate: z.number().min(0).max(100).optional(),
+  newMonthlyPayment: z.number().min(0).optional(),
+  capitalLeftInDeal: z.number().min(0).optional(),
+  totalInvested: z.number().min(0).optional(),
+  totalReturned: z.number().min(0).optional(),
+  finalCashOnCash: z.number().min(0).max(100).optional(),
+});
+
+export const brrrrPhaseUpdateApiSchema = brrrrPhaseInsertApiSchema.partial();
+
+// BRRRR Phase Transition schema
+export const brrrrPhaseTransitionSchema = z.object({
+  toPhase: z.enum(["acquisition", "rehab", "rent", "refinance", "stabilized"]),
+  notes: z.string().max(1000, "Notes must be 1000 characters or less").optional(),
+});
+
+// =============================================================================
+// Rehab Scope Item API Schemas
+// =============================================================================
+
+export const rehabScopeItemInsertApiSchema = rehabScopeItemInsertSchema.extend({
+  estimatedCost: z.number().min(0, "Estimated cost must be positive"),
+  actualCost: z.number().min(0, "Actual cost must be positive").optional(),
+});
+
+export const rehabScopeItemUpdateApiSchema = rehabScopeItemInsertApiSchema
+  .partial()
+  .extend({
+    id: z.string().uuid("Invalid ID"),
+  });
+
+// =============================================================================
+// Type Exports
+// =============================================================================
+
+export type PropertyStrategyInsertApi = z.infer<typeof propertyStrategyInsertApiSchema>;
+export type PropertyStrategyUpdateApi = z.infer<typeof propertyStrategyUpdateApiSchema>;
+export type BRRRRPhaseInsertApi = z.infer<typeof brrrrPhaseInsertApiSchema>;
+export type BRRRRPhaseUpdateApi = z.infer<typeof brrrrPhaseUpdateApiSchema>;
+export type BRRRRPhaseTransition = z.infer<typeof brrrrPhaseTransitionSchema>;
+export type RehabScopeItemInsertApi = z.infer<typeof rehabScopeItemInsertApiSchema>;
+export type RehabScopeItemUpdateApi = z.infer<typeof rehabScopeItemUpdateApiSchema>;
+```
+
+### Tier 3: Form Schemas (if needed)
+
+Create `packages/shared/src/validation/form/strategy.ts` for complex form validation:
+
+```typescript
+import { z } from "zod";
+
+// Form schema for strategy selection (string inputs that transform to typed values)
+export const strategyFormSchema = z.object({
+  primaryStrategy: z.string().min(1, "Strategy is required"),
+  strategyVariant: z.string().optional(),
+  holdPeriod: z.string().optional(),
+  targetExitYear: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .refine((val) => val === undefined || (val >= 2024 && val <= 2100), "Enter a valid year"),
+  exitMethod: z.string().optional(),
+});
+
+// Form schema for rehab items (currency inputs)
+export const rehabItemFormSchema = z.object({
+  category: z.string().min(1, "Category is required"),
+  description: z.string().min(1, "Description is required"),
+  estimatedCost: z
+    .string()
+    .min(1, "Estimated cost is required")
+    .transform((val) => parseFloat(val.replace(/[,$]/g, "")))
+    .refine((val) => !isNaN(val) && val >= 0, "Enter a valid amount"),
+  actualCost: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseFloat(val.replace(/[,$]/g, "")) : undefined))
+    .refine((val) => val === undefined || (!isNaN(val) && val >= 0), "Enter a valid amount"),
+});
+```
+
+### Export from Index
+
+Add to `packages/shared/src/validation/index.ts`:
+
+```typescript
+// Strategy schemas (base)
+export * from "./base/strategy";
+
+// Strategy schemas (enhanced API)
+export * from "./enhanced/strategy";
+
+// Strategy schemas (form)
+export * from "./form/strategy";
+```
+
+---
+
 ## API Routes
 
 > **Pattern**: Follow existing Hono patterns in `apps/api/src/routes/properties.ts`
+> **Reference**: `.claude/patterns/feature-checklist.md` Step 4
 
 ### Strategy Endpoints
 
@@ -499,6 +800,38 @@ router.get('/:propertyId/goal-alignment', /* ... */);
 ## UI Components
 
 > **Pattern**: Follow existing component structure in `apps/web/src/components/property-hub/property-details/`
+> **Reference**: `.claude/patterns/design-system.md`, `.claude/patterns/feature-checklist.md` Step 8
+
+### Dark Mode Checklist
+
+All UI components MUST include dark mode variants. Check each component for:
+
+- [ ] Background colors have dark variants (`bg-white` → `dark:bg-slate-900` or `dark:bg-white/5`)
+- [ ] Text colors have dark variants (`text-slate-900` → `dark:text-white`)
+- [ ] Secondary text (`text-slate-500` → `dark:text-white/60`)
+- [ ] Borders have dark variants (`border-slate-200` → `dark:border-white/10`)
+- [ ] Hover states work in both modes
+- [ ] Accent colors use `#E8FF4D` in dark mode (`dark:bg-[#E8FF4D] dark:text-black`)
+- [ ] Use opacity-based colors for subtle variations (`white/5`, `white/10`, etc.)
+
+### @axori/ui Components to Use
+
+Always prefer `@axori/ui` components over custom implementations:
+
+```typescript
+import {
+  Button,
+  Input,          // Use variant="rounded"
+  Select,         // Use variant="rounded"
+  Textarea,
+  Drawer,
+  Card,
+  ErrorCard,
+  DeleteConfirmationCard,
+  EmptyState,
+  LoadingSpinner,
+} from "@axori/ui";
+```
 
 ### Directory Structure
 
@@ -598,29 +931,70 @@ interface ScoreWeightsEditorProps {
 
 ---
 
-## Hooks & State Management
+## API Hooks
 
-> **Pattern**: Follow existing hook patterns in `apps/web/src/hooks/api/`
+> **Pattern**: TanStack Query with key factory pattern
+> **Reference**: `CLAUDE.md` TanStack Query Hook Patterns, `.claude/settings.md`
 
-### API Hooks
+### Query Key Factory
 
 Create `apps/web/src/hooks/api/usePropertyStrategy.ts`:
 
 ```typescript
-// Query: Get property strategy
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useUser } from "@clerk/tanstack-start";
+import { apiFetch } from "@/lib/api";
+import type { PropertyStrategy, BRRRRPhaseRecord } from "@axori/db/types";
+
+// =============================================================================
+// Query Key Factory (Standard Pattern)
+// =============================================================================
+
+export const strategyKeys = {
+  all: ["strategies"] as const,
+  lists: () => [...strategyKeys.all, "list"] as const,
+  list: (propertyId: string) => [...strategyKeys.lists(), propertyId] as const,
+  details: () => [...strategyKeys.all, "detail"] as const,
+  detail: (propertyId: string) => [...strategyKeys.details(), propertyId] as const,
+};
+
+export const rehabScopeKeys = {
+  all: ["rehab-scope"] as const,
+  lists: () => [...rehabScopeKeys.all, "list"] as const,
+  list: (propertyId: string) => [...rehabScopeKeys.lists(), propertyId] as const,
+  details: () => [...rehabScopeKeys.all, "detail"] as const,
+  detail: (itemId: string) => [...rehabScopeKeys.details(), itemId] as const,
+};
+
+// =============================================================================
+// Strategy Hooks
+// =============================================================================
+
+interface StrategyResponse {
+  strategy: PropertyStrategy | null;
+  brrrrPhase: BRRRRPhaseRecord | null;
+  scoreWeights: {
+    financialPerformance: number;
+    equityVelocity: number;
+    operationalHealth: number;
+    marketPosition: number;
+    riskFactors: number;
+  };
+}
+
+/**
+ * Get property strategy configuration
+ */
 export function usePropertyStrategy(propertyId: string | null | undefined) {
   const { user } = useUser();
 
   return useQuery({
-    queryKey: ['properties', propertyId, 'strategy'],
+    queryKey: strategyKeys.detail(propertyId ?? ""),
     queryFn: async () => {
-      const result = await apiFetch<{
-        strategy: PropertyStrategy | null;
-        brrrrPhase: BRRRRPhase | null;
-        scoreWeights: StrategyScoreWeights;
-      }>(`/api/properties/${propertyId}/strategy`, {
-        clerkId: user.id,
-      });
+      const result = await apiFetch<StrategyResponse>(
+        `/api/properties/${propertyId}/strategy`,
+        { clerkId: user!.id }
+      );
       return result;
     },
     enabled: !!user?.id && !!propertyId,
@@ -628,61 +1002,180 @@ export function usePropertyStrategy(propertyId: string | null | undefined) {
   });
 }
 
-// Mutation: Update strategy
+/**
+ * Update property strategy
+ */
 export function useUpdatePropertyStrategy() {
   const queryClient = useQueryClient();
   const { user } = useUser();
 
   return useMutation({
-    mutationFn: async ({ propertyId, ...data }: UpdateStrategyInput) => {
+    mutationFn: async ({
+      propertyId,
+      ...data
+    }: { propertyId: string } & Partial<PropertyStrategy>) => {
       return await apiFetch(`/api/properties/${propertyId}/strategy`, {
-        method: 'PUT',
-        clerkId: user.id,
+        method: "PUT",
+        clerkId: user!.id,
         body: JSON.stringify(data),
       });
     },
     onSuccess: (_, variables) => {
+      // Invalidate strategy detail
       queryClient.invalidateQueries({
-        queryKey: ['properties', variables.propertyId, 'strategy']
+        queryKey: strategyKeys.detail(variables.propertyId),
       });
+      // Invalidate property detail (strategy is included in property response)
       queryClient.invalidateQueries({
-        queryKey: ['properties', variables.propertyId]
+        queryKey: ["properties", variables.propertyId],
       });
     },
   });
 }
 
-// Mutation: Transition BRRRR phase
+/**
+ * Transition BRRRR phase
+ */
 export function useTransitionBRRRRPhase() {
   const queryClient = useQueryClient();
   const { user } = useUser();
 
   return useMutation({
-    mutationFn: async ({ propertyId, toPhase, notes }: TransitionPhaseInput) => {
-      return await apiFetch(`/api/properties/${propertyId}/strategy/brrrr/transition`, {
-        method: 'POST',
-        clerkId: user.id,
-        body: JSON.stringify({ toPhase, notes }),
-      });
+    mutationFn: async ({
+      propertyId,
+      toPhase,
+      notes,
+    }: {
+      propertyId: string;
+      toPhase: string;
+      notes?: string;
+    }) => {
+      return await apiFetch(
+        `/api/properties/${propertyId}/strategy/brrrr/transition`,
+        {
+          method: "POST",
+          clerkId: user!.id,
+          body: JSON.stringify({ toPhase, notes }),
+        }
+      );
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['properties', variables.propertyId, 'strategy']
+        queryKey: strategyKeys.detail(variables.propertyId),
       });
     },
   });
 }
-```
 
-### Rehab Scope Hooks
+// =============================================================================
+// Rehab Scope Hooks
+// =============================================================================
 
-Create `apps/web/src/hooks/api/useRehabScope.ts`:
+/**
+ * Get rehab scope items for a property
+ */
+export function useRehabScope(propertyId: string | null | undefined) {
+  const { user } = useUser();
 
-```typescript
-export function useRehabScope(propertyId: string | null | undefined) { /* ... */ }
-export function useAddRehabItem() { /* ... */ }
-export function useUpdateRehabItem() { /* ... */ }
-export function useDeleteRehabItem() { /* ... */ }
+  return useQuery({
+    queryKey: rehabScopeKeys.list(propertyId ?? ""),
+    queryFn: async () => {
+      const result = await apiFetch<{ items: RehabScopeItem[] }>(
+        `/api/properties/${propertyId}/rehab-scope`,
+        { clerkId: user!.id }
+      );
+      return result.items;
+    },
+    enabled: !!user?.id && !!propertyId,
+  });
+}
+
+/**
+ * Add rehab scope item
+ */
+export function useCreateRehabItem() {
+  const queryClient = useQueryClient();
+  const { user } = useUser();
+
+  return useMutation({
+    mutationFn: async ({
+      propertyId,
+      ...data
+    }: { propertyId: string } & RehabScopeItemInsertApi) => {
+      return await apiFetch(`/api/properties/${propertyId}/rehab-scope`, {
+        method: "POST",
+        clerkId: user!.id,
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: rehabScopeKeys.list(variables.propertyId),
+      });
+    },
+  });
+}
+
+/**
+ * Update rehab scope item
+ */
+export function useUpdateRehabItem() {
+  const queryClient = useQueryClient();
+  const { user } = useUser();
+
+  return useMutation({
+    mutationFn: async ({
+      propertyId,
+      itemId,
+      ...data
+    }: { propertyId: string; itemId: string } & Partial<RehabScopeItemInsertApi>) => {
+      return await apiFetch(
+        `/api/properties/${propertyId}/rehab-scope/${itemId}`,
+        {
+          method: "PUT",
+          clerkId: user!.id,
+          body: JSON.stringify(data),
+        }
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: rehabScopeKeys.list(variables.propertyId),
+      });
+    },
+  });
+}
+
+/**
+ * Delete rehab scope item
+ */
+export function useDeleteRehabItem() {
+  const queryClient = useQueryClient();
+  const { user } = useUser();
+
+  return useMutation({
+    mutationFn: async ({
+      propertyId,
+      itemId,
+    }: {
+      propertyId: string;
+      itemId: string;
+    }) => {
+      return await apiFetch(
+        `/api/properties/${propertyId}/rehab-scope/${itemId}`,
+        {
+          method: "DELETE",
+          clerkId: user!.id,
+        }
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: rehabScopeKeys.list(variables.propertyId),
+      });
+    },
+  });
+}
 ```
 
 ### Computed Hooks
@@ -690,23 +1183,193 @@ export function useDeleteRehabItem() { /* ... */ }
 Create `apps/web/src/hooks/computed/useGoalAlignment.ts`:
 
 ```typescript
+import { useMemo } from "react";
+import { useProperty } from "../api/useProperties";
+import { usePropertyStrategy } from "../api/usePropertyStrategy";
+import { useCurrentUser } from "../api/useCurrentUser";
+
 export function useGoalAlignment(propertyId: string) {
   const { data: property } = useProperty(propertyId);
-  const { data: strategy } = usePropertyStrategy(propertyId);
-  const { data: user } = useCurrentUser(); // Get FIRE number from onboarding data
+  const { data: strategyData } = usePropertyStrategy(propertyId);
+  const { data: user } = useCurrentUser();
 
   return useMemo(() => {
-    if (!property || !strategy || !user) return null;
+    if (!property || !strategyData || !user) return null;
+
+    const strategy = strategyData.strategy;
+    if (!strategy) return null;
 
     // Calculate goal alignment metrics
+    const currentMonthlyContribution = calculateMonthlyCashFlow(property);
+    const projectedMonthlyAtPayoff = calculatePayoffCashFlow(property);
+    const fireGoal = user.onboardingData?.fireNumber ?? 0;
+    const percentOfFireGoal = fireGoal > 0
+      ? (currentMonthlyContribution / fireGoal) * 100
+      : 0;
+
     return {
-      currentMonthlyContribution: calculateMonthlyCashFlow(property),
-      projectedMonthlyAtPayoff: calculatePayoffCashFlow(property),
-      percentOfFireGoal: calculateFirePercentage(property, user),
-      // ... other metrics
+      currentMonthlyContribution,
+      projectedMonthlyAtPayoff,
+      percentOfFireGoal,
+      fireGoal,
+      isOnTrack: currentMonthlyContribution >= (strategy.targetMonthlyCashFlow ?? 0),
     };
-  }, [property, strategy, user]);
+  }, [property, strategyData, user]);
 }
+
+// Helper functions (simplified)
+function calculateMonthlyCashFlow(property: any): number {
+  // Implementation based on existing financial calculations
+  return 0;
+}
+
+function calculatePayoffCashFlow(property: any): number {
+  // Implementation: cash flow when mortgages are paid off
+  return 0;
+}
+```
+
+---
+
+## Drawer Registration
+
+> **Pattern**: URL-based drawer factory with lazy loading
+> **Reference**: `apps/web/src/lib/drawer/registry.ts`, `.claude/patterns/feature-checklist.md` Steps 6-7
+
+### Add Drawer Names
+
+Add to `DRAWERS` constant in `apps/web/src/lib/drawer/registry.ts`:
+
+```typescript
+export const DRAWERS = {
+  // ... existing drawers ...
+
+  // Strategy Drawers
+  STRATEGY_EDIT: 'strategy-edit',
+  EXIT_STRATEGY: 'exit-strategy',
+  BRRRR_PHASE_TRANSITION: 'brrrr-phase-transition',
+  REHAB_ITEM_ADD: 'rehab-item-add',
+  REHAB_ITEM_EDIT: 'rehab-item-edit',
+  SCORE_WEIGHTS: 'score-weights',
+} as const;
+```
+
+### Add Param Schemas
+
+```typescript
+/**
+ * Schema for strategy drawer (property-based)
+ */
+export const strategyDrawerParamsSchema = z.object({
+  propertyId: z.string().min(1, 'Property ID is required'),
+});
+
+/**
+ * Schema for rehab item drawer (property + optional itemId for edit mode)
+ */
+export const rehabItemDrawerParamsSchema = z.object({
+  propertyId: z.string().min(1, 'Property ID is required'),
+  itemId: z.string().optional(),
+});
+
+/**
+ * Schema for BRRRR phase transition drawer
+ */
+export const brrrrTransitionDrawerParamsSchema = z.object({
+  propertyId: z.string().min(1, 'Property ID is required'),
+  currentPhase: z.string().min(1, 'Current phase is required'),
+});
+```
+
+### Add to DRAWER_NAMES Array
+
+```typescript
+export const DRAWER_NAMES = [
+  // ... existing names ...
+
+  // Strategy drawers
+  'strategy-edit',
+  'exit-strategy',
+  'brrrr-phase-transition',
+  'rehab-item-add',
+  'rehab-item-edit',
+  'score-weights',
+] as const;
+```
+
+### Register Drawer Components
+
+```typescript
+// Add to DRAWER_REGISTRY
+
+// ==========================================================================
+// Strategy Drawers
+// ==========================================================================
+'strategy-edit': {
+  component: lazy(() =>
+    import('@/components/drawers/StrategyEditDrawer').then((m) => ({
+      default: m.StrategyEditDrawer,
+    })),
+  ),
+  paramsSchema: strategyDrawerParamsSchema,
+  permission: 'member',
+  displayName: 'Edit Strategy',
+},
+
+'exit-strategy': {
+  component: lazy(() =>
+    import('@/components/drawers/ExitStrategyDrawer').then((m) => ({
+      default: m.ExitStrategyDrawer,
+    })),
+  ),
+  paramsSchema: strategyDrawerParamsSchema,
+  permission: 'member',
+  displayName: 'Exit Strategy',
+},
+
+'brrrr-phase-transition': {
+  component: lazy(() =>
+    import('@/components/drawers/BRRRRPhaseTransitionDrawer').then((m) => ({
+      default: m.BRRRRPhaseTransitionDrawer,
+    })),
+  ),
+  paramsSchema: brrrrTransitionDrawerParamsSchema,
+  permission: 'member',
+  displayName: 'Advance BRRRR Phase',
+},
+
+'rehab-item-add': {
+  component: lazy(() =>
+    import('@/components/drawers/RehabItemDrawer').then((m) => ({
+      default: m.RehabItemDrawer,
+    })),
+  ),
+  paramsSchema: rehabItemDrawerParamsSchema,
+  permission: 'member',
+  displayName: 'Add Rehab Item',
+},
+
+'rehab-item-edit': {
+  component: lazy(() =>
+    import('@/components/drawers/RehabItemDrawer').then((m) => ({
+      default: m.RehabItemDrawer,
+    })),
+  ),
+  paramsSchema: rehabItemDrawerParamsSchema,
+  permission: 'member',
+  displayName: 'Edit Rehab Item',
+},
+
+'score-weights': {
+  component: lazy(() =>
+    import('@/components/drawers/ScoreWeightsDrawer').then((m) => ({
+      default: m.ScoreWeightsDrawer,
+    })),
+  ),
+  paramsSchema: strategyDrawerParamsSchema,
+  permission: 'member',
+  displayName: 'Score Weights',
+},
 ```
 
 ---
@@ -816,57 +1479,82 @@ export function useGoalAlignment(propertyId: string) {
 ### New Files
 
 ```
-packages/db/src/schema/
-└── index.ts                                  # Add enums, tables, relations
+# Database & Types
+packages/db/src/schema/index.ts               # Add enums, tables, relations
+packages/db/src/types.ts                      # Add type exports (InferSelectModel/Insert)
+packages/db/src/types-only.ts                 # Add re-exports for client-safe imports
 
-packages/shared/src/
-├── types/strategy.ts                         # Type definitions
-├── constants/strategy-weights.ts             # Default weight matrices
-└── validation/base/strategy.ts               # Zod schemas
+# Validation (Three-Tier Pattern)
+packages/shared/src/validation/base/strategy.ts      # Tier 1: drizzle-zod base schemas
+packages/shared/src/validation/enhanced/strategy.ts  # Tier 2: API schemas with business logic
+packages/shared/src/validation/form/strategy.ts      # Tier 3: Form schemas with transforms
 
-apps/api/src/routes/
-└── strategy.ts                               # Strategy API routes (or add to properties.ts)
+# Constants & Types
+packages/shared/src/types/strategy.ts                # Shared type definitions
+packages/shared/src/constants/strategy-weights.ts    # Default weight matrices
 
-apps/web/src/
-├── hooks/api/
-│   ├── usePropertyStrategy.ts                # Strategy hooks
-│   └── useRehabScope.ts                      # Rehab scope hooks
-├── hooks/computed/
-│   └── useGoalAlignment.ts                   # Goal alignment calculation
-└── components/property-hub/property-details/strategy/
-    ├── index.ts
-    ├── StrategyOverview.tsx
-    ├── StrategySelector.tsx
-    ├── StrategyVariantSelector.tsx
-    ├── ExitStrategyEditor.tsx
-    ├── GoalAlignmentCard.tsx
-    ├── ScoreWeightsEditor.tsx
-    ├── brrrr/
-    │   ├── BRRRRPhaseTracker.tsx
-    │   ├── BRRRRPhaseDetail.tsx
-    │   └── BRRRRPhaseTransition.tsx
-    └── rehab/
-        ├── RehabScopeManager.tsx
-        ├── RehabScopeItem.tsx
-        └── RehabBudgetSummary.tsx
+# API Routes
+apps/api/src/routes/strategy.ts               # Strategy API routes (or add to properties.ts)
+
+# Hooks
+apps/web/src/hooks/api/usePropertyStrategy.ts # Strategy & rehab scope hooks with key factory
+apps/web/src/hooks/computed/useGoalAlignment.ts # Goal alignment calculation
+
+# Drawer Components (registered in drawer factory)
+apps/web/src/components/drawers/
+├── StrategyEditDrawer.tsx
+├── ExitStrategyDrawer.tsx
+├── BRRRRPhaseTransitionDrawer.tsx
+├── RehabItemDrawer.tsx
+└── ScoreWeightsDrawer.tsx
+
+# Feature Components
+apps/web/src/components/property-hub/property-details/strategy/
+├── index.ts
+├── StrategyOverview.tsx
+├── StrategySelector.tsx
+├── StrategyVariantSelector.tsx
+├── ExitStrategyCard.tsx
+├── GoalAlignmentCard.tsx
+├── ScoreWeightsCard.tsx
+├── brrrr/
+│   ├── BRRRRPhaseTracker.tsx
+│   ├── BRRRRPhaseDetail.tsx
+│   └── BRRRRPhaseTransitionCard.tsx
+└── rehab/
+    ├── RehabScopeManager.tsx
+    ├── RehabScopeItem.tsx
+    └── RehabBudgetSummary.tsx
 ```
 
 ### Files to Modify
 
 ```
+# Drawer Registry (CRITICAL - register all new drawers)
+apps/web/src/lib/drawer/registry.ts
+  → Add drawer names to DRAWERS constant
+  → Add param schemas (strategyDrawerParamsSchema, etc.)
+  → Add to DRAWER_NAMES array
+  → Register drawer components in DRAWER_REGISTRY
+
+# Validation Index (export new schemas)
+packages/shared/src/validation/index.ts
+  → Export base/strategy.ts
+  → Export enhanced/strategy.ts
+  → Export form/strategy.ts
+
+# Strategy Tab Route
 apps/web/src/routes/_authed/property-hub.$propertyId/strategy.tsx
   → Replace mock UI with real components
+  → Import from strategy components directory
 
-apps/web/src/hooks/api/useProperties.ts
-  → Update Property type to include strategy relation
-  → Or keep separate with usePropertyStrategy
-
-packages/shared/src/validation/index.ts
-  → Export strategy schemas
-
+# API Routes (optional - can add to properties.ts instead)
 apps/api/src/routes/properties.ts
   → Include strategy in property GET response
-  → Or add strategy-specific endpoints
+  → OR create separate strategy.ts route file
+
+apps/api/src/index.ts
+  → Register strategy routes if separate file
 ```
 
 ---
