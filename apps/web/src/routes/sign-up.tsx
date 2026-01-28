@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useSignUp, useUser } from '@clerk/tanstack-react-start'
 import { useEffect, useState } from 'react'
+import { useShowAuth } from '@/hooks/useFeatureFlags'
 
 export const Route = createFileRoute('/sign-up')({
   component: SignUpPage,
@@ -10,6 +11,14 @@ function SignUpPage() {
   const navigate = useNavigate()
   const { isSignedIn } = useUser()
   const { isLoaded, signUp, setActive } = useSignUp()
+  const showAuth = useShowAuth()
+
+  // Redirect to home if in coming soon mode (unless bypass enabled)
+  useEffect(() => {
+    if (!showAuth) {
+      navigate({ to: '/' })
+    }
+  }, [showAuth, navigate])
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

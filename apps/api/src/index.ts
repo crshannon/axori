@@ -79,6 +79,7 @@ import mapboxRouter from "./routes/mapbox";
 import portfoliosRouter from "./routes/portfolios";
 import permissionsRouter from "./routes/permissions";
 import portfolioMembersRouter from "./routes/portfolio-members";
+import emailCapturesRouter from "./routes/email-captures";
 import bankAccountsRouter from "./routes/bank-accounts";
 import documentsRouter from "./routes/documents";
 app.route("/api/properties", propertiesRouter);
@@ -89,6 +90,7 @@ app.route("/api/mapbox", mapboxRouter);
 app.route("/api/portfolios", portfoliosRouter);
 app.route("/api/permissions", permissionsRouter);
 app.route("/api/portfolio-members", portfolioMembersRouter);
+app.route("/api/email-captures", emailCapturesRouter);
 app.route("/api/bank-accounts", bankAccountsRouter);
 app.route("/api/documents", documentsRouter);
 
@@ -100,4 +102,3 @@ serve({
 }, (info) => {
   console.log(`🚀 API server running on http://localhost:${info.port}`);
 });
-
