@@ -38,7 +38,8 @@ const RECOMMENDED_ENV_VARS = [
   },
 ]
 
-async function globalSetup(config: FullConfig) {
+// eslint-disable-next-line @typescript-eslint/require-await
+async function globalSetup(config: FullConfig): Promise<void> {
   console.log('\n')
   console.log('╔' + '═'.repeat(62) + '╗')
   console.log('║' + '  📋 E2E Test Environment Check'.padEnd(62) + '║')

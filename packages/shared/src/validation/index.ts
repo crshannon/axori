@@ -44,6 +44,11 @@ export {
   propertyBankAccountSelectSchema,
 } from "./base/bankAccounts";
 
+export {
+  propertyDocumentInsertSchema,
+  propertyDocumentSelectSchema,
+} from "./base/documents";
+
 // ============================================================================
 // ENHANCED SCHEMAS (Phase 4)
 // ============================================================================
@@ -51,6 +56,7 @@ export {
 export * from "./enhanced/loans";
 export * from "./enhanced/transactions";
 export * from "./enhanced/properties";
+export * from "./enhanced/documents";
 
 // ============================================================================
 // DEPRECATED SCHEMAS (Phase 8 Cleanup)

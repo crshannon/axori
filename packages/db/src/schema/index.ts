@@ -1162,6 +1162,7 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
   costSegStudies: many(costSegregationStudies),
   depreciationRecords: many(annualDepreciationRecords),
   bankAccounts: many(propertyBankAccounts),
+  documents: many(propertyDocuments),
 }));
 
 export const propertyCharacteristicsRelations = relations(propertyCharacteristics, ({ one }) => ({
@@ -1254,11 +1255,10 @@ export const propertyTransactionsRelations = relations(propertyTransactions, ({ 
     references: [users.id],
     relationName: "transactionReviewer",
   }),
-  // TODO: Add document relation when property_documents table exists
-  //   document: one(propertyDocuments, {
-  //   fields: [propertyTransactions.documentId],
-  //   references: [propertyDocuments.id],
-  // }),
+  document: one(propertyDocuments, {
+    fields: [propertyTransactions.documentId],
+    references: [propertyDocuments.id],
+  }),
 }));
 
 // Property Depreciation Relations
@@ -1403,6 +1403,96 @@ export const propertyBankAccountsRelations = relations(propertyBankAccounts, ({ 
   }),
   createdByUser: one(users, {
     fields: [propertyBankAccounts.createdBy],
+    references: [users.id],
+  }),
+}));
+
+// =============================================================================
+// PROPERTY DOCUMENTS
+// =============================================================================
+
+// Document type enum
+export const documentTypeEnum = pgEnum("document_type", [
+  "lease",
+  "tax_bill",
+  "insurance_policy",
+  "insurance_claim",
+  "closing_disclosure",
+  "deed",
+  "title_policy",
+  "appraisal",
+  "inspection",
+  "mortgage_statement",
+  "hoa_statement",
+  "utility_bill",
+  "receipt",
+  "contractor_invoice",
+  "permit",
+  "year_end_report",
+  "rent_roll",
+  "1099",
+  "w9",
+  "other",
+]);
+
+// Document processing status enum
+export const documentProcessingStatusEnum = pgEnum("document_processing_status", [
+  "pending", // Uploaded, not yet processed
+  "processing", // AI extraction in progress
+  "completed", // AI extraction completed successfully
+  "failed", // AI extraction failed
+]);
+
+// Property Documents - Document management for properties (1:many)
+export const propertyDocuments = pgTable("property_documents", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  propertyId: uuid("property_id")
+    .notNull()
+    .references(() => properties.id, { onDelete: "cascade" }),
+
+  // File Info
+  storagePath: text("storage_path").notNull(), // Path in Supabase Storage
+  originalFilename: text("original_filename").notNull(),
+  mimeType: text("mime_type"),
+  sizeBytes: integer("size_bytes"),
+
+  // Classification
+  documentType: documentTypeEnum("document_type").notNull(),
+  documentYear: integer("document_year"), // For annual docs (tax bills, etc.)
+
+  // AI Processing
+  processingStatus: documentProcessingStatusEnum("processing_status").default("pending"),
+  aiProcessedAt: timestamp("ai_processed_at"),
+  aiExtractedData: jsonb("ai_extracted_data"), // Structured data from document
+  aiConfidence: numeric("ai_confidence", { precision: 4, scale: 3 }), // Confidence score 0-1
+  aiError: text("ai_error"), // Error message if processing failed
+  aiAppliedData: jsonb("ai_applied_data"), // Data that was applied to property
+  aiAppliedAt: timestamp("ai_applied_at"), // When data was applied
+
+  // Metadata
+  description: text("description"),
+  tags: text("tags").array(), // User-defined tags
+
+  // Audit
+  uploadedBy: uuid("uploaded_by")
+    .references(() => users.id, { onDelete: "set null" }),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  propertyIdIdx: index("idx_property_documents_property_id").on(table.propertyId),
+  documentTypeIdx: index("idx_property_documents_type").on(table.documentType),
+  documentYearIdx: index("idx_property_documents_year").on(table.documentYear),
+  processingStatusIdx: index("idx_property_documents_processing_status").on(table.processingStatus),
+}));
+
+// Property Documents Relations
+export const propertyDocumentsRelations = relations(propertyDocuments, ({ one }) => ({
+  property: one(properties, {
+    fields: [propertyDocuments.propertyId],
+    references: [properties.id],
+  }),
+  uploadedByUser: one(users, {
+    fields: [propertyDocuments.uploadedBy],
     references: [users.id],
   }),
 }));
