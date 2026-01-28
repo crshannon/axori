@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
-import { Input } from "@axori/ui";
-import { Button } from "@axori/ui";
-import { Check, ArrowRight, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button, Input  } from "@axori/ui";
+import { ArrowRight, Check } from "lucide-react";
 
 interface EmailCaptureFormProps {
   source?: string;
@@ -155,27 +154,14 @@ export function EmailCaptureForm({
             className="flex-[2]"
             disabled={submitState === "submitting"}
           />
-          <button
+          <Button
             type="submit"
-            disabled={submitState === "submitting"}
-            className="
-              flex items-center justify-center gap-2 rounded-2xl px-8 py-4
-              text-sm font-bold uppercase tracking-wider
-              bg-violet-600 text-white hover:bg-violet-700
-              dark:bg-[#E8FF4D] dark:text-black dark:hover:bg-[#E8FF4D]/90
-              transition-all disabled:opacity-50 disabled:cursor-not-allowed
-              shrink-0
-            "
+            isLoading={submitState === "submitting"}
+            className="rounded-2xl px-8 py-4 text-sm font-bold uppercase tracking-wider shrink-0"
           >
-            {submitState === "submitting" ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <>
-                Join Waitlist
-                <ArrowRight className="h-4 w-4" />
-              </>
-            )}
-          </button>
+            Join Waitlist
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
         {submitState === "error" && errorMessage && (
           <p className="mt-2 text-sm text-red-500 dark:text-red-400">

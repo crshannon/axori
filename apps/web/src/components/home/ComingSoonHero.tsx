@@ -1,27 +1,27 @@
 import { useMemo } from "react";
-import { EmailCaptureForm } from "./EmailCaptureForm";
 import {
-  Sparkles,
-  TrendingUp,
-  Building2,
-  DollarSign,
-  PieChart,
-  Percent,
-  Home,
-  Wallet,
-  BarChart3,
   ArrowUpRight,
-  Calculator,
-  Landmark,
+  Award,
   BadgeDollarSign,
-  CircleDollarSign,
   Banknote,
+  BarChart3,
+  Building2,
+  Calculator,
+  CircleDollarSign,
+  Clock,
+  DollarSign,
+  Home,
+  Landmark,
+  Percent,
+  PieChart,
   Receipt,
   Scale,
-  Clock,
+  Sparkles,
   Target,
-  Award,
+  TrendingUp,
+  Wallet,
 } from "lucide-react";
+import { EmailCaptureForm } from "./EmailCaptureForm";
 
 /**
  * Pool of floating data cards to randomly select from
@@ -218,7 +218,7 @@ const CARD_POSITIONS = [
 /**
  * Randomly shuffle array using Fisher-Yates algorithm
  */
-function shuffleArray<T>(array: T[]): T[] {
+function shuffleArray<T>(array: Array<T>): Array<T> {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

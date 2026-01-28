@@ -3,7 +3,7 @@ import { SignedIn, SignedOut, useUser } from '@clerk/clerk-react'
 import { ArrowUpRight, Sparkles } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle/ThemeToggle'
 import { SignOutButton } from '@/components/sign-out-button/SignOutButton'
-import { useShowAuth, useComingSoonMode } from '@/hooks/useFeatureFlags'
+import { useComingSoonMode, useShowAuth } from '@/hooks/useFeatureFlags'
 
 export const Header = () => {
   const { isSignedIn = false } = useUser()

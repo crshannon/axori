@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { Button } from '@axori/ui'
+import { ArrowRight } from 'lucide-react'
 import PricingSection from '@/components/home/PricingSection'
 import PropertyScoreSection from '@/components/home/PropertyScoreSection'
 import { Hero } from '@/components/home/Hero'
@@ -8,7 +9,6 @@ import { ValueProposition } from '@/components/home/ValueProposition'
 import { SocialProof } from '@/components/home/SocialProof'
 import { PublicLayout } from '@/components/layouts/PublicLayout'
 import { useComingSoonMode } from '@/hooks/useFeatureFlags'
-import { ArrowRight } from 'lucide-react'
 
 export const Route = createFileRoute('/')({ component: App })
 

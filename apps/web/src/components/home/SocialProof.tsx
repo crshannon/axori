@@ -15,7 +15,7 @@ interface Testimonial {
   rating: number;
 }
 
-const testimonials: Testimonial[] = [
+const testimonials: Array<Testimonial> = [
   {
     quote:
       "Finally, a platform that understands how serious investors think. The analytics are institutional-grade.",

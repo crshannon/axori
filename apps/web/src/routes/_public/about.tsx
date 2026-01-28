@@ -1,14 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@axori/ui";
 import {
-  Eye,
-  Zap,
-  Shield,
   ArrowRight,
-  Sparkles,
   Building2,
-  Users,
+  Eye,
+  Shield,
+  Sparkles,
   Target,
+  Users,
+  Zap,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_public/about")({
@@ -207,11 +207,11 @@ function About() {
                 To empower the next 1 million investors to build generational
                 wealth without the "accidental landlord" headache.
               </p>
-              <Link to="/#waitlist">
+              <a href="/#waitlist">
                 <Button className="mt-8 w-full py-4 rounded-full font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-white/90">
                   JOIN THE MISSION
                 </Button>
-              </Link>
+              </a>
             </div>
           </div>
 
@@ -230,7 +230,7 @@ function About() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-8 md:gap-12">
-              {VALUES.map((item, i) => {
+              {VALUES.map((item) => {
                 const Icon = item.icon;
                 return (
                   <div
@@ -298,12 +298,12 @@ function About() {
                   Get early access to the platform that's changing how investors
                   think about real estate.
                 </p>
-                <Link to="/#waitlist">
+                <a href="/#waitlist">
                   <Button className="inline-flex items-center gap-3 px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm hover:scale-105 transition-all bg-white text-slate-900 hover:bg-slate-100 dark:bg-[#E8FF4D] dark:text-black dark:hover:bg-[#d4eb45]">
                     Get Early Access
                     <ArrowRight className="w-5 h-5" />
                   </Button>
-                </Link>
+                </a>
               </div>
             </div>
           </section>

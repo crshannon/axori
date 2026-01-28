@@ -1,18 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Button, FormLabel, Input, Select } from "@axori/ui";
+import { Button, FormLabel, Input, Select, Textarea } from "@axori/ui";
 import {
-  Send,
-  Mail,
-  MessageSquare,
-  Clock,
-  Zap,
   ArrowUpRight,
-  Sparkles,
-  Twitter,
-  Linkedin,
+  CheckCircle2,
+  Clock,
   Github,
   HelpCircle,
-  CheckCircle2,
+  Linkedin,
+  Mail,
+  MessageSquare,
+  Send,
+  Sparkles,
+  Twitter,
+  Zap,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_public/contact")({
@@ -164,14 +164,13 @@ function Contact() {
                   <option>50+ units</option>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <FormLabel>Your Message</FormLabel>
-                <textarea
-                  rows={5}
-                  placeholder="Tell us about your portfolio goals..."
-                  className="w-full px-6 py-4 rounded-2xl text-sm font-medium border outline-none transition-all bg-slate-50 border-slate-200 focus:border-violet-300 shadow-inner focus:bg-white dark:bg-white/5 dark:border-white/10 dark:focus:border-[#E8FF4D]/30 dark:text-white dark:placeholder:text-white/30 dark:focus:bg-white/10"
-                ></textarea>
-              </div>
+              <Textarea
+                variant="rounded"
+                label="Your Message"
+                rows={5}
+                placeholder="Tell us about your portfolio goals..."
+                className="bg-slate-50 border-slate-200 shadow-inner focus:bg-white focus:border-violet-300 dark:bg-white/5 dark:border-white/10 dark:focus:bg-white/10 dark:focus:border-[#E8FF4D]/30"
+              />
               <Button className="w-full py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-violet-200 transition-all hover:scale-[1.02] bg-violet-600 text-white hover:bg-violet-700 dark:bg-[#E8FF4D] dark:text-black dark:hover:bg-[#d9f03e] dark:shadow-black/30">
                 <span className="flex items-center justify-center gap-2">
                   DEPLOY ANALYST REQUEST

@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
+import { ArrowUpRight, Sparkles } from 'lucide-react'
 import { useComingSoonMode } from '@/hooks/useFeatureFlags'
 import { EmailCaptureForm } from '@/components/home/EmailCaptureForm'
-import { ArrowUpRight, Sparkles } from 'lucide-react'
 
 export const Footer = () => {
   const comingSoonMode = useComingSoonMode()

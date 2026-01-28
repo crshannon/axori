@@ -1,11 +1,11 @@
 import React from 'react'
 import {
+  ArrowRight,
   Banknote,
-  TrendingUp,
-  Shield,
   Calculator,
   Clock,
-  ArrowRight,
+  Shield,
+  TrendingUp,
 } from 'lucide-react'
 
 const PropertyScoreSection: React.FC = () => {
