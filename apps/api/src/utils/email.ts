@@ -19,6 +19,8 @@ import {
   type PortfolioInvitationEmailProps,
   WelcomeEmail,
   type WelcomeEmailProps,
+  ComingSoonConfirmationEmail,
+  type ComingSoonConfirmationEmailProps,
 } from "@axori/shared/src/email/templates";
 
 // ============================================================================
@@ -107,6 +109,16 @@ export interface SendWelcomeEmailOptions {
   to: string;
   /** Name of the recipient */
   name: string;
+}
+
+/**
+ * Options for sending a coming soon confirmation email
+ */
+export interface SendComingSoonEmailOptions {
+  /** Email address of the recipient */
+  to: string;
+  /** First name of the recipient */
+  firstName: string;
 }
 
 // ============================================================================
@@ -271,6 +283,73 @@ export async function sendWelcomeEmail(
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     console.error("Error sending welcome email:", errorMessage);
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+}
+
+/**
+ * Sends a coming soon confirmation email to a waitlist signup
+ *
+ * @param options - The coming soon email options
+ * @returns The result of the send operation
+ *
+ * @example
+ * ```ts
+ * const result = await sendComingSoonEmail({
+ *   to: "user@example.com",
+ *   firstName: "John",
+ * });
+ * ```
+ */
+export async function sendComingSoonEmail(
+  options: SendComingSoonEmailOptions
+): Promise<SendEmailResult> {
+  const resend = getResendClient();
+
+  if (!resend) {
+    console.log("📧 [Mock] Coming soon email would be sent to:", options.to);
+    return {
+      success: true,
+      messageId: "mock-message-id-" + Date.now(),
+    };
+  }
+
+  try {
+    // Build the email props
+    const emailProps: ComingSoonConfirmationEmailProps = {
+      firstName: options.firstName,
+    };
+
+    // Render the React email to HTML
+    const html = await render(ComingSoonConfirmationEmail(emailProps));
+
+    // Send the email
+    const { data, error } = await resend.emails.send({
+      from: DEFAULT_FROM_EMAIL,
+      to: options.to,
+      subject: `You're on the list, ${options.firstName}!`,
+      html,
+    });
+
+    if (error) {
+      console.error("Failed to send coming soon email:", error);
+      return {
+        success: false,
+        error: error.message || "Failed to send email",
+      };
+    }
+
+    console.log(`✓ Coming soon email sent to ${options.to} (ID: ${data?.id})`);
+    return {
+      success: true,
+      messageId: data?.id,
+    };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error("Error sending coming soon email:", errorMessage);
     return {
       success: false,
       error: errorMessage,
