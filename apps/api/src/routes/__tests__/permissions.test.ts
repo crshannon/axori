@@ -12,7 +12,7 @@
  * @see AXO-116: Add comprehensive permission tests
  */
 
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { PropertyAccess } from "@axori/db";
 
 // ============================================================================

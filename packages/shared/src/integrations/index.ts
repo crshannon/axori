@@ -4,4 +4,5 @@ export * from "./appfolio";
 export * from "./mapbox";
 export * from "./plaid";
 export * from "./ai";
+export * from "./supabase";
 

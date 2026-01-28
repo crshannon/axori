@@ -24,8 +24,6 @@ import {
 } from "../utils/audit";
 import {
   PortfolioRole,
-  canManageRole,
-  getAssignableRoles,
   validateRoleChange,
   validateMemberRemoval,
   validateInvitation,
@@ -524,8 +522,6 @@ portfoliosRouter.put(
       return c.json({ error: "Member not found" }, 404);
     }
 
-    // Determine the effective new role
-    const effectiveNewRole = validated.role || membership.role as PortfolioRole;
     const isRoleChange = validated.role && validated.role !== membership.role;
 
     // If changing role, use comprehensive role change validation

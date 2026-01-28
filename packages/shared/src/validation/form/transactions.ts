@@ -24,7 +24,7 @@ export type TransactionType = z.infer<typeof transactionTypeEnum>
 // ============================================================================
 
 // All categories from the database enum
-const allCategoriesEnum = z.enum([
+export const allCategoriesEnum = z.enum([
   // Income categories
   "rent",
   "parking",
