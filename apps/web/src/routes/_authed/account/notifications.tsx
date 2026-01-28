@@ -2,6 +2,7 @@
  * Notifications Settings Page
  *
  * Email and notification preferences management.
+ * Full-width bento-style layout.
  */
 
 import { createFileRoute } from "@tanstack/react-router"
@@ -10,6 +11,7 @@ import { Loading, cn } from "@axori/ui"
 import {
   AlertTriangle,
   Bell,
+  Check,
   DollarSign,
   FileText,
   Mail,
@@ -135,15 +137,9 @@ function NotificationsPage() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
   const [saving, setSaving] = useState(false)
 
-  const cardClass = cn(
-    "p-8 rounded-3xl border transition-all duration-500",
-    "bg-white border-slate-200 shadow-sm",
-    "dark:bg-[#1A1A1A] dark:border-white/5"
-  )
-
   if (!isLoaded) {
     return (
-      <div className="p-8 w-full flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <Loading size="lg" />
       </div>
     )
@@ -165,197 +161,277 @@ function NotificationsPage() {
   }
 
   const categories = [
-    { id: "property", label: "Property Notifications", icon: AlertTriangle },
-    { id: "financial", label: "Financial Notifications", icon: DollarSign },
-    { id: "account", label: "Account Notifications", icon: Bell },
-    { id: "marketing", label: "Marketing & Updates", icon: Mail },
+    {
+      id: "property",
+      label: "Property",
+      description: "Alerts and updates about your properties",
+      icon: AlertTriangle,
+      color: "violet",
+    },
+    {
+      id: "financial",
+      label: "Financial",
+      description: "Payments, expenses, and market data",
+      icon: DollarSign,
+      color: "emerald",
+    },
+    {
+      id: "account",
+      label: "Account",
+      description: "Security and billing notifications",
+      icon: Bell,
+      color: "blue",
+    },
+    {
+      id: "marketing",
+      label: "Marketing",
+      description: "Product news and tips",
+      icon: Mail,
+      color: "amber",
+    },
   ] as const
 
+  const emailCount = settings.filter((s) => s.email).length
+  const pushCount = settings.filter((s) => s.push).length
+
   return (
-    <div className="p-8 w-full max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Header */}
-      <div className={cardClass}>
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Bell className="w-5 h-5 text-blue-500" />
-              Notification Preferences
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Choose how and when you want to be notified
-            </p>
-          </div>
-
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className={cn(
-              "px-4 py-2 text-sm font-medium rounded-xl transition-colors",
-              "bg-blue-500 text-white hover:bg-blue-600",
-              "disabled:opacity-50 disabled:cursor-not-allowed"
-            )}
-          >
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
-
-        {/* Quick toggles */}
-        <div className="mt-6 grid grid-cols-2 gap-4">
-          <div className={cn(
-            "p-4 rounded-xl flex items-center justify-between",
-            "bg-slate-50 dark:bg-white/5"
-          )}>
-            <div className="flex items-center gap-3">
-              <Mail className="w-5 h-5 text-slate-400" />
-              <span className="text-sm font-medium">Email Notifications</span>
-            </div>
-            <button
-              onClick={() => {
-                const allEmailOn = settings.every((s) => s.email)
-                setSettings((prev) =>
-                  prev.map((s) => ({ ...s, email: !allEmailOn }))
-                )
-              }}
-              className={cn(
-                "w-12 h-6 rounded-full transition-colors relative",
-                settings.every((s) => s.email)
-                  ? "bg-blue-500"
-                  : "bg-slate-300 dark:bg-slate-600"
-              )}
-            >
-              <span
-                className={cn(
-                  "absolute top-1 w-4 h-4 rounded-full bg-white transition-all",
-                  settings.every((s) => s.email) ? "left-7" : "left-1"
-                )}
-              />
-            </button>
-          </div>
-
-          <div className={cn(
-            "p-4 rounded-xl flex items-center justify-between",
-            "bg-slate-50 dark:bg-white/5"
-          )}>
-            <div className="flex items-center gap-3">
-              <Bell className="w-5 h-5 text-slate-400" />
-              <span className="text-sm font-medium">Push Notifications</span>
-            </div>
-            <button
-              onClick={() => {
-                const allPushOn = settings.every((s) => s.push)
-                setSettings((prev) =>
-                  prev.map((s) => ({ ...s, push: !allPushOn }))
-                )
-              }}
-              className={cn(
-                "w-12 h-6 rounded-full transition-colors relative",
-                settings.every((s) => s.push)
-                  ? "bg-blue-500"
-                  : "bg-slate-300 dark:bg-slate-600"
-              )}
-            >
-              <span
-                className={cn(
-                  "absolute top-1 w-4 h-4 rounded-full bg-white transition-all",
-                  settings.every((s) => s.push) ? "left-7" : "left-1"
-                )}
-              />
-            </button>
-          </div>
-        </div>
+    <div className="px-6 lg:px-12 py-10">
+      {/* Page Header */}
+      <div className="mb-10">
+        <h2 className="text-3xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+          Notifications
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-white/50 mt-1">
+          Choose how and when you want to be notified
+        </p>
       </div>
 
-      {/* Category Sections */}
-      {categories.map((category) => {
-        const categorySettings = settings.filter((s) => s.category === category.id)
-        const CategoryIcon = category.icon
+      {/* Bento Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Summary Card - Span 4 */}
+        <div className="lg:col-span-4">
+          <div
+            className={cn(
+              "h-full p-8 rounded-3xl border",
+              "bg-white border-slate-200",
+              "dark:bg-[#1A1A1A] dark:border-white/5"
+            )}
+          >
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40">
+              Notification Summary
+            </span>
 
-        return (
-          <section key={category.id} className={cardClass}>
-            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <CategoryIcon className="w-5 h-5 text-blue-500" />
-              {category.label}
-            </h3>
-
-            <div className="space-y-4">
-              {categorySettings.map((setting) => {
-                const Icon = setting.icon
-
-                return (
+            <div className="mt-6 space-y-6">
+              {/* Email Stats */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Mail className="size-4 text-violet-600 dark:text-[#E8FF4D]" />
+                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                      Email
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">
+                    {emailCount}/{settings.length}
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-slate-100 dark:bg-white/5 overflow-hidden">
                   <div
-                    key={setting.id}
+                    className="h-full rounded-full bg-violet-500 dark:bg-[#E8FF4D] transition-all"
+                    style={{
+                      width: `${(emailCount / settings.length) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Push Stats */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Bell className="size-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                      Push
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">
+                    {pushCount}/{settings.length}
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-slate-100 dark:bg-white/5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-blue-500 dark:bg-blue-400 transition-all"
+                    style={{
+                      width: `${(pushCount / settings.length) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="pt-6 border-t border-slate-100 dark:border-white/5 space-y-3">
+                <button
+                  onClick={() =>
+                    setSettings((prev) => prev.map((s) => ({ ...s, email: true })))
+                  }
+                  className={cn(
+                    "w-full px-4 py-3 rounded-2xl text-sm font-medium transition-colors text-left flex items-center justify-between",
+                    "bg-slate-50 hover:bg-slate-100 text-slate-700",
+                    "dark:bg-white/5 dark:hover:bg-white/10 dark:text-white/70"
+                  )}
+                >
+                  Enable all email
+                  <Check className="size-4" />
+                </button>
+                <button
+                  onClick={() =>
+                    setSettings((prev) => prev.map((s) => ({ ...s, push: true })))
+                  }
+                  className={cn(
+                    "w-full px-4 py-3 rounded-2xl text-sm font-medium transition-colors text-left flex items-center justify-between",
+                    "bg-slate-50 hover:bg-slate-100 text-slate-700",
+                    "dark:bg-white/5 dark:hover:bg-white/10 dark:text-white/70"
+                  )}
+                >
+                  Enable all push
+                  <Check className="size-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className={cn(
+                "w-full mt-8 px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-wider transition-all",
+                "bg-violet-600 text-white hover:bg-violet-700",
+                "dark:bg-[#E8FF4D] dark:text-black dark:hover:bg-[#d4eb45]",
+                "disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </div>
+
+        {/* Right Column - Span 8 */}
+        <div className="lg:col-span-8 space-y-6">
+          {categories.map((category) => {
+            const categorySettings = settings.filter(
+              (s) => s.category === category.id
+            )
+            const CategoryIcon = category.icon
+
+            return (
+              <div
+                key={category.id}
+                className={cn(
+                  "p-8 rounded-3xl border",
+                  "bg-white border-slate-200",
+                  "dark:bg-[#1A1A1A] dark:border-white/5"
+                )}
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div
                     className={cn(
-                      "flex items-center justify-between p-4 rounded-xl",
-                      "bg-slate-50 dark:bg-white/5"
+                      "p-2.5 rounded-xl",
+                      category.color === "violet" &&
+                        "bg-violet-100 text-violet-600 dark:bg-[#E8FF4D]/10 dark:text-[#E8FF4D]",
+                      category.color === "emerald" &&
+                        "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+                      category.color === "blue" &&
+                        "bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+                      category.color === "amber" &&
+                        "bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
                     )}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-slate-500 dark:text-slate-400" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{setting.label}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {setting.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      {/* Email Toggle */}
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-slate-400" />
-                        <button
-                          onClick={() => toggleSetting(setting.id, "email")}
-                          className={cn(
-                            "w-10 h-5 rounded-full transition-colors relative",
-                            setting.email
-                              ? "bg-blue-500"
-                              : "bg-slate-300 dark:bg-slate-600"
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all",
-                              setting.email ? "left-5" : "left-0.5"
-                            )}
-                          />
-                        </button>
-                      </div>
-
-                      {/* Push Toggle */}
-                      <div className="flex items-center gap-2">
-                        <Bell className="w-4 h-4 text-slate-400" />
-                        <button
-                          onClick={() => toggleSetting(setting.id, "push")}
-                          className={cn(
-                            "w-10 h-5 rounded-full transition-colors relative",
-                            setting.push
-                              ? "bg-blue-500"
-                              : "bg-slate-300 dark:bg-slate-600"
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all",
-                              setting.push ? "left-5" : "left-0.5"
-                            )}
-                          />
-                        </button>
-                      </div>
-                    </div>
+                    <CategoryIcon className="size-5" />
                   </div>
-                )
-              })}
-            </div>
-          </section>
-        )
-      })}
+                  <div>
+                    <h3 className="font-bold text-slate-900 dark:text-white">
+                      {category.label} Notifications
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-white/50">
+                      {category.description}
+                    </p>
+                  </div>
+                </div>
 
-      {/* Unsubscribe Note */}
-      <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-        You can unsubscribe from all marketing emails at any time. Security alerts cannot be disabled.
-      </p>
+                <div className="space-y-3">
+                  {categorySettings.map((setting) => {
+                    const Icon = setting.icon
+
+                    return (
+                      <div
+                        key={setting.id}
+                        className={cn(
+                          "flex items-center justify-between p-4 rounded-2xl",
+                          "bg-slate-50 dark:bg-white/5"
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-xl bg-white dark:bg-white/10 flex items-center justify-center shadow-sm">
+                            <Icon className="size-5 text-slate-500 dark:text-slate-400" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm text-slate-900 dark:text-white">
+                              {setting.label}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-white/50">
+                              {setting.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          {/* Email Toggle */}
+                          <button
+                            onClick={() => toggleSetting(setting.id, "email")}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-1.5 rounded-xl transition-colors",
+                              setting.email
+                                ? "bg-violet-100 text-violet-700 dark:bg-[#E8FF4D]/10 dark:text-[#E8FF4D]"
+                                : "bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-white/30"
+                            )}
+                          >
+                            <Mail className="size-3.5" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider">
+                              Email
+                            </span>
+                          </button>
+
+                          {/* Push Toggle */}
+                          <button
+                            onClick={() => toggleSetting(setting.id, "push")}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-1.5 rounded-xl transition-colors",
+                              setting.push
+                                ? "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+                                : "bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-white/30"
+                            )}
+                          >
+                            <Bell className="size-3.5" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider">
+                              Push
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Footer Note */}
+          <p className="text-xs text-slate-400 dark:text-white/30 text-center py-4">
+            Security alerts cannot be disabled. You can unsubscribe from
+            marketing emails at any time.
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
