@@ -64,6 +64,13 @@
       "when": 1737840000000,
       "tag": "0008_invitation_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1737926400000,
+      "tag": "0009_property_documents",
+      "breakpoints": true
     }
   ]
 }

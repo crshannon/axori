@@ -204,9 +204,7 @@ export const PropertyCard = ({
       duration-500
       hover:scale-[1.02] hover:shadow-2xl
     `,
-    hasMissingData && `
-      border-2 border-dashed
-    `,
+    hasMissingData && `border-2 border-dashed`,
     hasMissingData && isDark
       ? "border-amber-500/30 bg-amber-500/5"
       : hasMissingData
@@ -316,7 +314,7 @@ export const PropertyCard = ({
               {missingRentalIncome && (
                 <span
                   className={cn(
-                    "w-1.5 h-1.5 rounded-full",
+                    "size-1.5 rounded-full",
                     isDark ? "bg-amber-400" : "bg-amber-500"
                   )}
                   title="Rental income missing"
@@ -331,10 +329,19 @@ export const PropertyCard = ({
                   onAddRentalIncome?.(id);
                 }}
                 className={cn(
-                  "text-sm font-black tracking-tight uppercase mt-1 transition-colors",
+                  `
+                    mt-1 text-sm font-black tracking-tight uppercase
+                    transition-colors
+                  `,
                   isDark
-                    ? "text-amber-400 hover:text-amber-300"
-                    : "text-amber-600 hover:text-amber-700"
+                    ? `
+                      text-amber-400
+                      hover:text-amber-300
+                    `
+                    : `
+                      text-amber-600
+                      hover:text-amber-700
+                    `
                 )}
               >
                 Add Rent
@@ -352,7 +359,7 @@ export const PropertyCard = ({
           </div>
           <div
             className={cn(
-              "text-right flex-1",
+              "flex-1 text-right",
               missingCurrentValue && "cursor-pointer"
             )}
             onClick={(e) => {
@@ -374,7 +381,7 @@ export const PropertyCard = ({
               {missingCurrentValue && (
                 <span
                   className={cn(
-                    "w-1.5 h-1.5 rounded-full",
+                    "size-1.5 rounded-full",
                     isDark ? "bg-amber-400" : "bg-amber-500"
                   )}
                   title="Current value missing"
@@ -389,10 +396,19 @@ export const PropertyCard = ({
                   onAddCurrentValue?.(id);
                 }}
                 className={cn(
-                  "text-sm font-black tracking-tight uppercase mt-1 transition-colors",
+                  `
+                    mt-1 text-sm font-black tracking-tight uppercase
+                    transition-colors
+                  `,
                   isDark
-                    ? "text-amber-400 hover:text-amber-300"
-                    : "text-amber-600 hover:text-amber-700"
+                    ? `
+                      text-amber-400
+                      hover:text-amber-300
+                    `
+                    : `
+                      text-amber-600
+                      hover:text-amber-700
+                    `
                 )}
               >
                 Add Value

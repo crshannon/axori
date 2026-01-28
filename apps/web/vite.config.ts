@@ -117,7 +117,17 @@ export default defineConfig(({ mode }) => {
         protocolImports: false,
       }),
       devtools(),
-      nitro(),
+      nitro({
+        // Mark node:buffer as external to avoid build issues
+        rollup: {
+          external: (id) => {
+            if (id === 'node:buffer' || id.startsWith('node:')) {
+              return true
+            }
+            return false
+          },
+        },
+      }),
       // this is the plugin that enables path aliases
       viteTsConfigPaths({
         projects: ['./tsconfig.json'],
