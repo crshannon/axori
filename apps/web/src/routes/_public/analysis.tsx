@@ -32,7 +32,7 @@ function Analysis() {
                   className={`w-3.5 h-3.5 rounded-full opacity-10 ${accentBgClass}`}
                 ></div>
               </div>
-              <span className="text-[11px] font-black uppercase tracking-[0.4em] opacity-40">
+              <span className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-white/40">
                 System Architecture / V2.5
               </span>
             </div>
@@ -118,7 +118,7 @@ function Analysis() {
             </div>
             <div className="mt-12">
               <div className="flex justify-between items-end mb-4">
-                <span className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40">
                   Strategy Fit
                 </span>
                 <span
@@ -176,18 +176,18 @@ function Analysis() {
                 {
                   label: 'Gross Potential Rent',
                   val: '$14,200',
-                  opacity: 'opacity-40',
+                  labelColor: 'text-slate-400 dark:text-white/40',
                 },
                 {
                   label: 'Projected Expenses',
                   val: '-$5,100',
-                  opacity: 'opacity-40',
+                  labelColor: 'text-slate-400 dark:text-white/40',
                   color: 'text-red-500',
                 },
                 {
                   label: 'Net Monthly Income',
                   val: '$9,100',
-                  opacity: 'opacity-100',
+                  labelColor: 'text-slate-900 dark:text-white',
                   bold: true,
                 },
               ].map((row, i) => (
@@ -198,7 +198,7 @@ function Analysis() {
                   }`}
                 >
                   <span
-                    className={`text-[11px] font-black uppercase tracking-widest ${row.opacity}`}
+                    className={`text-[11px] font-black uppercase tracking-widest ${row.labelColor}`}
                   >
                     {row.label}
                   </span>
@@ -293,7 +293,7 @@ function Analysis() {
                   className="p-5 rounded-3xl transition-colors bg-slate-50 border border-black/5 dark:bg-white/5 dark:border-white/5"
                 >
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-[11px] font-black uppercase tracking-widest opacity-50">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-white/50">
                       {r.l}
                     </span>
                     <span
@@ -302,7 +302,7 @@ function Analysis() {
                       {r.v}
                     </span>
                   </div>
-                  <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                     <div
                       className={`h-full ${r.c.replace('text', 'bg')} rounded-full opacity-60`}
                       style={{ width: `${100 - r.p}%` }}

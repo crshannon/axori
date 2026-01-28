@@ -108,20 +108,20 @@ function Pricing() {
 
               <div className="mb-12 relative z-10">
                 <div className={`w-14 h-1.5 mb-8 ${plan.accent}`}></div>
-                <h2 className="text-5xl font-black uppercase tracking-tighter mb-2">
+                <h2 className="text-5xl font-black uppercase tracking-tighter mb-2 text-slate-900 dark:text-white">
                   {plan.name}
                 </h2>
                 <div className="flex items-baseline gap-2 mb-8">
-                  <span className="text-6xl font-black tracking-tighter tabular-nums">
+                  <span className="text-6xl font-black tracking-tighter tabular-nums text-slate-900 dark:text-white">
                     {plan.price}
                   </span>
-                  <span className="text-sm font-bold opacity-40 uppercase tracking-widest">
+                  <span className="text-sm font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest">
                     {plan.period}
                   </span>
                 </div>
               </div>
 
-              <p className="text-sm font-bold opacity-60 mb-12 leading-relaxed relative z-10">
+              <p className="text-sm font-bold text-slate-500 dark:text-white/60 mb-12 leading-relaxed relative z-10">
                 {plan.desc}
               </p>
 
@@ -129,7 +129,7 @@ function Pricing() {
                 {plan.features.map((feat, fi) => (
                   <li
                     key={fi}
-                    className="flex items-center gap-4 text-xs font-black uppercase tracking-widest"
+                    className="flex items-center gap-4 text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white"
                   >
                     <div
                       className={`w-6 h-6 rounded-full flex items-center justify-center ${
@@ -238,10 +238,10 @@ function Pricing() {
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-8">
               THE PROMISE
             </p>
-            <h4 className="text-2xl font-black uppercase tracking-tight mb-4">
+            <h4 className="text-2xl font-black uppercase tracking-tight mb-4 text-slate-900 dark:text-white">
               No Lock-ins.
             </h4>
-            <p className="text-sm opacity-60 leading-relaxed font-medium mb-8">
+            <p className="text-sm text-slate-500 dark:text-white/60 leading-relaxed font-medium mb-8">
               Axori is a tool, not a trap. Cancel anytime, export your data to
               CSV or JSON in seconds. We earn your trust every billing cycle.
             </p>
@@ -359,10 +359,10 @@ function Pricing() {
             </p>
           </div>
           <div className="p-10 rounded-[3rem] border flex flex-col justify-between transition-colors bg-white border-black/5 shadow-sm dark:bg-[#1A1A1A] dark:border-white/5">
-            <h5 className="text-xl font-black uppercase leading-tight mb-4">
+            <h5 className="text-xl font-black uppercase leading-tight mb-4 text-slate-900 dark:text-white">
               What's "Concierge"?
             </h5>
-            <p className="text-xs opacity-60 leading-relaxed font-bold">
+            <p className="text-xs text-slate-500 dark:text-white/60 leading-relaxed font-bold">
               A real human analyst who sanity checks your portfolio every
               quarter.
             </p>
