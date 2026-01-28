@@ -967,6 +967,29 @@ packages/
 5. **Attachment Storage**: Where should communication attachments be stored?
    - *Recommendation*: Use existing file storage pattern (if exists), otherwise Supabase Storage
 
+### Cross-Feature Integration Required
+
+> **⚠️ IMPORTANT: Document Tab Integration**
+>
+> The **Documents Tab** feature is being developed separately. Communication attachments
+> (email attachments, formal notices, lease documents referenced in communications) should
+> integrate with the Documents system rather than creating a parallel storage mechanism.
+>
+> **Action Items:**
+> 1. Review Documents Tab schema once available
+> 2. Ensure `email_attachments` can link to document records
+> 3. Communication attachments should appear in both:
+>    - The communication detail view (contextual)
+>    - The Documents tab (consolidated property documents)
+> 4. Consider shared upload component between features
+> 5. Align file categorization/tagging between systems
+>
+> **Temporary Approach (if Documents not ready):**
+> - Store attachments in Supabase Storage with `communications/` prefix
+> - Track in `email_attachments` table as planned
+> - Add `documentId` nullable field for future linking
+> - Plan migration to link existing attachments when Documents feature ships
+
 ### Technical Clarifications Needed
 
 1. Does the existing `propertyManagement` table contact info need migration to `property_contacts`?
