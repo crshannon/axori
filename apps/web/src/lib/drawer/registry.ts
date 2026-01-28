@@ -74,6 +74,10 @@ export const DRAWERS = {
   BANK_ALLOCATION: 'bank-allocation',
   PROPERTY_ACQUISITION: 'property-acquisition',
   VALUATION: 'valuation',
+  // Documents Drawers
+  UPLOAD_DOCUMENT: 'upload-document',
+  DOCUMENT_DETAIL: 'document-detail',
+  TAX_EXPORT: 'tax-export',
 } as const
 
 // =============================================================================
@@ -111,6 +115,22 @@ export const bankAccountDrawerParamsSchema = z.object({
   bankAccountId: z.string().optional(),
 })
 
+/**
+ * Schema for document drawer (property + optional documentId for detail view)
+ */
+export const documentDrawerParamsSchema = z.object({
+  propertyId: z.string().min(1, 'Property ID is required'),
+  documentId: z.string().optional(),
+})
+
+/**
+ * Schema for tax export drawer (property + optional year for pre-selection)
+ */
+export const taxExportDrawerParamsSchema = z.object({
+  propertyId: z.string().min(1, 'Property ID is required'),
+  year: z.coerce.number().optional(),
+})
+
 // =============================================================================
 // DRAWER NAMES (for type safety)
 // =============================================================================
@@ -136,6 +156,10 @@ export const DRAWER_NAMES = [
   'bank-allocation',
   'property-acquisition',
   'valuation',
+  // Documents Drawers
+  'upload-document',
+  'document-detail',
+  'tax-export',
 ] as const
 
 export type DrawerName = (typeof DRAWER_NAMES)[number]
@@ -287,6 +311,42 @@ export const DRAWER_REGISTRY: Record<DrawerName, DrawerRegistryEntry<any>> = {
     paramsSchema: propertyDrawerParamsSchema,
     permission: 'member',
     displayName: 'Property Valuation',
+  },
+
+  // ==========================================================================
+  // Documents Drawers
+  // ==========================================================================
+  'upload-document': {
+    component: lazy(() =>
+      import('@/components/drawers/DocumentUploadDrawer').then((m) => ({
+        default: m.DocumentUploadDrawer,
+      })),
+    ),
+    paramsSchema: documentDrawerParamsSchema,
+    permission: 'member',
+    displayName: 'Upload Document',
+  },
+
+  'document-detail': {
+    component: lazy(() =>
+      import('@/components/drawers/DocumentDetailDrawer').then((m) => ({
+        default: m.DocumentDetailDrawer,
+      })),
+    ),
+    paramsSchema: documentDrawerParamsSchema,
+    permission: 'viewer',
+    displayName: 'Document Details',
+  },
+
+  'tax-export': {
+    component: lazy(() =>
+      import('@/components/drawers/TaxExportDrawer').then((m) => ({
+        default: m.TaxExportDrawer,
+      })),
+    ),
+    paramsSchema: taxExportDrawerParamsSchema,
+    permission: 'member',
+    displayName: 'Tax Export',
   },
 }
 

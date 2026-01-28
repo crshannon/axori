@@ -256,7 +256,7 @@ export function validatePropertyAccessWithinRole(
   const rolePermissions = ROLE_DEFAULT_PERMISSIONS[role];
 
   // Check each property's access
-  for (const [propertyId, permissions] of Object.entries(propertyAccess)) {
+  for (const permissions of Object.values(propertyAccess)) {
     for (const permission of permissions) {
       if (!rolePermissions.includes(permission as PropertyPermission)) {
         return {

@@ -17,6 +17,8 @@ export type {
   LoanInsert,
   PropertyBankAccount,
   PropertyBankAccountInsert,
+  PropertyDocument,
+  PropertyDocumentInsert,
 } from "@axori/db/types";
 
 // Export Zod-inferred types for runtime parsing and validation

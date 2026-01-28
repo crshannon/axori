@@ -333,7 +333,7 @@ async function isDrawerOpen(page: Page): Promise<boolean> {
 /**
  * Get current URL search params
  */
-async function getSearchParams(page: Page): Promise<URLSearchParams> {
+function getSearchParams(page: Page): URLSearchParams {
   const url = new URL(page.url())
   return url.searchParams
 }
@@ -460,7 +460,7 @@ test.describe('Drawer Opening', () => {
     await waitForDrawerOpen(page)
 
     // Verify URL has the last drawer
-    const params = await getSearchParams(page)
+    const params = getSearchParams(page)
     expect(params.get('drawer')).toBe('asset-config')
   })
 })
@@ -493,7 +493,7 @@ test.describe('Drawer Closing', () => {
     await waitForDrawerClosed(page)
 
     // Verify URL params are cleared
-    const params = await getSearchParams(page)
+    const params = getSearchParams(page)
     expect(params.get('drawer')).toBeNull()
   })
 
@@ -513,7 +513,7 @@ test.describe('Drawer Closing', () => {
     await waitForDrawerClosed(page)
 
     // Verify URL params are cleared
-    const params = await getSearchParams(page)
+    const params = getSearchParams(page)
     expect(params.get('drawer')).toBeNull()
   })
 
@@ -537,7 +537,7 @@ test.describe('Drawer Closing', () => {
     await waitForDrawerClosed(page)
 
     // Verify URL params are cleared
-    const params = await getSearchParams(page)
+    const params = getSearchParams(page)
     expect(params.get('drawer')).toBeNull()
   })
 
@@ -566,7 +566,7 @@ test.describe('Drawer Closing', () => {
     expect(await isDrawerOpen(page)).toBe(false)
 
     // URL should not have drawer params
-    const params = await getSearchParams(page)
+    const params = getSearchParams(page)
     expect(params.get('drawer')).toBeNull()
   })
 
@@ -642,7 +642,7 @@ test.describe('Navigation & Deep Linking', () => {
     await expect(drawer).toContainText('Asset Configuration')
 
     // Verify URL still has params
-    const params = await getSearchParams(page)
+    const params = getSearchParams(page)
     expect(params.get('drawer')).toBe('asset-config')
     expect(params.get('propertyId')).toBe(TEST_PROPERTY_ID)
   })
@@ -687,7 +687,7 @@ test.describe('Navigation & Deep Linking', () => {
     expect(await isDrawerOpen(page)).toBe(false)
 
     // Verify URL has no drawer params
-    const params = await getSearchParams(page)
+    const params = getSearchParams(page)
     expect(params.get('drawer')).toBeNull()
   })
 
@@ -700,7 +700,7 @@ test.describe('Navigation & Deep Linking', () => {
 
     await waitForDrawerOpen(page)
 
-    let params = await getSearchParams(page)
+    let params = getSearchParams(page)
     expect(params.get('drawer')).toBe('asset-config')
 
     // Navigate to a different drawer
@@ -713,7 +713,7 @@ test.describe('Navigation & Deep Linking', () => {
     await waitForDrawerOpen(page)
 
     // Verify new drawer is shown
-    params = await getSearchParams(page)
+    params = getSearchParams(page)
     expect(params.get('drawer')).toBe('acquisition')
 
     const drawer = page.locator('[role="dialog"]')
@@ -869,7 +869,7 @@ test.describe('URL State Management', () => {
       `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=add-loan&propertyId=${TEST_PROPERTY_ID}&loanId=${TEST_LOAN_ID}`,
     )
 
-    const params = await getSearchParams(page)
+    const params = getSearchParams(page)
     expect(params.get('drawer')).toBe('add-loan')
     expect(params.get('propertyId')).toBe(TEST_PROPERTY_ID)
     expect(params.get('loanId')).toBe(TEST_LOAN_ID)
@@ -881,7 +881,7 @@ test.describe('URL State Management', () => {
       `/property-hub/${TEST_PROPERTY_ID}/financials?drawer=add-loan&propertyId=${TEST_PROPERTY_ID}&loanId=${TEST_LOAN_ID}`,
     )
 
-    const params = await getSearchParams(page)
+    const params = getSearchParams(page)
     expect(params.get('drawer')).toBe('add-loan')
     expect(params.get('propertyId')).toBe(TEST_PROPERTY_ID)
     expect(params.get('loanId')).toBe(TEST_LOAN_ID)
@@ -897,7 +897,7 @@ test.describe('URL State Management', () => {
       `/property-hub/${TEST_PROPERTY_ID}/settings?drawer=asset-config&propertyId=${encodeURIComponent(specialPropertyId)}`,
     )
 
-    const params = await getSearchParams(page)
+    const params = getSearchParams(page)
     expect(params.get('propertyId')).toBe(specialPropertyId)
   })
 })
@@ -974,7 +974,7 @@ test.describe('Drawer Type-Specific Tests', () => {
     await waitForDrawerOpen(page)
 
     // Verify drawer received loanId param
-    const params = await getSearchParams(page)
+    const params = getSearchParams(page)
     expect(params.get('loanId')).toBe(TEST_LOAN_ID)
   })
 })
