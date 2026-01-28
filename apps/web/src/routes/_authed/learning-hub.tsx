@@ -1,6 +1,7 @@
-import { Link, Outlet, createFileRoute, useLocation } from "@tanstack/react-router";
+import { Link, Outlet, createFileRoute, useLocation, useNavigate } from "@tanstack/react-router";
 import { BookOpen, Bookmark, ChevronDown, GraduationCap, Search, Trophy } from "lucide-react";
 import { createContext, useContext, useEffect, useState } from "react";
+import type { KeyboardEvent } from "react";
 import { cn } from "@/utils/helpers";
 import { useTheme } from "@/utils/providers/theme-provider";
 import { getLearningStats } from "@/lib/learning-hub/progress";
@@ -46,6 +47,7 @@ function LearningHubLayout() {
   const { appTheme } = useTheme();
   const isDark = appTheme === "dark";
   const location = useLocation();
+  const navigate = useNavigate();
   const [selectedJourney, setSelectedJourney] = useState<string>("builder");
   const [journeyDropdownOpen, setJourneyDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,6 +57,16 @@ function LearningHubLayout() {
   useEffect(() => {
     setStats(getLearningStats());
   }, [location.pathname]); // Refresh stats when navigating
+
+  // Handle search - navigate to glossary with search query
+  const handleSearch = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && searchQuery.trim()) {
+      navigate({
+        to: "/learning-hub/glossary",
+        search: { q: searchQuery.trim() },
+      });
+    }
+  };
 
   const tabs = [
     { path: "/learning-hub", label: "HOME", exact: true },
@@ -122,9 +134,10 @@ function LearningHubLayout() {
                 />
                 <input
                   type="text"
-                  placeholder="Search protocols and tags..."
+                  placeholder="Search glossary terms..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearch}
                   className={cn(
                     "pl-12 pr-6 py-3.5 rounded-full text-sm border transition-all w-full sm:w-72 outline-none",
                     isDark
