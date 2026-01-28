@@ -22,6 +22,16 @@ import {
   Wallet,
 } from "lucide-react";
 import { EmailCaptureForm } from "./EmailCaptureForm";
+import type { ReactNode } from "react";
+
+interface ComingSoonHeroProps {
+  /** Badge text shown above the headline */
+  badgeText?: string;
+  /** Custom CTA slot - if not provided, shows EmailCaptureForm */
+  ctaSlot?: ReactNode;
+  /** Bottom stats to show - defaults to waitlist stats */
+  showWaitlistStats?: boolean;
+}
 
 /**
  * Pool of floating data cards to randomly select from
@@ -285,13 +295,17 @@ function FloatingDataCard({
 }
 
 /**
- * Coming Soon Hero Component
+ * Hero Component
  *
- * The main hero section for the soft-launch landing page.
+ * The main hero section for the landing page.
  * Features animated background, floating data visualizations,
- * and email capture form.
+ * and customizable CTA slot (email capture form or buttons).
  */
-export function ComingSoonHero() {
+export function ComingSoonHero({
+  badgeText = "Coming Soon",
+  ctaSlot,
+  showWaitlistStats = true,
+}: ComingSoonHeroProps = {}) {
   // Randomly select 8 cards on mount (client-side only)
   const selectedCards = useMemo(() => {
     const shuffled = shuffleArray(DATA_CARD_POOL);
@@ -359,7 +373,7 @@ export function ComingSoonHero() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500 dark:bg-[#E8FF4D]"></span>
               </span>
               <span className="text-xs font-black uppercase tracking-widest text-violet-600 dark:text-[#E8FF4D]">
-                Coming Soon
+                {badgeText}
               </span>
               <Sparkles className="h-3.5 w-3.5 text-violet-500 dark:text-[#E8FF4D]" />
             </div>
@@ -386,61 +400,67 @@ export function ComingSoonHero() {
             </span>
           </p>
 
-          {/* Email Capture Form */}
+          {/* CTA Slot - Email Capture Form or Custom CTA */}
           <div className="w-full max-w-2xl">
-            <EmailCaptureForm source="hero" variant="hero" />
+            {ctaSlot ? (
+              ctaSlot
+            ) : (
+              <>
+                <EmailCaptureForm source="hero" variant="hero" />
 
-            {/* Trust indicators */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs">
-              <div className="flex items-center gap-2 text-slate-500 dark:text-white/40">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                  />
-                </svg>
-                <span className="font-semibold">Bank-level security</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-500 dark:text-white/40">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span className="font-semibold">Early access priority</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-500 dark:text-white/40">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
-                  />
-                </svg>
-                <span className="font-semibold">No spam, ever</span>
-              </div>
-            </div>
+                {/* Trust indicators */}
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs">
+                  <div className="flex items-center gap-2 text-slate-500 dark:text-white/40">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                      />
+                    </svg>
+                    <span className="font-semibold">Bank-level security</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-500 dark:text-white/40">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span className="font-semibold">Early access priority</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-500 dark:text-white/40">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
+                      />
+                    </svg>
+                    <span className="font-semibold">No spam, ever</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -449,32 +469,65 @@ export function ComingSoonHero() {
       <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200/50 dark:border-white/5 bg-white/50 dark:bg-white/[0.02] backdrop-blur-sm">
         <div className="mx-auto max-w-[1440px] px-4 md:px-6 py-4">
           <div className="flex items-center justify-center gap-8 md:gap-16 text-sm overflow-x-auto">
-            <div className="flex items-center gap-2 whitespace-nowrap">
-              <span className="text-slate-400 dark:text-white/30 font-medium">
-                Waitlist
-              </span>
-              <span className="font-black tabular-nums text-slate-900 dark:text-white">
-                2,400+
-              </span>
-            </div>
-            <div className="h-4 w-px bg-slate-200 dark:bg-white/10" />
-            <div className="flex items-center gap-2 whitespace-nowrap">
-              <span className="text-slate-400 dark:text-white/30 font-medium">
-                Beta Users
-              </span>
-              <span className="font-black tabular-nums text-slate-900 dark:text-white">
-                127
-              </span>
-            </div>
-            <div className="h-4 w-px bg-slate-200 dark:bg-white/10" />
-            <div className="flex items-center gap-2 whitespace-nowrap">
-              <span className="text-slate-400 dark:text-white/30 font-medium">
-                Launch
-              </span>
-              <span className="font-black text-violet-600 dark:text-[#E8FF4D]">
-                Q1 2026
-              </span>
-            </div>
+            {showWaitlistStats ? (
+              <>
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <span className="text-slate-400 dark:text-white/30 font-medium">
+                    Waitlist
+                  </span>
+                  <span className="font-black tabular-nums text-slate-900 dark:text-white">
+                    2,400+
+                  </span>
+                </div>
+                <div className="h-4 w-px bg-slate-200 dark:bg-white/10" />
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <span className="text-slate-400 dark:text-white/30 font-medium">
+                    Beta Users
+                  </span>
+                  <span className="font-black tabular-nums text-slate-900 dark:text-white">
+                    127
+                  </span>
+                </div>
+                <div className="h-4 w-px bg-slate-200 dark:bg-white/10" />
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <span className="text-slate-400 dark:text-white/30 font-medium">
+                    Launch
+                  </span>
+                  <span className="font-black text-violet-600 dark:text-[#E8FF4D]">
+                    Q1 2026
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <span className="text-slate-400 dark:text-white/30 font-medium">
+                    Active Investors
+                  </span>
+                  <span className="font-black tabular-nums text-slate-900 dark:text-white">
+                    2,400+
+                  </span>
+                </div>
+                <div className="h-4 w-px bg-slate-200 dark:bg-white/10" />
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <span className="text-slate-400 dark:text-white/30 font-medium">
+                    Properties Analyzed
+                  </span>
+                  <span className="font-black tabular-nums text-slate-900 dark:text-white">
+                    12K+
+                  </span>
+                </div>
+                <div className="h-4 w-px bg-slate-200 dark:bg-white/10" />
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <span className="text-slate-400 dark:text-white/30 font-medium">
+                    Avg ROI Increase
+                  </span>
+                  <span className="font-black text-violet-600 dark:text-[#E8FF4D]">
+                    +23%
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

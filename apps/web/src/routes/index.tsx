@@ -126,71 +126,17 @@ function App() {
     )
   }
 
-  // Normal Mode - Full landing page (matches coming-soon style with sign-up CTAs)
+  // Normal Mode - Full landing page (uses same hero with sign-up CTAs)
   return (
     <PublicLayout>
-      {/* Hero Section - Similar to ComingSoonHero but with Sign Up CTA */}
-      <section className="relative w-full min-h-[90vh] flex items-center overflow-hidden bg-white dark:bg-[#0F1115]">
-        {/* Background Grid Pattern */}
-        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
-          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern
-                id="hero-grid"
-                width="60"
-                height="60"
-                patternUnits="userSpaceOnUse"
-              >
-                <path
-                  d="M 60 0 L 0 0 0 60"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1"
-                />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#hero-grid)" />
-          </svg>
-        </div>
-
-        {/* Animated Gradient Orbs */}
-        <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-violet-500/20 rounded-full blur-[120px] animate-pulse dark:bg-violet-500/10" />
-        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-[#E8FF4D]/15 rounded-full blur-[100px] animate-pulse dark:bg-[#E8FF4D]/10" />
-        <div className="absolute top-1/2 right-0 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[80px] dark:bg-blue-500/5" />
-
-        {/* Main Content */}
-        <div className="relative z-10 mx-auto max-w-[1440px] px-4 md:px-6 py-20">
-          <div className="max-w-4xl">
-            {/* Badge */}
-            <div className="mb-8 animate-fadeIn">
-              <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-lg shadow-violet-500/5">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="text-xs font-black uppercase tracking-widest text-violet-600 dark:text-[#E8FF4D]">
-                  Now Available
-                </span>
-              </div>
-            </div>
-
-            {/* Main Headline */}
-            <h1 className="text-[clamp(3rem,8vw,7rem)] leading-[0.9] tracking-[-0.04em] font-extrabold uppercase mb-8 transition-colors text-slate-900 dark:text-white">
-              OWN YOUR <span className="opacity-30">WEALTH</span>,
-              <br />
-              <span className="text-violet-600 dark:text-[#E8FF4D]">OWN</span>{' '}
-              YOUR DATA.
-            </h1>
-
-            {/* Subheadline */}
-            <p className="text-xl md:text-2xl text-slate-500 dark:text-white/50 max-w-2xl mb-12 font-medium leading-relaxed">
-              The first real estate platform that prioritizes your "Investment
-              DNA" over generic market data. AI-powered analysis, institutional
-              tools, all in your pocket.
-            </p>
-
+      {/* Hero - Same component with custom CTA slot */}
+      <ComingSoonHero
+        badgeText="Now Available"
+        showWaitlistStats={false}
+        ctaSlot={
+          <>
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/sign-up">
                 <Button className="px-10 py-5 rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-violet-200 bg-violet-600 text-white hover:bg-violet-700 dark:bg-[#E8FF4D] dark:text-black dark:hover:bg-[#d4eb45] dark:shadow-black/30">
                   Get Started Free
@@ -205,13 +151,13 @@ function App() {
             </div>
 
             {/* Trust note */}
-            <p className="mt-8 text-xs text-slate-400 dark:text-white/30 font-medium">
+            <p className="mt-8 text-xs text-slate-400 dark:text-white/30 font-medium text-center">
               Free to start • No credit card required • 2,400+ investors
               already using Axori
             </p>
-          </div>
-        </div>
-      </section>
+          </>
+        }
+      />
 
       {/* Value Proposition */}
       <ValueProposition />
