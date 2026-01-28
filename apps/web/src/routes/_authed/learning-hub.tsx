@@ -74,6 +74,7 @@ function LearningHubLayout() {
     { path: "/learning-hub/paths", label: "PATHS" },
     { path: "/learning-hub/articles", label: "ARTICLES" },
     { path: "/learning-hub/calculators", label: "CALCULATORS" },
+    { path: "/learning-hub/quizzes", label: "QUIZZES" },
     { path: "/learning-hub/analyzer", label: "ANALYZER" },
     { path: "/learning-hub/scenarios", label: "SCENARIOS" },
     { path: "/learning-hub/freedom", label: "FREEDOM" },
