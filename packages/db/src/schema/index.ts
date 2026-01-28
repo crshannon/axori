@@ -943,6 +943,14 @@ export const invitationTokenStatusEnum = pgEnum("invitation_token_status", [
   "revoked", // Token was manually revoked by admin/owner
 ]);
 
+// Email capture status enum - for waitlist/coming soon signups
+export const emailCaptureStatusEnum = pgEnum("email_capture_status", [
+  "pending", // Just captured, no email sent yet
+  "notified", // Welcome/confirmation email sent
+  "converted", // Signed up as a full user
+  "unsubscribed", // Opted out of communications
+]);
+
 // Invitation Tokens - Secure, single-use tokens for portfolio invitations
 export const invitationTokens = pgTable("invitation_tokens", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -990,6 +998,48 @@ export const invitationTokens = pgTable("invitation_tokens", {
   statusIdx: index("idx_invitation_tokens_status").on(table.status),
   // Index for finding expired tokens (for cleanup jobs)
   expiresAtIdx: index("idx_invitation_tokens_expires_at").on(table.expiresAt),
+}));
+
+// Email Captures - Waitlist/coming soon email signups
+export const emailCaptures = pgTable("email_captures", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  // Contact info
+  email: text("email").notNull().unique(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name"),
+
+  // Capture source and campaign tracking
+  source: text("source").default("homepage"), // homepage, footer, popup, etc.
+  campaign: text("campaign"), // For specific marketing campaigns
+
+  // UTM tracking
+  utmSource: text("utm_source"), // e.g., twitter, newsletter, google
+  utmMedium: text("utm_medium"), // e.g., social, email, cpc
+  utmCampaign: text("utm_campaign"), // e.g., launch2024, waitlist_promo
+  utmContent: text("utm_content"), // e.g., hero_cta, footer_form
+  utmTerm: text("utm_term"), // e.g., search keywords
+
+  // Status
+  status: emailCaptureStatusEnum("status").notNull().default("pending"),
+
+  // Request metadata
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  referrer: text("referrer"),
+
+  // Conversion tracking (when they become a real user)
+  convertedUserId: uuid("converted_user_id")
+    .references(() => users.id, { onDelete: "set null" }),
+  convertedAt: timestamp("converted_at"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  emailIdx: index("idx_email_captures_email").on(table.email),
+  statusIdx: index("idx_email_captures_status").on(table.status),
+  sourceIdx: index("idx_email_captures_source").on(table.source),
+  createdAtIdx: index("idx_email_captures_created_at").on(table.createdAt),
 }));
 
 // Relations
@@ -1711,6 +1761,15 @@ export const propertyDocumentsRelations = relations(propertyDocuments, ({ one })
   }),
   uploadedByUser: one(users, {
     fields: [propertyDocuments.uploadedBy],
+    references: [users.id],
+  }),
+}));
+
+// Email Captures Relations
+export const emailCapturesRelations = relations(emailCaptures, ({ one }) => ({
+  // The user this email capture converted to (if any)
+  convertedUser: one(users, {
+    fields: [emailCaptures.convertedUserId],
     references: [users.id],
   }),
 }));

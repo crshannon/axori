@@ -3,6 +3,7 @@ import { useSignIn, useUser } from '@clerk/tanstack-react-start'
 import { useEffect, useState } from 'react'
 import { Button } from '@axori/ui'
 import { useOnboardingStatus } from '@/utils/onboarding'
+import { useShowAuth } from '@/hooks/useFeatureFlags'
 
 export const Route = createFileRoute('/sign-in')({
   component: SignInPage,
@@ -12,6 +13,14 @@ function SignInPage() {
   const navigate = useNavigate()
   const { isSignedIn, isLoaded: isUserLoaded } = useUser()
   const { isLoaded: isSignInLoaded, signIn, setActive } = useSignIn()
+  const showAuth = useShowAuth()
+
+  // Redirect to home if in coming soon mode (unless bypass enabled)
+  useEffect(() => {
+    if (!showAuth) {
+      navigate({ to: '/' })
+    }
+  }, [showAuth, navigate])
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
