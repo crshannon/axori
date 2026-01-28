@@ -15,7 +15,7 @@ function Analysis() {
     'p-12 rounded-[4rem] border transition-all duration-700 bg-white border-black/5 shadow-sm hover:shadow-2xl dark:bg-[#1A1A1A] dark:border-white/5'
 
   return (
-    <main className="flex-grow pt-12 pb-40">
+    <main className="flex-grow pt-12 pb-40 bg-slate-50 dark:bg-[#0a0a0c]">
       <div className="max-w-[1440px] mx-auto px-6">
         {/* Sales Hero */}
         <div className="mb-24 flex flex-col md:flex-row md:items-end justify-between gap-12">
@@ -46,16 +46,16 @@ function Analysis() {
               fidelity view of your portfolio's alpha.
             </p>
           </div>
-          <div className="hidden lg:block p-8 rounded-[3rem] border border-white/5 bg-white/5 backdrop-blur-md">
+          <div className="hidden lg:block p-8 rounded-[3rem] border border-slate-200 bg-slate-100 backdrop-blur-md dark:border-white/5 dark:bg-white/5">
             <div className="flex gap-6 items-center">
               <div className="w-12 h-12 rounded-full border border-emerald-500/50 flex items-center justify-center text-emerald-500">
                 <TrendingUp className="w-6 h-6" strokeWidth={3} />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40 mb-1">
                   Avg. Yield Lift
                 </p>
-                <p className="text-3xl font-black tabular-nums">+2.4%</p>
+                <p className="text-3xl font-black tabular-nums text-slate-900 dark:text-white">+2.4%</p>
               </div>
             </div>
           </div>
@@ -127,7 +127,7 @@ function Analysis() {
                   94%
                 </span>
               </div>
-              <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
                 <div
                   className={`h-full ${accentBgClass} rounded-full`}
                   style={{ width: '94%' }}
@@ -194,7 +194,7 @@ function Analysis() {
                 <div
                   key={i}
                   className={`flex justify-between items-center ${
-                    row.bold ? 'pt-6 border-t border-white/10 mt-2' : ''
+                    row.bold ? 'pt-6 border-t border-slate-200 dark:border-white/10 mt-2' : ''
                   }`}
                 >
                   <span

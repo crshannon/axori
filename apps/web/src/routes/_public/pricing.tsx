@@ -73,7 +73,7 @@ function Pricing() {
   ]
 
   return (
-    <main className="flex-grow pt-12 pb-32">
+    <main className="flex-grow pt-12 pb-32 bg-slate-50 dark:bg-[#0a0a0c]">
       <div className="max-w-[1440px] mx-auto px-6">
         {/* Header Hero */}
         <div className="mb-24 text-center">
