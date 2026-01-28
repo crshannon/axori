@@ -1462,14 +1462,798 @@ async function validatePropertyAccess(
 At 1,000 emails/month: ~$2-3/month
 At 10,000 emails/month: ~$20-30/month
 
-### 11.11 Security Considerations
+### 11.11 Phase 6f: Abuse Prevention & Rate Limiting
 
-1. **Webhook Verification:** Always verify Resend signature
-2. **Property Access:** Validate property ID exists before processing
-3. **Attachment Scanning:** Consider virus scanning for attachments
-4. **PII Handling:** Email content may contain sensitive data
-5. **Rate Limiting:** Prevent abuse of inbound addresses
-6. **Spam Filtering:** Rely on Resend's spam filtering + add own checks
+This phase should be implemented **before** or **alongside** Phase 6a. Do not launch email ingestion without these protections.
+
+#### Rate Limiting Strategy
+
+```typescript
+// packages/shared/src/security/rate-limiter.ts
+
+interface RateLimitConfig {
+  // Per-property limits
+  emailsPerPropertyPerHour: number    // Default: 50
+  emailsPerPropertyPerDay: number     // Default: 200
+
+  // Per-sender limits (prevents single bad actor)
+  emailsPerSenderPerHour: number      // Default: 20
+  emailsPerSenderPerDay: number       // Default: 50
+
+  // Global circuit breaker
+  totalEmailsPerMinute: number        // Default: 100
+
+  // Attachment limits
+  maxAttachmentSizeMB: number         // Default: 25
+  maxAttachmentsPerEmail: number      // Default: 10
+  maxTotalAttachmentSizeMB: number    // Default: 50
+}
+
+interface RateLimitResult {
+  allowed: boolean
+  reason?: 'property_hourly' | 'property_daily' | 'sender_hourly' |
+           'sender_daily' | 'global_limit' | 'attachment_size'
+  retryAfterSeconds?: number
+  currentCount?: number
+  limit?: number
+}
+```
+
+#### Rate Limit Implementation
+
+```typescript
+// Using Redis for distributed rate limiting (recommended)
+// Or Supabase + pg for simpler setup
+
+export const emailRateLimits = pgTable(
+  "email_rate_limits",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    // What we're limiting
+    limitType: text("limit_type").notNull(), // "property", "sender", "global"
+    limitKey: text("limit_key").notNull(),   // propertyId, senderEmail, or "global"
+
+    // Time window
+    windowStart: timestamp("window_start").notNull(),
+    windowType: text("window_type").notNull(), // "hour", "day", "minute"
+
+    // Count
+    count: integer("count").notNull().default(0),
+
+    // For cleanup
+    expiresAt: timestamp("expires_at").notNull(),
+  },
+  (table) => ({
+    lookupIdx: index("idx_rate_limits_lookup").on(
+      table.limitType,
+      table.limitKey,
+      table.windowType,
+      table.windowStart
+    ),
+    expiresIdx: index("idx_rate_limits_expires").on(table.expiresAt),
+  })
+)
+
+async function checkRateLimit(
+  propertyId: string,
+  senderEmail: string,
+  attachmentSizes: number[]
+): Promise<RateLimitResult> {
+  const config = getRateLimitConfig()
+  const now = new Date()
+
+  // Check in order of most likely to fail
+
+  // 1. Global circuit breaker (protects entire system)
+  const globalCount = await getCount('global', 'global', 'minute', now)
+  if (globalCount >= config.totalEmailsPerMinute) {
+    await alertOps('Global rate limit triggered - possible attack')
+    return { allowed: false, reason: 'global_limit', retryAfterSeconds: 60 }
+  }
+
+  // 2. Sender limits (stops individual bad actors)
+  const senderHourly = await getCount('sender', senderEmail, 'hour', now)
+  if (senderHourly >= config.emailsPerSenderPerHour) {
+    return {
+      allowed: false,
+      reason: 'sender_hourly',
+      currentCount: senderHourly,
+      limit: config.emailsPerSenderPerHour
+    }
+  }
+
+  // 3. Property limits (prevents flooding a single property)
+  const propertyHourly = await getCount('property', propertyId, 'hour', now)
+  if (propertyHourly >= config.emailsPerPropertyPerHour) {
+    return {
+      allowed: false,
+      reason: 'property_hourly',
+      currentCount: propertyHourly,
+      limit: config.emailsPerPropertyPerHour
+    }
+  }
+
+  // 4. Attachment size limits
+  const totalSize = attachmentSizes.reduce((a, b) => a + b, 0)
+  if (totalSize > config.maxTotalAttachmentSizeMB * 1024 * 1024) {
+    return { allowed: false, reason: 'attachment_size' }
+  }
+
+  // All checks passed - increment counters
+  await incrementCounters(propertyId, senderEmail)
+
+  return { allowed: true }
+}
+```
+
+#### Abuse Detection Patterns
+
+```typescript
+// Detect and flag suspicious patterns
+
+interface AbuseSignal {
+  type: 'velocity_spike' | 'known_spam_pattern' | 'malformed_address' |
+        'suspicious_attachment' | 'repeated_failures' | 'spoofed_sender'
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  details: Record<string, unknown>
+}
+
+async function detectAbuse(email: InboundEmail): Promise<AbuseSignal[]> {
+  const signals: AbuseSignal[] = []
+
+  // 1. Velocity spike detection
+  const recentCount = await getRecentEmailCount(email.propertyId, '5 minutes')
+  if (recentCount > 10) {
+    signals.push({
+      type: 'velocity_spike',
+      severity: 'high',
+      details: { count: recentCount, window: '5 minutes' }
+    })
+  }
+
+  // 2. Known spam patterns in subject/body
+  const spamPatterns = [
+    /\bcrypto\b.*\binvest/i,
+    /\bprince\b.*\bnigeria/i,
+    /\bviagra\b/i,
+    /\blottery\b.*\bwinner/i,
+    // Add more patterns
+  ]
+  for (const pattern of spamPatterns) {
+    if (pattern.test(email.subject || '') || pattern.test(email.textBody || '')) {
+      signals.push({
+        type: 'known_spam_pattern',
+        severity: 'high',
+        details: { pattern: pattern.source }
+      })
+    }
+  }
+
+  // 3. Malformed property address (attack attempt)
+  if (!isValidUUID(email.toAddress.split('@')[0].replace('prop-', ''))) {
+    signals.push({
+      type: 'malformed_address',
+      severity: 'critical',
+      details: { address: email.toAddress }
+    })
+  }
+
+  // 4. Suspicious attachment types
+  const dangerousExtensions = ['.exe', '.bat', '.cmd', '.scr', '.js', '.vbs', '.ps1']
+  for (const attachment of email.attachments || []) {
+    const ext = attachment.filename.toLowerCase().slice(-4)
+    if (dangerousExtensions.some(d => attachment.filename.toLowerCase().endsWith(d))) {
+      signals.push({
+        type: 'suspicious_attachment',
+        severity: 'critical',
+        details: { filename: attachment.filename }
+      })
+    }
+  }
+
+  // 5. Sender reputation check (if we have history)
+  const senderHistory = await getSenderHistory(email.fromEmail)
+  if (senderHistory.failedProcessingRate > 0.5 && senderHistory.totalEmails > 5) {
+    signals.push({
+      type: 'repeated_failures',
+      severity: 'medium',
+      details: { failRate: senderHistory.failedProcessingRate }
+    })
+  }
+
+  return signals
+}
+```
+
+#### Response to Abuse
+
+```typescript
+async function handleAbuseSignals(
+  email: InboundEmail,
+  signals: AbuseSignal[]
+): Promise<'process' | 'quarantine' | 'reject'> {
+
+  // Critical signals = immediate reject
+  if (signals.some(s => s.severity === 'critical')) {
+    await logSecurityEvent('email_rejected', { email, signals })
+    return 'reject'
+  }
+
+  // High severity = quarantine for review
+  if (signals.some(s => s.severity === 'high')) {
+    await quarantineEmail(email, signals)
+    await notifySecurityTeam(email, signals)
+    return 'quarantine'
+  }
+
+  // Medium/low = process but flag
+  if (signals.length > 0) {
+    await flagEmailForReview(email, signals)
+  }
+
+  return 'process'
+}
+```
+
+#### Quarantine System
+
+```typescript
+export const emailQuarantine = pgTable(
+  "email_quarantine",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    inboundEmailId: uuid("inbound_email_id").references(() => inboundEmails.id),
+
+    // Why it was quarantined
+    reason: text("reason").notNull(),
+    signals: jsonb("signals").notNull(), // Array of AbuseSignal
+
+    // Review status
+    status: text("status").notNull().default("pending"), // pending, released, deleted
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at"),
+    reviewNotes: text("review_notes"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  }
+)
+```
+
+---
+
+## 12. Data Security & Privacy Architecture
+
+This section is **non-negotiable** for a property management platform handling sensitive tenant, financial, and legal data.
+
+### 12.1 Data Classification
+
+| Classification | Examples | Handling Requirements |
+|---------------|----------|----------------------|
+| **Critical** | SSNs, bank account numbers, passwords | Encrypted, never logged, strict access |
+| **Sensitive** | Lease terms, rent amounts, tenant names, addresses | Encrypted at rest, audit logged |
+| **Internal** | Communication logs, task status, property notes | Standard protection, role-based access |
+| **Public** | Property addresses (already public record) | Standard protection |
+
+### 12.2 Multi-Tenancy Isolation
+
+**The #1 security risk**: User A seeing User B's data.
+
+```typescript
+// EVERY database query must be scoped to the user's accessible properties
+
+// BAD - No tenant isolation ❌
+const communications = await db.query.propertyCommunications.findMany({
+  where: eq(propertyCommunications.category, 'maintenance')
+})
+
+// GOOD - Properly isolated ✓
+const communications = await db.query.propertyCommunications.findMany({
+  where: and(
+    eq(propertyCommunications.propertyId, propertyId),
+    // User must have access to this property
+    inArray(propertyCommunications.propertyId, userAccessiblePropertyIds)
+  )
+})
+```
+
+#### Isolation Enforcement Pattern
+
+```typescript
+// packages/shared/src/security/tenant-isolation.ts
+
+/**
+ * CRITICAL: Use this for ALL property-scoped queries
+ * Enforces that users can only access their own properties
+ */
+export async function withPropertyAccess<T>(
+  userId: string,
+  propertyId: string,
+  operation: () => Promise<T>
+): Promise<T> {
+  // 1. Verify user has access to this property
+  const hasAccess = await verifyPropertyAccess(userId, propertyId)
+
+  if (!hasAccess) {
+    await logSecurityEvent('unauthorized_access_attempt', {
+      userId,
+      propertyId,
+      timestamp: new Date(),
+    })
+    throw new ForbiddenError('Access denied to this property')
+  }
+
+  // 2. Execute operation
+  return operation()
+}
+
+/**
+ * Get all property IDs a user can access
+ * Used for list queries
+ */
+export async function getUserPropertyIds(userId: string): Promise<string[]> {
+  const portfolioMemberships = await db.query.portfolioMembers.findMany({
+    where: eq(portfolioMembers.userId, userId),
+    with: {
+      portfolio: {
+        with: {
+          properties: {
+            columns: { id: true }
+          }
+        }
+      }
+    }
+  })
+
+  return portfolioMemberships.flatMap(
+    m => m.portfolio.properties.map(p => p.id)
+  )
+}
+```
+
+#### Row-Level Security (RLS) in Supabase
+
+```sql
+-- Enable RLS on all sensitive tables
+ALTER TABLE property_communications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE property_contacts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inbound_emails ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can only see communications for properties they have access to
+CREATE POLICY "Users can view own property communications"
+ON property_communications
+FOR SELECT
+USING (
+  property_id IN (
+    SELECT p.id FROM properties p
+    JOIN portfolios pf ON p.portfolio_id = pf.id
+    JOIN portfolio_members pm ON pf.id = pm.portfolio_id
+    WHERE pm.user_id = auth.uid()
+  )
+);
+
+-- Similar policies for INSERT, UPDATE, DELETE with role checks
+```
+
+### 12.3 PII Detection & Handling
+
+```typescript
+// packages/shared/src/security/pii-detector.ts
+
+interface PIIMatch {
+  type: 'ssn' | 'credit_card' | 'bank_account' | 'phone' | 'email' | 'address'
+  value: string      // The matched value
+  redacted: string   // Redacted version for logs
+  position: { start: number; end: number }
+  confidence: number
+}
+
+const PII_PATTERNS = {
+  ssn: {
+    pattern: /\b\d{3}-?\d{2}-?\d{4}\b/g,
+    redact: (match: string) => 'XXX-XX-' + match.slice(-4).replace(/-/g, ''),
+    confidence: 0.9
+  },
+  credit_card: {
+    pattern: /\b(?:\d{4}[- ]?){3}\d{4}\b/g,
+    redact: (match: string) => 'XXXX-XXXX-XXXX-' + match.slice(-4),
+    confidence: 0.85
+  },
+  bank_account: {
+    pattern: /\b\d{8,17}\b/g, // Very loose - needs context
+    redact: (match: string) => 'XXXXXXXX' + match.slice(-4),
+    confidence: 0.5 // Low confidence, needs context
+  },
+  phone: {
+    pattern: /\b(?:\+1[- ]?)?\(?[0-9]{3}\)?[- ]?[0-9]{3}[- ]?[0-9]{4}\b/g,
+    redact: (match: string) => '(XXX) XXX-' + match.slice(-4),
+    confidence: 0.8
+  }
+}
+
+export function detectPII(text: string): PIIMatch[] {
+  const matches: PIIMatch[] = []
+
+  for (const [type, config] of Object.entries(PII_PATTERNS)) {
+    const regex = new RegExp(config.pattern)
+    let match: RegExpExecArray | null
+
+    while ((match = regex.exec(text)) !== null) {
+      matches.push({
+        type: type as PIIMatch['type'],
+        value: match[0],
+        redacted: config.redact(match[0]),
+        position: { start: match.index, end: match.index + match[0].length },
+        confidence: config.confidence
+      })
+    }
+  }
+
+  return matches
+}
+
+/**
+ * Redact PII from text for safe logging
+ */
+export function redactPII(text: string): string {
+  const matches = detectPII(text)
+  let redacted = text
+
+  // Replace from end to start to preserve positions
+  for (const match of matches.sort((a, b) => b.position.start - a.position.start)) {
+    redacted =
+      redacted.slice(0, match.position.start) +
+      match.redacted +
+      redacted.slice(match.position.end)
+  }
+
+  return redacted
+}
+```
+
+#### PII in Email Processing
+
+```typescript
+// In the email processing pipeline
+
+async function processInboundEmail(email: RawInboundEmail) {
+  // 1. Detect PII in email content
+  const bodyPII = detectPII(email.textBody || '')
+  const subjectPII = detectPII(email.subject || '')
+
+  // 2. Store PII detection results (but NOT the actual PII values in logs)
+  await db.insert(inboundEmails).values({
+    ...email,
+    piiDetected: bodyPII.length > 0 || subjectPII.length > 0,
+    piiTypes: [...new Set([...bodyPII, ...subjectPII].map(p => p.type))],
+    // The actual content is stored encrypted (see 12.4)
+  })
+
+  // 3. NEVER log PII
+  logger.info('Processing email', {
+    propertyId: email.propertyId,
+    from: redactPII(email.fromEmail), // Redact even email addresses in logs
+    subject: redactPII(email.subject || ''),
+    piiDetected: bodyPII.length + subjectPII.length,
+    // NEVER log: email.textBody, email.htmlBody, attachments
+  })
+
+  // 4. If critical PII detected (SSN, credit card), flag for review
+  const criticalPII = [...bodyPII, ...subjectPII].filter(
+    p => ['ssn', 'credit_card', 'bank_account'].includes(p.type) &&
+         p.confidence > 0.7
+  )
+
+  if (criticalPII.length > 0) {
+    await flagForSecurityReview(email.id, 'critical_pii_detected', criticalPII)
+  }
+}
+```
+
+### 12.4 Encryption Strategy
+
+#### At Rest
+
+```typescript
+// All sensitive fields encrypted before storage
+
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto'
+
+const ENCRYPTION_KEY = process.env.DATA_ENCRYPTION_KEY! // 32 bytes
+const ALGORITHM = 'aes-256-gcm'
+
+export function encryptField(plaintext: string): EncryptedField {
+  const iv = randomBytes(16)
+  const cipher = createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY, 'hex'), iv)
+
+  let encrypted = cipher.update(plaintext, 'utf8', 'hex')
+  encrypted += cipher.final('hex')
+
+  const authTag = cipher.getAuthTag()
+
+  return {
+    ciphertext: encrypted,
+    iv: iv.toString('hex'),
+    authTag: authTag.toString('hex'),
+    version: 1 // For key rotation
+  }
+}
+
+export function decryptField(encrypted: EncryptedField): string {
+  const decipher = createDecipheriv(
+    ALGORITHM,
+    Buffer.from(ENCRYPTION_KEY, 'hex'),
+    Buffer.from(encrypted.iv, 'hex')
+  )
+
+  decipher.setAuthTag(Buffer.from(encrypted.authTag, 'hex'))
+
+  let decrypted = decipher.update(encrypted.ciphertext, 'hex', 'utf8')
+  decrypted += decipher.final('utf8')
+
+  return decrypted
+}
+```
+
+#### Fields to Encrypt
+
+| Table | Encrypted Fields |
+|-------|-----------------|
+| `inbound_emails` | `text_body`, `html_body`, `raw_headers` |
+| `email_attachments` | `ocr_text` (may contain PII from documents) |
+| `property_communications` | `content` (full notes/body) |
+| `property_contacts` | `phone`, `alternate_phone`, `email`, `address` |
+
+#### In Transit
+
+- All API endpoints over HTTPS only
+- Webhook endpoints verify signatures
+- Internal service communication over TLS
+
+### 12.5 Audit Logging
+
+```typescript
+// packages/shared/src/security/audit.ts
+
+export const securityAuditLog = pgTable(
+  "security_audit_log",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    // What happened
+    eventType: text("event_type").notNull(),
+    eventCategory: text("event_category").notNull(), // auth, data_access, admin, security
+
+    // Who did it
+    userId: uuid("user_id").references(() => users.id),
+    userEmail: text("user_email"), // Denormalized for deleted users
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+
+    // What was affected
+    resourceType: text("resource_type"), // property, communication, contact, etc.
+    resourceId: uuid("resource_id"),
+    propertyId: uuid("property_id"), // For property-scoped events
+
+    // Details
+    details: jsonb("details"), // Additional context (redacted)
+    result: text("result").notNull(), // success, failure, blocked
+
+    // Timestamp with high precision
+    createdAt: timestamp("created_at", { precision: 6 }).defaultNow().notNull(),
+  },
+  (table) => ({
+    eventTypeIdx: index("idx_audit_event_type").on(table.eventType),
+    userIdIdx: index("idx_audit_user_id").on(table.userId),
+    resourceIdx: index("idx_audit_resource").on(table.resourceType, table.resourceId),
+    createdAtIdx: index("idx_audit_created_at").on(table.createdAt),
+  })
+)
+
+// Events to log
+type AuditEventType =
+  // Authentication
+  | 'login_success' | 'login_failure' | 'logout' | 'password_reset'
+  // Data Access
+  | 'view_communication' | 'view_contact' | 'view_email' | 'export_data'
+  // Data Modification
+  | 'create_communication' | 'update_communication' | 'delete_communication'
+  | 'create_contact' | 'update_contact' | 'delete_contact'
+  // Admin Actions
+  | 'invite_user' | 'remove_user' | 'change_role'
+  // Security Events
+  | 'unauthorized_access_attempt' | 'rate_limit_exceeded' | 'suspicious_activity'
+  | 'pii_detected' | 'email_quarantined' | 'email_rejected'
+
+async function auditLog(event: {
+  type: AuditEventType
+  category: 'auth' | 'data_access' | 'data_modification' | 'admin' | 'security'
+  userId?: string
+  resourceType?: string
+  resourceId?: string
+  propertyId?: string
+  details?: Record<string, unknown>
+  result: 'success' | 'failure' | 'blocked'
+  request?: Request
+}) {
+  await db.insert(securityAuditLog).values({
+    eventType: event.type,
+    eventCategory: event.category,
+    userId: event.userId,
+    userEmail: event.userId ? await getUserEmail(event.userId) : null,
+    ipAddress: event.request ? getClientIP(event.request) : null,
+    userAgent: event.request?.headers.get('user-agent'),
+    resourceType: event.resourceType,
+    resourceId: event.resourceId,
+    propertyId: event.propertyId,
+    details: event.details ? redactPIIFromObject(event.details) : null,
+    result: event.result,
+  })
+
+  // Critical security events also alert immediately
+  if (event.category === 'security' && event.result !== 'success') {
+    await alertSecurityTeam(event)
+  }
+}
+```
+
+### 12.6 Data Retention & Deletion
+
+```typescript
+// Retention policies by data type
+
+const RETENTION_POLICIES = {
+  // Communications kept indefinitely (legal/compliance)
+  communications: null, // No auto-delete
+
+  // Inbound emails: raw data can be purged after processing
+  inbound_emails_raw: 90, // 90 days, then purge HTML/raw headers
+  inbound_emails_processed: null, // Keep processed data indefinitely
+
+  // Audit logs: long retention for compliance
+  audit_logs: 365 * 7, // 7 years
+
+  // Rate limit data: short-lived
+  rate_limits: 7, // 7 days
+
+  // Quarantined emails: review or auto-delete
+  quarantine: 30, // 30 days, then auto-delete if not reviewed
+}
+
+// Right to Deletion (GDPR/CCPA)
+async function handleDataDeletionRequest(userId: string) {
+  // 1. Log the request (this log is NOT deleted)
+  await auditLog({
+    type: 'data_deletion_request',
+    category: 'admin',
+    userId,
+    result: 'success'
+  })
+
+  // 2. Identify all user data
+  const userProperties = await getUserPropertyIds(userId)
+
+  // 3. For owned portfolios: anonymize or transfer
+  // 4. For shared portfolios: remove membership
+  // 5. Delete personal profile data
+  // 6. Anonymize audit logs (keep logs, remove PII)
+
+  // NOTE: Some data may be retained for legal compliance
+  // Communicate this clearly to the user
+}
+```
+
+### 12.7 Security Headers & API Protection
+
+```typescript
+// apps/api/src/middleware/security.ts
+
+import { Hono } from 'hono'
+import { secureHeaders } from 'hono/secure-headers'
+import { cors } from 'hono/cors'
+
+export function applySecurityMiddleware(app: Hono) {
+  // CORS - restrict to known origins
+  app.use('*', cors({
+    origin: [
+      process.env.WEB_URL!,
+      process.env.MOBILE_URL!, // If applicable
+    ],
+    credentials: true,
+  }))
+
+  // Security headers
+  app.use('*', secureHeaders({
+    contentSecurityPolicy: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+    },
+    xFrameOptions: 'DENY',
+    xContentTypeOptions: 'nosniff',
+    referrerPolicy: 'strict-origin-when-cross-origin',
+  }))
+
+  // Request size limits (prevent payload attacks)
+  app.use('*', async (c, next) => {
+    const contentLength = c.req.header('content-length')
+    if (contentLength && parseInt(contentLength) > 50 * 1024 * 1024) { // 50MB max
+      return c.json({ error: 'Payload too large' }, 413)
+    }
+    await next()
+  })
+}
+```
+
+### 12.8 Secrets Management
+
+```typescript
+// Environment variables checklist
+
+// REQUIRED - Must be set in production
+const REQUIRED_SECRETS = [
+  'DATABASE_URL',           // Database connection
+  'DATA_ENCRYPTION_KEY',    // 32-byte hex for field encryption
+  'CLERK_SECRET_KEY',       // Authentication
+  'RESEND_API_KEY',         // Email
+  'RESEND_WEBHOOK_SECRET',  // Webhook verification
+]
+
+// Validate on startup
+function validateSecrets() {
+  const missing = REQUIRED_SECRETS.filter(s => !process.env[s])
+  if (missing.length > 0) {
+    console.error('Missing required secrets:', missing)
+    process.exit(1)
+  }
+
+  // Validate key lengths
+  const encKey = process.env.DATA_ENCRYPTION_KEY!
+  if (encKey.length !== 64) { // 32 bytes = 64 hex chars
+    console.error('DATA_ENCRYPTION_KEY must be 32 bytes (64 hex characters)')
+    process.exit(1)
+  }
+}
+
+// Key rotation support
+// All encrypted fields include a 'version' to support key rotation
+```
+
+### 12.9 Compliance Considerations
+
+| Regulation | Relevant Requirements | How We Address |
+|------------|----------------------|----------------|
+| **GDPR** | Right to access, right to deletion, data minimization | Audit logs, deletion handlers, encrypt PII |
+| **CCPA** | Consumer data rights, disclosure requirements | Same as GDPR + California-specific notices |
+| **SOC 2** | Security, availability, confidentiality | Audit logging, encryption, access controls |
+| **Fair Housing** | Don't discriminate in communications | AI analysis should not use protected characteristics |
+
+### 12.10 Security Implementation Phases
+
+#### Phase 0 (Before any Communications work)
+- [ ] Enable RLS on all relevant tables
+- [ ] Implement tenant isolation middleware
+- [ ] Set up audit logging infrastructure
+- [ ] Configure security headers
+
+#### Phase 1-5 (Alongside Communications MVP)
+- [ ] Implement field encryption for sensitive data
+- [ ] Add PII detection to all text inputs
+- [ ] Set up rate limiting (basic)
+- [ ] Create security review process for flagged items
+
+#### Phase 6 (Email Processing)
+- [ ] Implement full rate limiting with Redis
+- [ ] Add abuse detection patterns
+- [ ] Create quarantine system
+- [ ] Webhook signature verification
+
+#### Phase 7 (Security Hardening)
+- [ ] Penetration testing
+- [ ] Security audit of AI prompts (prevent prompt injection)
+- [ ] Implement key rotation
+- [ ] SOC 2 preparation
 
 ---
 
