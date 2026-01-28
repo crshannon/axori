@@ -5,10 +5,13 @@
  * Full-width bento-style layout with Stripe integration.
  */
 
+import { useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { useUser } from "@clerk/tanstack-react-start"
 import { Loading, cn } from "@axori/ui"
 import {
+  AlertTriangle,
+  ArrowRight,
   Building,
   Calendar,
   Check,
@@ -20,6 +23,7 @@ import {
   Loader2,
   Settings,
   Sparkles,
+  X,
   Zap,
 } from "lucide-react"
 import type { PlanResponse } from "@/hooks/api/useBilling"
@@ -45,8 +49,13 @@ const PLAN_ICONS: Partial<Record<string, typeof Zap>> = {
   enterprise: Crown,
 }
 
+// Plan order for determining upgrade vs downgrade
+const PLAN_ORDER = ["free", "pro", "portfolio", "enterprise"]
+
 function BillingPage() {
   const { isLoaded } = useUser()
+  const [selectedPlan, setSelectedPlan] = useState<PlanResponse | null>(null)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   // Fetch real data from API
   const { data: subscription, isLoading: subscriptionLoading } =
@@ -88,14 +97,33 @@ function BillingPage() {
     isPopular: false,
   }
 
-  const handleUpgrade = (plan: PlanResponse) => {
+  const handleSelectPlan = (plan: PlanResponse) => {
     if (plan.slug === currentPlanSlug) return
+    setSelectedPlan(plan)
+    setShowConfirmModal(true)
+  }
+
+  const handleConfirmPlanChange = () => {
+    if (!selectedPlan) return
     // Use the stripePriceId from the plan config
-    createCheckout.mutate({
-      priceId: `price_${plan.slug}`, // This should match your Stripe price IDs
-      successUrl: `${window.location.origin}/account/billing?success=true`,
-      cancelUrl: `${window.location.origin}/account/billing?canceled=true`,
-    })
+    createCheckout.mutate(
+      {
+        priceId: `price_${selectedPlan.slug}`, // This should match your Stripe price IDs
+        successUrl: `${window.location.origin}/account/billing?success=true`,
+        cancelUrl: `${window.location.origin}/account/billing?canceled=true`,
+      },
+      {
+        onSuccess: () => {
+          setShowConfirmModal(false)
+          setSelectedPlan(null)
+        },
+      }
+    )
+  }
+
+  const handleCancelPlanChange = () => {
+    setShowConfirmModal(false)
+    setSelectedPlan(null)
   }
 
   const handleManageSubscription = () => {
@@ -105,6 +133,15 @@ function BillingPage() {
   }
 
   const defaultPaymentMethod = paymentMethods?.find((pm) => pm.isDefault)
+
+  // Determine if selected plan is an upgrade or downgrade
+  const isUpgrade = selectedPlan
+    ? PLAN_ORDER.indexOf(selectedPlan.slug) >
+      PLAN_ORDER.indexOf(currentPlanSlug)
+    : false
+  const priceDifference = selectedPlan
+    ? selectedPlan.amount - currentPlan.amount
+    : 0
 
   return (
     <div className="px-6 lg:px-12 py-10">
@@ -185,17 +222,15 @@ function BillingPage() {
                     const upgradePlan = plans?.find(
                       (p) => p.slug === "pro" && p.slug !== currentPlanSlug
                     )
-                    if (upgradePlan) handleUpgrade(upgradePlan)
+                    if (upgradePlan) handleSelectPlan(upgradePlan)
                   }}
-                  disabled={createCheckout.isPending}
                   className={cn(
                     "w-full px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-wider transition-all",
                     "bg-white text-violet-700 hover:bg-white/90",
-                    "dark:bg-black dark:text-[#E8FF4D] dark:hover:bg-black/80",
-                    "disabled:opacity-50 disabled:cursor-not-allowed"
+                    "dark:bg-black dark:text-[#E8FF4D] dark:hover:bg-black/80"
                   )}
                 >
-                  {createCheckout.isPending ? "Loading..." : "Upgrade Plan"}
+                  Upgrade Plan
                 </button>
               </div>
             </div>
@@ -416,21 +451,16 @@ function BillingPage() {
                     </ul>
 
                     <button
-                      onClick={() => handleUpgrade(plan)}
-                      disabled={isCurrent || createCheckout.isPending}
+                      onClick={() => handleSelectPlan(plan)}
+                      disabled={isCurrent}
                       className={cn(
                         "w-full py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-colors",
                         isCurrent
                           ? "bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed"
-                          : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100",
-                        "disabled:opacity-50 disabled:cursor-not-allowed"
+                          : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100"
                       )}
                     >
-                      {isCurrent
-                        ? "Current"
-                        : createCheckout.isPending
-                          ? "Loading..."
-                          : "Select"}
+                      {isCurrent ? "Current" : "Select"}
                     </button>
                   </div>
                 )
@@ -582,6 +612,227 @@ function BillingPage() {
           </div>
         </div>
       </div>
+
+      {/* Plan Change Confirmation Modal */}
+      {showConfirmModal && selectedPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={handleCancelPlanChange}
+          />
+
+          {/* Modal */}
+          <div
+            className={cn(
+              "relative w-full max-w-lg mx-4 p-8 rounded-3xl",
+              "bg-white dark:bg-[#1A1A1A]",
+              "border border-slate-200 dark:border-white/10",
+              "shadow-2xl"
+            )}
+          >
+            {/* Close button */}
+            <button
+              onClick={handleCancelPlanChange}
+              className={cn(
+                "absolute top-4 right-4 p-2 rounded-xl transition-colors",
+                "hover:bg-slate-100 dark:hover:bg-white/5"
+              )}
+            >
+              <X className="size-5 text-slate-400" />
+            </button>
+
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div
+                className={cn(
+                  "size-16 rounded-2xl flex items-center justify-center mx-auto mb-4",
+                  isUpgrade
+                    ? "bg-violet-100 dark:bg-[#E8FF4D]/10"
+                    : "bg-amber-100 dark:bg-amber-500/10"
+                )}
+              >
+                {isUpgrade ? (
+                  <Sparkles
+                    className={cn(
+                      "size-8",
+                      "text-violet-600 dark:text-[#E8FF4D]"
+                    )}
+                  />
+                ) : (
+                  <AlertTriangle className="size-8 text-amber-600 dark:text-amber-400" />
+                )}
+              </div>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+                {isUpgrade ? "Upgrade Your Plan" : "Change Your Plan"}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-white/50 mt-2">
+                {isUpgrade
+                  ? "Unlock more features and grow your portfolio"
+                  : "You're about to switch to a plan with fewer features"}
+              </p>
+            </div>
+
+            {/* Plan comparison */}
+            <div
+              className={cn(
+                "p-6 rounded-2xl mb-6",
+                "bg-slate-50 dark:bg-white/5"
+              )}
+            >
+              <div className="flex items-center justify-between">
+                {/* Current plan */}
+                <div className="text-center">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40">
+                    Current
+                  </span>
+                  <p className="font-bold text-lg text-slate-900 dark:text-white mt-1">
+                    {currentPlan.name}
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-white/50">
+                    ${currentPlan.amount}/mo
+                  </p>
+                </div>
+
+                {/* Arrow */}
+                <div
+                  className={cn(
+                    "size-10 rounded-full flex items-center justify-center",
+                    isUpgrade
+                      ? "bg-violet-100 dark:bg-[#E8FF4D]/10"
+                      : "bg-amber-100 dark:bg-amber-500/10"
+                  )}
+                >
+                  <ArrowRight
+                    className={cn(
+                      "size-5",
+                      isUpgrade
+                        ? "text-violet-600 dark:text-[#E8FF4D]"
+                        : "text-amber-600 dark:text-amber-400"
+                    )}
+                  />
+                </div>
+
+                {/* New plan */}
+                <div className="text-center">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40">
+                    New
+                  </span>
+                  <p className="font-bold text-lg text-slate-900 dark:text-white mt-1">
+                    {selectedPlan.name}
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-white/50">
+                    ${selectedPlan.amount}/mo
+                  </p>
+                </div>
+              </div>
+
+              {/* Price difference */}
+              <div
+                className={cn(
+                  "mt-4 pt-4 border-t text-center",
+                  "border-slate-200 dark:border-white/10"
+                )}
+              >
+                <span
+                  className={cn(
+                    "text-sm font-medium",
+                    priceDifference > 0
+                      ? "text-violet-600 dark:text-[#E8FF4D]"
+                      : "text-emerald-600 dark:text-emerald-400"
+                  )}
+                >
+                  {priceDifference > 0
+                    ? `+$${priceDifference}/mo`
+                    : priceDifference < 0
+                      ? `-$${Math.abs(priceDifference)}/mo`
+                      : "Same price"}
+                </span>
+              </div>
+            </div>
+
+            {/* Features comparison for upgrade */}
+            {isUpgrade && (
+              <div className="mb-6">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40 mb-3">
+                  What you'll get
+                </p>
+                <ul className="space-y-2">
+                  {selectedPlan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm">
+                      <Check className="size-4 text-emerald-500 flex-shrink-0" />
+                      <span className="text-slate-600 dark:text-slate-300">
+                        {feature}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Downgrade warning */}
+            {!isUpgrade && (
+              <div
+                className={cn(
+                  "flex items-start gap-3 p-4 rounded-xl mb-6",
+                  "bg-amber-50 dark:bg-amber-500/10",
+                  "border border-amber-200 dark:border-amber-500/20"
+                )}
+              >
+                <AlertTriangle className="size-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                    You may lose access to some features
+                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    Changes take effect at the end of your current billing
+                    period.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelPlanChange}
+                className={cn(
+                  "flex-1 px-6 py-4 rounded-2xl text-sm font-bold uppercase tracking-wider transition-colors",
+                  "bg-slate-100 text-slate-700 hover:bg-slate-200",
+                  "dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                )}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmPlanChange}
+                disabled={createCheckout.isPending}
+                className={cn(
+                  "flex-1 px-6 py-4 rounded-2xl text-sm font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2",
+                  isUpgrade
+                    ? "bg-violet-600 text-white hover:bg-violet-700 dark:bg-[#E8FF4D] dark:text-black dark:hover:bg-[#d4eb45]"
+                    : "bg-amber-500 text-white hover:bg-amber-600",
+                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                )}
+              >
+                {createCheckout.isPending ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>Confirm {isUpgrade ? "Upgrade" : "Change"}</>
+                )}
+              </button>
+            </div>
+
+            {/* Stripe notice */}
+            <p className="text-center text-[10px] text-slate-400 dark:text-white/30 mt-4">
+              You'll be redirected to Stripe to complete your payment securely
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
