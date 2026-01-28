@@ -40,10 +40,15 @@ import { Route as AuthedPropertyHubAddRouteImport } from './routes/_authed/prope
 import { Route as AuthedPropertyHubPropertyIdRouteImport } from './routes/_authed/property-hub.$propertyId'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as AuthedPropertyHubPropertyIdIndexRouteImport } from './routes/_authed/property-hub.$propertyId/index'
+import { Route as AuthedLearningHubScenariosIndexRouteImport } from './routes/_authed/learning-hub/scenarios/index'
 import { Route as AuthedLearningHubPathsIndexRouteImport } from './routes/_authed/learning-hub/paths/index'
 import { Route as AuthedLearningHubGlossaryIndexRouteImport } from './routes/_authed/learning-hub/glossary/index'
+import { Route as AuthedLearningHubFreedomIndexRouteImport } from './routes/_authed/learning-hub/freedom/index'
+import { Route as AuthedLearningHubChecklistsIndexRouteImport } from './routes/_authed/learning-hub/checklists/index'
 import { Route as AuthedLearningHubCalculatorsIndexRouteImport } from './routes/_authed/learning-hub/calculators/index'
 import { Route as AuthedLearningHubArticlesIndexRouteImport } from './routes/_authed/learning-hub/articles/index'
+import { Route as AuthedLearningHubAnalyzerIndexRouteImport } from './routes/_authed/learning-hub/analyzer/index'
+import { Route as AuthedLearningHubAchievementsIndexRouteImport } from './routes/_authed/learning-hub/achievements/index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
@@ -214,6 +219,12 @@ const AuthedPropertyHubPropertyIdIndexRoute =
     path: '/',
     getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
   } as any)
+const AuthedLearningHubScenariosIndexRoute =
+  AuthedLearningHubScenariosIndexRouteImport.update({
+    id: '/scenarios/',
+    path: '/scenarios/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
 const AuthedLearningHubPathsIndexRoute =
   AuthedLearningHubPathsIndexRouteImport.update({
     id: '/paths/',
@@ -226,6 +237,18 @@ const AuthedLearningHubGlossaryIndexRoute =
     path: '/glossary/',
     getParentRoute: () => AuthedLearningHubRoute,
   } as any)
+const AuthedLearningHubFreedomIndexRoute =
+  AuthedLearningHubFreedomIndexRouteImport.update({
+    id: '/freedom/',
+    path: '/freedom/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubChecklistsIndexRoute =
+  AuthedLearningHubChecklistsIndexRouteImport.update({
+    id: '/checklists/',
+    path: '/checklists/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
 const AuthedLearningHubCalculatorsIndexRoute =
   AuthedLearningHubCalculatorsIndexRouteImport.update({
     id: '/calculators/',
@@ -236,6 +259,18 @@ const AuthedLearningHubArticlesIndexRoute =
   AuthedLearningHubArticlesIndexRouteImport.update({
     id: '/articles/',
     path: '/articles/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubAnalyzerIndexRoute =
+  AuthedLearningHubAnalyzerIndexRouteImport.update({
+    id: '/analyzer/',
+    path: '/analyzer/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubAchievementsIndexRoute =
+  AuthedLearningHubAchievementsIndexRouteImport.update({
+    id: '/achievements/',
+    path: '/achievements/',
     getParentRoute: () => AuthedLearningHubRoute,
   } as any)
 const DemoStartSsrSpaModeRoute = DemoStartSsrSpaModeRouteImport.update({
@@ -362,10 +397,15 @@ export interface FileRoutesByFullPath {
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/learning-hub/achievements': typeof AuthedLearningHubAchievementsIndexRoute
+  '/learning-hub/analyzer': typeof AuthedLearningHubAnalyzerIndexRoute
   '/learning-hub/articles': typeof AuthedLearningHubArticlesIndexRoute
   '/learning-hub/calculators': typeof AuthedLearningHubCalculatorsIndexRoute
+  '/learning-hub/checklists': typeof AuthedLearningHubChecklistsIndexRoute
+  '/learning-hub/freedom': typeof AuthedLearningHubFreedomIndexRoute
   '/learning-hub/glossary': typeof AuthedLearningHubGlossaryIndexRoute
   '/learning-hub/paths': typeof AuthedLearningHubPathsIndexRoute
+  '/learning-hub/scenarios': typeof AuthedLearningHubScenariosIndexRoute
   '/property-hub/$propertyId/': typeof AuthedPropertyHubPropertyIdIndexRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
 }
@@ -409,10 +449,15 @@ export interface FileRoutesByTo {
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/learning-hub/achievements': typeof AuthedLearningHubAchievementsIndexRoute
+  '/learning-hub/analyzer': typeof AuthedLearningHubAnalyzerIndexRoute
   '/learning-hub/articles': typeof AuthedLearningHubArticlesIndexRoute
   '/learning-hub/calculators': typeof AuthedLearningHubCalculatorsIndexRoute
+  '/learning-hub/checklists': typeof AuthedLearningHubChecklistsIndexRoute
+  '/learning-hub/freedom': typeof AuthedLearningHubFreedomIndexRoute
   '/learning-hub/glossary': typeof AuthedLearningHubGlossaryIndexRoute
   '/learning-hub/paths': typeof AuthedLearningHubPathsIndexRoute
+  '/learning-hub/scenarios': typeof AuthedLearningHubScenariosIndexRoute
   '/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdIndexRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
 }
@@ -461,10 +506,15 @@ export interface FileRoutesById {
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/_authed/learning-hub/achievements/': typeof AuthedLearningHubAchievementsIndexRoute
+  '/_authed/learning-hub/analyzer/': typeof AuthedLearningHubAnalyzerIndexRoute
   '/_authed/learning-hub/articles/': typeof AuthedLearningHubArticlesIndexRoute
   '/_authed/learning-hub/calculators/': typeof AuthedLearningHubCalculatorsIndexRoute
+  '/_authed/learning-hub/checklists/': typeof AuthedLearningHubChecklistsIndexRoute
+  '/_authed/learning-hub/freedom/': typeof AuthedLearningHubFreedomIndexRoute
   '/_authed/learning-hub/glossary/': typeof AuthedLearningHubGlossaryIndexRoute
   '/_authed/learning-hub/paths/': typeof AuthedLearningHubPathsIndexRoute
+  '/_authed/learning-hub/scenarios/': typeof AuthedLearningHubScenariosIndexRoute
   '/_authed/property-hub/$propertyId/': typeof AuthedPropertyHubPropertyIdIndexRoute
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
 }
@@ -512,10 +562,15 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/learning-hub/achievements'
+    | '/learning-hub/analyzer'
     | '/learning-hub/articles'
     | '/learning-hub/calculators'
+    | '/learning-hub/checklists'
+    | '/learning-hub/freedom'
     | '/learning-hub/glossary'
     | '/learning-hub/paths'
+    | '/learning-hub/scenarios'
     | '/property-hub/$propertyId/'
     | '/demo/start/ssr'
   fileRoutesByTo: FileRoutesByTo
@@ -559,10 +614,15 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/learning-hub/achievements'
+    | '/learning-hub/analyzer'
     | '/learning-hub/articles'
     | '/learning-hub/calculators'
+    | '/learning-hub/checklists'
+    | '/learning-hub/freedom'
     | '/learning-hub/glossary'
     | '/learning-hub/paths'
+    | '/learning-hub/scenarios'
     | '/property-hub/$propertyId'
     | '/demo/start/ssr'
   id:
@@ -610,10 +670,15 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/_authed/learning-hub/achievements/'
+    | '/_authed/learning-hub/analyzer/'
     | '/_authed/learning-hub/articles/'
     | '/_authed/learning-hub/calculators/'
+    | '/_authed/learning-hub/checklists/'
+    | '/_authed/learning-hub/freedom/'
     | '/_authed/learning-hub/glossary/'
     | '/_authed/learning-hub/paths/'
+    | '/_authed/learning-hub/scenarios/'
     | '/_authed/property-hub/$propertyId/'
     | '/demo/start/ssr/'
   fileRoutesById: FileRoutesById
@@ -861,6 +926,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPropertyHubPropertyIdIndexRouteImport
       parentRoute: typeof AuthedPropertyHubPropertyIdRoute
     }
+    '/_authed/learning-hub/scenarios/': {
+      id: '/_authed/learning-hub/scenarios/'
+      path: '/scenarios'
+      fullPath: '/learning-hub/scenarios'
+      preLoaderRoute: typeof AuthedLearningHubScenariosIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
     '/_authed/learning-hub/paths/': {
       id: '/_authed/learning-hub/paths/'
       path: '/paths'
@@ -875,6 +947,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedLearningHubGlossaryIndexRouteImport
       parentRoute: typeof AuthedLearningHubRoute
     }
+    '/_authed/learning-hub/freedom/': {
+      id: '/_authed/learning-hub/freedom/'
+      path: '/freedom'
+      fullPath: '/learning-hub/freedom'
+      preLoaderRoute: typeof AuthedLearningHubFreedomIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/checklists/': {
+      id: '/_authed/learning-hub/checklists/'
+      path: '/checklists'
+      fullPath: '/learning-hub/checklists'
+      preLoaderRoute: typeof AuthedLearningHubChecklistsIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
     '/_authed/learning-hub/calculators/': {
       id: '/_authed/learning-hub/calculators/'
       path: '/calculators'
@@ -887,6 +973,20 @@ declare module '@tanstack/react-router' {
       path: '/articles'
       fullPath: '/learning-hub/articles'
       preLoaderRoute: typeof AuthedLearningHubArticlesIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/analyzer/': {
+      id: '/_authed/learning-hub/analyzer/'
+      path: '/analyzer'
+      fullPath: '/learning-hub/analyzer'
+      preLoaderRoute: typeof AuthedLearningHubAnalyzerIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/achievements/': {
+      id: '/_authed/learning-hub/achievements/'
+      path: '/achievements'
+      fullPath: '/learning-hub/achievements'
+      preLoaderRoute: typeof AuthedLearningHubAchievementsIndexRouteImport
       parentRoute: typeof AuthedLearningHubRoute
     }
     '/demo/start/ssr/spa-mode': {
@@ -995,10 +1095,15 @@ interface AuthedLearningHubRouteChildren {
   AuthedLearningHubArticlesSlugRoute: typeof AuthedLearningHubArticlesSlugRoute
   AuthedLearningHubGlossarySlugRoute: typeof AuthedLearningHubGlossarySlugRoute
   AuthedLearningHubPathsSlugRoute: typeof AuthedLearningHubPathsSlugRoute
+  AuthedLearningHubAchievementsIndexRoute: typeof AuthedLearningHubAchievementsIndexRoute
+  AuthedLearningHubAnalyzerIndexRoute: typeof AuthedLearningHubAnalyzerIndexRoute
   AuthedLearningHubArticlesIndexRoute: typeof AuthedLearningHubArticlesIndexRoute
   AuthedLearningHubCalculatorsIndexRoute: typeof AuthedLearningHubCalculatorsIndexRoute
+  AuthedLearningHubChecklistsIndexRoute: typeof AuthedLearningHubChecklistsIndexRoute
+  AuthedLearningHubFreedomIndexRoute: typeof AuthedLearningHubFreedomIndexRoute
   AuthedLearningHubGlossaryIndexRoute: typeof AuthedLearningHubGlossaryIndexRoute
   AuthedLearningHubPathsIndexRoute: typeof AuthedLearningHubPathsIndexRoute
+  AuthedLearningHubScenariosIndexRoute: typeof AuthedLearningHubScenariosIndexRoute
 }
 
 const AuthedLearningHubRouteChildren: AuthedLearningHubRouteChildren = {
@@ -1006,11 +1111,17 @@ const AuthedLearningHubRouteChildren: AuthedLearningHubRouteChildren = {
   AuthedLearningHubArticlesSlugRoute: AuthedLearningHubArticlesSlugRoute,
   AuthedLearningHubGlossarySlugRoute: AuthedLearningHubGlossarySlugRoute,
   AuthedLearningHubPathsSlugRoute: AuthedLearningHubPathsSlugRoute,
+  AuthedLearningHubAchievementsIndexRoute:
+    AuthedLearningHubAchievementsIndexRoute,
+  AuthedLearningHubAnalyzerIndexRoute: AuthedLearningHubAnalyzerIndexRoute,
   AuthedLearningHubArticlesIndexRoute: AuthedLearningHubArticlesIndexRoute,
   AuthedLearningHubCalculatorsIndexRoute:
     AuthedLearningHubCalculatorsIndexRoute,
+  AuthedLearningHubChecklistsIndexRoute: AuthedLearningHubChecklistsIndexRoute,
+  AuthedLearningHubFreedomIndexRoute: AuthedLearningHubFreedomIndexRoute,
   AuthedLearningHubGlossaryIndexRoute: AuthedLearningHubGlossaryIndexRoute,
   AuthedLearningHubPathsIndexRoute: AuthedLearningHubPathsIndexRoute,
+  AuthedLearningHubScenariosIndexRoute: AuthedLearningHubScenariosIndexRoute,
 }
 
 const AuthedLearningHubRouteWithChildren =
