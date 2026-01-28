@@ -1344,6 +1344,274 @@ export const invitationTokensRelations = relations(invitationTokens, ({ one }) =
 }));
 
 // =============================================================================
+// SUBSCRIPTIONS & BILLING
+// =============================================================================
+
+// Subscription status enum
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "active", // Subscription is active and paid
+  "trialing", // In trial period
+  "past_due", // Payment failed, grace period
+  "canceled", // User canceled, access until period end
+  "unpaid", // Payment failed, no access
+  "incomplete", // Initial payment failed
+  "incomplete_expired", // Initial payment window expired
+  "paused", // Subscription paused
+]);
+
+// Plan interval enum
+export const planIntervalEnum = pgEnum("plan_interval", [
+  "month",
+  "year",
+]);
+
+// Subscriptions table - tracks user subscriptions synced from Stripe
+export const subscriptions = pgTable("subscriptions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull()
+    .unique(), // One subscription per user
+
+  // Stripe IDs
+  stripeCustomerId: text("stripe_customer_id").notNull().unique(),
+  stripeSubscriptionId: text("stripe_subscription_id").unique(),
+  stripePriceId: text("stripe_price_id"),
+
+  // Subscription details
+  status: subscriptionStatusEnum("status").notNull().default("active"),
+  planName: text("plan_name"), // "free", "pro", "portfolio", "enterprise"
+
+  // Billing period
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+
+  // Cancellation
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  canceledAt: timestamp("canceled_at"),
+  cancellationReason: text("cancellation_reason"),
+
+  // Trial
+  trialStart: timestamp("trial_start"),
+  trialEnd: timestamp("trial_end"),
+
+  // Metadata
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("idx_subscriptions_user_id").on(table.userId),
+  stripeCustomerIdIdx: index("idx_subscriptions_stripe_customer_id").on(table.stripeCustomerId),
+  statusIdx: index("idx_subscriptions_status").on(table.status),
+}));
+
+// Plans table - available subscription plans (synced from Stripe)
+export const plans = pgTable("plans", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  // Stripe IDs
+  stripePriceId: text("stripe_price_id").notNull().unique(),
+  stripeProductId: text("stripe_product_id"),
+
+  // Plan details
+  name: text("name").notNull(), // "Free", "Pro", "Portfolio", "Enterprise"
+  slug: text("slug").notNull().unique(), // "free", "pro", "portfolio", "enterprise"
+  description: text("description"),
+
+  // Pricing
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(), // in dollars
+  currency: text("currency").default("usd"),
+  interval: planIntervalEnum("interval").notNull().default("month"),
+
+  // Features (JSON array)
+  features: jsonb("features").$type<string[]>(),
+
+  // Limits
+  propertyLimit: integer("property_limit"), // null = unlimited
+  teamMemberLimit: integer("team_member_limit"), // null = unlimited
+
+  // Display
+  isActive: boolean("is_active").default(true),
+  isPopular: boolean("is_popular").default(false),
+  sortOrder: integer("sort_order").default(0),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  slugIdx: index("idx_plans_slug").on(table.slug),
+  activeIdx: index("idx_plans_active").on(table.isActive),
+}));
+
+// =============================================================================
+// USER PREFERENCES
+// =============================================================================
+
+// Theme preference enum
+export const themePreferenceEnum = pgEnum("theme_preference", [
+  "light",
+  "dark",
+  "system",
+]);
+
+// User Preferences table - user settings and preferences (1:1 with users)
+export const userPreferences = pgTable("user_preferences", {
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .primaryKey(),
+
+  // Theme
+  theme: themePreferenceEnum("theme").default("system"),
+
+  // Notifications
+  emailNotifications: boolean("email_notifications").default(true),
+  marketingEmails: boolean("marketing_emails").default(false),
+  securityAlerts: boolean("security_alerts").default(true),
+  productUpdates: boolean("product_updates").default(true),
+
+  // Default Portfolio
+  defaultPortfolioId: uuid("default_portfolio_id")
+    .references(() => portfolios.id, { onDelete: "set null" }),
+
+  // Timezone & Locale
+  timezone: text("timezone").default("America/New_York"),
+  locale: text("locale").default("en-US"),
+  currency: text("currency").default("USD"),
+
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// =============================================================================
+// ACCOUNT MANAGEMENT
+// =============================================================================
+
+// Account deletion request type enum
+export const accountRequestTypeEnum = pgEnum("account_request_type", [
+  "delete_account", // Full account deletion
+  "purge_data", // Remove all data but keep account
+]);
+
+// Account request status enum
+export const accountRequestStatusEnum = pgEnum("account_request_status", [
+  "pending", // Request created, awaiting confirmation
+  "confirmed", // User confirmed, in grace period
+  "processing", // Currently being processed
+  "completed", // Request fulfilled
+  "cancelled", // User cancelled the request
+]);
+
+// Account Deletion Requests - tracks account deletion and data purge requests
+export const accountDeletionRequests = pgTable("account_deletion_requests", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+
+  requestType: accountRequestTypeEnum("request_type").notNull(),
+  status: accountRequestStatusEnum("status").notNull().default("pending"),
+
+  // Confirmation
+  confirmationToken: text("confirmation_token").unique(),
+  tokenExpiresAt: timestamp("token_expires_at"),
+  confirmedAt: timestamp("confirmed_at"),
+
+  // Grace period (24 hours after confirmation before processing)
+  gracePeriodEndsAt: timestamp("grace_period_ends_at"),
+
+  // Processing
+  processedAt: timestamp("processed_at"),
+  processedBy: text("processed_by"), // "system" or admin user ID
+
+  // Feedback
+  reason: text("reason"), // Optional: why user is leaving
+
+  // Timestamps
+  requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("idx_account_deletion_requests_user_id").on(table.userId),
+  statusIdx: index("idx_account_deletion_requests_status").on(table.status),
+  tokenIdx: index("idx_account_deletion_requests_token").on(table.confirmationToken),
+}));
+
+// Data Export format enum
+export const dataExportFormatEnum = pgEnum("data_export_format", [
+  "json",
+  "csv",
+]);
+
+// Data Export status enum
+export const dataExportStatusEnum = pgEnum("data_export_status", [
+  "pending", // Request received
+  "processing", // Export in progress
+  "completed", // Ready for download
+  "failed", // Export failed
+  "expired", // Download link expired
+]);
+
+// Data Export Requests - tracks user data export requests (GDPR compliance)
+export const dataExportRequests = pgTable("data_export_requests", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+
+  format: dataExportFormatEnum("format").notNull().default("json"),
+  status: dataExportStatusEnum("status").notNull().default("pending"),
+
+  // Download info
+  downloadUrl: text("download_url"),
+  downloadExpiresAt: timestamp("download_expires_at"),
+  fileSize: integer("file_size"), // in bytes
+
+  // Processing
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  errorMessage: text("error_message"),
+
+  // Metadata
+  requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("idx_data_export_requests_user_id").on(table.userId),
+  statusIdx: index("idx_data_export_requests_status").on(table.status),
+}));
+
+// Subscription relations
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [subscriptions.userId],
+    references: [users.id],
+  }),
+}));
+
+// User preferences relations
+export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [userPreferences.userId],
+    references: [users.id],
+  }),
+  defaultPortfolio: one(portfolios, {
+    fields: [userPreferences.defaultPortfolioId],
+    references: [portfolios.id],
+  }),
+}));
+
+// Account deletion requests relations
+export const accountDeletionRequestsRelations = relations(accountDeletionRequests, ({ one }) => ({
+  user: one(users, {
+    fields: [accountDeletionRequests.userId],
+    references: [users.id],
+  }),
+}));
+
+// Data export requests relations
+export const dataExportRequestsRelations = relations(dataExportRequests, ({ one }) => ({
+  user: one(users, {
+    fields: [dataExportRequests.userId],
+    references: [users.id],
+  }),
+}));
+
+// =============================================================================
 // BANK ACCOUNTS
 // =============================================================================
 
