@@ -78,6 +78,8 @@ export const DRAWERS = {
   UPLOAD_DOCUMENT: 'upload-document',
   DOCUMENT_DETAIL: 'document-detail',
   TAX_EXPORT: 'tax-export',
+  // Strategy Drawers
+  STRATEGY_EDIT: 'strategy-edit',
 } as const
 
 // =============================================================================
@@ -160,6 +162,8 @@ export const DRAWER_NAMES = [
   'upload-document',
   'document-detail',
   'tax-export',
+  // Strategy Drawers
+  'strategy-edit',
 ] as const
 
 export type DrawerName = (typeof DRAWER_NAMES)[number]
@@ -347,6 +351,20 @@ export const DRAWER_REGISTRY: Record<DrawerName, DrawerRegistryEntry<any>> = {
     paramsSchema: taxExportDrawerParamsSchema,
     permission: 'member',
     displayName: 'Tax Export',
+  },
+
+  // ==========================================================================
+  // Strategy Drawers
+  // ==========================================================================
+  'strategy-edit': {
+    component: lazy(() =>
+      import('@/components/drawers/StrategyEditDrawer').then((m) => ({
+        default: m.StrategyEditDrawer,
+      })),
+    ),
+    paramsSchema: propertyDrawerParamsSchema,
+    permission: 'member',
+    displayName: 'Edit Strategy',
   },
 }
 
