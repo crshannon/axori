@@ -6,19 +6,19 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router"
-import { useUser, useSession, useClerk } from "@clerk/tanstack-react-start"
+import { useClerk, useSession, useUser } from "@clerk/tanstack-react-start"
 import { Loading, cn } from "@axori/ui"
 import {
-  Shield,
-  Smartphone,
-  Monitor,
-  Globe,
   Clock,
-  LogOut,
-  ShieldCheck,
-  ShieldAlert,
-  Key,
+  Globe,
   History,
+  Key,
+  LogOut,
+  Monitor,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  Smartphone,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -155,12 +155,12 @@ function SecurityPage() {
               onClick={() => clerk.openUserProfile()}
               className={cn(
                 "px-4 py-2 text-sm font-medium rounded-lg transition-colors",
-                user?.phoneNumbers?.some(p => p.verification?.status === "verified")
+                user?.phoneNumbers.some(p => p.verification.status === "verified")
                   ? "bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20"
                   : "bg-purple-500 text-white hover:bg-purple-600"
               )}
             >
-              {user?.phoneNumbers?.some(p => p.verification?.status === "verified") ? "Manage" : "Set Up"}
+              {user?.phoneNumbers.some(p => p.verification.status === "verified") ? "Manage" : "Set Up"}
             </button>
           </div>
         </div>

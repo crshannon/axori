@@ -8,11 +8,10 @@
 import { Hono } from "hono";
 import Stripe from "stripe";
 import { db, eq } from "@axori/db";
-import { subscriptions, users } from "@axori/db/src/schema";
+import { subscriptions } from "@axori/db/src/schema";
 import {
   getPlanByPriceId,
   mapStripeSubscriptionStatus,
-  HANDLED_WEBHOOK_EVENTS,
 } from "@axori/shared/src/integrations/stripe";
 
 const stripeWebhookRouter = new Hono();

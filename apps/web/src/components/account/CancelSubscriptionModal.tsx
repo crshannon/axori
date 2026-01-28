@@ -5,7 +5,7 @@
  */
 
 import { useState } from "react";
-import { Modal, Button, cn } from "@axori/ui";
+import { Button, Modal, cn } from "@axori/ui";
 import { AlertTriangle, Calendar, CreditCard, X } from "lucide-react";
 import { useCancelSubscription, useSubscription } from "@/hooks/api/useBilling";
 

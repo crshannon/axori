@@ -76,9 +76,7 @@ export const Modal = ({
   const modalContent = (
     <div
       className={cn(
-        "fixed inset-0 z-50 flex items-center justify-center p-4",
-        // Animation
-        "animate-in fade-in duration-200"
+        "fixed inset-0 z-50 flex items-center justify-center p-4"
       )}
       onClick={closeOnOutsideClick ? onClose : undefined}
       role="dialog"
@@ -89,16 +87,22 @@ export const Modal = ({
       <div
         className={cn(
           "fixed inset-0 bg-black/50 backdrop-blur-sm",
-          "animate-in fade-in duration-200"
+          "transition-opacity duration-200"
         )}
       />
 
       {/* Modal Content */}
       <div
         className={cn(
-          "relative z-50 w-full rounded-2xl bg-white shadow-2xl dark:bg-[#1A1A1A]",
-          "animate-in zoom-in-95 slide-in-from-bottom-4 duration-300",
-          "border border-slate-200 dark:border-white/10",
+          `
+            relative z-50 w-full rounded-2xl bg-white shadow-2xl
+            dark:bg-[#1A1A1A]
+          `,
+          "transition-all duration-300",
+          `
+            border border-slate-200
+            dark:border-white/10
+          `,
           sizeClasses[size],
           className
         )}
@@ -109,20 +113,29 @@ export const Modal = ({
           <div
             className={cn(
               "flex items-start justify-between p-6",
-              (title || description) && "border-b border-slate-200 dark:border-white/10"
+              (title || description) && `
+                border-b border-slate-200
+                dark:border-white/10
+              `
             )}
           >
             <div>
               {title && (
                 <h2
                   id="modal-title"
-                  className="text-xl font-semibold text-slate-900 dark:text-white"
+                  className="
+                    text-xl font-semibold text-slate-900
+                    dark:text-white
+                  "
                 >
                   {title}
                 </h2>
               )}
               {description && (
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                <p className="
+                  mt-1 text-sm text-slate-500
+                  dark:text-slate-400
+                ">
                   {description}
                 </p>
               )}
@@ -133,12 +146,19 @@ export const Modal = ({
                 onClick={onClose}
                 className={cn(
                   "rounded-lg p-2 transition-colors",
-                  "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300",
-                  "hover:bg-slate-100 dark:hover:bg-white/10"
+                  `
+                    text-slate-400
+                    hover:text-slate-600
+                    dark:hover:text-slate-300
+                  `,
+                  `
+                    hover:bg-slate-100
+                    dark:hover:bg-white/10
+                  `
                 )}
                 aria-label="Close modal"
               >
-                <X className="h-5 w-5" />
+                <X className="size-5" />
               </button>
             )}
           </div>
@@ -154,7 +174,10 @@ export const Modal = ({
           <div
             className={cn(
               "flex items-center justify-end gap-3 p-6",
-              "border-t border-slate-200 dark:border-white/10"
+              `
+                border-t border-slate-200
+                dark:border-white/10
+              `
             )}
           >
             {footer}

@@ -8,7 +8,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useUser } from "@clerk/tanstack-react-start"
 import { Loading, cn } from "@axori/ui"
-import { Camera, Mail, User, ExternalLink } from "lucide-react"
+import { Camera, ExternalLink, Mail, User } from "lucide-react"
 
 export const Route = createFileRoute("/_authed/account/")({
   component: ProfilePage,
@@ -145,7 +145,7 @@ function ProfilePage() {
                     Primary
                   </span>
                 )}
-                {email.verification?.status === "verified" && (
+                {email.verification.status === "verified" && (
                   <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400">
                     Verified
                   </span>

@@ -8,14 +8,10 @@
 import { Hono } from "hono";
 import Stripe from "stripe";
 import { db, eq } from "@axori/db";
-import { subscriptions, plans, users } from "@axori/db/src/schema";
+import { subscriptions } from "@axori/db/src/schema";
 import { requireAuth, getAuthenticatedUserId } from "../middleware/permissions";
 import { withErrorHandling } from "../utils/errors";
-import {
-  PLAN_CONFIGS,
-  getPlanByPriceId,
-  mapStripeSubscriptionStatus,
-} from "@axori/shared/src/integrations/stripe";
+import { PLAN_CONFIGS } from "@axori/shared/src/integrations/stripe";
 
 const billingRouter = new Hono();
 
@@ -209,7 +205,7 @@ billingRouter.get(
             : null,
         },
       });
-    } catch (error) {
+    } catch {
       // No upcoming invoice (e.g., free plan or canceled)
       return c.json({ upcomingInvoice: null });
     }

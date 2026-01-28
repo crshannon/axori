@@ -6,7 +6,7 @@
  */
 
 import { Outlet, createFileRoute, useLocation, useNavigate } from "@tanstack/react-router"
-import { ArrowLeft, CreditCard, Bell, Shield, User } from "lucide-react"
+import { ArrowLeft, Bell, CreditCard, Shield, User } from "lucide-react"
 import { cn } from "@axori/ui"
 
 export const Route = createFileRoute("/_authed/account")({
@@ -20,7 +20,7 @@ interface AccountTab {
   icon: typeof User
 }
 
-const ACCOUNT_TABS: AccountTab[] = [
+const ACCOUNT_TABS: Array<AccountTab> = [
   {
     id: "profile",
     label: "Profile",

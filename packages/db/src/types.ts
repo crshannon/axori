@@ -23,6 +23,11 @@ import {
   invitationTokens,
   propertyBankAccounts,
   propertyDocuments,
+  subscriptions,
+  plans,
+  userPreferences,
+  accountDeletionRequests,
+  dataExportRequests,
 } from './schema'
 
 // Re-export property access types for external use
@@ -371,3 +376,70 @@ export type PropertyDocument = InferSelectModel<typeof propertyDocuments>
  * Used when creating new document records
  */
 export type PropertyDocumentInsert = InferInsertModel<typeof propertyDocuments>
+
+// ============================================================================
+// Subscriptions & Billing
+// ============================================================================
+
+/**
+ * Subscription type inferred from Drizzle schema (for read operations)
+ * Represents a user's subscription synced from Stripe
+ */
+export type Subscription = InferSelectModel<typeof subscriptions>
+
+/**
+ * Subscription insert type inferred from Drizzle schema (for insert operations)
+ */
+export type SubscriptionInsert = InferInsertModel<typeof subscriptions>
+
+/**
+ * Plan type inferred from Drizzle schema (for read operations)
+ * Represents an available subscription plan synced from Stripe
+ */
+export type Plan = InferSelectModel<typeof plans>
+
+/**
+ * Plan insert type inferred from Drizzle schema (for insert operations)
+ */
+export type PlanInsert = InferInsertModel<typeof plans>
+
+// ============================================================================
+// User Preferences
+// ============================================================================
+
+/**
+ * User Preferences type inferred from Drizzle schema (for read operations)
+ * Represents user settings and preferences (theme, notifications, etc.)
+ */
+export type UserPreferences = InferSelectModel<typeof userPreferences>
+
+/**
+ * User Preferences insert type inferred from Drizzle schema (for insert operations)
+ */
+export type UserPreferencesInsert = InferInsertModel<typeof userPreferences>
+
+// ============================================================================
+// Account Management
+// ============================================================================
+
+/**
+ * Account Deletion Request type inferred from Drizzle schema (for read operations)
+ * Tracks account deletion and data purge requests
+ */
+export type AccountDeletionRequest = InferSelectModel<typeof accountDeletionRequests>
+
+/**
+ * Account Deletion Request insert type inferred from Drizzle schema (for insert operations)
+ */
+export type AccountDeletionRequestInsert = InferInsertModel<typeof accountDeletionRequests>
+
+/**
+ * Data Export Request type inferred from Drizzle schema (for read operations)
+ * Tracks user data export requests for GDPR compliance
+ */
+export type DataExportRequest = InferSelectModel<typeof dataExportRequests>
+
+/**
+ * Data Export Request insert type inferred from Drizzle schema (for insert operations)
+ */
+export type DataExportRequestInsert = InferInsertModel<typeof dataExportRequests>

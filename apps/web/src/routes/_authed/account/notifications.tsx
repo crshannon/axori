@@ -8,13 +8,13 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useUser } from "@clerk/tanstack-react-start"
 import { Loading, cn } from "@axori/ui"
 import {
+  AlertTriangle,
   Bell,
+  DollarSign,
+  FileText,
   Mail,
   MessageSquare,
   TrendingUp,
-  AlertTriangle,
-  FileText,
-  DollarSign,
   Users,
 } from "lucide-react"
 import { useState } from "react"
@@ -33,7 +33,7 @@ interface NotificationSetting {
   category: "property" | "financial" | "account" | "marketing"
 }
 
-const DEFAULT_SETTINGS: NotificationSetting[] = [
+const DEFAULT_SETTINGS: Array<NotificationSetting> = [
   // Property Notifications
   {
     id: "property_alerts",

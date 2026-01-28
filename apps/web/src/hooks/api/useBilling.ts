@@ -4,25 +4,47 @@
  * React Query hooks for billing and subscription management.
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/tanstack-react-start";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
-// Types
-export interface Plan {
+// =============================================================================
+// Query Key Factory
+// =============================================================================
+
+/**
+ * Query keys for billing operations.
+ * Follows the standard key factory pattern for TanStack Query.
+ */
+export const billingKeys = {
+  all: ["billing"] as const,
+  subscription: () => [...billingKeys.all, "subscription"] as const,
+  plans: () => [...billingKeys.all, "plans"] as const,
+  invoices: () => [...billingKeys.all, "invoices"] as const,
+  upcomingInvoice: () => [...billingKeys.all, "upcoming-invoice"] as const,
+  paymentMethods: () => [...billingKeys.all, "payment-methods"] as const,
+};
+
+// =============================================================================
+// Types (API Response Types)
+// Note: These represent API response shapes which may differ from raw database types.
+// For database types, use @axori/db types (Subscription, Plan, etc.)
+// =============================================================================
+
+export interface PlanResponse {
   id: string;
   name: string;
   slug: string;
   amount: number;
   interval: "month" | "year";
-  features: string[];
+  features: Array<string>;
   propertyLimit: number | null;
   teamMemberLimit: number | null;
   isPopular: boolean;
 }
 
-export interface Subscription {
+export interface SubscriptionResponse {
   id?: string;
   plan: string;
   status: string;
@@ -31,12 +53,12 @@ export interface Subscription {
   currentPeriodEnd?: string;
   cancelAtPeriodEnd?: boolean;
   trialEnd?: string;
-  features: string[];
+  features: Array<string>;
   propertyLimit: number;
   teamMemberLimit: number;
 }
 
-export interface Invoice {
+export interface InvoiceResponse {
   id: string;
   number?: string;
   status: string;
@@ -49,7 +71,7 @@ export interface Invoice {
   hostedInvoiceUrl?: string;
 }
 
-export interface UpcomingInvoice {
+export interface UpcomingInvoiceResponse {
   amount: number;
   currency: string;
   periodStart: string;
@@ -57,7 +79,7 @@ export interface UpcomingInvoice {
   nextPaymentAttempt?: string;
 }
 
-export interface PaymentMethod {
+export interface PaymentMethodResponse {
   id: string;
   brand?: string;
   last4?: string;
@@ -96,10 +118,10 @@ export function useSubscription() {
   const { getToken } = useAuth();
 
   return useQuery({
-    queryKey: ["billing", "subscription"],
+    queryKey: billingKeys.subscription(),
     queryFn: async () => {
       const token = await getToken();
-      return apiFetch<Subscription>("/api/billing/subscription", token);
+      return apiFetch<SubscriptionResponse>("/api/billing/subscription", token);
     },
   });
 }
@@ -109,11 +131,11 @@ export function useSubscription() {
  */
 export function usePlans() {
   return useQuery({
-    queryKey: ["billing", "plans"],
+    queryKey: billingKeys.plans(),
     queryFn: async () => {
       const response = await fetch(`${API_BASE}/api/billing/plans`);
       const data = await response.json();
-      return data.plans as Plan[];
+      return data.plans as Array<PlanResponse>;
     },
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });
@@ -126,10 +148,10 @@ export function useInvoices() {
   const { getToken } = useAuth();
 
   return useQuery({
-    queryKey: ["billing", "invoices"],
+    queryKey: billingKeys.invoices(),
     queryFn: async () => {
       const token = await getToken();
-      const data = await apiFetch<{ invoices: Invoice[] }>("/api/billing/invoices", token);
+      const data = await apiFetch<{ invoices: Array<InvoiceResponse> }>("/api/billing/invoices", token);
       return data.invoices;
     },
   });
@@ -142,10 +164,10 @@ export function useUpcomingInvoice() {
   const { getToken } = useAuth();
 
   return useQuery({
-    queryKey: ["billing", "upcoming-invoice"],
+    queryKey: billingKeys.upcomingInvoice(),
     queryFn: async () => {
       const token = await getToken();
-      const data = await apiFetch<{ upcomingInvoice: UpcomingInvoice | null }>(
+      const data = await apiFetch<{ upcomingInvoice: UpcomingInvoiceResponse | null }>(
         "/api/billing/upcoming-invoice",
         token
       );
@@ -161,10 +183,10 @@ export function usePaymentMethods() {
   const { getToken } = useAuth();
 
   return useQuery({
-    queryKey: ["billing", "payment-methods"],
+    queryKey: billingKeys.paymentMethods(),
     queryFn: async () => {
       const token = await getToken();
-      const data = await apiFetch<{ paymentMethods: PaymentMethod[] }>(
+      const data = await apiFetch<{ paymentMethods: Array<PaymentMethodResponse> }>(
         "/api/billing/payment-methods",
         token
       );
@@ -259,7 +281,7 @@ export function useCancelSubscription() {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["billing", "subscription"] });
+      queryClient.invalidateQueries({ queryKey: billingKeys.subscription() });
     },
   });
 }
@@ -279,7 +301,7 @@ export function useResumeSubscription() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["billing", "subscription"] });
+      queryClient.invalidateQueries({ queryKey: billingKeys.subscription() });
     },
   });
 }

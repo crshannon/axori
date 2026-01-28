@@ -130,6 +130,7 @@ export const ConfirmationDialog = ({
       await onConfirm();
       onClose();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Confirmation action failed:", error);
     } finally {
       setIsConfirming(false);
@@ -149,32 +150,44 @@ export const ConfirmationDialog = ({
         {/* Icon */}
         <div
           className={cn(
-            "w-16 h-16 rounded-full flex items-center justify-center mb-4",
+            "mb-4 flex size-16 items-center justify-center rounded-full",
             config.bgClass
           )}
         >
-          <Icon className={cn("w-8 h-8", config.iconClass)} />
+          <Icon className={cn("size-8", config.iconClass)} />
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+        <h3 className="
+          mb-2 text-xl font-semibold text-slate-900
+          dark:text-white
+        ">
           {title}
         </h3>
 
         {/* Description */}
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-sm">
+        <p className="
+          mb-6 max-w-sm text-sm text-slate-500
+          dark:text-slate-400
+        ">
           {description}
         </p>
 
         {/* Additional content */}
-        {children && <div className="w-full mb-6">{children}</div>}
+        {children && <div className="mb-6 w-full">{children}</div>}
 
         {/* Type to confirm */}
         {requireTypeConfirm && (
-          <div className="w-full mb-6">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+          <div className="mb-6 w-full">
+            <p className="
+              mb-2 text-xs text-slate-500
+              dark:text-slate-400
+            ">
               Type{" "}
-              <code className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/10 font-mono text-red-500">
+              <code className="
+                rounded-sm bg-slate-100 px-1.5 py-0.5 font-mono text-red-500
+                dark:bg-white/10
+              ">
                 {requireTypeConfirm}
               </code>{" "}
               to confirm
@@ -185,11 +198,20 @@ export const ConfirmationDialog = ({
               onChange={(e) => setTypeConfirmValue(e.target.value)}
               placeholder={typeConfirmPlaceholder || requireTypeConfirm}
               className={cn(
-                "w-full px-4 py-3 rounded-xl border text-sm text-center font-mono",
-                "bg-slate-50 border-slate-200 dark:bg-white/5 dark:border-white/10",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500/50",
+                `
+                  w-full rounded-xl border px-4 py-3 text-center font-mono
+                  text-sm
+                `,
+                `
+                  border-slate-200 bg-slate-50
+                  dark:border-white/10 dark:bg-white/5
+                `,
+                "focus:ring-2 focus:ring-blue-500/50 focus:outline-none",
                 isTypeConfirmValid && typeConfirmValue
-                  ? "border-green-500 dark:border-green-500"
+                  ? `
+                    border-green-500
+                    dark:border-green-500
+                  `
                   : ""
               )}
               autoComplete="off"
@@ -199,7 +221,7 @@ export const ConfirmationDialog = ({
         )}
 
         {/* Buttons */}
-        <div className="flex gap-3 w-full">
+        <div className="flex w-full gap-3">
           <Button
             variant="secondary"
             onClick={onClose}
@@ -218,7 +240,7 @@ export const ConfirmationDialog = ({
             {isLoading || isConfirming ? (
               <span className="flex items-center gap-2">
                 <svg
-                  className="animate-spin h-4 w-4"
+                  className="size-4 animate-spin"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"

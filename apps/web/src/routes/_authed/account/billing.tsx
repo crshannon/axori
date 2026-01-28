@@ -9,15 +9,15 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useUser } from "@clerk/tanstack-react-start"
 import { Loading, cn } from "@axori/ui"
 import {
-  CreditCard,
-  FileText,
+  Building,
   Calendar,
+  Check,
+  CreditCard,
+  Crown,
   Download,
   ExternalLink,
-  Check,
+  FileText,
   Sparkles,
-  Building,
-  Crown,
   Zap,
 } from "lucide-react"
 import { useState } from "react"
@@ -125,7 +125,7 @@ function BillingPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              {currentPlan.icon && <currentPlan.icon className="w-7 h-7 text-white" />}
+              <currentPlan.icon className="w-7 h-7 text-white" />
             </div>
             <div>
               <h3 className="text-xl font-bold">{currentPlan.name} Plan</h3>

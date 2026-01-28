@@ -74,15 +74,12 @@ export const DRAWERS = {
   BANK_ALLOCATION: 'bank-allocation',
   PROPERTY_ACQUISITION: 'property-acquisition',
   VALUATION: 'valuation',
-<<<<<<< HEAD
-  // Account Settings Drawers
-  PLAN_SELECTION: 'plan-selection',
-=======
   // Documents Drawers
   UPLOAD_DOCUMENT: 'upload-document',
   DOCUMENT_DETAIL: 'document-detail',
   TAX_EXPORT: 'tax-export',
->>>>>>> origin/main
+  // Account Settings Drawers
+  PLAN_SELECTION: 'plan-selection',
 } as const
 
 // =============================================================================

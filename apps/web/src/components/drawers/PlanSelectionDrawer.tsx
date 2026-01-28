@@ -4,12 +4,12 @@
  * Allows users to compare and select subscription plans.
  */
 
-import { Drawer, cn, Button } from "@axori/ui";
-import { Check, Sparkles, Building, Crown, Zap, ArrowRight } from "lucide-react";
-import { usePlans, useSubscription, useCreateCheckoutSession } from "@/hooks/api/useBilling";
+import { Button, Drawer, cn } from "@axori/ui";
+import { ArrowRight, Building, Check, Crown, Sparkles, Zap } from "lucide-react";
 import type { DrawerComponentProps } from "@/lib/drawer/registry";
+import { useCreateCheckoutSession, usePlans, useSubscription } from "@/hooks/api/useBilling";
 
-const PLAN_ICONS: Record<string, typeof Zap> = {
+const PLAN_ICONS: Partial<Record<string, typeof Zap>> = {
   free: Zap,
   pro: Sparkles,
   portfolio: Building,
