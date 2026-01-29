@@ -11,7 +11,7 @@ interface KanbanColumnProps {
   id: string;
   title: string;
   color: string;
-  tickets: Partial<ForgeTicket>[];
+  tickets: ForgeTicket[];
 }
 
 export function KanbanColumn({ id, title, color, tickets }: KanbanColumnProps) {
