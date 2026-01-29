@@ -11,13 +11,15 @@
   },
   "scripts": {
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx migrate.ts",
+    "db:migrate": "tsx src/migrations/runner.ts --apply",
+    "db:status": "tsx src/migrations/runner.ts --status",
+    "db:verify": "tsx src/migrations/runner.ts --verify",
     "db:push": "drizzle-kit push",
+    "db:pull": "drizzle-kit pull",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/seed/markets.ts",
     "db:seed:user": "tsx src/seed/mock-user-data.ts",
     "db:cleanup:user": "tsx src/seed/cleanup-user-data.ts",
-    "db:ensure:transactions": "tsx src/seed/ensure-transactions-table.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
