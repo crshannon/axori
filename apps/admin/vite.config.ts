@@ -8,7 +8,8 @@ import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
+  const isTest = process.env.VITEST || mode === "test";
   // Load env vars from root directory first, then app directory (app takes precedence)
   const rootEnv = loadEnv(mode, resolve(__dirname, "../.."), "");
   const appEnv = loadEnv(mode, __dirname, "");
@@ -100,7 +101,8 @@ export default defineConfig(({ mode }) => {
         protocolImports: false,
       }),
       devtools(),
-      nitro(),
+      // Exclude nitro during tests - it has compatibility issues with vitest
+      !isTest && nitro(),
       viteTsConfigPaths({
         projects: ["./tsconfig.json"],
       }),
