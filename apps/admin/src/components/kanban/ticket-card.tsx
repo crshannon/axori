@@ -4,14 +4,14 @@ import { clsx } from "clsx";
 import {
   AlertCircle,
   Bug,
+  ExternalLink,
   FileText,
+  GitBranch,
   Lightbulb,
   Paintbrush,
   RefreshCw,
   Wrench,
   Zap,
-  ExternalLink,
-  GitBranch,
 } from "lucide-react";
 import type { ForgeTicket } from "@axori/db";
 
@@ -46,7 +46,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
     transition,
     isDragging: isSortableDragging,
   } = useSortable({
-    id: ticket.id!,
+    id: ticket.id,
   });
 
   const style = {

@@ -247,9 +247,9 @@ export class GitHubClient {
   /**
    * List directory contents
    */
-  async listDirectory(path: string, ref?: string): Promise<GitHubContent[]> {
+  async listDirectory(path: string, ref?: string): Promise<Array<GitHubContent>> {
     const params = ref ? `?ref=${ref}` : ""
-    return this.request<GitHubContent[]>(`/contents/${path}${params}`)
+    return this.request<Array<GitHubContent>>(`/contents/${path}${params}`)
   }
 
   // =============================================================================
@@ -303,9 +303,9 @@ export class GitHubClient {
   /**
    * List pull requests for a branch
    */
-  async listPullRequests(head?: string): Promise<GitHubPullRequest[]> {
+  async listPullRequests(head?: string): Promise<Array<GitHubPullRequest>> {
     const params = head ? `?head=${this.owner}:${head}` : ""
-    return this.request<GitHubPullRequest[]>(`/pulls${params}`)
+    return this.request<Array<GitHubPullRequest>>(`/pulls${params}`)
   }
 
   /**

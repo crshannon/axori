@@ -4,14 +4,15 @@
  * Modal for assigning an AI agent to a ticket with protocol selection
  */
 
-import { useState, useEffect } from "react"
-import { X, Bot, Cpu, Zap, Check, Sparkles } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Bot, Check, Cpu, Sparkles, X, Zap } from "lucide-react"
 import { clsx } from "clsx"
+import type {AgentProtocol} from "@/hooks/api/use-agents";
 import {
+  
   useAgentProtocols,
-  useSuggestProtocol,
   useCreateExecution,
-  type AgentProtocol,
+  useSuggestProtocol
 } from "@/hooks/api/use-agents"
 
 interface AssignAgentModalProps {
@@ -23,7 +24,7 @@ interface AssignAgentModalProps {
     title: string
     type: string
     estimate?: number | null
-    labels?: string[] | null
+    labels?: Array<string> | null
   }
 }
 

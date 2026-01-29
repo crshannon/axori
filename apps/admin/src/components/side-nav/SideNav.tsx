@@ -1,14 +1,14 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { UserButton } from "@clerk/clerk-react";
 import {
-  Zap,
-  LayoutDashboard,
-  Kanban,
-  Flag,
   BookOpen,
+  Flag,
+  Kanban,
+  LayoutDashboard,
   Scale,
-  Wallet,
   Settings,
+  Wallet,
+  Zap,
 } from "lucide-react";
 import { clsx } from "clsx";
 

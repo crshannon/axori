@@ -16,8 +16,6 @@ import {
   desc,
   asc,
   sql,
-  ilike,
-  inArray,
 } from "@axori/db";
 import {
   requireAuth,
@@ -597,7 +595,7 @@ router.post(
   withErrorHandling(
     async (c) => {
       const ticketId = c.req.param("id");
-      const userId = getAuthenticatedUserId(c);
+      const _userId = getAuthenticatedUserId(c); // Reserved for future author tracking
       const body = await c.req.json();
 
       const schema = z.object({

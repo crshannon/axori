@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useUser } from "@clerk/tanstack-react-start";
-import { Zap, LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/" as any)({
   component: LandingPage,

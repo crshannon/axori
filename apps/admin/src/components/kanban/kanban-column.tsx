@@ -11,7 +11,7 @@ interface KanbanColumnProps {
   id: string;
   title: string;
   color: string;
-  tickets: ForgeTicket[];
+  tickets: Array<ForgeTicket>;
 }
 
 export function KanbanColumn({ id, title, color, tickets }: KanbanColumnProps) {
@@ -43,7 +43,7 @@ export function KanbanColumn({ id, title, color, tickets }: KanbanColumnProps) {
         className="flex-1 overflow-y-auto p-2"
       >
         <SortableContext
-          items={tickets.map((t) => t.id!)}
+          items={tickets.map((t) => t.id)}
           strategy={verticalListSortingStrategy}
         >
           <div className="flex flex-col gap-2">

@@ -1,12 +1,13 @@
 import {
-  useQuery,
+  
   useMutation,
-  useQueryClient,
-  type UseQueryOptions,
+  useQuery,
+  useQueryClient
 } from "@tanstack/react-query";
 import { useUser } from "@clerk/clerk-react";
-import { apiFetch } from "@/lib/api/client";
+import type {UseQueryOptions} from "@tanstack/react-query";
 import type { ForgeTicket, ForgeTicketInsert } from "@axori/db";
+import { apiFetch } from "@/lib/api/client";
 
 // Query keys for tickets
 export const ticketKeys = {
@@ -31,7 +32,7 @@ export interface TicketFilters {
  */
 export function useTickets(
   filters?: TicketFilters,
-  options?: Omit<UseQueryOptions<ForgeTicket[]>, "queryKey" | "queryFn">
+  options?: Omit<UseQueryOptions<Array<ForgeTicket>>, "queryKey" | "queryFn">
 ) {
   const { user } = useUser();
 
@@ -48,7 +49,7 @@ export function useTickets(
       }
       const queryString = params.toString();
       const endpoint = `/forge/tickets${queryString ? `?${queryString}` : ""}`;
-      return apiFetch<ForgeTicket[]>(endpoint, { clerkId: user?.id });
+      return apiFetch<Array<ForgeTicket>>(endpoint, { clerkId: user?.id });
     },
     enabled: !!user?.id,
     ...options,
@@ -150,12 +151,12 @@ export function useUpdateTicketStatus() {
       await queryClient.cancelQueries({ queryKey: ticketKeys.lists() });
 
       // Snapshot previous value
-      const previousTickets = queryClient.getQueryData<ForgeTicket[]>(
+      const previousTickets = queryClient.getQueryData<Array<ForgeTicket>>(
         ticketKeys.lists()
       );
 
       // Optimistically update
-      queryClient.setQueryData<ForgeTicket[]>(ticketKeys.lists(), (old) =>
+      queryClient.setQueryData<Array<ForgeTicket>>(ticketKeys.lists(), (old) =>
         old?.map((t) => (t.id === id ? { ...t, status } : t))
       );
 

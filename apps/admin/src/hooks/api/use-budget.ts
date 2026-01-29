@@ -4,7 +4,7 @@
  * TanStack Query hooks for token budget management
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api/client"
 
 // =============================================================================
@@ -175,7 +175,7 @@ export function useRecentUsage(limit = 50) {
   return useQuery({
     queryKey: budgetKeys.recent(limit),
     queryFn: async () => {
-      return api.get<RecentUsageEntry[]>(`/forge/budget/recent?limit=${limit}`)
+      return api.get<Array<RecentUsageEntry>>(`/forge/budget/recent?limit=${limit}`)
     },
   })
 }

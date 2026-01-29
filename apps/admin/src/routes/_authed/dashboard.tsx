@@ -1,12 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import {
-  CheckCircle,
-  GitPullRequest,
   AlertTriangle,
-  Zap,
   ArrowRight,
+  CheckCircle,
   Clock,
+  GitPullRequest,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authed/dashboard" as any)({

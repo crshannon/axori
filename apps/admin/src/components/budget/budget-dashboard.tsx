@@ -6,23 +6,23 @@
 
 import { clsx } from "clsx"
 import {
-  Wallet,
-  Cpu,
-  Bot,
-  Zap,
-  DollarSign,
-  Calendar,
   Activity,
   AlertTriangle,
+  Bot,
+  Calendar,
+  Cpu,
+  DollarSign,
+  Wallet,
+  Zap,
 } from "lucide-react"
 import {
-  useTodayBudget,
-  useBudgetStats,
-  useTokenUsage,
-  formatTokens,
   formatCost,
   formatDuration,
+  formatTokens,
   getBudgetProgressColor,
+  useBudgetStats,
+  useTodayBudget,
+  useTokenUsage,
 } from "@/hooks/api/use-budget"
 
 export function BudgetDashboard() {

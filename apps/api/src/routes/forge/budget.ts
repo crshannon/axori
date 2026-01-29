@@ -17,7 +17,7 @@ import {
   and,
 } from "@axori/db"
 import { requireAuth } from "../../middleware/permissions"
-import { withErrorHandling, validateData, ApiError } from "../../utils/errors"
+import { withErrorHandling, validateData } from "../../utils/errors"
 
 const router = new Hono()
 

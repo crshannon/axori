@@ -1,22 +1,23 @@
-import { useState, useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   DndContext,
+  
+  
   DragOverlay,
-  closestCorners,
+  
   KeyboardSensor,
   PointerSensor,
+  closestCorners,
   useSensor,
-  useSensors,
-  type DragStartEvent,
-  type DragEndEvent,
-  type DragOverEvent,
+  useSensors
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { Plus, Search, Filter, Loader2 } from "lucide-react";
+import { Filter, Loader2, Plus, Search } from "lucide-react";
 import { KanbanColumn } from "./kanban-column";
 import { TicketCard } from "./ticket-card";
-import { useTickets, useUpdateTicketStatus } from "@/hooks/api/use-tickets";
+import type {DragEndEvent, DragOverEvent, DragStartEvent} from "@dnd-kit/core";
 import type { ForgeTicket } from "@axori/db";
+import { useTickets, useUpdateTicketStatus } from "@/hooks/api/use-tickets";
 
 // Ticket status columns configuration
 const COLUMNS = [
@@ -32,7 +33,7 @@ const COLUMNS = [
 type TicketStatus = (typeof COLUMNS)[number]["id"];
 
 // Mock data fallback for when API is not available
-const MOCK_TICKETS: ForgeTicket[] = [
+const MOCK_TICKETS: Array<ForgeTicket> = [
   {
     id: "1",
     identifier: "AXO-001",

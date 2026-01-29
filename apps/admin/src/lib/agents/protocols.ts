@@ -26,10 +26,10 @@ export interface ProtocolConfig {
   model: ClaudeModel
   maxTokens: number
   systemPrompt: string
-  tools: string[]
+  tools: Array<string>
   estimatedTokens: { min: number; max: number }
   estimatedCostCents: { min: number; max: number }
-  bestFor: string[]
+  bestFor: Array<string>
   requiresApproval: boolean
   canCreateBranch: boolean
   canCreatePR: boolean
@@ -389,7 +389,7 @@ Include examples where appropriate.`,
 export function suggestProtocol(ticket: {
   type: string
   estimate?: number | null
-  labels?: string[] | null
+  labels?: Array<string> | null
 }): AgentProtocol {
   // Bug -> Sonnet bug fix
   if (ticket.type === "bug") return "sonnet_bug_fix"

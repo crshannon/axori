@@ -4,7 +4,7 @@
  * TanStack Query hooks for agent protocol and execution management
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api/client"
 
 // =============================================================================
@@ -18,7 +18,7 @@ export interface AgentProtocol {
   model: string
   estimatedTokens: { min: number; max: number }
   estimatedCostCents: { min: number; max: number }
-  bestFor: string[]
+  bestFor: Array<string>
   requiresApproval: boolean
 }
 
@@ -39,7 +39,7 @@ export interface AgentExecution {
   checkpointData?: Record<string, unknown>
   checkpointStep?: number
   branchCreated?: string
-  filesChanged?: string[]
+  filesChanged?: Array<string>
   prUrl?: string
   tokensUsed?: number
   costCents?: number
@@ -78,7 +78,7 @@ export function useAgentProtocols() {
   return useQuery({
     queryKey: agentKeys.protocols(),
     queryFn: async () => {
-      const response = await api.get<AgentProtocol[]>("/forge/agents/protocols")
+      const response = await api.get<Array<AgentProtocol>>("/forge/agents/protocols")
       return response
     },
   })
@@ -106,7 +106,7 @@ export function useSuggestProtocol() {
     mutationFn: async (ticket: {
       type: string
       estimate?: number | null
-      labels?: string[] | null
+      labels?: Array<string> | null
     }) => {
       const response = await api.post<ProtocolSuggestion>("/forge/agents/suggest", ticket)
       return response
@@ -134,7 +134,7 @@ export function useExecutions(filters?: {
       if (filters?.status) params.set("status", filters.status)
       if (filters?.limit) params.set("limit", filters.limit.toString())
 
-      const response = await api.get<AgentExecution[]>(
+      const response = await api.get<Array<AgentExecution>>(
         `/forge/executions?${params.toString()}`
       )
       return response
@@ -163,7 +163,7 @@ export function useTicketExecutions(ticketId: string) {
   return useQuery({
     queryKey: agentKeys.ticketExecutions(ticketId),
     queryFn: async () => {
-      const response = await api.get<AgentExecution[]>(
+      const response = await api.get<Array<AgentExecution>>(
         `/forge/executions?ticketId=${ticketId}`
       )
       return response

@@ -74,7 +74,7 @@ router.post("/preview", verifyWebhookSecret, async (c) => {
     return c.json({ error: "Invalid payload", details: parsed.error.issues }, 400)
   }
 
-  const { ticket_id, preview_url, branch, status, commit_sha } = parsed.data
+  const { ticket_id, preview_url, branch, status, commit_sha: _commit_sha } = parsed.data
 
   // Create deployment record
   const [deployment] = await db
@@ -136,7 +136,7 @@ router.post("/staging", verifyWebhookSecret, async (c) => {
     return c.json({ error: "Invalid payload", details: parsed.error.issues }, 400)
   }
 
-  const { status, commit_sha } = parsed.data
+  const { status, commit_sha: _commit_sha } = parsed.data
 
   // Create deployment record
   const [deployment] = await db
@@ -170,7 +170,7 @@ router.post("/production", verifyWebhookSecret, async (c) => {
     return c.json({ error: "Invalid payload", details: parsed.error.issues }, 400)
   }
 
-  const { status, commit_sha, release_tag, tickets } = parsed.data
+  const { status, commit_sha: _commit_sha, release_tag, tickets } = parsed.data
 
   // Create deployment record
   const [deployment] = await db

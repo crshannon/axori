@@ -5,9 +5,9 @@
  * GitHub, and the Forge registry/decisions system.
  */
 
-import type { ToolDefinition } from "./anthropic"
+import { and, db, eq, forgeDecisions, forgeRegistry, sql } from "@axori/db"
 import { getGitHubClient } from "../github/client"
-import { db, forgeRegistry, forgeDecisions, eq, and, sql } from "@axori/db"
+import type { ToolDefinition } from "./anthropic"
 
 // =============================================================================
 // TOOL DEFINITIONS (for Anthropic API)
@@ -330,7 +330,7 @@ export function createToolExecutors(context: {
       return results.map((r) => r.path).join("\n")
     },
 
-    run_command: async (input) => {
+    run_command: (input) => {
       const command = input.command as string
 
       if (!isCommandSafe(command)) {
@@ -355,7 +355,7 @@ export function createToolExecutors(context: {
       const body = input.body as string
       const head = input.head as string
       const base = input.base as string | undefined
-      const draft = (input.draft as boolean) ?? false
+      const draft = (input.draft as boolean | undefined) ?? false
 
       // Add ticket reference and Forge attribution to PR body
       const fullBody = `${body}
@@ -452,7 +452,7 @@ export function createToolExecutors(context: {
 /**
  * Get tool definitions for a list of tool names
  */
-export function getToolDefinitions(toolNames: string[]): ToolDefinition[] {
+export function getToolDefinitions(toolNames: Array<string>): Array<ToolDefinition> {
   return toolNames
     .filter((name) => name in TOOL_DEFINITIONS)
     .map((name) => TOOL_DEFINITIONS[name])

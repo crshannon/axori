@@ -10,18 +10,20 @@
 
 import {
   db,
-  forgeTickets,
-  forgeAgentExecutions,
-  forgeTokenUsage,
-  forgeTokenBudgets,
-  forgeFileLocks,
   eq,
+  forgeAgentExecutions,
+  forgeFileLocks,
+  forgeTickets,
+  forgeTokenBudgets,
+  forgeTokenUsage,
   sql,
 } from "@axori/db"
-import { getAnthropicClient, type AnthropicMessage } from "./anthropic"
-import { PROTOCOLS, calculateEstimatedCost, type AgentProtocol } from "./protocols"
-import { createToolExecutors, getToolDefinitions } from "./tools"
 import { getGitHubClient } from "../github/client"
+import {  getAnthropicClient } from "./anthropic"
+import {  PROTOCOLS, calculateEstimatedCost } from "./protocols"
+import { createToolExecutors, getToolDefinitions } from "./tools"
+import type {AnthropicMessage} from "./anthropic";
+import type {AgentProtocol} from "./protocols";
 
 // =============================================================================
 // TYPES
@@ -41,7 +43,7 @@ export interface ExecutionResult {
   executionId: string
   status: "completed" | "failed" | "paused"
   branchCreated?: string
-  filesChanged?: string[]
+  filesChanged?: Array<string>
   prUrl?: string
   prNumber?: number
   tokensUsed: number
@@ -75,7 +77,7 @@ export class AgentOrchestrator {
     options: ExecutionOptions = {}
   ): Promise<ExecutionResult> {
     const startTime = Date.now()
-    const executionLog: string[] = []
+    const executionLog: Array<string> = []
 
     const log = (message: string) => {
       const timestamp = new Date().toISOString()
@@ -237,7 +239,7 @@ export class AgentOrchestrator {
 
     // Get the checkpoint data and resume
     const checkpointData = execution.checkpointData as {
-      messages: AnthropicMessage[]
+      messages: Array<AnthropicMessage>
       step: number
     } | null
 
@@ -418,7 +420,7 @@ Remember to:
   }
 
   private async checkBudget(protocol: AgentProtocol): Promise<boolean> {
-    const today = new Date().toISOString().split("T")[0] as string
+    const today = new Date().toISOString().split("T")[0]
 
     // Get or create today's budget record
     let [budget] = await db
@@ -469,7 +471,7 @@ Remember to:
     })
 
     // Update daily budget
-    const today = new Date().toISOString().split("T")[0] as string
+    const today = new Date().toISOString().split("T")[0]
     await db
       .update(forgeTokenBudgets)
       .set({
@@ -479,7 +481,7 @@ Remember to:
       .where(eq(forgeTokenBudgets.date, today))
   }
 
-  private extractFilesChanged(messages: AnthropicMessage[]): string[] {
+  private extractFilesChanged(messages: Array<AnthropicMessage>): Array<string> {
     const files = new Set<string>()
 
     for (const message of messages) {
@@ -500,7 +502,7 @@ Remember to:
   }
 
   private extractPRInfo(
-    messages: AnthropicMessage[]
+    messages: Array<AnthropicMessage>
   ): { url: string; number: number } | null {
     for (const message of messages) {
       if (Array.isArray(message.content)) {
@@ -546,7 +548,7 @@ export function getOrchestrator(): AgentOrchestrator {
  */
 export async function checkForConflicts(ticketId: string): Promise<{
   hasConflict: boolean
-  conflictingTickets: Array<{ id: string; identifier: string; files: string[] }>
+  conflictingTickets: Array<{ id: string; identifier: string; files: Array<string> }>
 }> {
   // Suppress unused variable warning - will be used for conflict analysis
   void ticketId
@@ -582,7 +584,7 @@ export async function checkForConflicts(ticketId: string): Promise<{
  */
 export async function acquireFileLocks(
   ticketId: string,
-  files: string[]
+  files: Array<string>
 ): Promise<boolean> {
   try {
     for (const file of files) {

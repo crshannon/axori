@@ -10,7 +10,7 @@ import type { ClaudeModel } from "./protocols"
 // Types for Anthropic API
 export interface AnthropicMessage {
   role: "user" | "assistant"
-  content: string | ContentBlock[]
+  content: string | Array<ContentBlock>
 }
 
 export interface ContentBlock {
@@ -30,7 +30,7 @@ export interface ToolDefinition {
   input_schema: {
     type: "object"
     properties: Record<string, unknown>
-    required?: string[]
+    required?: Array<string>
   }
 }
 
@@ -38,15 +38,15 @@ export interface AnthropicRequest {
   model: ClaudeModel
   max_tokens: number
   system?: string
-  messages: AnthropicMessage[]
-  tools?: ToolDefinition[]
+  messages: Array<AnthropicMessage>
+  tools?: Array<ToolDefinition>
 }
 
 export interface AnthropicResponse {
   id: string
   type: "message"
   role: "assistant"
-  content: ContentBlock[]
+  content: Array<ContentBlock>
   model: string
   stop_reason: "end_turn" | "max_tokens" | "stop_sequence" | "tool_use"
   usage: {
@@ -112,10 +112,10 @@ export class AnthropicClient {
       maxIterations?: number
       onToolUse?: (name: string, input: Record<string, unknown>) => void
       onResponse?: (response: AnthropicResponse) => void
-      onCheckpoint?: (iteration: number, messages: AnthropicMessage[]) => Promise<void>
+      onCheckpoint?: (iteration: number, messages: Array<AnthropicMessage>) => Promise<void>
     } = {}
   ): Promise<{
-    messages: AnthropicMessage[]
+    messages: Array<AnthropicMessage>
     totalInputTokens: number
     totalOutputTokens: number
     iterations: number
@@ -153,7 +153,7 @@ export class AnthropicClient {
       }
 
       // Process tool calls
-      const toolResults: ContentBlock[] = []
+      const toolResults: Array<ContentBlock> = []
 
       for (const block of response.content) {
         if (block.type === "tool_use" && block.name && block.id) {
