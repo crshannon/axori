@@ -164,17 +164,25 @@ For each project in Vercel Dashboard:
 
 ### Environment Variables
 
-Add the same environment variables in Vercel Dashboard for manual deployments:
+Add these environment variables in Vercel Dashboard for manual deployments:
 
 1. Go to Project → **Settings** → **Environment Variables**
 2. Add for each environment (Production, Preview, Development):
 
-```
-VITE_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY
-VITE_CLERK_PUBLISHABLE_KEY
-VITE_API_URL
-```
+| Variable | Example Value | Description |
+|----------|---------------|-------------|
+| `VITE_SUPABASE_URL` | `https://mullmlaoraflnvgbjdxx.supabase.co` | Your Supabase project URL (Project Settings → API) |
+| `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6...` | Supabase anon/public key (Project Settings → API → anon public) |
+| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_test_xxx...` (staging) / `pk_live_xxx...` (prod) | Clerk publishable key (Clerk Dashboard → API Keys) |
+| `VITE_API_URL` | `https://api.axori.com` | Your API server URL |
+| `VITE_COMING_SOON_MODE` | `true` or `false` | Enable/disable coming soon landing page |
+
+**Where to find these values:**
+
+- **Supabase**: https://supabase.com/dashboard/project/YOUR_PROJECT/settings/api
+- **Clerk**: https://dashboard.clerk.com → Your app → API Keys
+
+**Tip:** Use different Clerk apps for staging vs production to keep user data separate.
 
 ---
 
