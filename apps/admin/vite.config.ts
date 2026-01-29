@@ -100,16 +100,7 @@ export default defineConfig(({ mode }) => {
         protocolImports: false,
       }),
       devtools(),
-      nitro({
-        rollup: {
-          external: (id: string) => {
-            if (id === "node:buffer" || id.startsWith("node:")) {
-              return true;
-            }
-            return false;
-          },
-        },
-      }),
+      nitro(),
       viteTsConfigPaths({
         projects: ["./tsconfig.json"],
       }),

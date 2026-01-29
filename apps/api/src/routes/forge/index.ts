@@ -9,6 +9,7 @@ import ticketsRouter from "./tickets";
 import milestonesRouter from "./milestones";
 import projectsRouter from "./projects";
 import executionsRouter from "./executions";
+import agentsRouter from "./agents";
 
 const router = new Hono();
 
@@ -17,5 +18,6 @@ router.route("/tickets", ticketsRouter);
 router.route("/milestones", milestonesRouter);
 router.route("/projects", projectsRouter);
 router.route("/executions", executionsRouter);
+router.route("/agents", agentsRouter);
 
 export default router;
