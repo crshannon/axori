@@ -49,4 +49,39 @@ async function apiFetch<T>(
   return response.json();
 }
 
+/**
+ * API client with convenience methods
+ */
+export const api = {
+  get: <T>(endpoint: string, options?: RequestInit) =>
+    apiFetch<T>(endpoint, { ...options, method: "GET" }),
+
+  post: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
+    apiFetch<T>(endpoint, {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+
+  put: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
+    apiFetch<T>(endpoint, {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+
+  patch: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
+    apiFetch<T>(endpoint, {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+
+  delete: <T>(endpoint: string, options?: RequestInit) =>
+    apiFetch<T>(endpoint, { ...options, method: "DELETE" }),
+}
+
 export { API_BASE_URL, apiFetch };

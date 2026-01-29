@@ -11,7 +11,7 @@ import {
   type DragEndEvent,
   type DragOverEvent,
 } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Plus, Search, Filter, Loader2 } from "lucide-react";
 import { KanbanColumn } from "./kanban-column";
 import { TicketCard } from "./ticket-card";
@@ -245,7 +245,8 @@ export function KanbanBoard() {
     }
 
     const activeId = active.id as string;
-    const overId = over.id;
+    // overId would be used for reordering within columns (future enhancement)
+    void over.id;
 
     const ticket = ticketsWithOptimisticUpdates.find((t) => t.id === activeId);
     if (!ticket) return;

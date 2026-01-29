@@ -65,7 +65,7 @@ export function SideNav() {
       {/* Bottom Section */}
       <div className="flex flex-col items-center gap-2">
         <Link
-          to="/settings"
+          to={"/settings" as string}
           className={clsx(
             "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
             location.pathname === "/settings"
