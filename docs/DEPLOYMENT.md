@@ -93,10 +93,19 @@ These are shared across all environments and workflows:
 |--------|-------|-------------|
 | `VERCEL_TOKEN` | `your-token` | From Step 3 |
 | `VERCEL_ORG_ID` | `team_xxx` | From `.vercel/project.json` |
-| `VERCEL_WEB_PROJECT_ID` | `prj_xxx` | From `apps/web/.vercel/project.json` |
-| `VERCEL_ADMIN_PROJECT_ID` | `prj_xxx` | From `apps/admin/.vercel/project.json` |
-| `FORGE_WEBHOOK_URL` | `https://admin.axori.com` | Admin app URL for webhooks |
-| `FORGE_WEBHOOK_SECRET` | `random-secret` | Shared secret for webhook auth |
+| `VERCEL_PROJECT_ID_WEB` | `prj_xxx` | From `apps/web/.vercel/project.json` |
+| `VERCEL_PROJECT_ID_ADMIN` | `prj_xxx` | From `apps/admin/.vercel/project.json` |
+| `FORGE_WEBHOOK_URL` | `https://admin.axori.com` | Admin app URL for webhooks (optional) |
+| `FORGE_WEBHOOK_SECRET` | `random-secret` | Shared secret for webhook auth (optional) |
+
+### Repository Variables (Not secrets - for non-sensitive config)
+
+**Path:** Settings → Secrets and variables → Actions → **Variables** tab → New repository variable
+
+| Variable | Value | Description |
+|----------|-------|-------------|
+| `STAGING_DOMAIN` | `staging.axori.com` | Custom staging domain (optional) |
+| `PRODUCTION_DOMAIN` | `app.axori.com` | Custom production domain (optional) |
 
 ### Environment Secrets (Scoped to specific environments)
 
