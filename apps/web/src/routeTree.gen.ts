@@ -26,8 +26,12 @@ import { Route as PublicAnalysisRouteImport } from './routes/_public/analysis'
 import { Route as PublicAboutRouteImport } from './routes/_public/about'
 import { Route as AuthedWealthJourneyRouteImport } from './routes/_authed/wealth-journey'
 import { Route as AuthedPropertyHubRouteImport } from './routes/_authed/property-hub'
+import { Route as AuthedLearningHubRouteImport } from './routes/_authed/learning-hub'
 import { Route as AuthedExploreRouteImport } from './routes/_authed/explore'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedAccountRouteImport } from './routes/_authed/account'
+import { Route as AuthedLearningHubIndexRouteImport } from './routes/_authed/learning-hub/index'
+import { Route as AuthedAccountIndexRouteImport } from './routes/_authed/account/index'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
@@ -36,8 +40,21 @@ import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
 import { Route as AuthedPropertyHubAddRouteImport } from './routes/_authed/property-hub.add'
 import { Route as AuthedPropertyHubPropertyIdRouteImport } from './routes/_authed/property-hub.$propertyId'
+import { Route as AuthedAccountSecurityRouteImport } from './routes/_authed/account/security'
+import { Route as AuthedAccountNotificationsRouteImport } from './routes/_authed/account/notifications'
+import { Route as AuthedAccountDataRouteImport } from './routes/_authed/account/data'
+import { Route as AuthedAccountBillingRouteImport } from './routes/_authed/account/billing'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as AuthedPropertyHubPropertyIdIndexRouteImport } from './routes/_authed/property-hub.$propertyId/index'
+import { Route as AuthedLearningHubScenariosIndexRouteImport } from './routes/_authed/learning-hub/scenarios/index'
+import { Route as AuthedLearningHubPathsIndexRouteImport } from './routes/_authed/learning-hub/paths/index'
+import { Route as AuthedLearningHubGlossaryIndexRouteImport } from './routes/_authed/learning-hub/glossary/index'
+import { Route as AuthedLearningHubFreedomIndexRouteImport } from './routes/_authed/learning-hub/freedom/index'
+import { Route as AuthedLearningHubChecklistsIndexRouteImport } from './routes/_authed/learning-hub/checklists/index'
+import { Route as AuthedLearningHubCalculatorsIndexRouteImport } from './routes/_authed/learning-hub/calculators/index'
+import { Route as AuthedLearningHubArticlesIndexRouteImport } from './routes/_authed/learning-hub/articles/index'
+import { Route as AuthedLearningHubAnalyzerIndexRouteImport } from './routes/_authed/learning-hub/analyzer/index'
+import { Route as AuthedLearningHubAchievementsIndexRouteImport } from './routes/_authed/learning-hub/achievements/index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
@@ -49,6 +66,9 @@ import { Route as AuthedPropertyHubPropertyIdFinancialsRouteImport } from './rou
 import { Route as AuthedPropertyHubPropertyIdDocumentsRouteImport } from './routes/_authed/property-hub.$propertyId/documents'
 import { Route as AuthedPropertyHubPropertyIdCommunicationsRouteImport } from './routes/_authed/property-hub.$propertyId/communications'
 import { Route as AuthedPropertyHubPropertyIdAnalyticsRouteImport } from './routes/_authed/property-hub.$propertyId/analytics'
+import { Route as AuthedLearningHubPathsSlugRouteImport } from './routes/_authed/learning-hub/paths/$slug'
+import { Route as AuthedLearningHubGlossarySlugRouteImport } from './routes/_authed/learning-hub/glossary/$slug'
+import { Route as AuthedLearningHubArticlesSlugRouteImport } from './routes/_authed/learning-hub/articles/$slug'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -133,6 +153,11 @@ const AuthedPropertyHubRoute = AuthedPropertyHubRouteImport.update({
   path: '/property-hub',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedLearningHubRoute = AuthedLearningHubRouteImport.update({
+  id: '/learning-hub',
+  path: '/learning-hub',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedExploreRoute = AuthedExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
@@ -142,6 +167,21 @@ const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedAccountRoute = AuthedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedLearningHubIndexRoute = AuthedLearningHubIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedLearningHubRoute,
+} as any)
+const AuthedAccountIndexRoute = AuthedAccountIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedAccountRoute,
 } as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
   id: '/demo/start/server-funcs',
@@ -184,6 +224,27 @@ const AuthedPropertyHubPropertyIdRoute =
     path: '/$propertyId',
     getParentRoute: () => AuthedPropertyHubRoute,
   } as any)
+const AuthedAccountSecurityRoute = AuthedAccountSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => AuthedAccountRoute,
+} as any)
+const AuthedAccountNotificationsRoute =
+  AuthedAccountNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthedAccountRoute,
+  } as any)
+const AuthedAccountDataRoute = AuthedAccountDataRouteImport.update({
+  id: '/data',
+  path: '/data',
+  getParentRoute: () => AuthedAccountRoute,
+} as any)
+const AuthedAccountBillingRoute = AuthedAccountBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AuthedAccountRoute,
+} as any)
 const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
   id: '/demo/start/ssr/',
   path: '/demo/start/ssr/',
@@ -194,6 +255,60 @@ const AuthedPropertyHubPropertyIdIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
+  } as any)
+const AuthedLearningHubScenariosIndexRoute =
+  AuthedLearningHubScenariosIndexRouteImport.update({
+    id: '/scenarios/',
+    path: '/scenarios/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubPathsIndexRoute =
+  AuthedLearningHubPathsIndexRouteImport.update({
+    id: '/paths/',
+    path: '/paths/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubGlossaryIndexRoute =
+  AuthedLearningHubGlossaryIndexRouteImport.update({
+    id: '/glossary/',
+    path: '/glossary/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubFreedomIndexRoute =
+  AuthedLearningHubFreedomIndexRouteImport.update({
+    id: '/freedom/',
+    path: '/freedom/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubChecklistsIndexRoute =
+  AuthedLearningHubChecklistsIndexRouteImport.update({
+    id: '/checklists/',
+    path: '/checklists/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubCalculatorsIndexRoute =
+  AuthedLearningHubCalculatorsIndexRouteImport.update({
+    id: '/calculators/',
+    path: '/calculators/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubArticlesIndexRoute =
+  AuthedLearningHubArticlesIndexRouteImport.update({
+    id: '/articles/',
+    path: '/articles/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubAnalyzerIndexRoute =
+  AuthedLearningHubAnalyzerIndexRouteImport.update({
+    id: '/analyzer/',
+    path: '/analyzer/',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubAchievementsIndexRoute =
+  AuthedLearningHubAchievementsIndexRouteImport.update({
+    id: '/achievements/',
+    path: '/achievements/',
+    getParentRoute: () => AuthedLearningHubRoute,
   } as any)
 const DemoStartSsrSpaModeRoute = DemoStartSsrSpaModeRouteImport.update({
   id: '/demo/start/ssr/spa-mode',
@@ -258,14 +373,34 @@ const AuthedPropertyHubPropertyIdAnalyticsRoute =
     path: '/analytics',
     getParentRoute: () => AuthedPropertyHubPropertyIdRoute,
   } as any)
+const AuthedLearningHubPathsSlugRoute =
+  AuthedLearningHubPathsSlugRouteImport.update({
+    id: '/paths/$slug',
+    path: '/paths/$slug',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubGlossarySlugRoute =
+  AuthedLearningHubGlossarySlugRouteImport.update({
+    id: '/glossary/$slug',
+    path: '/glossary/$slug',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
+const AuthedLearningHubArticlesSlugRoute =
+  AuthedLearningHubArticlesSlugRouteImport.update({
+    id: '/articles/$slug',
+    path: '/articles/$slug',
+    getParentRoute: () => AuthedLearningHubRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/account': typeof AuthedAccountRouteWithChildren
   '/dashboard': typeof AuthedDashboardRoute
   '/explore': typeof AuthedExploreRoute
+  '/learning-hub': typeof AuthedLearningHubRouteWithChildren
   '/property-hub': typeof AuthedPropertyHubRouteWithChildren
   '/wealth-journey': typeof AuthedWealthJourneyRoute
   '/about': typeof PublicAboutRoute
@@ -277,6 +412,10 @@ export interface FileRoutesByFullPath {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/invitation/accept': typeof InvitationAcceptRoute
+  '/account/billing': typeof AuthedAccountBillingRoute
+  '/account/data': typeof AuthedAccountDataRoute
+  '/account/notifications': typeof AuthedAccountNotificationsRoute
+  '/account/security': typeof AuthedAccountSecurityRoute
   '/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdRouteWithChildren
   '/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -285,6 +424,11 @@ export interface FileRoutesByFullPath {
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/account/': typeof AuthedAccountIndexRoute
+  '/learning-hub/': typeof AuthedLearningHubIndexRoute
+  '/learning-hub/articles/$slug': typeof AuthedLearningHubArticlesSlugRoute
+  '/learning-hub/glossary/$slug': typeof AuthedLearningHubGlossarySlugRoute
+  '/learning-hub/paths/$slug': typeof AuthedLearningHubPathsSlugRoute
   '/property-hub/$propertyId/analytics': typeof AuthedPropertyHubPropertyIdAnalyticsRoute
   '/property-hub/$propertyId/communications': typeof AuthedPropertyHubPropertyIdCommunicationsRoute
   '/property-hub/$propertyId/documents': typeof AuthedPropertyHubPropertyIdDocumentsRoute
@@ -296,6 +440,15 @@ export interface FileRoutesByFullPath {
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/learning-hub/achievements': typeof AuthedLearningHubAchievementsIndexRoute
+  '/learning-hub/analyzer': typeof AuthedLearningHubAnalyzerIndexRoute
+  '/learning-hub/articles': typeof AuthedLearningHubArticlesIndexRoute
+  '/learning-hub/calculators': typeof AuthedLearningHubCalculatorsIndexRoute
+  '/learning-hub/checklists': typeof AuthedLearningHubChecklistsIndexRoute
+  '/learning-hub/freedom': typeof AuthedLearningHubFreedomIndexRoute
+  '/learning-hub/glossary': typeof AuthedLearningHubGlossaryIndexRoute
+  '/learning-hub/paths': typeof AuthedLearningHubPathsIndexRoute
+  '/learning-hub/scenarios': typeof AuthedLearningHubScenariosIndexRoute
   '/property-hub/$propertyId/': typeof AuthedPropertyHubPropertyIdIndexRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
 }
@@ -317,6 +470,10 @@ export interface FileRoutesByTo {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/invitation/accept': typeof InvitationAcceptRoute
+  '/account/billing': typeof AuthedAccountBillingRoute
+  '/account/data': typeof AuthedAccountDataRoute
+  '/account/notifications': typeof AuthedAccountNotificationsRoute
+  '/account/security': typeof AuthedAccountSecurityRoute
   '/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
@@ -324,6 +481,11 @@ export interface FileRoutesByTo {
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/account': typeof AuthedAccountIndexRoute
+  '/learning-hub': typeof AuthedLearningHubIndexRoute
+  '/learning-hub/articles/$slug': typeof AuthedLearningHubArticlesSlugRoute
+  '/learning-hub/glossary/$slug': typeof AuthedLearningHubGlossarySlugRoute
+  '/learning-hub/paths/$slug': typeof AuthedLearningHubPathsSlugRoute
   '/property-hub/$propertyId/analytics': typeof AuthedPropertyHubPropertyIdAnalyticsRoute
   '/property-hub/$propertyId/communications': typeof AuthedPropertyHubPropertyIdCommunicationsRoute
   '/property-hub/$propertyId/documents': typeof AuthedPropertyHubPropertyIdDocumentsRoute
@@ -335,6 +497,15 @@ export interface FileRoutesByTo {
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/learning-hub/achievements': typeof AuthedLearningHubAchievementsIndexRoute
+  '/learning-hub/analyzer': typeof AuthedLearningHubAnalyzerIndexRoute
+  '/learning-hub/articles': typeof AuthedLearningHubArticlesIndexRoute
+  '/learning-hub/calculators': typeof AuthedLearningHubCalculatorsIndexRoute
+  '/learning-hub/checklists': typeof AuthedLearningHubChecklistsIndexRoute
+  '/learning-hub/freedom': typeof AuthedLearningHubFreedomIndexRoute
+  '/learning-hub/glossary': typeof AuthedLearningHubGlossaryIndexRoute
+  '/learning-hub/paths': typeof AuthedLearningHubPathsIndexRoute
+  '/learning-hub/scenarios': typeof AuthedLearningHubScenariosIndexRoute
   '/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdIndexRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
 }
@@ -346,8 +517,10 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/_authed/account': typeof AuthedAccountRouteWithChildren
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/explore': typeof AuthedExploreRoute
+  '/_authed/learning-hub': typeof AuthedLearningHubRouteWithChildren
   '/_authed/property-hub': typeof AuthedPropertyHubRouteWithChildren
   '/_authed/wealth-journey': typeof AuthedWealthJourneyRoute
   '/_public/about': typeof PublicAboutRoute
@@ -359,6 +532,10 @@ export interface FileRoutesById {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/invitation/accept': typeof InvitationAcceptRoute
+  '/_authed/account/billing': typeof AuthedAccountBillingRoute
+  '/_authed/account/data': typeof AuthedAccountDataRoute
+  '/_authed/account/notifications': typeof AuthedAccountNotificationsRoute
+  '/_authed/account/security': typeof AuthedAccountSecurityRoute
   '/_authed/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdRouteWithChildren
   '/_authed/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -367,6 +544,11 @@ export interface FileRoutesById {
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/_authed/account/': typeof AuthedAccountIndexRoute
+  '/_authed/learning-hub/': typeof AuthedLearningHubIndexRoute
+  '/_authed/learning-hub/articles/$slug': typeof AuthedLearningHubArticlesSlugRoute
+  '/_authed/learning-hub/glossary/$slug': typeof AuthedLearningHubGlossarySlugRoute
+  '/_authed/learning-hub/paths/$slug': typeof AuthedLearningHubPathsSlugRoute
   '/_authed/property-hub/$propertyId/analytics': typeof AuthedPropertyHubPropertyIdAnalyticsRoute
   '/_authed/property-hub/$propertyId/communications': typeof AuthedPropertyHubPropertyIdCommunicationsRoute
   '/_authed/property-hub/$propertyId/documents': typeof AuthedPropertyHubPropertyIdDocumentsRoute
@@ -378,6 +560,15 @@ export interface FileRoutesById {
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/_authed/learning-hub/achievements/': typeof AuthedLearningHubAchievementsIndexRoute
+  '/_authed/learning-hub/analyzer/': typeof AuthedLearningHubAnalyzerIndexRoute
+  '/_authed/learning-hub/articles/': typeof AuthedLearningHubArticlesIndexRoute
+  '/_authed/learning-hub/calculators/': typeof AuthedLearningHubCalculatorsIndexRoute
+  '/_authed/learning-hub/checklists/': typeof AuthedLearningHubChecklistsIndexRoute
+  '/_authed/learning-hub/freedom/': typeof AuthedLearningHubFreedomIndexRoute
+  '/_authed/learning-hub/glossary/': typeof AuthedLearningHubGlossaryIndexRoute
+  '/_authed/learning-hub/paths/': typeof AuthedLearningHubPathsIndexRoute
+  '/_authed/learning-hub/scenarios/': typeof AuthedLearningHubScenariosIndexRoute
   '/_authed/property-hub/$propertyId/': typeof AuthedPropertyHubPropertyIdIndexRoute
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
 }
@@ -388,8 +579,10 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/sign-in'
     | '/sign-up'
+    | '/account'
     | '/dashboard'
     | '/explore'
+    | '/learning-hub'
     | '/property-hub'
     | '/wealth-journey'
     | '/about'
@@ -401,6 +594,10 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/invitation/accept'
+    | '/account/billing'
+    | '/account/data'
+    | '/account/notifications'
+    | '/account/security'
     | '/property-hub/$propertyId'
     | '/property-hub/add'
     | '/demo/api/names'
@@ -409,6 +606,11 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/account/'
+    | '/learning-hub/'
+    | '/learning-hub/articles/$slug'
+    | '/learning-hub/glossary/$slug'
+    | '/learning-hub/paths/$slug'
     | '/property-hub/$propertyId/analytics'
     | '/property-hub/$propertyId/communications'
     | '/property-hub/$propertyId/documents'
@@ -420,6 +622,15 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/learning-hub/achievements'
+    | '/learning-hub/analyzer'
+    | '/learning-hub/articles'
+    | '/learning-hub/calculators'
+    | '/learning-hub/checklists'
+    | '/learning-hub/freedom'
+    | '/learning-hub/glossary'
+    | '/learning-hub/paths'
+    | '/learning-hub/scenarios'
     | '/property-hub/$propertyId/'
     | '/demo/start/ssr'
   fileRoutesByTo: FileRoutesByTo
@@ -441,6 +652,10 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/invitation/accept'
+    | '/account/billing'
+    | '/account/data'
+    | '/account/notifications'
+    | '/account/security'
     | '/property-hub/add'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
@@ -448,6 +663,11 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/account'
+    | '/learning-hub'
+    | '/learning-hub/articles/$slug'
+    | '/learning-hub/glossary/$slug'
+    | '/learning-hub/paths/$slug'
     | '/property-hub/$propertyId/analytics'
     | '/property-hub/$propertyId/communications'
     | '/property-hub/$propertyId/documents'
@@ -459,6 +679,15 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/learning-hub/achievements'
+    | '/learning-hub/analyzer'
+    | '/learning-hub/articles'
+    | '/learning-hub/calculators'
+    | '/learning-hub/checklists'
+    | '/learning-hub/freedom'
+    | '/learning-hub/glossary'
+    | '/learning-hub/paths'
+    | '/learning-hub/scenarios'
     | '/property-hub/$propertyId'
     | '/demo/start/ssr'
   id:
@@ -469,8 +698,10 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/sign-in'
     | '/sign-up'
+    | '/_authed/account'
     | '/_authed/dashboard'
     | '/_authed/explore'
+    | '/_authed/learning-hub'
     | '/_authed/property-hub'
     | '/_authed/wealth-journey'
     | '/_public/about'
@@ -482,6 +713,10 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/invitation/accept'
+    | '/_authed/account/billing'
+    | '/_authed/account/data'
+    | '/_authed/account/notifications'
+    | '/_authed/account/security'
     | '/_authed/property-hub/$propertyId'
     | '/_authed/property-hub/add'
     | '/demo/api/names'
@@ -490,6 +725,11 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/_authed/account/'
+    | '/_authed/learning-hub/'
+    | '/_authed/learning-hub/articles/$slug'
+    | '/_authed/learning-hub/glossary/$slug'
+    | '/_authed/learning-hub/paths/$slug'
     | '/_authed/property-hub/$propertyId/analytics'
     | '/_authed/property-hub/$propertyId/communications'
     | '/_authed/property-hub/$propertyId/documents'
@@ -501,6 +741,15 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/_authed/learning-hub/achievements/'
+    | '/_authed/learning-hub/analyzer/'
+    | '/_authed/learning-hub/articles/'
+    | '/_authed/learning-hub/calculators/'
+    | '/_authed/learning-hub/checklists/'
+    | '/_authed/learning-hub/freedom/'
+    | '/_authed/learning-hub/glossary/'
+    | '/_authed/learning-hub/paths/'
+    | '/_authed/learning-hub/scenarios/'
     | '/_authed/property-hub/$propertyId/'
     | '/demo/start/ssr/'
   fileRoutesById: FileRoutesById
@@ -650,6 +899,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPropertyHubRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/learning-hub': {
+      id: '/_authed/learning-hub'
+      path: '/learning-hub'
+      fullPath: '/learning-hub'
+      preLoaderRoute: typeof AuthedLearningHubRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/explore': {
       id: '/_authed/explore'
       path: '/explore'
@@ -663,6 +919,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthedDashboardRouteImport
       parentRoute: typeof AuthedRoute
+    }
+    '/_authed/account': {
+      id: '/_authed/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthedAccountRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/learning-hub/': {
+      id: '/_authed/learning-hub/'
+      path: '/'
+      fullPath: '/learning-hub/'
+      preLoaderRoute: typeof AuthedLearningHubIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/account/': {
+      id: '/_authed/account/'
+      path: '/'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AuthedAccountIndexRouteImport
+      parentRoute: typeof AuthedAccountRoute
     }
     '/demo/start/server-funcs': {
       id: '/demo/start/server-funcs'
@@ -720,6 +997,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPropertyHubPropertyIdRouteImport
       parentRoute: typeof AuthedPropertyHubRoute
     }
+    '/_authed/account/security': {
+      id: '/_authed/account/security'
+      path: '/security'
+      fullPath: '/account/security'
+      preLoaderRoute: typeof AuthedAccountSecurityRouteImport
+      parentRoute: typeof AuthedAccountRoute
+    }
+    '/_authed/account/notifications': {
+      id: '/_authed/account/notifications'
+      path: '/notifications'
+      fullPath: '/account/notifications'
+      preLoaderRoute: typeof AuthedAccountNotificationsRouteImport
+      parentRoute: typeof AuthedAccountRoute
+    }
+    '/_authed/account/data': {
+      id: '/_authed/account/data'
+      path: '/data'
+      fullPath: '/account/data'
+      preLoaderRoute: typeof AuthedAccountDataRouteImport
+      parentRoute: typeof AuthedAccountRoute
+    }
+    '/_authed/account/billing': {
+      id: '/_authed/account/billing'
+      path: '/billing'
+      fullPath: '/account/billing'
+      preLoaderRoute: typeof AuthedAccountBillingRouteImport
+      parentRoute: typeof AuthedAccountRoute
+    }
     '/demo/start/ssr/': {
       id: '/demo/start/ssr/'
       path: '/demo/start/ssr'
@@ -733,6 +1038,69 @@ declare module '@tanstack/react-router' {
       fullPath: '/property-hub/$propertyId/'
       preLoaderRoute: typeof AuthedPropertyHubPropertyIdIndexRouteImport
       parentRoute: typeof AuthedPropertyHubPropertyIdRoute
+    }
+    '/_authed/learning-hub/scenarios/': {
+      id: '/_authed/learning-hub/scenarios/'
+      path: '/scenarios'
+      fullPath: '/learning-hub/scenarios'
+      preLoaderRoute: typeof AuthedLearningHubScenariosIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/paths/': {
+      id: '/_authed/learning-hub/paths/'
+      path: '/paths'
+      fullPath: '/learning-hub/paths'
+      preLoaderRoute: typeof AuthedLearningHubPathsIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/glossary/': {
+      id: '/_authed/learning-hub/glossary/'
+      path: '/glossary'
+      fullPath: '/learning-hub/glossary'
+      preLoaderRoute: typeof AuthedLearningHubGlossaryIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/freedom/': {
+      id: '/_authed/learning-hub/freedom/'
+      path: '/freedom'
+      fullPath: '/learning-hub/freedom'
+      preLoaderRoute: typeof AuthedLearningHubFreedomIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/checklists/': {
+      id: '/_authed/learning-hub/checklists/'
+      path: '/checklists'
+      fullPath: '/learning-hub/checklists'
+      preLoaderRoute: typeof AuthedLearningHubChecklistsIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/calculators/': {
+      id: '/_authed/learning-hub/calculators/'
+      path: '/calculators'
+      fullPath: '/learning-hub/calculators'
+      preLoaderRoute: typeof AuthedLearningHubCalculatorsIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/articles/': {
+      id: '/_authed/learning-hub/articles/'
+      path: '/articles'
+      fullPath: '/learning-hub/articles'
+      preLoaderRoute: typeof AuthedLearningHubArticlesIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/analyzer/': {
+      id: '/_authed/learning-hub/analyzer/'
+      path: '/analyzer'
+      fullPath: '/learning-hub/analyzer'
+      preLoaderRoute: typeof AuthedLearningHubAnalyzerIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/achievements/': {
+      id: '/_authed/learning-hub/achievements/'
+      path: '/achievements'
+      fullPath: '/learning-hub/achievements'
+      preLoaderRoute: typeof AuthedLearningHubAchievementsIndexRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
     }
     '/demo/start/ssr/spa-mode': {
       id: '/demo/start/ssr/spa-mode'
@@ -811,8 +1179,86 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPropertyHubPropertyIdAnalyticsRouteImport
       parentRoute: typeof AuthedPropertyHubPropertyIdRoute
     }
+    '/_authed/learning-hub/paths/$slug': {
+      id: '/_authed/learning-hub/paths/$slug'
+      path: '/paths/$slug'
+      fullPath: '/learning-hub/paths/$slug'
+      preLoaderRoute: typeof AuthedLearningHubPathsSlugRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/glossary/$slug': {
+      id: '/_authed/learning-hub/glossary/$slug'
+      path: '/glossary/$slug'
+      fullPath: '/learning-hub/glossary/$slug'
+      preLoaderRoute: typeof AuthedLearningHubGlossarySlugRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/learning-hub/articles/$slug': {
+      id: '/_authed/learning-hub/articles/$slug'
+      path: '/articles/$slug'
+      fullPath: '/learning-hub/articles/$slug'
+      preLoaderRoute: typeof AuthedLearningHubArticlesSlugRouteImport
+      parentRoute: typeof AuthedLearningHubRoute
+    }
   }
 }
+
+interface AuthedAccountRouteChildren {
+  AuthedAccountBillingRoute: typeof AuthedAccountBillingRoute
+  AuthedAccountDataRoute: typeof AuthedAccountDataRoute
+  AuthedAccountNotificationsRoute: typeof AuthedAccountNotificationsRoute
+  AuthedAccountSecurityRoute: typeof AuthedAccountSecurityRoute
+  AuthedAccountIndexRoute: typeof AuthedAccountIndexRoute
+}
+
+const AuthedAccountRouteChildren: AuthedAccountRouteChildren = {
+  AuthedAccountBillingRoute: AuthedAccountBillingRoute,
+  AuthedAccountDataRoute: AuthedAccountDataRoute,
+  AuthedAccountNotificationsRoute: AuthedAccountNotificationsRoute,
+  AuthedAccountSecurityRoute: AuthedAccountSecurityRoute,
+  AuthedAccountIndexRoute: AuthedAccountIndexRoute,
+}
+
+const AuthedAccountRouteWithChildren = AuthedAccountRoute._addFileChildren(
+  AuthedAccountRouteChildren,
+)
+
+interface AuthedLearningHubRouteChildren {
+  AuthedLearningHubIndexRoute: typeof AuthedLearningHubIndexRoute
+  AuthedLearningHubArticlesSlugRoute: typeof AuthedLearningHubArticlesSlugRoute
+  AuthedLearningHubGlossarySlugRoute: typeof AuthedLearningHubGlossarySlugRoute
+  AuthedLearningHubPathsSlugRoute: typeof AuthedLearningHubPathsSlugRoute
+  AuthedLearningHubAchievementsIndexRoute: typeof AuthedLearningHubAchievementsIndexRoute
+  AuthedLearningHubAnalyzerIndexRoute: typeof AuthedLearningHubAnalyzerIndexRoute
+  AuthedLearningHubArticlesIndexRoute: typeof AuthedLearningHubArticlesIndexRoute
+  AuthedLearningHubCalculatorsIndexRoute: typeof AuthedLearningHubCalculatorsIndexRoute
+  AuthedLearningHubChecklistsIndexRoute: typeof AuthedLearningHubChecklistsIndexRoute
+  AuthedLearningHubFreedomIndexRoute: typeof AuthedLearningHubFreedomIndexRoute
+  AuthedLearningHubGlossaryIndexRoute: typeof AuthedLearningHubGlossaryIndexRoute
+  AuthedLearningHubPathsIndexRoute: typeof AuthedLearningHubPathsIndexRoute
+  AuthedLearningHubScenariosIndexRoute: typeof AuthedLearningHubScenariosIndexRoute
+}
+
+const AuthedLearningHubRouteChildren: AuthedLearningHubRouteChildren = {
+  AuthedLearningHubIndexRoute: AuthedLearningHubIndexRoute,
+  AuthedLearningHubArticlesSlugRoute: AuthedLearningHubArticlesSlugRoute,
+  AuthedLearningHubGlossarySlugRoute: AuthedLearningHubGlossarySlugRoute,
+  AuthedLearningHubPathsSlugRoute: AuthedLearningHubPathsSlugRoute,
+  AuthedLearningHubAchievementsIndexRoute:
+    AuthedLearningHubAchievementsIndexRoute,
+  AuthedLearningHubAnalyzerIndexRoute: AuthedLearningHubAnalyzerIndexRoute,
+  AuthedLearningHubArticlesIndexRoute: AuthedLearningHubArticlesIndexRoute,
+  AuthedLearningHubCalculatorsIndexRoute:
+    AuthedLearningHubCalculatorsIndexRoute,
+  AuthedLearningHubChecklistsIndexRoute: AuthedLearningHubChecklistsIndexRoute,
+  AuthedLearningHubFreedomIndexRoute: AuthedLearningHubFreedomIndexRoute,
+  AuthedLearningHubGlossaryIndexRoute: AuthedLearningHubGlossaryIndexRoute,
+  AuthedLearningHubPathsIndexRoute: AuthedLearningHubPathsIndexRoute,
+  AuthedLearningHubScenariosIndexRoute: AuthedLearningHubScenariosIndexRoute,
+}
+
+const AuthedLearningHubRouteWithChildren =
+  AuthedLearningHubRoute._addFileChildren(AuthedLearningHubRouteChildren)
 
 interface AuthedPropertyHubPropertyIdRouteChildren {
   AuthedPropertyHubPropertyIdAnalyticsRoute: typeof AuthedPropertyHubPropertyIdAnalyticsRoute
@@ -868,15 +1314,19 @@ const AuthedPropertyHubRouteWithChildren =
   AuthedPropertyHubRoute._addFileChildren(AuthedPropertyHubRouteChildren)
 
 interface AuthedRouteChildren {
+  AuthedAccountRoute: typeof AuthedAccountRouteWithChildren
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedExploreRoute: typeof AuthedExploreRoute
+  AuthedLearningHubRoute: typeof AuthedLearningHubRouteWithChildren
   AuthedPropertyHubRoute: typeof AuthedPropertyHubRouteWithChildren
   AuthedWealthJourneyRoute: typeof AuthedWealthJourneyRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedAccountRoute: AuthedAccountRouteWithChildren,
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedExploreRoute: AuthedExploreRoute,
+  AuthedLearningHubRoute: AuthedLearningHubRouteWithChildren,
   AuthedPropertyHubRoute: AuthedPropertyHubRouteWithChildren,
   AuthedWealthJourneyRoute: AuthedWealthJourneyRoute,
 }

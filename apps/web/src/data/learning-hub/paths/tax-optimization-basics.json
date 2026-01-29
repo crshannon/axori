@@ -1,0 +1,186 @@
+{
+  "_id": "path-tax-optimization-basics",
+  "_type": "learningPath",
+  "slug": "tax-optimization-basics",
+  "title": "Tax Optimization Basics",
+  "description": "Discover how real estate investors legally minimize taxes. Learn about depreciation, 1031 exchanges, cost segregation, and strategies to keep more of your rental income.",
+  "icon": "Receipt",
+  "investorLevel": "intermediate",
+  "estimatedHours": 3,
+  "targetPersonas": ["wealth-builder", "cash-flow-seeker", "equity-optimizer"],
+  "targetStrategies": ["buy-and-hold", "brrrr", "syndication"],
+  "modules": [
+    {
+      "_id": "module-tax-1",
+      "title": "The Tax Advantages of Real Estate",
+      "description": "Understand why real estate is one of the most tax-advantaged investments available.",
+      "order": 1,
+      "lessons": [
+        {
+          "_id": "lesson-tax-1-1",
+          "title": "Why Real Estate Gets Special Tax Treatment",
+          "type": "article",
+          "contentRef": "real-estate-tax-advantages",
+          "order": 1,
+          "estimatedMinutes": 8,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-tax-1-2",
+          "title": "Understanding Passive Income",
+          "type": "glossary",
+          "contentRef": "passive-income",
+          "order": 2,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-tax-1-3",
+          "title": "Active vs Passive Losses",
+          "type": "glossary",
+          "contentRef": "passive-activity-loss",
+          "order": 3,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "_id": "module-tax-2",
+      "title": "Depreciation Deep Dive",
+      "description": "Master depreciation - the paper loss that shelters your rental income from taxes.",
+      "order": 2,
+      "lessons": [
+        {
+          "_id": "lesson-tax-2-1",
+          "title": "Depreciation Explained",
+          "type": "glossary",
+          "contentRef": "depreciation",
+          "order": 1,
+          "estimatedMinutes": 7,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-tax-2-2",
+          "title": "Cost Segregation Studies",
+          "type": "glossary",
+          "contentRef": "cost-segregation",
+          "order": 2,
+          "estimatedMinutes": 8,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-tax-2-3",
+          "title": "Bonus Depreciation",
+          "type": "glossary",
+          "contentRef": "bonus-depreciation",
+          "order": 3,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-tax-2-4",
+          "title": "Depreciation Calculator",
+          "type": "calculator",
+          "contentRef": "depreciation-calculator",
+          "order": 4,
+          "estimatedMinutes": 10,
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "_id": "module-tax-3",
+      "title": "Deferring & Avoiding Taxes",
+      "description": "Learn strategies to defer capital gains and legally minimize your tax burden.",
+      "order": 3,
+      "lessons": [
+        {
+          "_id": "lesson-tax-3-1",
+          "title": "1031 Exchange Fundamentals",
+          "type": "glossary",
+          "contentRef": "1031-exchange",
+          "order": 1,
+          "estimatedMinutes": 10,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-tax-3-2",
+          "title": "Capital Gains Explained",
+          "type": "glossary",
+          "contentRef": "capital-gains",
+          "order": 2,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-tax-3-3",
+          "title": "Depreciation Recapture",
+          "type": "glossary",
+          "contentRef": "depreciation-recapture",
+          "order": 3,
+          "estimatedMinutes": 7,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-tax-3-4",
+          "title": "Opportunity Zones",
+          "type": "glossary",
+          "contentRef": "opportunity-zone",
+          "order": 4,
+          "estimatedMinutes": 6,
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "_id": "module-tax-4",
+      "title": "Entity Structure & Planning",
+      "description": "Understand how entity structure affects your taxes and liability.",
+      "order": 4,
+      "lessons": [
+        {
+          "_id": "lesson-tax-4-1",
+          "title": "LLC for Real Estate",
+          "type": "glossary",
+          "contentRef": "llc",
+          "order": 1,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-tax-4-2",
+          "title": "Pass-Through Taxation",
+          "type": "glossary",
+          "contentRef": "pass-through-taxation",
+          "order": 2,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-tax-4-3",
+          "title": "Working with a CPA",
+          "type": "article",
+          "contentRef": "working-with-real-estate-cpa",
+          "order": 3,
+          "estimatedMinutes": 8,
+          "isRequired": false
+        },
+        {
+          "_id": "lesson-tax-4-4",
+          "title": "Tax Strategy Quiz",
+          "type": "quiz",
+          "contentRef": "quiz-tax-final",
+          "order": 4,
+          "estimatedMinutes": 10,
+          "isRequired": true
+        }
+      ]
+    }
+  ],
+  "prerequisites": ["real-estate-investing-101"],
+  "certificateEnabled": true,
+  "status": "published",
+  "createdAt": "2025-01-15T00:00:00Z",
+  "updatedAt": "2025-01-15T00:00:00Z"
+}

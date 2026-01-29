@@ -22,4 +22,6 @@ export interface LearningSnippet {
     | 'asset-dna-calibration'
     | 'calculation-presumptions'
     | 'notification-engine'
+  /** Link to full glossary entry for "Learn More" functionality */
+  glossarySlug?: string
 }

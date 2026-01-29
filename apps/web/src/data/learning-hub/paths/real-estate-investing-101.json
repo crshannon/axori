@@ -1,0 +1,231 @@
+{
+  "_id": "path-real-estate-investing-101",
+  "_type": "learningPath",
+  "slug": "real-estate-investing-101",
+  "title": "Real Estate Investing 101",
+  "description": "Master the foundational concepts of real estate investing. Learn the key metrics, terminology, and strategies that every investor needs to know to get started and build wealth through property ownership.",
+  "icon": "GraduationCap",
+  "investorLevel": "beginner",
+  "estimatedHours": 4,
+  "targetPersonas": ["first-timer", "wealth-builder", "passive-investor"],
+  "targetStrategies": ["buy-and-hold", "house-hacking"],
+  "modules": [
+    {
+      "_id": "module-101-1",
+      "title": "Understanding Real Estate as an Investment",
+      "description": "Learn why real estate is one of the most powerful wealth-building tools and the core concepts that make it work.",
+      "order": 1,
+      "lessons": [
+        {
+          "_id": "lesson-101-1-1",
+          "title": "Why Real Estate? The 5 Ways to Build Wealth",
+          "type": "article",
+          "contentRef": "why-real-estate-wealth-building",
+          "order": 1,
+          "estimatedMinutes": 8,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-1-2",
+          "title": "Cash Flow: Your Monthly Profit",
+          "type": "glossary",
+          "contentRef": "cash-flow",
+          "order": 2,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-1-3",
+          "title": "Appreciation: Growing Your Equity",
+          "type": "glossary",
+          "contentRef": "appreciation",
+          "order": 3,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-1-4",
+          "title": "Leverage: Using Other People's Money",
+          "type": "glossary",
+          "contentRef": "leverage",
+          "order": 4,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-1-5",
+          "title": "Module Quiz: Investment Basics",
+          "type": "quiz",
+          "contentRef": "quiz-101-module-1",
+          "order": 5,
+          "estimatedMinutes": 5,
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "_id": "module-101-2",
+      "title": "Key Metrics Every Investor Must Know",
+      "description": "Master the numbers that separate successful investors from the rest. Learn how to analyze deals like a pro.",
+      "order": 2,
+      "lessons": [
+        {
+          "_id": "lesson-101-2-1",
+          "title": "Cap Rate: The Universal Property Metric",
+          "type": "glossary",
+          "contentRef": "cap-rate",
+          "order": 1,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-2-2",
+          "title": "Cash-on-Cash Return: Your True ROI",
+          "type": "glossary",
+          "contentRef": "cash-on-cash-return",
+          "order": 2,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-2-3",
+          "title": "NOI: Net Operating Income Explained",
+          "type": "glossary",
+          "contentRef": "net-operating-income",
+          "order": 3,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-2-4",
+          "title": "Calculate Your Cap Rate",
+          "type": "calculator",
+          "contentRef": "cap-rate-calculator",
+          "order": 4,
+          "estimatedMinutes": 10,
+          "isRequired": false
+        },
+        {
+          "_id": "lesson-101-2-5",
+          "title": "Module Quiz: Key Metrics",
+          "type": "quiz",
+          "contentRef": "quiz-101-module-2",
+          "order": 5,
+          "estimatedMinutes": 5,
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "_id": "module-101-3",
+      "title": "Property Types & Investment Strategies",
+      "description": "Explore different property types and investment approaches to find what fits your goals and lifestyle.",
+      "order": 3,
+      "lessons": [
+        {
+          "_id": "lesson-101-3-1",
+          "title": "Single-Family Rentals (SFR)",
+          "type": "glossary",
+          "contentRef": "single-family-rental",
+          "order": 1,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-3-2",
+          "title": "Multifamily Properties",
+          "type": "glossary",
+          "contentRef": "multifamily",
+          "order": 2,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-3-3",
+          "title": "Buy and Hold Strategy",
+          "type": "glossary",
+          "contentRef": "buy-and-hold",
+          "order": 3,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-3-4",
+          "title": "House Hacking: Live for Free",
+          "type": "glossary",
+          "contentRef": "house-hacking",
+          "order": 4,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-3-5",
+          "title": "The BRRRR Strategy Overview",
+          "type": "glossary",
+          "contentRef": "brrrr",
+          "order": 5,
+          "estimatedMinutes": 7,
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "_id": "module-101-4",
+      "title": "Financing Your First Deal",
+      "description": "Understand how to fund your investments, from conventional loans to creative financing strategies.",
+      "order": 4,
+      "lessons": [
+        {
+          "_id": "lesson-101-4-1",
+          "title": "Loan-to-Value Ratio (LTV)",
+          "type": "glossary",
+          "contentRef": "loan-to-value",
+          "order": 1,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-4-2",
+          "title": "Down Payment Requirements",
+          "type": "glossary",
+          "contentRef": "down-payment",
+          "order": 2,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-4-3",
+          "title": "Understanding DSCR Loans",
+          "type": "glossary",
+          "contentRef": "dscr",
+          "order": 3,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-101-4-4",
+          "title": "Mortgage Calculator",
+          "type": "calculator",
+          "contentRef": "mortgage-calculator",
+          "order": 4,
+          "estimatedMinutes": 10,
+          "isRequired": false
+        },
+        {
+          "_id": "lesson-101-4-5",
+          "title": "Final Quiz: Ready to Invest?",
+          "type": "quiz",
+          "contentRef": "quiz-101-final",
+          "order": 5,
+          "estimatedMinutes": 10,
+          "isRequired": true
+        }
+      ]
+    }
+  ],
+  "prerequisites": [],
+  "certificateEnabled": true,
+  "status": "published",
+  "createdAt": "2025-01-15T00:00:00Z",
+  "updatedAt": "2025-01-15T00:00:00Z"
+}

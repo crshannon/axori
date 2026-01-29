@@ -5,6 +5,7 @@ import {
   Compass,
   DollarSign,
   FileText,
+  GraduationCap,
   Layers,
   LayoutDashboard,
   MessageCircle,
@@ -21,7 +22,7 @@ import type { FileRouteTypes } from '../routeTree.gen'
  */
 type NavRoutePath = Extract<
   FileRouteTypes['fullPaths'],
-  '/dashboard' | '/wealth-journey' | '/explore' | '/property-hub' | '/account'
+  '/dashboard' | '/wealth-journey' | '/explore' | '/property-hub' | '/learning-hub' | '/account'
 >
 
 /**
@@ -68,6 +69,14 @@ export const NAV_ITEMS: Array<NavItem> = [
     icon: Layers,
     enabled: true,
     featureFlag: 'nav-wealth-journey',
+  },
+  {
+    id: 'learning-hub',
+    path: '/learning-hub',
+    icon: GraduationCap,
+    enabled: true,
+    featureFlag: 'nav-learning-hub',
+    label: 'Learning Hub',
   },
   {
     id: 'explore',

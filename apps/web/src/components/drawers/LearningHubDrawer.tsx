@@ -2,7 +2,7 @@ import { Button, IconButton, Typography } from '@axori/ui'
 import { X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { LearningSnippet } from '@/data/learning-hub/loan-snippets'
+import type { LearningSnippet } from '@/data/learning-hub/types'
 import { cn } from '@/utils/helpers/cn'
 
 interface LearningHubDrawerProps {

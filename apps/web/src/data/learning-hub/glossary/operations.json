@@ -1,0 +1,218 @@
+{
+  "category": "operations",
+  "terms": [
+    {
+      "_id": "term_noi",
+      "_type": "glossaryTerm",
+      "slug": "net-operating-income",
+      "term": "Net Operating Income (NOI)",
+      "shortDefinition": "Total property income minus operating expenses, excluding debt service and capital expenditures. The foundational metric for property performance.",
+      "fullDefinition": "Net Operating Income (NOI) is the income a property generates after all operating expenses but before debt service (mortgage payments) and income taxes. It's calculated as Gross Rental Income minus Operating Expenses (property taxes, insurance, management, maintenance, utilities, etc.). NOI is the foundation for many key metrics including cap rate and DSCR. A higher NOI means more cash available to cover debt payments, build reserves, and generate profit.",
+      "category": "operations",
+      "investorLevel": "beginner",
+      "relatedTerms": ["cap-rate", "gross-rental-income", "operating-expenses", "debt-service-coverage-ratio"],
+      "synonyms": ["NOI", "net income", "operating income"],
+      "formulas": [
+        {
+          "name": "NOI Calculation",
+          "expression": "Gross Rental Income - Operating Expenses",
+          "variables": [
+            { "symbol": "Gross Rental Income", "description": "Total rent collected plus other income", "unit": "$" },
+            { "symbol": "Operating Expenses", "description": "Property taxes, insurance, management, repairs, etc.", "unit": "$" }
+          ],
+          "example": {
+            "inputs": { "grossIncome": 48000, "operatingExpenses": 12000 },
+            "result": 36000
+          }
+        }
+      ],
+      "proTips": [
+        "NOI does NOT include mortgage payments—that's intentional for comparing properties regardless of financing",
+        "To increase NOI: raise rents, add income streams, or reduce operating expenses",
+        "Use NOI to compare properties objectively, even if they have different financing",
+        "Track NOI monthly to catch expense creep early"
+      ],
+      "examples": [
+        {
+          "title": "Duplex NOI Calculation",
+          "scenario": "Your duplex generates $4,000/month rent. Annual expenses: $4,800 taxes, $1,800 insurance, $2,400 maintenance, $4,800 management (10%)",
+          "calculation": "NOI = ($4,000 × 12) - ($4,800 + $1,800 + $2,400 + $4,800) = $48,000 - $13,800 = $34,200",
+          "outcome": "Your NOI is $34,200/year, which you can use to calculate cap rate and evaluate if this property meets your return targets"
+        }
+      ],
+      "relevantContexts": ["operating-core"],
+      "featureLink": {
+        "label": "View in Operating Core",
+        "route": "/property-hub/:propertyId/financials",
+        "section": "operating-core"
+      },
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_gross_rental_income",
+      "_type": "glossaryTerm",
+      "slug": "gross-rental-income",
+      "term": "Gross Rental Income",
+      "shortDefinition": "Total income a property could generate at full occupancy, before any expenses or vacancy deductions.",
+      "fullDefinition": "Gross Rental Income (also called Gross Potential Rent) is the maximum income a property could generate if fully occupied at market rents. It includes base rent from all units plus any additional income like parking, laundry, or storage. This is your starting point for calculating NOI and evaluating a property's income potential. The difference between gross potential rent and what you actually collect is due to vacancy and credit losses.",
+      "category": "operations",
+      "investorLevel": "beginner",
+      "relatedTerms": ["net-operating-income", "vacancy-rate", "effective-gross-income"],
+      "synonyms": ["gross income", "gross potential rent", "GPR", "scheduled rent"],
+      "proTips": [
+        "Compare your actual rent to market rates regularly—you might be leaving money on the table",
+        "Gross income should include ALL income: rent, late fees, pet rent, parking, laundry",
+        "Use gross potential rent for underwriting, then factor in realistic vacancy",
+        "Track month-over-month to catch trends in your income"
+      ],
+      "relevantContexts": ["operating-core"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_vacancy_rate",
+      "_type": "glossaryTerm",
+      "slug": "vacancy-rate",
+      "term": "Vacancy Rate",
+      "shortDefinition": "The percentage of time or units that are unoccupied, representing lost rental income.",
+      "fullDefinition": "Vacancy rate measures the portion of potential rental income lost due to unoccupied units. It's expressed as a percentage of gross potential rent. A 5% vacancy rate means you're losing 5% of potential income to turnover, vacancy between tenants, or marketing time. When analyzing properties, use realistic vacancy assumptions based on local market data—typically 5-8% for residential properties in stable markets.",
+      "category": "operations",
+      "investorLevel": "beginner",
+      "relatedTerms": ["gross-rental-income", "effective-gross-income", "cash-flow"],
+      "synonyms": ["vacancy", "vacancy loss", "occupancy rate"],
+      "formulas": [
+        {
+          "name": "Vacancy Rate",
+          "expression": "(Vacant Units ÷ Total Units) × 100",
+          "variables": [
+            { "symbol": "Vacant Units", "description": "Number of unoccupied units", "unit": "units" },
+            { "symbol": "Total Units", "description": "Total units in property", "unit": "units" }
+          ]
+        }
+      ],
+      "proTips": [
+        "Even single-family rentals should budget 5-8% vacancy for turnover",
+        "Track your actual vacancy vs. budget to improve future projections",
+        "High vacancy might indicate pricing, property condition, or management issues",
+        "Consider offering lease renewal incentives to reduce turnover vacancy"
+      ],
+      "relevantContexts": ["operating-core", "calculation-presumptions"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_operating_expenses",
+      "_type": "glossaryTerm",
+      "slug": "operating-expenses",
+      "term": "Operating Expenses",
+      "shortDefinition": "Recurring costs to operate a property, including taxes, insurance, management, maintenance, and utilities.",
+      "fullDefinition": "Operating expenses are the ongoing costs of owning and managing a rental property. They include property taxes, insurance, property management fees, repairs and maintenance, utilities (if landlord-paid), landscaping, HOA fees, and other recurring costs. Operating expenses do NOT include mortgage payments, capital expenditures, or depreciation. Understanding your operating expense ratio (expenses ÷ gross income) helps you benchmark against similar properties.",
+      "category": "operations",
+      "investorLevel": "beginner",
+      "relatedTerms": ["net-operating-income", "capex-reserve", "property-management-fee"],
+      "synonyms": ["OpEx", "expenses", "property expenses"],
+      "proTips": [
+        "A typical operating expense ratio is 35-50% for residential properties",
+        "Don't confuse operating expenses with capital expenditures (CapEx)",
+        "Self-managing saves the 8-10% management fee but costs your time",
+        "Review expenses quarterly to catch and address any unusual increases"
+      ],
+      "relevantContexts": ["operating-core"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_capex",
+      "_type": "glossaryTerm",
+      "slug": "capex-reserve",
+      "term": "Capital Expenditure Reserve (CapEx)",
+      "shortDefinition": "Funds set aside for major repairs and replacements like roofs, HVAC systems, and appliances.",
+      "fullDefinition": "Capital Expenditure (CapEx) reserves are funds set aside for major repairs and replacements that occur periodically but not annually. This includes roofs (every 20-30 years), HVAC systems (15-20 years), water heaters (10-15 years), appliances, flooring, and other major components. Proper CapEx reserves prevent cash flow emergencies and protect your investment. A common rule of thumb is 5-10% of gross rent, though actual needs vary by property age and condition.",
+      "category": "operations",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["operating-expenses", "cash-flow", "net-operating-income"],
+      "synonyms": ["CapEx", "capital reserves", "replacement reserves", "capital expenditures"],
+      "proTips": [
+        "Older properties typically need higher CapEx reserves (10%+)",
+        "Create a CapEx schedule listing all major systems and their replacement timeline",
+        "CapEx is separate from your operating expense budget",
+        "When buying, get a property inspection to understand upcoming CapEx needs"
+      ],
+      "examples": [
+        {
+          "title": "CapEx Reserve Calculation",
+          "scenario": "Your property rents for $2,000/month. The roof will need replacement in 10 years (~$12,000), HVAC in 8 years (~$8,000)",
+          "calculation": "Monthly reserve needed: ($12,000 ÷ 120 months) + ($8,000 ÷ 96 months) = $100 + $83 = $183/month (9.2% of rent)",
+          "outcome": "Setting aside $183/month ensures you're prepared for these major expenses without impacting cash flow"
+        }
+      ],
+      "relevantContexts": ["operating-core"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_property_management",
+      "_type": "glossaryTerm",
+      "slug": "property-management-fee",
+      "term": "Property Management Fee",
+      "shortDefinition": "The fee charged by a property manager to handle day-to-day operations, typically 8-10% of collected rent.",
+      "fullDefinition": "Property management fees are charged by professional managers to handle tenant relations, rent collection, maintenance coordination, and other day-to-day operations. Fees typically range from 8-12% of collected rent, with additional charges for tenant placement (50-100% of first month's rent) and lease renewals. Even if you self-manage, many investors include a management fee in their analysis to understand true property performance and prepare for future scaling.",
+      "category": "operations",
+      "investorLevel": "beginner",
+      "relatedTerms": ["operating-expenses", "net-operating-income", "cash-flow"],
+      "synonyms": ["management fee", "PM fee", "property manager fee"],
+      "proTips": [
+        "Include management fees in your analysis even if you self-manage",
+        "Ask about all fees: placement, renewal, maintenance markup, etc.",
+        "A good property manager can save money through efficient operations",
+        "Self-managing works for 1-2 properties but consider PM as you scale"
+      ],
+      "relevantContexts": ["operating-core"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_rent_roll",
+      "_type": "glossaryTerm",
+      "slug": "rent-roll",
+      "term": "Rent Roll",
+      "shortDefinition": "A document listing all units, tenants, lease terms, and rental amounts for a property.",
+      "fullDefinition": "A rent roll is a detailed list of all rental units in a property showing current tenants, unit details, monthly rent, lease start and end dates, security deposits, and any notes. It's essential for due diligence when purchasing, refinancing, or evaluating a property. The rent roll tells you actual income (not just projected), lease expirations to plan for, and any below-market or problematic tenants.",
+      "category": "operations",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["gross-rental-income", "vacancy-rate", "due-diligence"],
+      "synonyms": ["lease roll", "tenant roll", "rental schedule"],
+      "proTips": [
+        "Always verify the rent roll with bank statements or leases during due diligence",
+        "Look for month-to-month tenants—they could leave anytime",
+        "Compare rent roll rents to market rates to find upside potential",
+        "Check for lease expiration clustering that could create turnover waves"
+      ],
+      "relevantContexts": ["operating-core", "acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_turn_costs",
+      "_type": "glossaryTerm",
+      "slug": "turn-costs",
+      "term": "Turn Costs",
+      "shortDefinition": "The expenses incurred when preparing a unit for a new tenant, including cleaning, repairs, and upgrades.",
+      "fullDefinition": "Turn costs (or turnover costs) are the expenses required to prepare a unit for a new tenant after the previous one moves out. This includes cleaning, painting, carpet cleaning or replacement, repairs, and any upgrades. Turn costs also include the lost rent during vacancy. High turnover is expensive—minimizing turn costs and turnover frequency directly improves your bottom line.",
+      "category": "operations",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["vacancy-rate", "capex-reserve", "property-management-fee"],
+      "synonyms": ["turnover costs", "make-ready costs", "unit turn"],
+      "proTips": [
+        "Average turn costs are $1,000-$3,000 plus lost rent during vacancy",
+        "Invest in durable materials that reduce turn costs (LVP flooring, quality paint)",
+        "A thorough move-in inspection documents condition and protects your security deposit claims",
+        "Long-term tenants save thousands in turn costs—treat good tenants well"
+      ],
+      "relevantContexts": ["operating-core"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    }
+  ]
+}

@@ -1,0 +1,197 @@
+{
+  "category": "valuation",
+  "terms": [
+    {
+      "_id": "term_cap_rate",
+      "_type": "glossaryTerm",
+      "slug": "cap-rate",
+      "term": "Capitalization Rate (Cap Rate)",
+      "shortDefinition": "NOI divided by property value, expressing the expected rate of return on an investment property as if purchased with all cash.",
+      "fullDefinition": "The Capitalization Rate (cap rate) is a fundamental metric for valuing income-producing real estate. It represents the expected return on investment if you purchased the property with all cash (no financing). Cap rate is calculated by dividing Net Operating Income (NOI) by property value. Higher cap rates indicate higher returns (but often more risk); lower cap rates suggest lower returns (but often more stability). Cap rates vary by market, property type, and asset class.",
+      "category": "valuation",
+      "investorLevel": "beginner",
+      "relatedTerms": ["net-operating-income", "cash-on-cash-return", "gross-rent-multiplier"],
+      "synonyms": ["cap rate", "capitalization rate", "yield"],
+      "formulas": [
+        {
+          "name": "Cap Rate Calculation",
+          "expression": "(Net Operating Income ÷ Property Value) × 100",
+          "variables": [
+            { "symbol": "NOI", "description": "Annual net operating income", "unit": "$" },
+            { "symbol": "Property Value", "description": "Current market value or purchase price", "unit": "$" }
+          ],
+          "example": {
+            "inputs": { "noi": 36000, "propertyValue": 500000 },
+            "result": 7.2
+          }
+        }
+      ],
+      "proTips": [
+        "Cap rates don't account for financing—use cash-on-cash return for leveraged returns",
+        "A property bought at 7% cap rate doesn't mean 7% return if you use financing",
+        "Cap rates compress (go lower) when interest rates drop and expand when rates rise",
+        "Compare cap rates within the same market and property type for meaningful analysis"
+      ],
+      "examples": [
+        {
+          "title": "Comparing Investment Properties",
+          "scenario": "Property A: $400K, $32K NOI (8% cap). Property B: $500K, $35K NOI (7% cap)",
+          "calculation": "Property A cap rate = $32K ÷ $400K = 8%. Property B = $35K ÷ $500K = 7%",
+          "outcome": "Property A has a higher cap rate (better yield), but Property B might be in a better location with more appreciation potential"
+        }
+      ],
+      "relevantContexts": ["operating-core", "acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_arv",
+      "_type": "glossaryTerm",
+      "slug": "arv",
+      "term": "After Repair Value (ARV)",
+      "shortDefinition": "The estimated value of a property after all renovations and improvements are completed.",
+      "fullDefinition": "After Repair Value (ARV) is the projected market value of a property after renovations are complete. It's a critical number for fix-and-flip investors and BRRRR strategists. ARV is determined by analyzing comparable sales (comps) of renovated properties in the same area. The difference between purchase price plus rehab costs and ARV represents your potential equity gain.",
+      "category": "valuation",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["comps", "forced-appreciation", "brrrr", "fix-and-flip"],
+      "synonyms": ["ARV", "after repair value", "renovated value", "improved value"],
+      "formulas": [
+        {
+          "name": "Maximum Allowable Offer (MAO)",
+          "expression": "(ARV × 70%) - Rehab Costs",
+          "variables": [
+            { "symbol": "ARV", "description": "After repair value", "unit": "$" },
+            { "symbol": "Rehab Costs", "description": "Estimated renovation costs", "unit": "$" }
+          ],
+          "example": {
+            "inputs": { "arv": 300000, "rehabCosts": 50000 },
+            "result": 160000
+          }
+        }
+      ],
+      "proTips": [
+        "Always verify ARV with recent comps—not listing prices, but actual sold prices",
+        "Be conservative with ARV estimates; overestimating is the #1 mistake new flippers make",
+        "Consider time on market for your ARV comps—slow sales suggest lower values",
+        "Your realtor or appraiser can help validate your ARV assumptions"
+      ],
+      "examples": [
+        {
+          "title": "BRRRR Deal Analysis",
+          "scenario": "Property listed at $150K needs $40K in rehab. Comparable renovated homes sold for $280K",
+          "calculation": "ARV = $280K. Using 70% rule: ($280K × 0.70) - $40K = $156K max purchase price",
+          "outcome": "At $150K purchase, this deal works. Total investment: $190K. Equity at refinance (75% LTV): $210K loan = $20K profit + recycled capital"
+        }
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_comps",
+      "_type": "glossaryTerm",
+      "slug": "comps",
+      "term": "Comparable Sales (Comps)",
+      "shortDefinition": "Recently sold properties similar to yours used to determine market value.",
+      "fullDefinition": "Comparable sales (comps) are recently sold properties that are similar to the subject property in location, size, condition, and features. Appraisers and investors use comps to estimate market value. Good comps are typically within 0.5-1 mile, sold within the last 6 months, and have similar square footage, bed/bath count, and condition. Adjustments are made for differences.",
+      "category": "valuation",
+      "investorLevel": "beginner",
+      "relatedTerms": ["arv", "appraisal", "market-value"],
+      "synonyms": ["comparables", "comparable sales", "comp analysis", "CMA"],
+      "proTips": [
+        "Look for 3-5 comparable sales for a reliable estimate",
+        "Sold prices matter more than listing prices—anyone can list at any price",
+        "Adjust for differences: add value for extra beds/baths, subtract for less",
+        "Drive the comps to verify condition matches what you expect for value"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_grm",
+      "_type": "glossaryTerm",
+      "slug": "gross-rent-multiplier",
+      "term": "Gross Rent Multiplier (GRM)",
+      "shortDefinition": "Property price divided by annual gross rent, used for quick property comparisons.",
+      "fullDefinition": "The Gross Rent Multiplier (GRM) is a simple metric for comparing investment properties. It's calculated by dividing the property price by annual gross rent. A lower GRM generally indicates a better value (you're paying less per dollar of rent). While GRM doesn't account for expenses like cap rate does, it's useful for quick screening and comparing properties in the same market.",
+      "category": "valuation",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["cap-rate", "gross-rental-income", "cash-on-cash-return"],
+      "synonyms": ["GRM", "rent multiplier", "gross income multiplier"],
+      "formulas": [
+        {
+          "name": "GRM Calculation",
+          "expression": "Property Price ÷ Annual Gross Rent",
+          "variables": [
+            { "symbol": "Price", "description": "Purchase price or value", "unit": "$" },
+            { "symbol": "Annual Rent", "description": "Gross annual rental income", "unit": "$" }
+          ],
+          "example": {
+            "inputs": { "price": 300000, "annualRent": 36000 },
+            "result": 8.33
+          }
+        }
+      ],
+      "proTips": [
+        "Lower GRM = better value relative to income, but consider the why (condition? location?)",
+        "GRM doesn't account for expenses—a property with low taxes might look worse than one with high taxes",
+        "Use GRM for quick screening, then dig deeper with NOI and cap rate",
+        "GRM varies significantly by market—know your local benchmarks"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_appraisal",
+      "_type": "glossaryTerm",
+      "slug": "appraisal",
+      "term": "Appraisal",
+      "shortDefinition": "A professional opinion of a property's market value, required by lenders for mortgage financing.",
+      "fullDefinition": "An appraisal is a professional estimate of a property's market value conducted by a licensed appraiser. Lenders require appraisals to ensure the property is worth at least the loan amount. Appraisers use three approaches: Sales Comparison (comps), Income Approach (for rentals), and Cost Approach (replacement cost). For investment properties, both the sales comparison and income approaches matter.",
+      "category": "valuation",
+      "investorLevel": "beginner",
+      "relatedTerms": ["comps", "market-value", "loan-to-value"],
+      "synonyms": ["property appraisal", "valuation", "appraised value"],
+      "proTips": [
+        "Provide the appraiser with your renovation receipts and a list of improvements",
+        "A low appraisal can derail a deal—have backup plans (renegotiate, bring more cash, or walk)",
+        "For refinances, meet the appraiser and walk them through the property",
+        "Appraisals for investment properties may use the income approach—make sure your rent roll is accurate"
+      ],
+      "relevantContexts": ["acquisition", "debt-logic"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_forced_appreciation",
+      "_type": "glossaryTerm",
+      "slug": "forced-appreciation",
+      "term": "Forced Appreciation",
+      "shortDefinition": "Increasing property value through improvements or increasing income, rather than waiting for market appreciation.",
+      "fullDefinition": "Forced appreciation is increasing a property's value through your own actions rather than waiting for the market to appreciate. For residential properties, this means renovations and upgrades. For income properties, it includes increasing NOI through higher rents or lower expenses—since value = NOI ÷ cap rate, higher NOI directly increases value. Forced appreciation is the foundation of value-add investing and the BRRRR strategy.",
+      "category": "valuation",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["brrrr", "arv", "net-operating-income", "value-add"],
+      "synonyms": ["value add", "manufactured equity", "active appreciation"],
+      "proTips": [
+        "Every $1 increase in monthly NOI can add $150-200 to property value (at 6-8% cap rate)",
+        "Focus on improvements that increase rent or reduce expenses, not just cosmetics",
+        "Force appreciation before market conditions change on you",
+        "Combine forced appreciation with a refinance to recycle capital"
+      ],
+      "examples": [
+        {
+          "title": "Forcing Appreciation Through NOI",
+          "scenario": "Your 4-unit property has NOI of $24K. In a 6% cap rate market, value = $400K. You raise rents by $100/unit.",
+          "calculation": "New NOI = $24K + ($100 × 4 × 12) = $28,800. New value = $28,800 ÷ 0.06 = $480K",
+          "outcome": "By increasing rent $100/unit, you created $80K in equity through forced appreciation"
+        }
+      ],
+      "relevantContexts": ["acquisition", "operating-core"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    }
+  ]
+}

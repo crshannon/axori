@@ -1,0 +1,213 @@
+{
+  "_id": "path-financing-fundamentals",
+  "_type": "learningPath",
+  "slug": "financing-fundamentals",
+  "title": "Financing Fundamentals",
+  "description": "Master the art of financing real estate investments. Learn about different loan types, qualifying for mortgages, and creative financing strategies to fund your deals.",
+  "icon": "Landmark",
+  "investorLevel": "beginner",
+  "estimatedHours": 3,
+  "targetPersonas": ["first-timer", "wealth-builder", "equity-optimizer"],
+  "targetStrategies": ["buy-and-hold", "brrrr", "house-hacking"],
+  "modules": [
+    {
+      "_id": "module-finance-1",
+      "title": "Understanding Mortgages",
+      "description": "Learn the fundamentals of real estate financing and how mortgages work.",
+      "order": 1,
+      "lessons": [
+        {
+          "_id": "lesson-finance-1-1",
+          "title": "How Mortgages Work",
+          "type": "article",
+          "contentRef": "how-mortgages-work",
+          "order": 1,
+          "estimatedMinutes": 10,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-finance-1-2",
+          "title": "Loan-to-Value Ratio",
+          "type": "glossary",
+          "contentRef": "loan-to-value",
+          "order": 2,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-finance-1-3",
+          "title": "Understanding Amortization",
+          "type": "glossary",
+          "contentRef": "amortization",
+          "order": 3,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-finance-1-4",
+          "title": "Mortgage Calculator",
+          "type": "calculator",
+          "contentRef": "mortgage-calculator",
+          "order": 4,
+          "estimatedMinutes": 8,
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "_id": "module-finance-2",
+      "title": "Loan Types for Investors",
+      "description": "Explore different loan products and find the right financing for your strategy.",
+      "order": 2,
+      "lessons": [
+        {
+          "_id": "lesson-finance-2-1",
+          "title": "Conventional vs Investment Loans",
+          "type": "article",
+          "contentRef": "conventional-vs-investment-loans",
+          "order": 1,
+          "estimatedMinutes": 8,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-finance-2-2",
+          "title": "DSCR Loans Explained",
+          "type": "glossary",
+          "contentRef": "dscr",
+          "order": 2,
+          "estimatedMinutes": 7,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-finance-2-3",
+          "title": "Hard Money Loans",
+          "type": "glossary",
+          "contentRef": "hard-money-loan",
+          "order": 3,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-finance-2-4",
+          "title": "HELOC for Investing",
+          "type": "glossary",
+          "contentRef": "heloc",
+          "order": 4,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-finance-2-5",
+          "title": "DSCR Calculator",
+          "type": "calculator",
+          "contentRef": "dscr-calculator",
+          "order": 5,
+          "estimatedMinutes": 8,
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "_id": "module-finance-3",
+      "title": "Qualifying for Loans",
+      "description": "Understand what lenders look for and how to position yourself for approval.",
+      "order": 3,
+      "lessons": [
+        {
+          "_id": "lesson-finance-3-1",
+          "title": "Debt-to-Income Ratio",
+          "type": "glossary",
+          "contentRef": "debt-to-income",
+          "order": 1,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-finance-3-2",
+          "title": "Credit Score Requirements",
+          "type": "article",
+          "contentRef": "credit-score-real-estate",
+          "order": 2,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-finance-3-3",
+          "title": "Reserves & Cash Requirements",
+          "type": "glossary",
+          "contentRef": "reserves",
+          "order": 3,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-finance-3-4",
+          "title": "Pre-Approval Process",
+          "type": "article",
+          "contentRef": "mortgage-pre-approval",
+          "order": 4,
+          "estimatedMinutes": 7,
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "_id": "module-finance-4",
+      "title": "Refinancing Strategies",
+      "description": "Learn when and how to refinance to optimize your portfolio.",
+      "order": 4,
+      "lessons": [
+        {
+          "_id": "lesson-finance-4-1",
+          "title": "Rate-and-Term Refinance",
+          "type": "glossary",
+          "contentRef": "rate-term-refinance",
+          "order": 1,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-finance-4-2",
+          "title": "Cash-Out Refinance",
+          "type": "glossary",
+          "contentRef": "cash-out-refinance",
+          "order": 2,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-finance-4-3",
+          "title": "When to Refinance",
+          "type": "article",
+          "contentRef": "when-to-refinance",
+          "order": 3,
+          "estimatedMinutes": 8,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-finance-4-4",
+          "title": "Refinance Calculator",
+          "type": "calculator",
+          "contentRef": "refinance-calculator",
+          "order": 4,
+          "estimatedMinutes": 10,
+          "isRequired": false
+        },
+        {
+          "_id": "lesson-finance-4-5",
+          "title": "Financing Quiz",
+          "type": "quiz",
+          "contentRef": "quiz-financing-final",
+          "order": 5,
+          "estimatedMinutes": 10,
+          "isRequired": true
+        }
+      ]
+    }
+  ],
+  "prerequisites": [],
+  "certificateEnabled": true,
+  "status": "published",
+  "createdAt": "2025-01-15T00:00:00Z",
+  "updatedAt": "2025-01-15T00:00:00Z"
+}

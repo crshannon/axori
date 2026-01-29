@@ -17,6 +17,42 @@ This document tracks all active tasks, todos, and development work for the Axori
 
 ## 🎯 High Priority
 
+### Learning Hub Feature
+
+> **Plan**: [docs/architecture/plans/010-learning-hub/](../architecture/plans/010-learning-hub/)
+
+- [ ] **Phase 1: Foundation (MVP)**
+  - [ ] Create type definitions (`packages/shared/src/content/learning-hub/types.ts`)
+  - [ ] Build initial glossary content (50+ terms across 10 categories)
+  - [ ] Add Learning Hub to left navigation (`GraduationCap` icon)
+  - [ ] Create route structure (`/learning-hub`, `/learning-hub/glossary`, etc.)
+  - [ ] Build UI components (GlossaryCard, TermDetail, CategoryFilter, etc.)
+  - [ ] Implement basic search with Fuse.js
+  - [ ] Integrate with existing Learning Hub drawers ("Learn More" links)
+
+- [ ] **Phase 2: Personalization**
+  - [ ] Build recommendation engine using onboarding data
+  - [ ] Create portfolio-aware suggestions
+  - [ ] Implement progress tracking (localStorage)
+  - [ ] Build personalized hub home dashboard
+
+- [ ] **Phase 3: Rich Content**
+  - [ ] Create learning paths with modules
+  - [ ] Build article library
+  - [ ] Add interactive calculator hub
+  - [ ] Implement quizzes and knowledge checks
+
+- [ ] **Phase 4: Advanced Features**
+  - [ ] Property Analyzer ("Analyze Your Property")
+  - [ ] Scenario Modeler (what-if simulations)
+  - [ ] Freedom Number tracker
+  - [ ] Achievement/badge system
+
+- [ ] **Phase 5: CMS Migration (Future)**
+  - [ ] Evaluate CMS options (Sanity.io recommended)
+  - [ ] Set up CMS studio for non-technical editors
+  - [ ] Migrate JSON content to CMS
+
 ### Legal & Compliance
 
 - [ ] **Implement legal disclaimers and user acknowledgments**

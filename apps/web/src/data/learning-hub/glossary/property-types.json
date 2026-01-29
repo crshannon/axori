@@ -1,0 +1,110 @@
+{
+  "category": "property-types",
+  "terms": [
+    {
+      "_id": "term_sfr",
+      "_type": "glossaryTerm",
+      "slug": "single-family-residence",
+      "term": "Single Family Residence (SFR)",
+      "shortDefinition": "A standalone house designed for one family, the most common property type for beginning investors.",
+      "fullDefinition": "A Single Family Residence (SFR) is a standalone house designed for one household. SFRs are the most common entry point for new investors because they're familiar, easier to finance, and have a large buyer pool when you sell. They typically appreciate well and attract longer-term tenants (families). The downside is lower cash flow compared to multifamily since you're only collecting one rent check.",
+      "category": "property-types",
+      "investorLevel": "beginner",
+      "relatedTerms": ["multifamily", "cash-flow", "appreciation"],
+      "synonyms": ["SFR", "single family", "SFH", "detached house"],
+      "proTips": [
+        "SFRs are great for appreciation-focused markets",
+        "Tenants often take better care of SFRs since they feel like 'their' home",
+        "One vacancy = 100% vacancy, so reserves are important",
+        "Consider townhomes and condos as lower-cost SFR alternatives"
+      ],
+      "relevantContexts": ["asset-configuration"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_small_multi",
+      "_type": "glossaryTerm",
+      "slug": "small-multifamily",
+      "term": "Small Multifamily (2-4 Units)",
+      "shortDefinition": "Properties with 2-4 units (duplex, triplex, fourplex) that still qualify for residential financing.",
+      "fullDefinition": "Small multifamily properties (2-4 units) offer the best of both worlds: multiple income streams like commercial properties, but with residential financing (better rates, lower down payments if owner-occupied). Duplexes, triplexes, and fourplexes are ideal for house hacking and provide natural vacancy protection—one empty unit doesn't mean zero income. They're often the sweet spot for growing investors.",
+      "category": "property-types",
+      "investorLevel": "beginner",
+      "relatedTerms": ["house-hacking", "cash-flow", "gross-rent-multiplier"],
+      "synonyms": ["duplex", "triplex", "fourplex", "2-4 unit", "small multi"],
+      "proTips": [
+        "You can house hack a 2-4 unit with just 3.5% down using FHA",
+        "Multiple units provide natural vacancy protection",
+        "Often better cash flow than SFRs but with similar financing",
+        "Look for properties where you can add units (convert basement, garage, etc.)"
+      ],
+      "relevantContexts": ["asset-configuration"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_large_multi",
+      "_type": "glossaryTerm",
+      "slug": "large-multifamily",
+      "term": "Large Multifamily (5+ Units)",
+      "shortDefinition": "Apartment buildings with 5+ units that require commercial financing and are valued based on income.",
+      "fullDefinition": "Large multifamily (5+ units) properties are valued based on income (NOI and cap rate) rather than comparable sales. This means you can directly increase value by improving NOI—a major advantage. The trade-off: commercial loans have different terms (shorter amortization, balloon payments, stricter requirements). Many investors scale into this space as they build experience and capital.",
+      "category": "property-types",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["cap-rate", "net-operating-income", "value-add", "commercial-loan"],
+      "synonyms": ["apartment building", "multifamily", "apartment complex"],
+      "proTips": [
+        "Value = NOI ÷ Cap Rate means you control your equity growth",
+        "Larger properties support on-site management",
+        "Economies of scale improve per-unit costs",
+        "Commercial loans often require 25-30% down and have balloon payments"
+      ],
+      "relevantContexts": ["asset-configuration"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_commercial",
+      "_type": "glossaryTerm",
+      "slug": "commercial-real-estate",
+      "term": "Commercial Real Estate",
+      "shortDefinition": "Properties used for business purposes: office, retail, industrial, and hospitality.",
+      "fullDefinition": "Commercial real estate includes office buildings, retail centers, industrial warehouses, and hospitality properties. Commercial leases are typically longer (3-10 years) with tenants often responsible for expenses (NNN leases). Commercial properties are valued based on income, offering forced appreciation potential. However, they require more capital, expertise, and come with higher vacancy risk when tenants leave.",
+      "category": "property-types",
+      "investorLevel": "advanced",
+      "relatedTerms": ["cap-rate", "net-operating-income", "triple-net-lease"],
+      "synonyms": ["CRE", "commercial property", "commercial buildings"],
+      "proTips": [
+        "NNN (triple net) leases make tenants pay taxes, insurance, and maintenance",
+        "Longer leases provide stability but limit rent increase opportunities",
+        "Tenant quality matters more—a credit tenant reduces risk",
+        "Commercial loans have different terms than residential"
+      ],
+      "relevantContexts": ["asset-configuration"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_mixed_use",
+      "_type": "glossaryTerm",
+      "slug": "mixed-use",
+      "term": "Mixed-Use Property",
+      "shortDefinition": "Properties combining residential and commercial uses, such as apartments above retail storefronts.",
+      "fullDefinition": "Mixed-use properties combine residential and commercial uses in one building—typically retail or office on the ground floor with apartments above. They offer income diversification but also complexity. Financing can be challenging as some lenders don't fit neatly into residential or commercial categories. Mixed-use can be attractive in urban areas where commercial tenants appreciate foot traffic and residents want walkability.",
+      "category": "property-types",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["commercial-real-estate", "small-multifamily", "cash-flow"],
+      "synonyms": ["mixed use", "live-work", "retail-residential"],
+      "proTips": [
+        "Commercial tenants often pay more per square foot than residential",
+        "Vacancy risk is diversified across different tenant types",
+        "Financing may require portfolio lenders or commercial terms",
+        "Great for urban infill where demand exists for both uses"
+      ],
+      "relevantContexts": ["asset-configuration"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    }
+  ]
+}

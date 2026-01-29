@@ -1773,3 +1773,116 @@ export const emailCapturesRelations = relations(emailCaptures, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// =====================================================
+// LEARNING HUB TABLES
+// =====================================================
+
+// Learning content type enum
+export const learningContentTypeEnum = pgEnum("learning_content_type", [
+  "term",      // Glossary term
+  "article",   // Learning article
+  "path",      // Learning path
+  "lesson",    // Individual lesson within a path
+  "quiz",      // Quiz
+]);
+
+// Learning progress status enum
+export const learningProgressStatusEnum = pgEnum("learning_progress_status", [
+  "viewed",      // Content has been viewed
+  "in_progress", // Currently working through (for paths)
+  "completed",   // Fully completed
+]);
+
+// User Learning Progress - tracks viewed/completed content
+export const userLearningProgress = pgTable("user_learning_progress", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").notNull(),
+  contentType: learningContentTypeEnum("content_type").notNull(),
+  contentSlug: text("content_slug").notNull(),
+  status: learningProgressStatusEnum("status").notNull().default("viewed"),
+  progressData: jsonb("progress_data"), // For paths: { currentModule, currentLesson, completedLessons: [] }
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  // Unique constraint: one progress record per user per content item
+  uniqueUserContent: unique().on(table.userId, table.contentType, table.contentSlug),
+  // Indexes for common queries
+  userIdIdx: index("idx_user_learning_progress_user_id").on(table.userId),
+  contentTypeIdx: index("idx_user_learning_progress_content_type").on(table.contentType),
+  statusIdx: index("idx_user_learning_progress_status").on(table.status),
+}));
+
+// User Learning Bookmarks - saved items
+export const userLearningBookmarks = pgTable("user_learning_bookmarks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").notNull(),
+  contentType: learningContentTypeEnum("content_type").notNull(),
+  contentSlug: text("content_slug").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  // Unique constraint: one bookmark per user per content item
+  uniqueUserBookmark: unique().on(table.userId, table.contentType, table.contentSlug),
+  // Indexes for common queries
+  userIdIdx: index("idx_user_learning_bookmarks_user_id").on(table.userId),
+  contentTypeIdx: index("idx_user_learning_bookmarks_content_type").on(table.contentType),
+}));
+
+// User Quiz Attempts - quiz results
+export const userQuizAttempts = pgTable("user_quiz_attempts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").notNull(),
+  quizSlug: text("quiz_slug").notNull(),
+  score: integer("score").notNull(),
+  maxScore: integer("max_score").notNull(),
+  answers: jsonb("answers").notNull(), // { questionId: selectedAnswer, ... }
+  completedAt: timestamp("completed_at").defaultNow().notNull(),
+}, (table) => ({
+  // Indexes for common queries
+  userIdIdx: index("idx_user_quiz_attempts_user_id").on(table.userId),
+  quizSlugIdx: index("idx_user_quiz_attempts_quiz_slug").on(table.quizSlug),
+}));
+
+// User Learning Achievements - badges and achievements
+export const userLearningAchievements = pgTable("user_learning_achievements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").notNull(),
+  achievementId: text("achievement_id").notNull(), // e.g., "first_steps", "glossary_explorer"
+  unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
+  metadata: jsonb("metadata"), // Extra data about how achievement was earned
+}, (table) => ({
+  // Unique constraint: one achievement per user
+  uniqueUserAchievement: unique().on(table.userId, table.achievementId),
+  // Index for user queries
+  userIdIdx: index("idx_user_learning_achievements_user_id").on(table.userId),
+}));
+
+// Learning Hub Relations
+export const userLearningProgressRelations = relations(userLearningProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [userLearningProgress.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userLearningBookmarksRelations = relations(userLearningBookmarks, ({ one }) => ({
+  user: one(users, {
+    fields: [userLearningBookmarks.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userQuizAttemptsRelations = relations(userQuizAttempts, ({ one }) => ({
+  user: one(users, {
+    fields: [userQuizAttempts.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userLearningAchievementsRelations = relations(userLearningAchievements, ({ one }) => ({
+  user: one(users, {
+    fields: [userLearningAchievements.userId],
+    references: [users.id],
+  }),
+}));

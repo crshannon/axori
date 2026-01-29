@@ -1,0 +1,89 @@
+{
+  "category": "legal",
+  "terms": [
+    {
+      "_id": "term_llc",
+      "_type": "glossaryTerm",
+      "slug": "llc",
+      "term": "Limited Liability Company (LLC)",
+      "shortDefinition": "A business structure that protects your personal assets from lawsuits related to your rental properties.",
+      "fullDefinition": "A Limited Liability Company (LLC) is a business entity that provides liability protection for its owners (called members). When you hold rental properties in an LLC, your personal assets (home, savings, other investments) are generally protected from lawsuits related to the property. The LLC is taxed as a pass-through entity, meaning profits flow to your personal return. LLCs add some complexity but are common among real estate investors for asset protection.",
+      "category": "legal",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["operating-agreement", "asset-protection", "series-llc"],
+      "synonyms": ["LLC", "limited liability company", "holding company"],
+      "proTips": [
+        "Consult with a real estate attorney about the best structure for your situation",
+        "Most lenders require loans in personal name—you can transfer to LLC after closing",
+        "Maintain the LLC properly (separate bank accounts, annual filings) to preserve protection",
+        "Consider a Series LLC in states that allow it for multiple property protection"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_operating_agreement",
+      "_type": "glossaryTerm",
+      "slug": "operating-agreement",
+      "term": "Operating Agreement",
+      "shortDefinition": "A legal document outlining how an LLC is run, including ownership percentages, profit distribution, and management structure.",
+      "fullDefinition": "An operating agreement is a legal document that defines the ownership structure, member responsibilities, profit distribution, and management of an LLC. Even single-member LLCs should have an operating agreement to establish the separation between personal and business affairs. For partnerships, the operating agreement is crucial for defining each partner's role, capital contributions, and exit procedures. It helps prevent disputes and protects liability protection.",
+      "category": "legal",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["llc", "partnership", "asset-protection"],
+      "synonyms": ["LLC agreement", "company agreement", "OA"],
+      "proTips": [
+        "Have an attorney draft or review your operating agreement",
+        "Include provisions for what happens if a member wants to exit",
+        "Define clearly how profits and losses are distributed",
+        "Update the operating agreement when adding or removing members"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_umbrella_insurance",
+      "_type": "glossaryTerm",
+      "slug": "umbrella-insurance",
+      "term": "Umbrella Insurance",
+      "shortDefinition": "Additional liability coverage beyond your standard landlord policy, providing extra protection against lawsuits.",
+      "fullDefinition": "Umbrella insurance is extra liability coverage that kicks in when your regular landlord insurance policy limits are exhausted. If you're sued for more than your landlord policy covers, umbrella insurance provides additional protection. Policies typically start at $1 million and are relatively affordable ($150-300/year per million). As you build a portfolio, umbrella insurance becomes increasingly important for protecting your personal assets.",
+      "category": "legal",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["llc", "landlord-insurance", "asset-protection"],
+      "synonyms": ["umbrella policy", "excess liability", "umbrella coverage"],
+      "proTips": [
+        "Umbrella policies are cheap relative to the protection they provide",
+        "Match your umbrella coverage to your net worth and exposure",
+        "Get umbrella from the same company as your other policies for bundling discounts",
+        "Combine umbrella insurance with LLC protection for layered defense"
+      ],
+      "relevantContexts": ["operating-core"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_lease_agreement",
+      "_type": "glossaryTerm",
+      "slug": "lease-agreement",
+      "term": "Lease Agreement",
+      "shortDefinition": "A legal contract between landlord and tenant defining the terms of the rental arrangement.",
+      "fullDefinition": "A lease agreement is the legal contract that governs the relationship between landlord and tenant. It specifies rent amount, due date, security deposit, lease term, maintenance responsibilities, rules (pets, guests, modifications), and grounds for termination. A solid lease protects both parties and is your primary tool for enforcing expectations. Use state-specific leases that comply with local landlord-tenant laws.",
+      "category": "legal",
+      "investorLevel": "beginner",
+      "relatedTerms": ["security-deposit", "tenant-screening", "eviction"],
+      "synonyms": ["rental agreement", "lease contract", "tenancy agreement"],
+      "proTips": [
+        "Use a lease template specific to your state's laws",
+        "Include all adults as signers on the lease",
+        "Document everything—addendums for pets, move-in condition, etc.",
+        "Have an attorney review your lease template"
+      ],
+      "relevantContexts": ["operating-core"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    }
+  ]
+}

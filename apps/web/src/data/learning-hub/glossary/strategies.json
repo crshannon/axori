@@ -1,0 +1,168 @@
+{
+  "category": "strategies",
+  "terms": [
+    {
+      "_id": "term_brrrr",
+      "_type": "glossaryTerm",
+      "slug": "brrrr",
+      "term": "BRRRR Strategy",
+      "shortDefinition": "Buy, Rehab, Rent, Refinance, Repeat—a wealth-building strategy that recycles capital into multiple properties.",
+      "fullDefinition": "BRRRR stands for Buy, Rehab, Rent, Refinance, Repeat. You purchase a property below market value, renovate it to increase value, rent it out, then do a cash-out refinance to pull out most or all of your initial investment. That capital is then recycled into the next property. When executed well, you end up with a cash-flowing asset while recovering your initial investment to do it again. BRRRR is one of the most powerful strategies for building a portfolio quickly.",
+      "category": "strategies",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["arv", "refinance", "forced-appreciation", "equity-velocity"],
+      "synonyms": ["BRRRR method", "buy rehab rent refinance repeat", "velocity investing"],
+      "proTips": [
+        "Success depends on buying below market AND adding value through rehab",
+        "Know your lender's seasoning requirements before you start",
+        "Build in a margin of safety—don't depend on top-dollar appraisal",
+        "The 'Repeat' is the magic—each cycle builds your portfolio without new capital"
+      ],
+      "examples": [
+        {
+          "title": "BRRRR Deal Example",
+          "scenario": "Buy: $150K property needing work. Rehab: $40K renovation. Total invested: $190K. ARV after rehab: $280K.",
+          "calculation": "Rent: $1,800/month. Refinance at 75% LTV: $280K × 0.75 = $210K loan. Cash back: $210K - $150K purchase loan = $60K",
+          "outcome": "You recover $60K of your $90K cash investment, own a property worth $280K with $70K equity, and cash flow monthly. Repeat with the $60K!"
+        }
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_buy_hold",
+      "_type": "glossaryTerm",
+      "slug": "buy-and-hold",
+      "term": "Buy and Hold",
+      "shortDefinition": "The classic strategy of purchasing properties and holding them long-term for cash flow and appreciation.",
+      "fullDefinition": "Buy and hold is the foundational real estate strategy: purchase income-producing properties and hold them for the long term. You benefit from monthly cash flow, mortgage paydown, appreciation, and tax advantages. Unlike flipping, buy and hold focuses on building lasting wealth. Properties are selected for their ability to generate consistent income and grow in value over years or decades.",
+      "category": "strategies",
+      "investorLevel": "beginner",
+      "relatedTerms": ["cash-flow", "appreciation", "leverage", "depreciation"],
+      "synonyms": ["long-term hold", "rental investing", "buy and rent"],
+      "proTips": [
+        "Buy and hold is the most proven path to real estate wealth",
+        "Focus on cash flow to weather market cycles",
+        "Time in the market beats timing the market",
+        "Refinance periodically to access equity while maintaining ownership"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_house_hack",
+      "_type": "glossaryTerm",
+      "slug": "house-hacking",
+      "term": "House Hacking",
+      "shortDefinition": "Living in one unit of a property while renting out others to offset or eliminate your housing costs.",
+      "fullDefinition": "House hacking means buying a multi-unit property (duplex, triplex, fourplex), living in one unit, and renting out the others. The rental income offsets or covers your mortgage, letting you live for free or cheap while building equity. You can also house hack a single-family home by renting rooms. It's the best way to get started in real estate—you get favorable owner-occupied financing (lower rates, 3-5% down) while building your portfolio.",
+      "category": "strategies",
+      "investorLevel": "beginner",
+      "relatedTerms": ["fha-loan", "cash-flow", "leverage", "multifamily"],
+      "synonyms": ["house hack", "live-in landlord", "owner-occupied rental"],
+      "proTips": [
+        "FHA loans allow 3.5% down on 1-4 unit properties if you live there",
+        "Live there 1 year, then move out and repeat with another house hack",
+        "Your living expenses become an investment, not just an expense",
+        "This is the #1 recommended strategy for first-time investors"
+      ],
+      "examples": [
+        {
+          "title": "House Hack Duplex",
+          "scenario": "Buy a duplex for $350K with 5% down ($17.5K). Live in one unit, rent the other for $1,500.",
+          "calculation": "Mortgage: $2,200/month. Rental income: $1,500. Your effective housing cost: $700/month",
+          "outcome": "You live for $700/month while building equity in a $350K asset. After 1 year, move out, rent your unit for $1,500, and cash flow $800/month."
+        }
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_fix_flip",
+      "_type": "glossaryTerm",
+      "slug": "fix-and-flip",
+      "term": "Fix and Flip",
+      "shortDefinition": "Buying undervalued properties, renovating them, and selling for profit—typically within months.",
+      "fullDefinition": "Fix and flip (or flipping) involves buying properties below market value, renovating them, and selling for a profit. Unlike buy and hold, the goal is quick turnover. Success requires accurately estimating ARV, renovation costs, and holding costs. Flipping is more like a job than passive investing—it requires active management. Profits are taxed as ordinary income (or short-term capital gains), not at favorable long-term rates.",
+      "category": "strategies",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["arv", "hard-money-loan", "forced-appreciation", "capital-gains"],
+      "synonyms": ["flipping", "flip", "rehab and sell"],
+      "proTips": [
+        "The 70% rule: Pay no more than (ARV × 70%) - rehab costs",
+        "Your profit is made when you buy, not when you sell",
+        "Factor in holding costs: mortgage, utilities, insurance, taxes during rehab",
+        "Build a reliable contractor team before you start"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_wholesale",
+      "_type": "glossaryTerm",
+      "slug": "wholesale",
+      "term": "Wholesale",
+      "shortDefinition": "Finding deeply discounted properties and assigning the contract to another investor for a fee, without actually buying the property.",
+      "fullDefinition": "Wholesaling involves finding distressed or undervalued properties, getting them under contract at a discount, and assigning that contract to another investor (usually a flipper or buy-and-hold investor) for an assignment fee. You never actually buy the property—you're selling the contract. Wholesaling requires little capital but significant marketing and negotiation skills. It's often a starting point for investors building capital to eventually buy properties themselves.",
+      "category": "strategies",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["arv", "motivated-seller", "assignment-fee"],
+      "synonyms": ["wholesaling", "contract assignment", "bird dogging"],
+      "proTips": [
+        "Wholesaling requires little capital but lots of hustle",
+        "Build relationships with cash buyers before you have deals",
+        "Know your state's laws—some require a real estate license for wholesaling",
+        "Focus on finding truly motivated sellers (distress, divorce, death, job loss)"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_str",
+      "_type": "glossaryTerm",
+      "slug": "short-term-rental",
+      "term": "Short-Term Rental (STR)",
+      "shortDefinition": "Properties rented nightly or weekly through platforms like Airbnb, typically generating higher income but requiring more management.",
+      "fullDefinition": "Short-term rentals (STRs) are properties rented for periods less than 30 days, typically through platforms like Airbnb or VRBO. STRs can generate 2-3x the income of long-term rentals in the right markets, but require more active management: guest communication, cleaning, maintenance, and dealing with seasonality. They also face regulatory risk as many cities restrict or ban STRs. Consider STRs if you're in a tourist market and can handle the operational demands.",
+      "category": "strategies",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["cash-flow", "gross-rental-income", "property-management-fee"],
+      "synonyms": ["STR", "Airbnb", "vacation rental", "VRBO"],
+      "proTips": [
+        "Research local regulations before buying for STR—many cities have restrictions",
+        "Seasonal markets have feast-or-famine cash flow patterns",
+        "STR income may be considered active (not passive) for tax purposes",
+        "Budget for higher turnover costs and professional cleaning"
+      ],
+      "relevantContexts": ["operating-core"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    },
+    {
+      "_id": "term_value_add",
+      "_type": "glossaryTerm",
+      "slug": "value-add",
+      "term": "Value-Add Investing",
+      "shortDefinition": "Acquiring properties with potential for improvement through renovations, better management, or repositioning.",
+      "fullDefinition": "Value-add investing focuses on properties that are underperforming due to deferred maintenance, poor management, below-market rents, or needed renovations. You add value through improvements, then benefit from increased cash flow and property value. This strategy combines elements of buy-and-hold (long-term ownership) with fix-and-flip (active improvement). Value-add is popular in commercial real estate and multifamily investing.",
+      "category": "strategies",
+      "investorLevel": "intermediate",
+      "relatedTerms": ["forced-appreciation", "brrrr", "cap-rate", "net-operating-income"],
+      "synonyms": ["value add", "repositioning", "turnaround"],
+      "proTips": [
+        "Look for properties with below-market rents in good locations",
+        "Value-add can be as simple as raising rents to market rates",
+        "Factor in tenant turnover if raising rents significantly",
+        "Combine physical improvements with operational improvements"
+      ],
+      "relevantContexts": ["acquisition"],
+      "createdAt": "2026-01-26T00:00:00Z",
+      "updatedAt": "2026-01-26T00:00:00Z"
+    }
+  ]
+}

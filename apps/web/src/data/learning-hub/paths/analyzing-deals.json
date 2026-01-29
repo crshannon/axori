@@ -1,0 +1,222 @@
+{
+  "_id": "path-analyzing-deals",
+  "_type": "learningPath",
+  "slug": "analyzing-deals",
+  "title": "Analyzing Deals Like a Pro",
+  "description": "Develop the skills to analyze investment properties confidently. Learn the metrics, calculations, and due diligence process that separates successful investors from the rest.",
+  "icon": "Calculator",
+  "investorLevel": "intermediate",
+  "estimatedHours": 4,
+  "targetPersonas": ["wealth-builder", "equity-optimizer", "first-timer"],
+  "targetStrategies": ["buy-and-hold", "brrrr", "fix-and-flip"],
+  "modules": [
+    {
+      "_id": "module-deals-1",
+      "title": "Core Investment Metrics",
+      "description": "Master the essential calculations every investor needs to evaluate deals.",
+      "order": 1,
+      "lessons": [
+        {
+          "_id": "lesson-deals-1-1",
+          "title": "Net Operating Income (NOI)",
+          "type": "glossary",
+          "contentRef": "net-operating-income",
+          "order": 1,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-1-2",
+          "title": "Cap Rate Analysis",
+          "type": "glossary",
+          "contentRef": "cap-rate",
+          "order": 2,
+          "estimatedMinutes": 7,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-1-3",
+          "title": "Cash-on-Cash Return",
+          "type": "glossary",
+          "contentRef": "cash-on-cash-return",
+          "order": 3,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-1-4",
+          "title": "Internal Rate of Return (IRR)",
+          "type": "glossary",
+          "contentRef": "irr",
+          "order": 4,
+          "estimatedMinutes": 8,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-1-5",
+          "title": "Cap Rate Calculator",
+          "type": "calculator",
+          "contentRef": "cap-rate-calculator",
+          "order": 5,
+          "estimatedMinutes": 8,
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "_id": "module-deals-2",
+      "title": "Income & Expense Analysis",
+      "description": "Learn to accurately project rental income and operating expenses.",
+      "order": 2,
+      "lessons": [
+        {
+          "_id": "lesson-deals-2-1",
+          "title": "Market Rent Analysis",
+          "type": "article",
+          "contentRef": "market-rent-analysis",
+          "order": 1,
+          "estimatedMinutes": 10,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-2-2",
+          "title": "Understanding Vacancy Rate",
+          "type": "glossary",
+          "contentRef": "vacancy-rate",
+          "order": 2,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-2-3",
+          "title": "Operating Expense Ratio",
+          "type": "glossary",
+          "contentRef": "operating-expense-ratio",
+          "order": 3,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-2-4",
+          "title": "CapEx Reserves",
+          "type": "glossary",
+          "contentRef": "capex",
+          "order": 4,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-2-5",
+          "title": "Cash-on-Cash Calculator",
+          "type": "calculator",
+          "contentRef": "cash-on-cash-calculator",
+          "order": 5,
+          "estimatedMinutes": 10,
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "_id": "module-deals-3",
+      "title": "Property Valuation",
+      "description": "Learn different approaches to determine what a property is worth.",
+      "order": 3,
+      "lessons": [
+        {
+          "_id": "lesson-deals-3-1",
+          "title": "Comparable Sales Approach",
+          "type": "glossary",
+          "contentRef": "comparable-sales",
+          "order": 1,
+          "estimatedMinutes": 7,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-3-2",
+          "title": "Income Approach to Value",
+          "type": "glossary",
+          "contentRef": "income-approach",
+          "order": 2,
+          "estimatedMinutes": 8,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-3-3",
+          "title": "After Repair Value (ARV)",
+          "type": "glossary",
+          "contentRef": "arv",
+          "order": 3,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-3-4",
+          "title": "Gross Rent Multiplier",
+          "type": "glossary",
+          "contentRef": "gross-rent-multiplier",
+          "order": 4,
+          "estimatedMinutes": 5,
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "_id": "module-deals-4",
+      "title": "Due Diligence Process",
+      "description": "Master the investigation process before you buy.",
+      "order": 4,
+      "lessons": [
+        {
+          "_id": "lesson-deals-4-1",
+          "title": "Due Diligence Checklist",
+          "type": "article",
+          "contentRef": "due-diligence-checklist",
+          "order": 1,
+          "estimatedMinutes": 12,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-4-2",
+          "title": "Property Inspections",
+          "type": "glossary",
+          "contentRef": "property-inspection",
+          "order": 2,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-4-3",
+          "title": "Title Search & Insurance",
+          "type": "glossary",
+          "contentRef": "title-insurance",
+          "order": 3,
+          "estimatedMinutes": 6,
+          "isRequired": true
+        },
+        {
+          "_id": "lesson-deals-4-4",
+          "title": "Reviewing Seller Disclosures",
+          "type": "article",
+          "contentRef": "reviewing-seller-disclosures",
+          "order": 4,
+          "estimatedMinutes": 8,
+          "isRequired": false
+        },
+        {
+          "_id": "lesson-deals-4-5",
+          "title": "Deal Analysis Quiz",
+          "type": "quiz",
+          "contentRef": "quiz-deals-final",
+          "order": 5,
+          "estimatedMinutes": 10,
+          "isRequired": true
+        }
+      ]
+    }
+  ],
+  "prerequisites": ["real-estate-investing-101"],
+  "certificateEnabled": true,
+  "status": "published",
+  "createdAt": "2025-01-15T00:00:00Z",
+  "updatedAt": "2025-01-15T00:00:00Z"
+}
