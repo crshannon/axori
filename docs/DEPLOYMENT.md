@@ -83,7 +83,11 @@ This creates `apps/admin/.vercel/project.json` with different project ID.
 
 Go to your GitHub repo → **Settings** → **Secrets and variables** → **Actions**
 
-### Vercel Secrets (Required)
+### Repository Secrets (Available to all workflows)
+
+**Path:** Settings → Secrets and variables → Actions → **Repository secrets** → New repository secret
+
+These are shared across all environments and workflows:
 
 | Secret | Value | Description |
 |--------|-------|-------------|
@@ -91,8 +95,21 @@ Go to your GitHub repo → **Settings** → **Secrets and variables** → **Acti
 | `VERCEL_ORG_ID` | `team_xxx` | From `.vercel/project.json` |
 | `VERCEL_WEB_PROJECT_ID` | `prj_xxx` | From `apps/web/.vercel/project.json` |
 | `VERCEL_ADMIN_PROJECT_ID` | `prj_xxx` | From `apps/admin/.vercel/project.json` |
+| `FORGE_WEBHOOK_URL` | `https://admin.axori.com` | Admin app URL for webhooks |
+| `FORGE_WEBHOOK_SECRET` | `random-secret` | Shared secret for webhook auth |
 
-### Staging Environment Secrets
+### Environment Secrets (Scoped to specific environments)
+
+**Path:** Settings → Environments → Select environment → **Environment secrets** → Add secret
+
+First, create the environments:
+1. Go to Settings → **Environments**
+2. Click **New environment**
+3. Create: `staging` and `production`
+
+Then add secrets to each environment:
+
+#### Staging Environment Secrets
 
 | Secret | Value | Description |
 |--------|-------|-------------|
@@ -102,7 +119,7 @@ Go to your GitHub repo → **Settings** → **Secrets and variables** → **Acti
 | `STAGING_CLERK_PUBLISHABLE_KEY` | `pk_test_...` | Clerk staging publishable key |
 | `STAGING_API_URL` | `https://staging-api.axori.com` | Staging API endpoint |
 
-### Production Environment Secrets
+#### Production Environment Secrets
 
 | Secret | Value | Description |
 |--------|-------|-------------|
@@ -112,12 +129,7 @@ Go to your GitHub repo → **Settings** → **Secrets and variables** → **Acti
 | `PROD_CLERK_PUBLISHABLE_KEY` | `pk_live_...` | Clerk production publishable key |
 | `PROD_API_URL` | `https://api.axori.com` | Production API endpoint |
 
-### Optional: Forge Webhook Secrets
-
-| Secret | Value | Description |
-|--------|-------|-------------|
-| `FORGE_WEBHOOK_URL` | `https://admin.axori.com` | Admin app URL for webhooks |
-| `FORGE_WEBHOOK_SECRET` | `random-secret` | Shared secret for webhook auth |
+> **Note:** Environment secrets provide additional security - you can add protection rules like required reviewers before deploying to production.
 
 ---
 
