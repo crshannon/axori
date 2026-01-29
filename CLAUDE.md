@@ -78,16 +78,18 @@ All migration logic lives in `packages/db/`. There is ONE source of truth for mi
 | `pnpm db:migrate` | Apply pending migrations | Production deployments |
 | `pnpm db:status` | Check migration status | Debugging |
 | `pnpm db:verify` | Verify database state | After migrations |
-| `pnpm db:push` | Push schema directly | Development only |
+| `pnpm db:push` | Push schema directly | ⚠️ Known bug - use db:generate + db:migrate |
 
 ### Development Workflow
 
-For local development, use `db:push` for quick iteration:
+**Note:** `db:push` has a known bug with this Supabase database (drizzle-kit fails to parse certain check constraints). Use the migration workflow instead:
 
 ```bash
 # 1. Modify schema in packages/db/src/schema/index.ts
-# 2. Push changes directly
-pnpm db:push
+# 2. Generate migration
+pnpm db:generate
+# 3. Apply migration
+pnpm db:migrate
 ```
 
 ### Production Workflow
