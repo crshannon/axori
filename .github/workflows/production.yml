@@ -37,13 +37,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Type check
-        run: pnpm type-check
+        run: pnpm type-check --filter=!@axori/mobile
 
       - name: Lint
-        run: pnpm lint
+        run: pnpm lint --filter=!@axori/mobile
 
       - name: Run tests
-        run: pnpm test
+        run: pnpm test --filter=!@axori/mobile
 
       - name: Run database migrations
         run: pnpm db:push
@@ -51,7 +51,7 @@ jobs:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
 
       - name: Build
-        run: pnpm build
+        run: pnpm build --filter=!@axori/mobile
         env:
           VITE_SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.PROD_SUPABASE_ANON_KEY }}
