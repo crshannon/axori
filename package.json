@@ -29,8 +29,10 @@
     "type-check:mobile": "pnpm --filter @axori/mobile type-check",
     "db:generate": "pnpm --filter @axori/db db:generate",
     "db:migrate": "pnpm --filter @axori/db db:migrate",
+    "db:status": "pnpm --filter @axori/db db:status",
+    "db:verify": "pnpm --filter @axori/db db:verify",
     "db:push": "pnpm --filter @axori/db db:push",
-    "db:pull": "pnpm --filter @axori/web db:pull",
+    "db:pull": "pnpm --filter @axori/db db:pull",
     "db:studio": "pnpm --filter @axori/db db:studio",
     "db:seed": "pnpm --filter @axori/db db:seed",
     "db:seed:user": "pnpm --filter @axori/db db:seed:user",
@@ -44,6 +46,7 @@
   "pnpm": {
     "overrides": {
       "drizzle-orm": "0.45.1",
+      "drizzle-kit": "0.30.0",
       "@types/pg": "8.16.0"
     }
   },

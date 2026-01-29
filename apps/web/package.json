@@ -13,12 +13,7 @@
     "lint": "eslint --max-warnings 0",
     "lint:fix": "eslint --fix --max-warnings 0",
     "format": "prettier",
-    "check": "prettier --write . && eslint --fix",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:pull": "drizzle-kit pull",
-    "db:studio": "drizzle-kit studio"
+    "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
     "@axori/db": "workspace:*",
@@ -41,7 +36,6 @@
     "@tanstack/router-plugin": "^1.132.0",
     "@tanstack/store": "^0.7.0",
     "clsx": "^2.1.0",
-    "drizzle-kit": "^0.31.8",
     "lucide-react": "^0.544.0",
     "mapbox-gl": "^3.17.0",
     "nitro": "latest",

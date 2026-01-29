@@ -54,10 +54,81 @@ pnpm check              # Format + lint fix
 pnpm type-check         # TypeScript checks
 
 # Database (Drizzle)
-pnpm db:generate        # Generate migrations
-pnpm db:push            # Push schema to database
+pnpm db:generate        # Generate SQL migrations from schema
+pnpm db:migrate         # Apply pending migrations
+pnpm db:status          # Check migration status
+pnpm db:verify          # Verify database state
+pnpm db:push            # Push schema directly (dev only)
+pnpm db:pull            # Pull schema from database
 pnpm db:studio          # Open Drizzle Studio
-pnpm db:seed            # Seed database
+pnpm db:seed            # Seed market data
+```
+
+---
+
+## Database Migrations
+
+All migration logic lives in `packages/db/`. There is ONE source of truth for migrations.
+
+### Migration Commands
+
+| Command | Purpose | When to Use |
+|---------|---------|-------------|
+| `pnpm db:generate` | Generate SQL from schema changes | After modifying schema |
+| `pnpm db:migrate` | Apply pending migrations | Production deployments |
+| `pnpm db:status` | Check migration status | Debugging |
+| `pnpm db:verify` | Verify database state | After migrations |
+| `pnpm db:push` | Push schema directly | ⚠️ Known bug - use db:generate + db:migrate |
+
+### Development Workflow
+
+**Note:** `db:push` has a known bug with this Supabase database (drizzle-kit fails to parse certain check constraints). Use the migration workflow instead:
+
+```bash
+# 1. Modify schema in packages/db/src/schema/index.ts
+# 2. Generate migration
+pnpm db:generate
+# 3. Apply migration
+pnpm db:migrate
+```
+
+### Production Workflow
+
+For production, always use managed migrations:
+
+```bash
+# 1. Modify schema
+# 2. Generate SQL migration
+pnpm db:generate
+
+# 3. Review generated SQL in packages/db/drizzle/
+# 4. Apply migrations
+pnpm db:migrate
+```
+
+### Migration Files
+
+```
+packages/db/
+├── drizzle/                    # SQL migrations (generated)
+│   ├── 0000_*.sql              # Migration files
+│   └── meta/_journal.json      # Migration metadata
+├── drizzle.config.ts           # Drizzle Kit config
+└── src/
+    └── migrations/
+        └── runner.ts           # Unified migration runner
+```
+
+### Verification
+
+The migration runner automatically verifies database state after applying migrations:
+- Checks critical tables exist
+- Validates required columns
+- Verifies data integrity constraints
+
+Run verification manually:
+```bash
+pnpm db:verify
 ```
 
 ---
