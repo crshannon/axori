@@ -1,20 +1,22 @@
 # Deployment Guide
 
-This guide covers setting up Vercel deployments for the Axori web and admin apps via GitHub Actions.
+This guide covers setting up Vercel deployments for the Axori web and admin apps.
 
 ## Overview
 
-| App | Directory | Production URL | Staging URL |
-|-----|-----------|----------------|-------------|
-| Web | `apps/web` | app.axori.com | staging.axori.com |
-| Admin (Forge) | `apps/admin` | admin.axori.com | staging-admin.axori.com |
+| App | Directory | Production URL | Preview |
+|-----|-----------|----------------|---------|
+| Web | `apps/web` | app.axori.com | Auto-generated Vercel URLs |
+| Admin (Forge) | `apps/admin` | admin.axori.com | Auto-generated Vercel URLs |
+
+> **Note:** This guide covers production deployment + Vercel's built-in preview deployments. A separate staging environment can be added later with Vercel Pro.
 
 ## Prerequisites
 
 - GitHub repository with Actions enabled
-- Vercel account (Pro plan recommended for team features)
-- Supabase project(s) for staging and production
-- Clerk application(s) for staging and production
+- Vercel account (free tier works for production + previews)
+- Supabase project
+- Clerk application
 
 ---
 
@@ -83,11 +85,9 @@ This creates `apps/admin/.vercel/project.json` with different project ID.
 
 Go to your GitHub repo → **Settings** → **Secrets and variables** → **Actions**
 
-### Repository Secrets (Available to all workflows)
+### Repository Secrets
 
 **Path:** Settings → Secrets and variables → Actions → **Repository secrets** → New repository secret
-
-These are shared across all environments and workflows:
 
 | Secret | Value | Description |
 |--------|-------|-------------|
@@ -95,50 +95,16 @@ These are shared across all environments and workflows:
 | `VERCEL_ORG_ID` | `team_xxx` | From `.vercel/project.json` |
 | `VERCEL_PROJECT_ID_WEB` | `prj_xxx` | From `apps/web/.vercel/project.json` |
 | `VERCEL_PROJECT_ID_ADMIN` | `prj_xxx` | From `apps/admin/.vercel/project.json` |
-| `FORGE_WEBHOOK_URL` | `https://admin.axori.com` | Admin app URL for webhooks (optional) |
-| `FORGE_WEBHOOK_SECRET` | `random-secret` | Shared secret for webhook auth (optional) |
+| `PROD_DATABASE_URL` | `postgresql://...` | Supabase connection string |
+| `FORGE_WEBHOOK_SECRET` | `openssl rand -base64 32` | For deployment notifications (optional) |
 
-### Repository Variables (Not secrets - for non-sensitive config)
+### Repository Variables
 
 **Path:** Settings → Secrets and variables → Actions → **Variables** tab → New repository variable
 
 | Variable | Value | Description |
 |----------|-------|-------------|
-| `STAGING_DOMAIN` | `staging.axori.com` | Custom staging domain (optional) |
 | `PRODUCTION_DOMAIN` | `app.axori.com` | Custom production domain (optional) |
-
-### Environment Secrets (Scoped to specific environments)
-
-**Path:** Settings → Environments → Select environment → **Environment secrets** → Add secret
-
-First, create the environments:
-1. Go to Settings → **Environments**
-2. Click **New environment**
-3. Create: `staging` and `production`
-
-Then add secrets to each environment:
-
-#### Staging Environment Secrets
-
-| Secret | Value | Description |
-|--------|-------|-------------|
-| `STAGING_DATABASE_URL` | `postgresql://...` | Supabase staging connection string |
-| `STAGING_SUPABASE_URL` | `https://xxx.supabase.co` | Supabase staging API URL |
-| `STAGING_SUPABASE_ANON_KEY` | `eyJ...` | Supabase staging anon key |
-| `STAGING_CLERK_PUBLISHABLE_KEY` | `pk_test_...` | Clerk staging publishable key |
-| `STAGING_API_URL` | `https://staging-api.axori.com` | Staging API endpoint |
-
-#### Production Environment Secrets
-
-| Secret | Value | Description |
-|--------|-------|-------------|
-| `PROD_DATABASE_URL` | `postgresql://...` | Supabase production connection string |
-| `PROD_SUPABASE_URL` | `https://xxx.supabase.co` | Supabase production API URL |
-| `PROD_SUPABASE_ANON_KEY` | `eyJ...` | Supabase production anon key |
-| `PROD_CLERK_PUBLISHABLE_KEY` | `pk_live_...` | Clerk production publishable key |
-| `PROD_API_URL` | `https://api.axori.com` | Production API endpoint |
-
-> **Note:** Environment secrets provide additional security - you can add protection rules like required reviewers before deploying to production.
 
 ---
 
@@ -164,61 +130,40 @@ For each project in Vercel Dashboard:
 
 ### Environment Variables
 
-Add these environment variables in Vercel Dashboard for manual deployments:
+Add these in Vercel Dashboard → Project → **Settings** → **Environment Variables**
 
-1. Go to Project → **Settings** → **Environment Variables**
-2. Add for each environment (Production, Preview, Development):
-
-| Variable | Production | Preview & Development | Description |
-|----------|------------|----------------------|-------------|
-| `VITE_SUPABASE_URL` | `https://xxx.supabase.co` | `https://xxx.supabase.co` | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | `eyJ...` (prod key) | `eyJ...` (staging key) | Supabase anon/public key |
-| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_live_xxx...` | `pk_test_xxx...` | Clerk publishable key |
-| `VITE_API_URL` | `https://api.axori.com` | `https://api-staging.axori.com` | API server URL |
-| `VITE_COMING_SOON_MODE` | `false` | `true` | Coming soon landing page |
-
-> **Note:** Preview and Development environments share the same staging API and credentials. You only need two API deployments total (production + staging).
+| Variable | Value | Environments | Description |
+|----------|-------|--------------|-------------|
+| `VITE_SUPABASE_URL` | `https://xxx.supabase.co` | All | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | `eyJhbGci...` | All | Supabase anon/public key |
+| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_test_xxx...` | All | Clerk publishable key |
+| `VITE_API_URL` | `https://api.axori.com` | Production | Production API URL |
+| `VITE_API_URL` | `http://localhost:3001` | Preview, Development | Dev/preview API URL |
+| `VITE_COMING_SOON_MODE` | `false` | All | Set to `true` to show landing page |
 
 **Where to find these values:**
 
-- **Supabase**: https://supabase.com/dashboard/project/YOUR_PROJECT/settings/api
-- **Clerk**: https://dashboard.clerk.com → Your app → API Keys
-
-**Tip:** Use different Clerk apps for staging vs production to keep user data separate.
+- **Supabase URL & Anon Key**: https://supabase.com/dashboard/project/YOUR_PROJECT/settings/api
+- **Clerk Publishable Key**: https://dashboard.clerk.com → Your app → API Keys
 
 ---
 
-## Step 6: Configure Custom Domains
+## Step 6: Configure Custom Domain (Production Only)
 
 ### In Vercel Dashboard
 
 1. Go to Project → **Settings** → **Domains**
-2. Add domains:
-   - Web Production: `app.axori.com`
-   - Web Staging: `staging.axori.com`
-   - Admin Production: `admin.axori.com`
-   - Admin Staging: `staging-admin.axori.com`
+2. Add your production domain: `app.axori.com`
 
 ### DNS Configuration
 
-Add these records in your DNS provider:
+Add this record in your DNS provider (Cloudflare, Namecheap, etc.):
 
 | Type | Name | Value |
 |------|------|-------|
 | CNAME | app | cname.vercel-dns.com |
-| CNAME | staging | cname.vercel-dns.com |
-| CNAME | admin | cname.vercel-dns.com |
-| CNAME | staging-admin | cname.vercel-dns.com |
 
----
-
-## Step 7: Update GitHub Workflows
-
-Update the workflow files to support both apps:
-
-### `.github/workflows/preview.yml`
-
-The current workflow deploys web app. To deploy both apps, the workflow needs modification. See the workflows in `.github/workflows/` for current configuration.
+For admin app, repeat with `admin` subdomain.
 
 ---
 
@@ -233,23 +178,9 @@ GitHub Actions runs
     ↓
 Type check → Lint → Test → Build
     ↓
-Deploy to Vercel Preview
+Deploy to Vercel Preview URL
     ↓
-Comment on PR with preview URL
-```
-
-### Staging Deployments
-
-```
-Push/merge to staging branch
-    ↓
-GitHub Actions runs
-    ↓
-Type check → Lint → Test → Migrations → Build
-    ↓
-Deploy to staging.axori.com
-    ↓
-Run E2E tests
+Comment on PR with preview URL (e.g., axori-web-abc123.vercel.app)
 ```
 
 ### Production Deployments
@@ -259,13 +190,11 @@ Push/merge to main branch
     ↓
 GitHub Actions runs
     ↓
-Type check → Lint → Test → Migrations → Build
+Type check → Lint → Test → Build
     ↓
 Deploy to app.axori.com
     ↓
 Create GitHub Release
-    ↓
-Notify Forge (update ticket status)
 ```
 
 ---
@@ -283,8 +212,8 @@ Check that the Root Directory is set correctly in Vercel project settings.
 ### Preview URL not working
 
 1. Check Vercel deployment logs
-2. Verify domain configuration
-3. Check if build completed successfully
+2. Check if build completed successfully
+3. Ensure environment variables are set for "Preview" environment
 
 ### Database connection errors
 
@@ -302,20 +231,30 @@ Run `pnpm type-check` locally before pushing. CI uses strict checks.
 
 1. **Never commit secrets** - Use GitHub Secrets and Vercel Environment Variables
 2. **Rotate tokens periodically** - Set calendar reminders
-3. **Use separate Clerk/Supabase projects** for staging vs production
-4. **Review PR previews** - They have access to staging secrets
+3. **.env.local is gitignored** - Safe for local development secrets
 
 ---
 
 ## Quick Start Checklist
 
-- [ ] Install Vercel CLI
-- [ ] Create Vercel project for web app
-- [ ] Create Vercel project for admin app
+- [ ] Install Vercel CLI (`npm i -g vercel`)
+- [ ] Run `vercel link` in `apps/web`
+- [ ] Run `vercel link` in `apps/admin`
 - [ ] Generate Vercel API token
-- [ ] Add all GitHub secrets
-- [ ] Configure Vercel project settings (root directory, build command)
+- [ ] Add GitHub repository secrets (VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID_WEB, VERCEL_PROJECT_ID_ADMIN, PROD_DATABASE_URL)
+- [ ] Set Root Directory in Vercel project settings
 - [ ] Add environment variables in Vercel dashboard
-- [ ] Configure custom domains
-- [ ] Update DNS records
-- [ ] Test with a feature branch push
+- [ ] Configure custom domain (optional)
+- [ ] Push to a feature branch to test preview deployment
+
+---
+
+## Future: Adding Staging Environment
+
+When ready to upgrade to Vercel Pro for a dedicated staging environment:
+
+1. Create `staging` branch in GitHub
+2. Add staging environment in GitHub (Settings → Environments)
+3. Add staging secrets (`STAGING_DATABASE_URL`, etc.)
+4. Configure staging domain in Vercel (`staging.axori.com`)
+5. Update workflows to deploy to staging on `staging` branch pushes
