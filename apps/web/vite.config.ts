@@ -118,14 +118,9 @@ export default defineConfig(({ mode }) => {
       }),
       devtools(),
       nitro({
-        // Mark node:buffer as external to avoid build issues
-        rollup: {
-          external: (id) => {
-            if (id === 'node:buffer' || id.startsWith('node:')) {
-              return true
-            }
-            return false
-          },
+        // Mark node: protocol imports as external
+        rollupConfig: {
+          external: [/^node:/],
         },
       }),
       // this is the plugin that enables path aliases
