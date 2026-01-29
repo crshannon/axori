@@ -1,0 +1,78 @@
+name: Staging Deployment
+
+on:
+  push:
+    branches: [staging]
+
+concurrency:
+  group: staging
+  cancel-in-progress: false
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Run database migrations
+        run: pnpm db:push
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+
+      - name: Build
+        run: pnpm build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.STAGING_CLERK_PUBLISHABLE_KEY }}
+          VITE_API_URL: ${{ secrets.STAGING_API_URL }}
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          alias-domains: staging.axori.com
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
+        env:
+          BASE_URL: https://staging.axori.com
+        continue-on-error: true
+
+      - name: Notify Forge
+        run: |
+          curl -X POST "${{ secrets.FORGE_WEBHOOK_URL }}/api/webhooks/github/staging" \
+            -H "Content-Type: application/json" \
+            -H "X-Webhook-Secret: ${{ secrets.FORGE_WEBHOOK_SECRET }}" \
+            -d '{
+              "environment": "staging",
+              "status": "deployed",
+              "commit_sha": "${{ github.sha }}",
+              "branch": "staging"
+            }'

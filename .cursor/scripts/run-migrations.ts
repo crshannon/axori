@@ -132,14 +132,12 @@ function runMigrations(projectRoot: string, checkOnly: boolean): boolean {
   }
 
   try {
-    const dbPath = join(projectRoot, 'packages', 'db')
-    
-    // Use npx tsx to avoid permission issues
-    execSync('npx --yes tsx migrate.ts', {
-      cwd: dbPath,
+    // Use pnpm db:migrate (runs node --import tsx migrate.ts in packages/db)
+    execSync('pnpm db:migrate', {
+      cwd: projectRoot,
       stdio: 'inherit',
     })
-    
+
     return true
   } catch (error) {
     console.error('\n❌ Migration failed:', error)

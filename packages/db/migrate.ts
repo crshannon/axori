@@ -52,7 +52,7 @@ async function getAppliedMigrations(
       ORDER BY created_at ASC
     `;
 
-    return migrations as Array<{ hash: string; created_at: Date }>;
+    return migrations as unknown as Array<{ hash: string; created_at: Date }>;
   } catch (error) {
     // Table doesn't exist yet, return empty array
     return [];
@@ -69,35 +69,33 @@ async function getAppliedMigrations(
  * 3. Set expected: true if the check should pass, false if it should fail
  */
 async function verifyDatabaseState(sql: postgres.Sql): Promise<boolean> {
-  const checks: Array<{ name: string; query: () => Promise<unknown[]>; expected: boolean }> = [
+  type CheckRow = { exists?: boolean; missing_entries?: number | string; count?: number | string };
+  const checks: Array<{ name: string; query: () => Promise<CheckRow[]>; expected: boolean }> = [
     {
       name: "lease_start_date column exists",
-      query: async () =>
-        await sql`
+      query: async () => [...(await sql`
         SELECT EXISTS (
           SELECT FROM information_schema.columns 
           WHERE table_name = 'property_rental_income' 
           AND column_name = 'lease_start_date'
         )
-      `,
+      `)],
       expected: true,
     },
     {
       name: "lease_end_date column exists",
-      query: async () =>
-        await sql`
+      query: async () => [...(await sql`
         SELECT EXISTS (
           SELECT FROM information_schema.columns 
           WHERE table_name = 'property_rental_income' 
           AND column_name = 'lease_end_date'
         )
-      `,
+      `)],
       expected: true,
     },
     {
       name: "portfolio creators have user_portfolios entries",
-      query: async () =>
-        await sql`
+      query: async () => [...(await sql`
         SELECT COUNT(*) as missing_entries
         FROM portfolios p
         WHERE p.created_by IS NOT NULL
@@ -107,7 +105,7 @@ async function verifyDatabaseState(sql: postgres.Sql): Promise<boolean> {
           WHERE up.user_id = p.created_by
           AND up.portfolio_id = p.id
         )
-      `,
+      `)],
       expected: false, // Expected count should be 0 (no missing entries)
     },
     // Add more verification checks here for future migrations
@@ -119,19 +117,22 @@ async function verifyDatabaseState(sql: postgres.Sql): Promise<boolean> {
   for (const check of checks) {
     try {
       const result = await check.query();
-      
-      // Handle different result types
-      let passed = false;
-      if (check.name.includes("missing_entries") || check.name.includes("count")) {
-        // For count queries, check if count is 0 when expected is false
-        // PostgreSQL returns bigint as string, so handle both string and number
-        const rawValue = (result[0] as { missing_entries?: number | string; count?: number | string })?.missing_entries ?? 
-                        (result[0] as { missing_entries?: number | string; count?: number | string })?.count ?? 0;
-        const count = typeof rawValue === 'string' ? parseInt(rawValue, 10) : Number(rawValue);
+      const row = result[0] as Record<string, unknown>;
+
+      // Route by result shape: count-like (missing_entries, count) vs exists
+      const countLikeKey = row && ("missing_entries" in row || "count" in row)
+        ? ("missing_entries" in row ? "missing_entries" : "count")
+        : null;
+
+      let passed: boolean;
+      if (countLikeKey !== null) {
+        // Count-style: pass when count is 0 and we expect no missing entries (expected: false)
+        const rawValue = row[countLikeKey];
+        const count = typeof rawValue === "string" ? parseInt(String(rawValue), 10) : Number(rawValue);
         passed = check.expected === false ? count === 0 : count > 0;
       } else {
-        // For EXISTS queries
-        const exists = (result[0] as { exists: boolean })?.exists === check.expected;
+        // EXISTS-style
+        const exists = row?.exists === check.expected;
         passed = exists;
       }
 
