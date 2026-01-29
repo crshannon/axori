@@ -167,19 +167,32 @@ For admin app, repeat with `admin` subdomain.
 
 ---
 
+## Step 7: Disable Vercel Auto-Deploy
+
+**Important:** By default, Vercel auto-deploys when you push to GitHub, bypassing your CI checks. You must disable this so deployments only happen through GitHub Actions.
+
+### Option A: Disable Auto-Build (Recommended)
+
+1. Go to **Vercel Dashboard** → Your Project → **Settings** → **Git**
+2. Scroll to **"Ignored Build Step"**
+3. Select **"Custom"** and enter: `exit 0`
+4. Click **Save**
+
+This tells Vercel to skip its automatic builds. Deployments will only happen via GitHub Actions.
+
+### Option B: Disconnect GitHub Integration
+
+1. Go to **Vercel Dashboard** → Your Project → **Settings** → **Git**
+2. Click **"Disconnect"** under Git Repository
+3. Confirm disconnection
+
+This completely removes the auto-deploy integration. Only GitHub Actions will deploy via the Vercel CLI.
+
+> **Note:** Repeat for both web and admin projects.
+
+---
+
 ## Deployment Flow
-
-### CI (All Branches)
-
-```
-Push to any branch (except main)
-    ↓
-GitHub Actions runs CI workflow
-    ↓
-Type check → Lint → Test
-    ↓
-Pass/Fail status reported
-```
 
 ### Preview Deployments (Pull Requests)
 
@@ -290,8 +303,9 @@ Run `pnpm type-check` locally before pushing. CI uses strict checks.
 - [ ] Add GitHub repository secrets (VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID_WEB, VERCEL_PROJECT_ID_ADMIN, PROD_DATABASE_URL)
 - [ ] Set Root Directory in Vercel project settings
 - [ ] Add environment variables in Vercel dashboard
+- [ ] **Disable Vercel auto-deploy** (Step 7 - Important!)
 - [ ] Configure custom domain (optional)
-- [ ] Push to a feature branch to test preview deployment
+- [ ] Open a PR to test preview deployment
 
 ---
 
