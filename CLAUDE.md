@@ -66,6 +66,20 @@ pnpm db:seed            # Seed market data
 
 ---
 
+## Pre-Push Checklist
+
+**CRITICAL: Always run these checks before pushing code:**
+
+```bash
+pnpm type-check         # Must pass - no TypeScript errors
+pnpm lint               # Must pass - no ESLint errors
+pnpm test               # Must pass - all tests green
+```
+
+These checks run in GitHub Actions CI. Failing to run them locally wastes CI time and blocks merges.
+
+---
+
 ## Database Migrations
 
 All migration logic lives in `packages/db/`. There is ONE source of truth for migrations.
