@@ -29,7 +29,9 @@ import { Route as AuthedPropertyHubRouteImport } from './routes/_authed/property
 import { Route as AuthedLearningHubRouteImport } from './routes/_authed/learning-hub'
 import { Route as AuthedExploreRouteImport } from './routes/_authed/explore'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedAccountRouteImport } from './routes/_authed/account'
 import { Route as AuthedLearningHubIndexRouteImport } from './routes/_authed/learning-hub/index'
+import { Route as AuthedAccountIndexRouteImport } from './routes/_authed/account/index'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
@@ -38,6 +40,10 @@ import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
 import { Route as AuthedPropertyHubAddRouteImport } from './routes/_authed/property-hub.add'
 import { Route as AuthedPropertyHubPropertyIdRouteImport } from './routes/_authed/property-hub.$propertyId'
+import { Route as AuthedAccountSecurityRouteImport } from './routes/_authed/account/security'
+import { Route as AuthedAccountNotificationsRouteImport } from './routes/_authed/account/notifications'
+import { Route as AuthedAccountDataRouteImport } from './routes/_authed/account/data'
+import { Route as AuthedAccountBillingRouteImport } from './routes/_authed/account/billing'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as AuthedPropertyHubPropertyIdIndexRouteImport } from './routes/_authed/property-hub.$propertyId/index'
 import { Route as AuthedLearningHubScenariosIndexRouteImport } from './routes/_authed/learning-hub/scenarios/index'
@@ -162,10 +168,20 @@ const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedAccountRoute = AuthedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedLearningHubIndexRoute = AuthedLearningHubIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthedLearningHubRoute,
+} as any)
+const AuthedAccountIndexRoute = AuthedAccountIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedAccountRoute,
 } as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
   id: '/demo/start/server-funcs',
@@ -208,6 +224,27 @@ const AuthedPropertyHubPropertyIdRoute =
     path: '/$propertyId',
     getParentRoute: () => AuthedPropertyHubRoute,
   } as any)
+const AuthedAccountSecurityRoute = AuthedAccountSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => AuthedAccountRoute,
+} as any)
+const AuthedAccountNotificationsRoute =
+  AuthedAccountNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthedAccountRoute,
+  } as any)
+const AuthedAccountDataRoute = AuthedAccountDataRouteImport.update({
+  id: '/data',
+  path: '/data',
+  getParentRoute: () => AuthedAccountRoute,
+} as any)
+const AuthedAccountBillingRoute = AuthedAccountBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AuthedAccountRoute,
+} as any)
 const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
   id: '/demo/start/ssr/',
   path: '/demo/start/ssr/',
@@ -360,6 +397,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/account': typeof AuthedAccountRouteWithChildren
   '/dashboard': typeof AuthedDashboardRoute
   '/explore': typeof AuthedExploreRoute
   '/learning-hub': typeof AuthedLearningHubRouteWithChildren
@@ -374,6 +412,10 @@ export interface FileRoutesByFullPath {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/invitation/accept': typeof InvitationAcceptRoute
+  '/account/billing': typeof AuthedAccountBillingRoute
+  '/account/data': typeof AuthedAccountDataRoute
+  '/account/notifications': typeof AuthedAccountNotificationsRoute
+  '/account/security': typeof AuthedAccountSecurityRoute
   '/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdRouteWithChildren
   '/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -382,6 +424,7 @@ export interface FileRoutesByFullPath {
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/account/': typeof AuthedAccountIndexRoute
   '/learning-hub/': typeof AuthedLearningHubIndexRoute
   '/learning-hub/articles/$slug': typeof AuthedLearningHubArticlesSlugRoute
   '/learning-hub/glossary/$slug': typeof AuthedLearningHubGlossarySlugRoute
@@ -427,6 +470,10 @@ export interface FileRoutesByTo {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/invitation/accept': typeof InvitationAcceptRoute
+  '/account/billing': typeof AuthedAccountBillingRoute
+  '/account/data': typeof AuthedAccountDataRoute
+  '/account/notifications': typeof AuthedAccountNotificationsRoute
+  '/account/security': typeof AuthedAccountSecurityRoute
   '/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
@@ -434,6 +481,7 @@ export interface FileRoutesByTo {
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/account': typeof AuthedAccountIndexRoute
   '/learning-hub': typeof AuthedLearningHubIndexRoute
   '/learning-hub/articles/$slug': typeof AuthedLearningHubArticlesSlugRoute
   '/learning-hub/glossary/$slug': typeof AuthedLearningHubGlossarySlugRoute
@@ -469,6 +517,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/_authed/account': typeof AuthedAccountRouteWithChildren
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/explore': typeof AuthedExploreRoute
   '/_authed/learning-hub': typeof AuthedLearningHubRouteWithChildren
@@ -483,6 +532,10 @@ export interface FileRoutesById {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/invitation/accept': typeof InvitationAcceptRoute
+  '/_authed/account/billing': typeof AuthedAccountBillingRoute
+  '/_authed/account/data': typeof AuthedAccountDataRoute
+  '/_authed/account/notifications': typeof AuthedAccountNotificationsRoute
+  '/_authed/account/security': typeof AuthedAccountSecurityRoute
   '/_authed/property-hub/$propertyId': typeof AuthedPropertyHubPropertyIdRouteWithChildren
   '/_authed/property-hub/add': typeof AuthedPropertyHubAddRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -491,6 +544,7 @@ export interface FileRoutesById {
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/_authed/account/': typeof AuthedAccountIndexRoute
   '/_authed/learning-hub/': typeof AuthedLearningHubIndexRoute
   '/_authed/learning-hub/articles/$slug': typeof AuthedLearningHubArticlesSlugRoute
   '/_authed/learning-hub/glossary/$slug': typeof AuthedLearningHubGlossarySlugRoute
@@ -525,6 +579,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/sign-in'
     | '/sign-up'
+    | '/account'
     | '/dashboard'
     | '/explore'
     | '/learning-hub'
@@ -539,6 +594,10 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/invitation/accept'
+    | '/account/billing'
+    | '/account/data'
+    | '/account/notifications'
+    | '/account/security'
     | '/property-hub/$propertyId'
     | '/property-hub/add'
     | '/demo/api/names'
@@ -547,6 +606,7 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/account/'
     | '/learning-hub/'
     | '/learning-hub/articles/$slug'
     | '/learning-hub/glossary/$slug'
@@ -592,6 +652,10 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/invitation/accept'
+    | '/account/billing'
+    | '/account/data'
+    | '/account/notifications'
+    | '/account/security'
     | '/property-hub/add'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
@@ -599,6 +663,7 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/account'
     | '/learning-hub'
     | '/learning-hub/articles/$slug'
     | '/learning-hub/glossary/$slug'
@@ -633,6 +698,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/sign-in'
     | '/sign-up'
+    | '/_authed/account'
     | '/_authed/dashboard'
     | '/_authed/explore'
     | '/_authed/learning-hub'
@@ -647,6 +713,10 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/invitation/accept'
+    | '/_authed/account/billing'
+    | '/_authed/account/data'
+    | '/_authed/account/notifications'
+    | '/_authed/account/security'
     | '/_authed/property-hub/$propertyId'
     | '/_authed/property-hub/add'
     | '/demo/api/names'
@@ -655,6 +725,7 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/_authed/account/'
     | '/_authed/learning-hub/'
     | '/_authed/learning-hub/articles/$slug'
     | '/_authed/learning-hub/glossary/$slug'
@@ -849,12 +920,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDashboardRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/account': {
+      id: '/_authed/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthedAccountRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/learning-hub/': {
       id: '/_authed/learning-hub/'
       path: '/'
       fullPath: '/learning-hub/'
       preLoaderRoute: typeof AuthedLearningHubIndexRouteImport
       parentRoute: typeof AuthedLearningHubRoute
+    }
+    '/_authed/account/': {
+      id: '/_authed/account/'
+      path: '/'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AuthedAccountIndexRouteImport
+      parentRoute: typeof AuthedAccountRoute
     }
     '/demo/start/server-funcs': {
       id: '/demo/start/server-funcs'
@@ -911,6 +996,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/property-hub/$propertyId'
       preLoaderRoute: typeof AuthedPropertyHubPropertyIdRouteImport
       parentRoute: typeof AuthedPropertyHubRoute
+    }
+    '/_authed/account/security': {
+      id: '/_authed/account/security'
+      path: '/security'
+      fullPath: '/account/security'
+      preLoaderRoute: typeof AuthedAccountSecurityRouteImport
+      parentRoute: typeof AuthedAccountRoute
+    }
+    '/_authed/account/notifications': {
+      id: '/_authed/account/notifications'
+      path: '/notifications'
+      fullPath: '/account/notifications'
+      preLoaderRoute: typeof AuthedAccountNotificationsRouteImport
+      parentRoute: typeof AuthedAccountRoute
+    }
+    '/_authed/account/data': {
+      id: '/_authed/account/data'
+      path: '/data'
+      fullPath: '/account/data'
+      preLoaderRoute: typeof AuthedAccountDataRouteImport
+      parentRoute: typeof AuthedAccountRoute
+    }
+    '/_authed/account/billing': {
+      id: '/_authed/account/billing'
+      path: '/billing'
+      fullPath: '/account/billing'
+      preLoaderRoute: typeof AuthedAccountBillingRouteImport
+      parentRoute: typeof AuthedAccountRoute
     }
     '/demo/start/ssr/': {
       id: '/demo/start/ssr/'
@@ -1090,6 +1203,26 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthedAccountRouteChildren {
+  AuthedAccountBillingRoute: typeof AuthedAccountBillingRoute
+  AuthedAccountDataRoute: typeof AuthedAccountDataRoute
+  AuthedAccountNotificationsRoute: typeof AuthedAccountNotificationsRoute
+  AuthedAccountSecurityRoute: typeof AuthedAccountSecurityRoute
+  AuthedAccountIndexRoute: typeof AuthedAccountIndexRoute
+}
+
+const AuthedAccountRouteChildren: AuthedAccountRouteChildren = {
+  AuthedAccountBillingRoute: AuthedAccountBillingRoute,
+  AuthedAccountDataRoute: AuthedAccountDataRoute,
+  AuthedAccountNotificationsRoute: AuthedAccountNotificationsRoute,
+  AuthedAccountSecurityRoute: AuthedAccountSecurityRoute,
+  AuthedAccountIndexRoute: AuthedAccountIndexRoute,
+}
+
+const AuthedAccountRouteWithChildren = AuthedAccountRoute._addFileChildren(
+  AuthedAccountRouteChildren,
+)
+
 interface AuthedLearningHubRouteChildren {
   AuthedLearningHubIndexRoute: typeof AuthedLearningHubIndexRoute
   AuthedLearningHubArticlesSlugRoute: typeof AuthedLearningHubArticlesSlugRoute
@@ -1181,6 +1314,7 @@ const AuthedPropertyHubRouteWithChildren =
   AuthedPropertyHubRoute._addFileChildren(AuthedPropertyHubRouteChildren)
 
 interface AuthedRouteChildren {
+  AuthedAccountRoute: typeof AuthedAccountRouteWithChildren
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedExploreRoute: typeof AuthedExploreRoute
   AuthedLearningHubRoute: typeof AuthedLearningHubRouteWithChildren
@@ -1189,6 +1323,7 @@ interface AuthedRouteChildren {
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedAccountRoute: AuthedAccountRouteWithChildren,
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedExploreRoute: AuthedExploreRoute,
   AuthedLearningHubRoute: AuthedLearningHubRouteWithChildren,
