@@ -169,13 +169,15 @@ Add these environment variables in Vercel Dashboard for manual deployments:
 1. Go to Project → **Settings** → **Environment Variables**
 2. Add for each environment (Production, Preview, Development):
 
-| Variable | Example Value | Description |
-|----------|---------------|-------------|
-| `VITE_SUPABASE_URL` | `https://mullmlaoraflnvgbjdxx.supabase.co` | Your Supabase project URL (Project Settings → API) |
-| `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6...` | Supabase anon/public key (Project Settings → API → anon public) |
-| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_test_xxx...` (staging) / `pk_live_xxx...` (prod) | Clerk publishable key (Clerk Dashboard → API Keys) |
-| `VITE_API_URL` | `https://api.axori.com` | Your API server URL |
-| `VITE_COMING_SOON_MODE` | `true` or `false` | Enable/disable coming soon landing page |
+| Variable | Production | Preview & Development | Description |
+|----------|------------|----------------------|-------------|
+| `VITE_SUPABASE_URL` | `https://xxx.supabase.co` | `https://xxx.supabase.co` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | `eyJ...` (prod key) | `eyJ...` (staging key) | Supabase anon/public key |
+| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_live_xxx...` | `pk_test_xxx...` | Clerk publishable key |
+| `VITE_API_URL` | `https://api.axori.com` | `https://api-staging.axori.com` | API server URL |
+| `VITE_COMING_SOON_MODE` | `false` | `true` | Coming soon landing page |
+
+> **Note:** Preview and Development environments share the same staging API and credentials. You only need two API deployments total (production + staging).
 
 **Where to find these values:**
 
