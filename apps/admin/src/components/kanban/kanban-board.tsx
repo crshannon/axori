@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -12,9 +12,10 @@ import {
   type DragOverEvent,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Filter, Loader2 } from "lucide-react";
 import { KanbanColumn } from "./kanban-column";
 import { TicketCard } from "./ticket-card";
+import { useTickets, useUpdateTicketStatus } from "@/hooks/api/use-tickets";
 import type { ForgeTicket } from "@axori/db";
 
 // Ticket status columns configuration
@@ -30,76 +31,125 @@ const COLUMNS = [
 
 type TicketStatus = (typeof COLUMNS)[number]["id"];
 
-// Mock data for initial development
-const MOCK_TICKETS: Partial<ForgeTicket>[] = [
+// Mock data fallback for when API is not available
+const MOCK_TICKETS: ForgeTicket[] = [
   {
     id: "1",
     identifier: "AXO-001",
     title: "Create Kanban Board Component",
+    description: null,
     status: "in_progress",
     priority: "high",
     type: "feature",
+    phase: "implementation",
+    releaseClassification: "feature",
+    parentId: null,
+    projectId: null,
+    milestoneId: null,
+    statusOrder: 0,
     estimate: 5,
+    currentPhase: "implementation",
+    assignedAgent: null,
+    agentSessionId: null,
+    branchName: null,
+    previewUrl: null,
+    prNumber: null,
+    prUrl: null,
+    isBreakingChange: false,
+    migrationNotes: null,
+    blocksDeploy: false,
     labels: ["frontend", "ui"],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    startedAt: null,
+    completedAt: null,
   },
   {
     id: "2",
     identifier: "AXO-002",
     title: "Set up Forge Database Schema",
+    description: null,
     status: "done",
     priority: "critical",
     type: "feature",
+    phase: "implementation",
+    releaseClassification: "feature",
+    parentId: null,
+    projectId: null,
+    milestoneId: null,
+    statusOrder: 0,
     estimate: 3,
+    currentPhase: "implementation",
+    assignedAgent: null,
+    agentSessionId: null,
+    branchName: null,
+    previewUrl: null,
+    prNumber: null,
+    prUrl: null,
+    isBreakingChange: false,
+    migrationNotes: null,
+    blocksDeploy: false,
     labels: ["database"],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    startedAt: null,
+    completedAt: new Date(),
   },
   {
     id: "3",
     identifier: "AXO-003",
     title: "Implement Agent Orchestrator",
+    description: null,
     status: "backlog",
     priority: "high",
     type: "feature",
+    phase: "planning",
+    releaseClassification: "feature",
+    parentId: null,
+    projectId: null,
+    milestoneId: null,
+    statusOrder: 0,
     estimate: 8,
+    currentPhase: "planning",
+    assignedAgent: null,
+    agentSessionId: null,
+    branchName: null,
+    previewUrl: null,
+    prNumber: null,
+    prUrl: null,
+    isBreakingChange: false,
+    migrationNotes: null,
+    blocksDeploy: false,
     labels: ["backend", "ai"],
-  },
-  {
-    id: "4",
-    identifier: "AXO-004",
-    title: "Add Token Budget Tracking",
-    status: "planned",
-    priority: "medium",
-    type: "feature",
-    estimate: 3,
-    labels: ["backend"],
-  },
-  {
-    id: "5",
-    identifier: "AXO-005",
-    title: "Design Morning Briefing UI",
-    status: "design",
-    priority: "medium",
-    type: "design",
-    estimate: 2,
-    labels: ["design", "ui"],
-  },
-  {
-    id: "6",
-    identifier: "AXO-006",
-    title: "Fix preview deployment webhook",
-    status: "in_review",
-    priority: "high",
-    type: "bug",
-    estimate: 1,
-    labels: ["devops"],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    startedAt: null,
+    completedAt: null,
   },
 ];
 
 export function KanbanBoard() {
-  const [tickets, setTickets] = useState<Partial<ForgeTicket>[]>(MOCK_TICKETS);
-  const [activeTicket, setActiveTicket] = useState<Partial<ForgeTicket> | null>(
-    null
-  );
+  // Fetch tickets from API
+  const { data: apiTickets, isLoading, error } = useTickets();
+  const updateTicketStatus = useUpdateTicketStatus();
+
+  // Use API data if available, otherwise fall back to mock data
+  const tickets = useMemo(() => {
+    if (apiTickets && apiTickets.length > 0) {
+      return apiTickets;
+    }
+    // Show mock data when API returns empty or on error
+    if (!isLoading && (error || !apiTickets || apiTickets.length === 0)) {
+      return MOCK_TICKETS;
+    }
+    return [];
+  }, [apiTickets, isLoading, error]);
+
+  const [activeTicket, setActiveTicket] = useState<ForgeTicket | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [optimisticUpdates, setOptimisticUpdates] = useState<
+    Map<string, TicketStatus>
+  >(new Map());
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -112,9 +162,20 @@ export function KanbanBoard() {
     })
   );
 
+  // Apply optimistic updates to tickets
+  const ticketsWithOptimisticUpdates = useMemo(() => {
+    return tickets.map((ticket) => {
+      const optimisticStatus = optimisticUpdates.get(ticket.id);
+      if (optimisticStatus) {
+        return { ...ticket, status: optimisticStatus };
+      }
+      return ticket;
+    });
+  }, [tickets, optimisticUpdates]);
+
   const getTicketsByStatus = useCallback(
     (status: TicketStatus) => {
-      return tickets
+      return ticketsWithOptimisticUpdates
         .filter((ticket) => ticket.status === status)
         .filter(
           (ticket) =>
@@ -123,12 +184,14 @@ export function KanbanBoard() {
             ticket.identifier?.toLowerCase().includes(searchQuery.toLowerCase())
         );
     },
-    [tickets, searchQuery]
+    [ticketsWithOptimisticUpdates, searchQuery]
   );
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    const ticket = tickets.find((t) => t.id === active.id);
+    const ticket = ticketsWithOptimisticUpdates.find(
+      (t) => t.id === active.id
+    );
     if (ticket) {
       setActiveTicket(ticket);
     }
@@ -138,35 +201,31 @@ export function KanbanBoard() {
     const { active, over } = event;
     if (!over) return;
 
-    const activeId = active.id;
+    const activeId = active.id as string;
     const overId = over.id;
 
-    // Find the containers (columns)
-    const activeTicket = tickets.find((t) => t.id === activeId);
-    const overTicket = tickets.find((t) => t.id === overId);
+    const ticket = ticketsWithOptimisticUpdates.find((t) => t.id === activeId);
+    const overTicket = ticketsWithOptimisticUpdates.find(
+      (t) => t.id === overId
+    );
 
-    if (!activeTicket) return;
+    if (!ticket) return;
 
     // If dropping on a column directly
     const isOverColumn = COLUMNS.some((col) => col.id === overId);
     if (isOverColumn) {
       const newStatus = overId as TicketStatus;
-      if (activeTicket.status !== newStatus) {
-        setTickets((prev) =>
-          prev.map((t) =>
-            t.id === activeId ? { ...t, status: newStatus } : t
-          )
-        );
+      if (ticket.status !== newStatus) {
+        // Apply optimistic update
+        setOptimisticUpdates((prev) => new Map(prev).set(activeId, newStatus));
       }
       return;
     }
 
     // If dropping on another ticket
-    if (overTicket && activeTicket.status !== overTicket.status) {
-      setTickets((prev) =>
-        prev.map((t) =>
-          t.id === activeId ? { ...t, status: overTicket.status } : t
-        )
+    if (overTicket && ticket.status !== overTicket.status) {
+      setOptimisticUpdates((prev) =>
+        new Map(prev).set(activeId, overTicket.status as TicketStatus)
       );
     }
   };
@@ -175,37 +234,58 @@ export function KanbanBoard() {
     const { active, over } = event;
     setActiveTicket(null);
 
-    if (!over) return;
+    if (!over) {
+      // Drag cancelled - clear optimistic update
+      setOptimisticUpdates((prev) => {
+        const next = new Map(prev);
+        next.delete(active.id as string);
+        return next;
+      });
+      return;
+    }
 
-    const activeId = active.id;
+    const activeId = active.id as string;
     const overId = over.id;
 
-    if (activeId === overId) return;
+    const ticket = ticketsWithOptimisticUpdates.find((t) => t.id === activeId);
+    if (!ticket) return;
 
-    const activeTicket = tickets.find((t) => t.id === activeId);
-    const overTicket = tickets.find((t) => t.id === overId);
+    // Get the final status (from optimistic update or current)
+    const newStatus =
+      optimisticUpdates.get(activeId) || (ticket.status as TicketStatus);
+    const originalStatus = tickets.find((t) => t.id === activeId)?.status;
 
-    if (!activeTicket) return;
+    // Clear optimistic update
+    setOptimisticUpdates((prev) => {
+      const next = new Map(prev);
+      next.delete(activeId);
+      return next;
+    });
 
-    // Reorder within the same column
-    if (overTicket && activeTicket.status === overTicket.status) {
-      const columnTickets = tickets.filter(
-        (t) => t.status === activeTicket.status
+    // If status changed, persist to API
+    if (newStatus !== originalStatus) {
+      updateTicketStatus.mutate(
+        { id: activeId, status: newStatus },
+        {
+          onError: () => {
+            // Revert on error (the query will refetch anyway)
+            console.error("Failed to update ticket status");
+          },
+        }
       );
-      const oldIndex = columnTickets.findIndex((t) => t.id === activeId);
-      const newIndex = columnTickets.findIndex((t) => t.id === overId);
-
-      if (oldIndex !== newIndex) {
-        const reorderedColumn = arrayMove(columnTickets, oldIndex, newIndex);
-        setTickets((prev) => {
-          const otherTickets = prev.filter(
-            (t) => t.status !== activeTicket.status
-          );
-          return [...otherTickets, ...reorderedColumn];
-        });
-      }
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="flex items-center gap-3 text-slate-400">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Loading tickets...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -214,8 +294,13 @@ export function KanbanBoard() {
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-white">Board</h1>
           <span className="text-sm text-slate-400">
-            {tickets.length} tickets
+            {ticketsWithOptimisticUpdates.length} tickets
           </span>
+          {error && (
+            <span className="text-xs text-yellow-400">
+              (showing mock data - API unavailable)
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-3">

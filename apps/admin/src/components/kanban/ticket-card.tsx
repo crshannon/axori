@@ -16,7 +16,7 @@ import {
 import type { ForgeTicket } from "@axori/db";
 
 interface TicketCardProps {
-  ticket: Partial<ForgeTicket>;
+  ticket: ForgeTicket;
   isDragging?: boolean;
 }
 
