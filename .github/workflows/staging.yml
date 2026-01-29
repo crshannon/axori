@@ -2,7 +2,7 @@ name: Staging Deployment
 
 on:
   push:
-    branches: [staging]
+    branches: [main]
 
 concurrency:
   group: staging
@@ -56,7 +56,6 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
           vercel-args: '--prod'
-          # Custom staging domain - configure in Vercel project settings
           alias-domains: ${{ vars.STAGING_DOMAIN || '' }}
 
       - name: Run E2E tests
@@ -76,7 +75,27 @@ jobs:
               "environment": "staging",
               "status": "deployed",
               "commit_sha": "${{ github.sha }}",
-              "branch": "staging",
+              "branch": "main",
               "deploy_url": "${{ steps.deploy.outputs.preview-url }}"
             }'
         continue-on-error: true
+
+      - name: Post deployment summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const stagingDomain = '${{ vars.STAGING_DOMAIN }}' || '${{ steps.deploy.outputs.preview-url }}';
+
+            const summary = `## Staging Deployment Complete
+
+            **Commit:** ${{ github.sha }}
+            **Branch:** main
+
+            **Staging URL:** [${stagingDomain}](https://${stagingDomain})
+
+            Ready for QA. Create a release tag to deploy to production.
+            `;
+
+            await core.summary
+              .addRaw(summary)
+              .write();

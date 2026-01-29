@@ -137,3 +137,27 @@ export {
   validateInvitation,
   validatePropertyAccessUpdate,
 } from "./security-validations";
+
+// Export admin app RBAC
+export {
+  // Types
+  type AdminRole,
+  type AdminFeature,
+  // Role constants
+  ADMIN_ROLES,
+  ADMIN_ROLE_LABELS,
+  ADMIN_ROLE_DESCRIPTIONS,
+  // Feature constants
+  ADMIN_FEATURES,
+  ROLE_FEATURES,
+  // Helper functions
+  hasAdminRole,
+  hasFeatureAccess,
+  canAccessForge,
+  canAccessAdmin,
+  isReadOnlyUser,
+  isSuperAdmin,
+  getAccessibleFeatures,
+  isValidAdminRole,
+  parseAdminRoles,
+} from "./admin-roles";

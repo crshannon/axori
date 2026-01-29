@@ -1,15 +1,11 @@
 name: Preview Deployment
 
 on:
-  push:
-    branches:
-      - 'feature/**'
-      - 'fix/**'
   pull_request:
     types: [opened, synchronize, reopened]
 
 concurrency:
-  group: preview-${{ github.ref }}
+  group: preview-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -66,7 +62,6 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
-          # Uses Vercel's automatic preview URLs (no custom domain needed)
 
       - name: Notify Forge
         if: steps.branch.outputs.ticket_id != ''
@@ -84,14 +79,17 @@ jobs:
         continue-on-error: true
 
       - name: Post preview URL to PR
-        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
             const previewUrl = '${{ steps.deploy.outputs.preview-url }}';
             const ticketId = '${{ steps.branch.outputs.ticket_id }}';
 
-            const body = `## Preview Deployment Ready\n\n**Preview:** [${previewUrl}](${previewUrl})\n\n${ticketId ? `**Ticket:** ${ticketId}` : ''}`;
+            const body = `## Preview Deployment Ready
+
+            **Preview:** [${previewUrl}](${previewUrl})
+
+            ${ticketId ? `**Ticket:** ${ticketId}` : ''}`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,

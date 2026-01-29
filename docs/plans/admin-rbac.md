@@ -228,15 +228,15 @@ await clerkClient.users.updateUserMetadata(userId, {
 
 ## Migration Checklist
 
-- [ ] Add admin role types to `@axori/permissions`
-- [ ] Create `useAdminAuth` hook
-- [ ] Create `RequireRole` component
-- [ ] Update `SideNav` with role-based navigation
+- [x] Add admin role types to `@axori/permissions`
+- [x] Create `useAdminAuth` hook
+- [x] Create `RequireRole` component
+- [x] Update `SideNav` with role-based navigation
 - [ ] Add route guards to protected routes
-- [ ] Add API middleware for role checks
-- [ ] Create unauthorized page
+- [x] Add API middleware for role checks
+- [x] Create unauthorized page
 - [ ] Set up initial user roles in Clerk
-- [ ] Update DEPLOYMENT.md with role setup instructions
+- [x] Update DEPLOYMENT.md with role setup instructions
 
 ## Future Enhancements
 

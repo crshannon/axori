@@ -9,7 +9,7 @@ This guide covers setting up Vercel deployments for the Axori web and admin apps
 | Web | `apps/web` | app.axori.com | Auto-generated Vercel URLs |
 | Admin (Forge) | `apps/admin` | admin.axori.com | Auto-generated Vercel URLs |
 
-> **Note:** This guide covers production deployment + Vercel's built-in preview deployments. A separate staging environment can be added later with Vercel Pro.
+> **Note:** Staging deploys automatically when merging to `main`. Production deploys via tag releases (e.g., `v1.0.0`).
 
 ## Prerequisites
 
@@ -169,12 +169,24 @@ For admin app, repeat with `admin` subdomain.
 
 ## Deployment Flow
 
-### Preview Deployments (Feature Branches)
+### CI (All Branches)
 
 ```
-Push to feature/* or fix/* branch
+Push to any branch (except main)
     ↓
-GitHub Actions runs
+GitHub Actions runs CI workflow
+    ↓
+Type check → Lint → Test
+    ↓
+Pass/Fail status reported
+```
+
+### Preview Deployments (Pull Requests)
+
+```
+Open/update PR against main
+    ↓
+GitHub Actions runs Preview workflow
     ↓
 Type check → Lint → Test → Build
     ↓
@@ -183,19 +195,53 @@ Deploy to Vercel Preview URL
 Comment on PR with preview URL (e.g., axori-web-abc123.vercel.app)
 ```
 
-### Production Deployments
+### Staging Deployments (Merge to Main)
 
 ```
-Push/merge to main branch
+Merge PR to main
     ↓
-GitHub Actions runs
+GitHub Actions runs Staging workflow
     ↓
 Type check → Lint → Test → Build
     ↓
-Deploy to app.axori.com
+Run database migrations
     ↓
-Create GitHub Release
+Deploy to staging URL
+    ↓
+Run E2E tests (if staging domain configured)
 ```
+
+### Production Deployments (Tag Release)
+
+```
+Create and push a release tag (e.g., v1.0.0)
+    ↓
+GitHub Actions runs Production workflow
+    ↓
+Type check → Lint → Test → Build
+    ↓
+Run database migrations
+    ↓
+Deploy to production URL
+    ↓
+Create GitHub Release with release notes
+```
+
+### Creating a Release
+
+To deploy to production, create a tag:
+
+```bash
+# Create an annotated tag
+git tag -a v1.0.0 -m "Release v1.0.0"
+
+# Push the tag to trigger production deployment
+git push origin v1.0.0
+```
+
+**Tag naming convention:** `v{major}.{minor}.{patch}` (e.g., `v1.0.0`, `v1.2.3`)
+
+You can also trigger a manual production deployment from GitHub Actions → Production Deployment → Run workflow.
 
 ---
 
@@ -249,12 +295,91 @@ Run `pnpm type-check` locally before pushing. CI uses strict checks.
 
 ---
 
-## Future: Adding Staging Environment
+## Admin App Role Setup
 
-When ready to upgrade to Vercel Pro for a dedicated staging environment:
+The admin app uses role-based access control (RBAC) stored in Clerk user metadata.
 
-1. Create `staging` branch in GitHub
-2. Add staging environment in GitHub (Settings → Environments)
-3. Add staging secrets (`STAGING_DATABASE_URL`, etc.)
-4. Configure staging domain in Vercel (`staging.axori.com`)
-5. Update workflows to deploy to staging on `staging` branch pushes
+### Available Roles
+
+| Role | Access |
+|------|--------|
+| `super_admin` | Full access to all features |
+| `admin` | User management, settings, billing |
+| `developer` | Forge: tickets, agents, deployments, registry |
+| `viewer` | Read-only access to Forge dashboards |
+
+Users can have multiple roles (e.g., `admin` + `developer`).
+
+### Setting Up Initial Admin Roles
+
+**Via Clerk Dashboard:**
+
+1. Go to [Clerk Dashboard](https://dashboard.clerk.com) → Users
+2. Select the user you want to grant admin access
+3. Go to the **Metadata** tab
+4. Under **Public metadata**, add:
+   ```json
+   {
+     "adminRoles": ["super_admin"]
+   }
+   ```
+5. Save changes
+
+**For Developers:**
+```json
+{
+  "adminRoles": ["developer"]
+}
+```
+
+**For Combined Access:**
+```json
+{
+  "adminRoles": ["admin", "developer"]
+}
+```
+
+### Via Clerk API (Automation)
+
+```typescript
+import { clerkClient } from "@clerk/clerk-sdk-node";
+
+// Grant developer role
+await clerkClient.users.updateUserMetadata(userId, {
+  publicMetadata: {
+    adminRoles: ["developer"],
+  },
+});
+
+// Grant multiple roles
+await clerkClient.users.updateUserMetadata(userId, {
+  publicMetadata: {
+    adminRoles: ["admin", "developer"],
+  },
+});
+```
+
+### Role Verification
+
+After setting roles, the user should:
+1. Sign out of the admin app
+2. Sign back in
+3. Verify they can see the appropriate navigation items
+
+---
+
+## Staging Environment Setup
+
+Staging is automatically deployed when code is merged to `main`. To configure:
+
+1. **GitHub Environment**: Create `staging` environment in GitHub (Settings → Environments)
+2. **Secrets**: Add staging-specific secrets:
+   - `STAGING_DATABASE_URL`
+   - `STAGING_SUPABASE_URL`
+   - `STAGING_SUPABASE_ANON_KEY`
+   - `STAGING_CLERK_PUBLISHABLE_KEY`
+   - `STAGING_API_URL`
+3. **Variables**: Add `STAGING_DOMAIN` variable (e.g., `staging.axori.com`)
+4. **Vercel**: Configure the staging domain alias in Vercel project settings
+
+Note: Staging deployments use the same Vercel project as production but with a different domain alias.
