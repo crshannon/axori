@@ -49,21 +49,25 @@ jobs:
           VITE_API_URL: ${{ secrets.STAGING_API_URL }}
 
       - name: Deploy to Vercel
+        id: deploy
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
           vercel-args: '--prod'
-          alias-domains: staging.axori.com
+          # Custom staging domain - configure in Vercel project settings
+          alias-domains: ${{ vars.STAGING_DOMAIN || '' }}
 
       - name: Run E2E tests
+        if: vars.STAGING_DOMAIN != ''
         run: pnpm test:e2e
         env:
-          BASE_URL: https://staging.axori.com
+          BASE_URL: https://${{ vars.STAGING_DOMAIN }}
         continue-on-error: true
 
       - name: Notify Forge
+        if: secrets.FORGE_WEBHOOK_URL != ''
         run: |
           curl -X POST "${{ secrets.FORGE_WEBHOOK_URL }}/api/webhooks/github/staging" \
             -H "Content-Type: application/json" \
@@ -72,5 +76,7 @@ jobs:
               "environment": "staging",
               "status": "deployed",
               "commit_sha": "${{ github.sha }}",
-              "branch": "staging"
+              "branch": "staging",
+              "deploy_url": "${{ steps.deploy.outputs.preview-url }}"
             }'
+        continue-on-error: true

@@ -57,9 +57,10 @@ jobs:
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
           vercel-args: '--prod'
-          alias-domains: app.axori.com
+          # Custom production domain - configure in Vercel project settings
+          alias-domains: ${{ vars.PRODUCTION_DOMAIN || '' }}
 
       - name: Create GitHub Release
         id: release
@@ -94,6 +95,7 @@ jobs:
           echo "tickets=$TICKETS" >> $GITHUB_OUTPUT
 
       - name: Notify Forge
+        if: secrets.FORGE_WEBHOOK_URL != ''
         run: |
           curl -X POST "${{ secrets.FORGE_WEBHOOK_URL }}/api/webhooks/github/production" \
             -H "Content-Type: application/json" \
@@ -104,8 +106,10 @@ jobs:
               "commit_sha": "${{ github.sha }}",
               "release_tag": "${{ steps.release.outputs.release_tag }}",
               "tickets": "${{ steps.tickets.outputs.tickets }}",
-              "branch": "main"
+              "branch": "main",
+              "deploy_url": "${{ steps.deploy.outputs.preview-url }}"
             }'
+        continue-on-error: true
 
       - name: Post deployment summary
         uses: actions/github-script@v7
@@ -113,15 +117,16 @@ jobs:
           script: |
             const releaseTag = '${{ steps.release.outputs.release_tag }}';
             const tickets = '${{ steps.tickets.outputs.tickets }}'.split(',').filter(Boolean);
+            const prodDomain = '${{ vars.PRODUCTION_DOMAIN }}' || '${{ steps.deploy.outputs.preview-url }}';
 
-            const summary = `## 🎉 Production Deployment Complete
+            const summary = `## Production Deployment Complete
 
             **Release:** ${releaseTag}
             **Commit:** ${{ github.sha }}
 
             ${tickets.length > 0 ? `### Tickets Included\n${tickets.map(t => `- ${t}`).join('\n')}` : ''}
 
-            **Live at:** [app.axori.com](https://app.axori.com)
+            **Live at:** [${prodDomain}](https://${prodDomain})
             `;
 
             await core.summary
