@@ -46,6 +46,7 @@
   "pnpm": {
     "overrides": {
       "drizzle-orm": "0.45.1",
+      "drizzle-kit": "0.30.0",
       "@types/pg": "8.16.0"
     }
   },
