@@ -120,7 +120,7 @@ async function getAppliedMigrations(
       ORDER BY created_at ASC
     `;
 
-    return migrations as AppliedMigration[];
+    return migrations as unknown as AppliedMigration[];
   } catch {
     return [];
   }
