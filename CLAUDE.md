@@ -66,17 +66,41 @@ pnpm db:seed            # Seed market data
 
 ---
 
-## Pre-Push Checklist
+## Pre-Commit Checklist (MANDATORY)
 
-**CRITICAL: Always run these checks before pushing code:**
+**CRITICAL: Always run these checks locally BEFORE committing or pushing code:**
 
 ```bash
+# Run ALL of these in order - all must pass
 pnpm type-check         # Must pass - no TypeScript errors
-pnpm lint               # Must pass - no ESLint errors
+pnpm lint               # Must pass - no ESLint errors (--max-warnings 0)
 pnpm test               # Must pass - all tests green
 ```
 
-These checks run in GitHub Actions CI. Failing to run them locally wastes CI time and blocks merges.
+### When to Run
+
+- **Before every commit**: Run at minimum `pnpm type-check` and `pnpm lint`
+- **Before every push**: Run all three checks
+- **After fixing lint errors**: Re-run `pnpm lint` to confirm fixes
+
+### Common Lint Issues
+
+| Error | Fix |
+|-------|-----|
+| Import order | Move `type` imports before regular imports from same source |
+| Sort imports | Alphabetize members within import braces |
+| `string[]` forbidden | Use `Array<string>` instead |
+| Unused variables | Prefix with `_` (e.g., `_unusedVar`) |
+| Missing await in async | Either add `await` or use `Promise.resolve()` |
+
+### Why This Matters
+
+These checks run in GitHub Actions CI with `--max-warnings 0`. Failing to run them locally:
+- Wastes CI compute time
+- Blocks PR merges
+- Creates unnecessary fix-up commits
+
+**Run checks locally first. Always.**
 
 ---
 

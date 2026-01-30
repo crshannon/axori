@@ -8,20 +8,20 @@
 import { useEffect, useState } from "react";
 import { Drawer } from "@axori/ui";
 import {
+  AlertTriangle,
   Bot,
+  ExternalLink,
+  GitBranch,
   Sparkles,
   Tag,
   X,
-  AlertTriangle,
-  GitBranch,
-  ExternalLink,
 } from "lucide-react";
 import { clsx } from "clsx";
 import type { ForgeTicket, ForgeTicketInsert } from "@axori/db/types";
 import {
   useCreateTicket,
-  useUpdateTicket,
   useDeleteTicket,
+  useUpdateTicket,
 } from "@/hooks/api/use-tickets";
 
 // =============================================================================
@@ -91,7 +91,7 @@ export function TicketDrawer({
   const [priority, setPriority] = useState<string>("medium");
   const [status, setStatus] = useState<string>("backlog");
   const [estimate, setEstimate] = useState<string>("");
-  const [labels, setLabels] = useState<string[]>([]);
+  const [labels, setLabels] = useState<Array<string>>([]);
   const [labelInput, setLabelInput] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 

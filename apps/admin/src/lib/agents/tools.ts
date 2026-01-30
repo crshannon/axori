@@ -330,16 +330,16 @@ export function createToolExecutors(context: {
       return results.map((r) => r.path).join("\n")
     },
 
-    run_command: async (input) => {
+    run_command: (input) => {
       const command = input.command as string
 
       if (!isCommandSafe(command)) {
-        return `Error: Command not allowed. Only safe commands are permitted: ${SAFE_COMMANDS.join(", ")}`
+        return Promise.resolve(`Error: Command not allowed. Only safe commands are permitted: ${SAFE_COMMANDS.join(", ")}`)
       }
 
       // In a real implementation, this would execute the command
       // For now, return a placeholder
-      return `Command execution not implemented in this environment. Would run: ${command}`
+      return Promise.resolve(`Command execution not implemented in this environment. Would run: ${command}`)
     },
 
     create_branch: async (input) => {

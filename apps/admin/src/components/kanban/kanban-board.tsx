@@ -15,9 +15,9 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Filter, Loader2, Plus, Search } from "lucide-react";
 import { KanbanColumn } from "./kanban-column";
 import { TicketCard } from "./ticket-card";
-import { TicketDrawer } from "@/components/tickets";
 import type {DragEndEvent, DragOverEvent, DragStartEvent} from "@dnd-kit/core";
 import type { ForgeTicket } from "@axori/db/types";
+import { TicketDrawer } from "@/components/tickets";
 import { useTickets, useUpdateTicketStatus } from "@/hooks/api/use-tickets";
 
 // Ticket status columns configuration
