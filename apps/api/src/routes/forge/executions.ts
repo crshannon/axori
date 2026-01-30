@@ -215,12 +215,14 @@ router.post(
         })
         .returning();
 
-      // Update ticket with assigned agent
+      // Update ticket with assigned agent and move to in_progress
       await db
         .update(forgeTickets)
         .set({
           assignedAgent: validated.protocol,
           agentSessionId: created.id,
+          status: "in_progress",
+          startedAt: new Date(),
           updatedAt: new Date(),
         })
         .where(eq(forgeTickets.id, validated.ticketId));

@@ -23,6 +23,7 @@ import {
   useDeleteTicket,
   useUpdateTicket,
 } from "@/hooks/api/use-tickets";
+import { ExecutionMonitor } from "@/components/agents/execution-monitor";
 
 // =============================================================================
 // Types
@@ -458,7 +459,10 @@ export function TicketDrawer({
               <Bot className="w-4 h-4" />
               Agent Assignment
             </h3>
-            {ticket?.assignedAgent ? (
+            {ticket?.agentSessionId ? (
+              // Show execution monitor when there's an active execution
+              <ExecutionMonitor executionId={ticket.agentSessionId} />
+            ) : ticket?.assignedAgent ? (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-lg bg-violet-500/20">

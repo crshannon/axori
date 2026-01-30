@@ -331,8 +331,10 @@ export async function startExecution(executionId: string): Promise<void> {
       (name, input) => executeToolCall(name, input, context),
       {
         maxIterations: 30,
-        onToolUse: (name, input) => {
+        onToolUse: async (name, input) => {
           console.log(`[${executionId}] Tool use: ${name}`, input);
+          // Save tool call to execution log for UI monitoring
+          await appendToExecutionLog(executionId, `🔧 ${name}: ${JSON.stringify(input).slice(0, 200)}`);
         },
         onIteration: async (iteration, messages) => {
           // Save checkpoint every 5 iterations
@@ -407,6 +409,31 @@ ${context.prompt}
 
 Please complete this task. Use the available tools to read files, make changes, and complete the work.
 When you're done, use the complete_task tool to summarize what you did.`;
+}
+
+/**
+ * Append a message to the execution log for real-time monitoring
+ */
+async function appendToExecutionLog(
+  executionId: string,
+  message: string
+): Promise<void> {
+  const timestamp = new Date().toISOString().slice(11, 19);
+  const logEntry = `[${timestamp}] ${message}\n`;
+
+  // Get current log and append
+  const [current] = await db
+    .select({ log: forgeAgentExecutions.executionLog })
+    .from(forgeAgentExecutions)
+    .where(eq(forgeAgentExecutions.id, executionId))
+    .limit(1);
+
+  const newLog = (current?.log || '') + logEntry;
+
+  await db
+    .update(forgeAgentExecutions)
+    .set({ executionLog: newLog })
+    .where(eq(forgeAgentExecutions.id, executionId));
 }
 
 /**
