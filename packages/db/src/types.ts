@@ -28,6 +28,24 @@ import {
   userPreferences,
   accountDeletionRequests,
   dataExportRequests,
+  // Forge schema tables
+  forgeMilestones,
+  forgeProjects,
+  forgeTickets,
+  forgeSubtasks,
+  forgeReferences,
+  forgeAgentExecutions,
+  forgeFileLocks,
+  forgeTokenUsage,
+  forgeTokenBudgets,
+  forgeRegistry,
+  forgeDecisions,
+  forgeDecisionApplications,
+  forgeTicketComments,
+  forgeTestPersonas,
+  forgeReleases,
+  forgeDeployments,
+  forgeSuccessMetrics,
 } from './schema'
 
 // Re-export property access types for external use
@@ -443,3 +461,126 @@ export type DataExportRequest = InferSelectModel<typeof dataExportRequests>
  * Data Export Request insert type inferred from Drizzle schema (for insert operations)
  */
 export type DataExportRequestInsert = InferInsertModel<typeof dataExportRequests>
+
+// ============================================================================
+// FORGE SCHEMA TYPES (Internal Dev Workflow Engine)
+// ============================================================================
+
+/**
+ * Forge Milestone type (for read operations)
+ * Represents a feature set or release grouping
+ */
+export type ForgeMilestone = InferSelectModel<typeof forgeMilestones>
+export type ForgeMilestoneInsert = InferInsertModel<typeof forgeMilestones>
+
+/**
+ * Forge Project type (for read operations)
+ * Represents a project grouping for tickets
+ */
+export type ForgeProject = InferSelectModel<typeof forgeProjects>
+export type ForgeProjectInsert = InferInsertModel<typeof forgeProjects>
+
+/**
+ * Forge Ticket type (for read operations)
+ * The main ticket/issue entity in Forge
+ */
+export type ForgeTicket = InferSelectModel<typeof forgeTickets>
+export type ForgeTicketInsert = InferInsertModel<typeof forgeTickets>
+
+/**
+ * Forge Subtask type (for read operations)
+ * Lightweight sub-items within a ticket
+ */
+export type ForgeSubtask = InferSelectModel<typeof forgeSubtasks>
+export type ForgeSubtaskInsert = InferInsertModel<typeof forgeSubtasks>
+
+/**
+ * Forge Reference type (for read operations)
+ * Design links, screenshots, and inspiration attached to tickets
+ */
+export type ForgeReference = InferSelectModel<typeof forgeReferences>
+export type ForgeReferenceInsert = InferInsertModel<typeof forgeReferences>
+
+/**
+ * Forge Agent Execution type (for read operations)
+ * Tracks AI agent executions against tickets
+ */
+export type ForgeAgentExecution = InferSelectModel<typeof forgeAgentExecutions>
+export type ForgeAgentExecutionInsert = InferInsertModel<typeof forgeAgentExecutions>
+
+/**
+ * Forge File Lock type (for read operations)
+ * Prevents conflicts by tracking file locks during agent execution
+ */
+export type ForgeFileLock = InferSelectModel<typeof forgeFileLocks>
+export type ForgeFileLockInsert = InferInsertModel<typeof forgeFileLocks>
+
+/**
+ * Forge Token Usage type (for read operations)
+ * Tracks token consumption per API call
+ */
+export type ForgeTokenUsage = InferSelectModel<typeof forgeTokenUsage>
+export type ForgeTokenUsageInsert = InferInsertModel<typeof forgeTokenUsage>
+
+/**
+ * Forge Token Budget type (for read operations)
+ * Daily token budget configuration and tracking
+ */
+export type ForgeTokenBudget = InferSelectModel<typeof forgeTokenBudgets>
+export type ForgeTokenBudgetInsert = InferInsertModel<typeof forgeTokenBudgets>
+
+/**
+ * Forge Registry type (for read operations)
+ * Codebase knowledge graph (components, hooks, utilities, etc.)
+ */
+export type ForgeRegistry = InferSelectModel<typeof forgeRegistry>
+export type ForgeRegistryInsert = InferInsertModel<typeof forgeRegistry>
+
+/**
+ * Forge Decision type (for read operations)
+ * Institutional memory - architectural and process decisions
+ */
+export type ForgeDecision = InferSelectModel<typeof forgeDecisions>
+export type ForgeDecisionInsert = InferInsertModel<typeof forgeDecisions>
+
+/**
+ * Forge Decision Application type (for read operations)
+ * Tracks where decisions were applied and compliance
+ */
+export type ForgeDecisionApplication = InferSelectModel<typeof forgeDecisionApplications>
+export type ForgeDecisionApplicationInsert = InferInsertModel<typeof forgeDecisionApplications>
+
+/**
+ * Forge Ticket Comment type (for read operations)
+ * Comments on tickets from users, agents, or system
+ */
+export type ForgeTicketComment = InferSelectModel<typeof forgeTicketComments>
+export type ForgeTicketCommentInsert = InferInsertModel<typeof forgeTicketComments>
+
+/**
+ * Forge Test Persona type (for read operations)
+ * Test user personas for E2E testing scenarios
+ */
+export type ForgeTestPersona = InferSelectModel<typeof forgeTestPersonas>
+export type ForgeTestPersonaInsert = InferInsertModel<typeof forgeTestPersonas>
+
+/**
+ * Forge Release type (for read operations)
+ * GitHub releases synced to Forge
+ */
+export type ForgeRelease = InferSelectModel<typeof forgeReleases>
+export type ForgeReleaseInsert = InferInsertModel<typeof forgeReleases>
+
+/**
+ * Forge Deployment type (for read operations)
+ * Deployment tracking for preview, staging, and production
+ */
+export type ForgeDeployment = InferSelectModel<typeof forgeDeployments>
+export type ForgeDeploymentInsert = InferInsertModel<typeof forgeDeployments>
+
+/**
+ * Forge Success Metric type (for read operations)
+ * Key metrics tracking for codebase health and velocity
+ */
+export type ForgeSuccessMetric = InferSelectModel<typeof forgeSuccessMetrics>
+export type ForgeSuccessMetricInsert = InferInsertModel<typeof forgeSuccessMetrics>

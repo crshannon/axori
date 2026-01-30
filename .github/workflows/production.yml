@@ -1,0 +1,180 @@
+name: Production Deployment
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy (leave empty to deploy latest main)'
+        required: false
+        type: string
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm type-check --filter=!@axori/mobile
+
+      - name: Lint
+        run: pnpm lint --filter=!@axori/mobile
+
+      - name: Run tests
+        run: pnpm test --filter=!@axori/mobile
+
+      - name: Run database migrations
+        run: pnpm db:push
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+      - name: Build
+        run: pnpm build --filter=!@axori/mobile
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.PROD_SUPABASE_ANON_KEY }}
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.PROD_CLERK_PUBLISHABLE_KEY }}
+          VITE_API_URL: ${{ secrets.PROD_API_URL }}
+
+      - name: Deploy Web to Vercel
+        id: deploy-web
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
+          vercel-args: '--prod'
+          alias-domains: ${{ vars.PRODUCTION_DOMAIN || '' }}
+
+      - name: Deploy Admin to Vercel
+        id: deploy-admin
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
+          vercel-args: '--prod'
+          alias-domains: ${{ vars.PRODUCTION_ADMIN_DOMAIN || '' }}
+
+      - name: Get release tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="${{ github.event.inputs.tag }}"
+            if [ -z "$TAG" ]; then
+              TAG="manual-$(date +%Y%m%d-%H%M%S)"
+            fi
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        id: release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = '${{ steps.tag.outputs.tag }}';
+
+            try {
+              // Check if release already exists
+              try {
+                await github.rest.repos.getReleaseByTag({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  tag: tag
+                });
+                console.log('Release already exists for tag:', tag);
+                core.setOutput('release_tag', tag);
+                return;
+              } catch (e) {
+                // Release doesn't exist, create it
+              }
+
+              const release = await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: tag,
+                name: `Release ${tag}`,
+                generate_release_notes: true,
+                target_commitish: context.sha
+              });
+
+              core.setOutput('release_tag', tag);
+              core.setOutput('release_url', release.data.html_url);
+            } catch (error) {
+              console.log('Release creation failed:', error.message);
+              core.setOutput('release_tag', tag);
+            }
+
+      - name: Extract tickets from commits
+        id: tickets
+        run: |
+          TICKETS=$(git log --oneline HEAD~10..HEAD | grep -oP 'AXO-\d+' | sort -u | tr '\n' ',' | sed 's/,$//')
+          echo "tickets=$TICKETS" >> $GITHUB_OUTPUT
+
+      - name: Notify Forge
+        if: secrets.FORGE_WEBHOOK_URL != ''
+        run: |
+          curl -X POST "${{ secrets.FORGE_WEBHOOK_URL }}/api/webhooks/github/production" \
+            -H "Content-Type: application/json" \
+            -H "X-Webhook-Secret: ${{ secrets.FORGE_WEBHOOK_SECRET }}" \
+            -d '{
+              "environment": "production",
+              "status": "deployed",
+              "commit_sha": "${{ github.sha }}",
+              "release_tag": "${{ steps.tag.outputs.tag }}",
+              "tickets": "${{ steps.tickets.outputs.tickets }}",
+              "web_deploy_url": "${{ steps.deploy-web.outputs.preview-url }}",
+              "admin_deploy_url": "${{ steps.deploy-admin.outputs.preview-url }}"
+            }'
+        continue-on-error: true
+
+      - name: Post deployment summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const releaseTag = '${{ steps.tag.outputs.tag }}';
+            const tickets = '${{ steps.tickets.outputs.tickets }}'.split(',').filter(Boolean);
+            const webDomain = '${{ vars.PRODUCTION_DOMAIN }}' || '${{ steps.deploy-web.outputs.preview-url }}';
+            const adminDomain = '${{ vars.PRODUCTION_ADMIN_DOMAIN }}' || '${{ steps.deploy-admin.outputs.preview-url }}';
+
+            const summary = `## Production Deployment Complete
+
+            **Release:** ${releaseTag}
+            **Commit:** ${{ github.sha }}
+
+            ${tickets.length > 0 ? `### Tickets Included\n${tickets.map(t => `- ${t}`).join('\n')}` : ''}
+
+            | App | Production URL |
+            |-----|----------------|
+            | Web | [${webDomain}](https://${webDomain}) |
+            | Admin | [${adminDomain}](https://${adminDomain}) |
+            `;
+
+            await core.summary
+              .addRaw(summary)
+              .write();

@@ -120,7 +120,7 @@ async function getAppliedMigrations(
       ORDER BY created_at ASC
     `;
 
-    return migrations as AppliedMigration[];
+    return migrations as unknown as AppliedMigration[];
   } catch {
     return [];
   }
@@ -192,7 +192,8 @@ async function verifyDatabaseState(
   // Check critical columns in specific tables
   const criticalColumns: Record<string, string[]> = {
     property_rental_income: ["lease_start_date", "lease_end_date"],
-    portfolios: ["created_by", "invitation_access"],
+    portfolios: ["created_by"],
+    user_portfolios: ["invited_by", "property_access"],
     loans: ["has_escrow"],
   };
 

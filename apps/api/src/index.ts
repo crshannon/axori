@@ -83,7 +83,9 @@ import emailCapturesRouter from "./routes/email-captures";
 import bankAccountsRouter from "./routes/bank-accounts";
 import billingRouter from "./routes/billing";
 import stripeWebhookRouter from "./routes/webhooks/stripe";
+import githubWebhookRouter from "./routes/webhooks/github";
 import documentsRouter from "./routes/documents";
+import forgeRouter from "./routes/forge";
 app.route("/api/properties", propertiesRouter);
 app.route("/api/onboarding", onboardingRouter);
 app.route("/api/users", usersRouter);
@@ -96,7 +98,9 @@ app.route("/api/email-captures", emailCapturesRouter);
 app.route("/api/bank-accounts", bankAccountsRouter);
 app.route("/api/billing", billingRouter);
 app.route("/api/webhooks/stripe", stripeWebhookRouter);
+app.route("/api/webhooks/github", githubWebhookRouter);
 app.route("/api/documents", documentsRouter);
+app.route("/api/forge", forgeRouter);
 
 const port = Number(process.env.PORT) || 3001;
 

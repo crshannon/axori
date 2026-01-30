@@ -1,5 +1,8 @@
 import { pgTable, text, timestamp, uuid, boolean, numeric, pgEnum, unique, serial, integer, date, index, jsonb } from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
+
+// Re-export Forge schema (separate postgres schema for internal tooling)
+export * from "./forge";
 
 // Portfolio role enum for user-portfolio relationships
 export const portfolioRoleEnum = pgEnum("portfolio_role", [

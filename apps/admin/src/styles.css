@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+/* Tell Tailwind to scan these directories for classes */
+@source "../../../packages/ui/src/**/*.{ts,tsx}";
+@source "../**/*.{ts,tsx}";
+
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant system (&:where(.system, .system *));
+@custom-variant not-system (&:where(:not(.system), :not(.system) *));
+
+/* Design System Color Variables - Forge Dark Theme */
+@theme {
+  /* Brand Colors */
+  --color-primary: 139 92 246; /* violet-600 */
+  --color-primary-dark: 124 58 237; /* violet-700 */
+  --color-primary-light: 167 139 250; /* violet-400 */
+  --color-accent: 232 255 77; /* #E8FF4D - Yellow-lime accent */
+
+  /* Dark Mode Backgrounds */
+  --color-bg-dark: 15 23 42; /* slate-900 #0f172a */
+  --color-bg-dark-card: 30 41 59; /* slate-800 #1e293b */
+  --color-bg-dark-hover: 51 65 85; /* slate-700 #334155 */
+
+  /* Semantic Colors */
+  --color-success: 34 197 94; /* green-500 */
+  --color-danger: 239 68 68; /* red-500 */
+  --color-warning: 245 158 11; /* amber-500 */
+  --color-info: 59 130 246; /* blue-500 */
+
+  /* Border Colors */
+  --color-border-light: 0 0 0 / 0.05;
+  --color-border-dark: 255 255 255 / 0.05;
+  --color-border-dark-hover: 255 255 255 / 0.1;
+
+  /* Shadow Colors */
+  --color-shadow-primary: 139 92 246 / 0.2;
+  --color-shadow-accent: 232 255 77 / 0.2;
+  --color-shadow-dark: 0 0 0 / 0.3;
+
+  /* Forge-specific */
+  --color-background: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-elevated: #334155;
+  --color-border: #475569;
+
+  /* Text */
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  /* Accent (AI/Forge elements) */
+  --color-accent-violet: #6366f1;
+  --color-accent-blue: #3b82f6;
+  --color-accent-glow: rgba(99, 102, 241, 0.2);
+
+  /* Agent Status */
+  --color-agent-active: #22c55e;
+  --color-agent-pending: #f59e0b;
+  --color-agent-failed: #ef4444;
+
+  /* Kanban Column Colors */
+  --color-status-backlog: #64748b;
+  --color-status-design: #a855f7;
+  --color-status-planned: #3b82f6;
+  --color-status-in-progress: #f59e0b;
+  --color-status-in-review: #f97316;
+  --color-status-testing: #8b5cf6;
+  --color-status-done: #22c55e;
+  --color-status-blocked: #ef4444;
+
+  /* Typography Sizes */
+  --font-size-huge: 3rem;
+}
+
+/* Typography Utilities */
+.text-huge {
+  font-size: var(--font-size-huge);
+  line-height: 1;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+}
+
+@media (min-width: 768px) {
+  .text-huge {
+    font-size: 3.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-huge {
+    font-size: 4.5rem;
+  }
+}
+
+body {
+  @apply m-0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+/* Forge-specific scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-surface-elevated);
+}
+
+/* Agent pulse animation */
+@keyframes agent-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.agent-active {
+  animation: agent-pulse 2s ease-in-out infinite;
+}
+
+/* Glow effect for AI elements */
+.ai-glow {
+  box-shadow: 0 0 20px var(--color-accent-glow);
+}
+
+/* Ticket card hover state */
+.ticket-card {
+  transition: all 0.2s ease;
+}
+
+.ticket-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 0 0 1px var(--color-accent-glow);
+}
+
+/* Kanban column drop indicator */
+.kanban-drop-indicator {
+  background: linear-gradient(to bottom, var(--color-accent-glow), transparent);
+}

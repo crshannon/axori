@@ -418,3 +418,103 @@ export function getPortfolioId(c: Context): string | undefined {
 export function getUserRole(c: Context): PortfolioRole | undefined {
   return c.get("role");
 }
+
+// ============================================================================
+// Admin Role Middleware (Forge/Admin App)
+// ============================================================================
+
+import {
+  type AdminRole,
+  type AdminFeature,
+  hasAdminRole,
+  hasFeatureAccess,
+  parseAdminRoles,
+} from "@axori/permissions";
+
+/**
+ * Middleware that requires a specific admin role.
+ *
+ * Admin roles are stored in Clerk publicMetadata.adminRoles.
+ * This middleware assumes the user's Clerk metadata is available via
+ * the Authorization header (Clerk JWT).
+ *
+ * @example
+ * router.post("/agents", requireAdminRole("developer"), handler);
+ */
+export function requireAdminRole(requiredRole: AdminRole) {
+  return async (c: Context, next: Next) => {
+    const adminRoles = c.get("adminRoles") as Array<AdminRole> | undefined;
+
+    if (!adminRoles || adminRoles.length === 0) {
+      return c.json({ error: "No admin roles assigned" }, 403);
+    }
+
+    if (!hasAdminRole(adminRoles, requiredRole)) {
+      return c.json(
+        { error: `This action requires the ${requiredRole} role` },
+        403
+      );
+    }
+
+    await next();
+  };
+}
+
+/**
+ * Middleware that requires access to a specific feature.
+ *
+ * @example
+ * router.post("/agents/run", requireFeature("forge:agents"), handler);
+ */
+export function requireFeature(feature: AdminFeature) {
+  return async (c: Context, next: Next) => {
+    const adminRoles = c.get("adminRoles") as Array<AdminRole> | undefined;
+
+    if (!adminRoles || adminRoles.length === 0) {
+      return c.json({ error: "No admin roles assigned" }, 403);
+    }
+
+    if (!hasFeatureAccess(adminRoles, feature)) {
+      return c.json(
+        { error: `You don't have access to the ${feature} feature` },
+        403
+      );
+    }
+
+    await next();
+  };
+}
+
+/**
+ * Middleware that extracts admin roles from Clerk metadata and stores in context.
+ * Should be used before requireAdminRole/requireFeature.
+ *
+ * This middleware expects the Clerk user's publicMetadata to be available.
+ * The actual implementation depends on how Clerk is integrated with your API.
+ *
+ * @example
+ * router.use("/admin/*", withAdminRoles());
+ * router.use("/forge/*", withAdminRoles());
+ */
+export function withAdminRoles() {
+  return async (c: Context, next: Next) => {
+    // Get Clerk metadata from the request
+    // This assumes you're passing the metadata through the Authorization header
+    // or have it available through Clerk's middleware
+    const clerkMetadata = c.get("clerkMetadata") as
+      | Record<string, unknown>
+      | undefined;
+
+    const adminRoles = parseAdminRoles(clerkMetadata);
+    c.set("adminRoles", adminRoles);
+
+    await next();
+  };
+}
+
+/**
+ * Get the admin roles from context.
+ */
+export function getAdminRoles(c: Context): Array<AdminRole> {
+  return (c.get("adminRoles") as Array<AdminRole>) ?? [];
+}
