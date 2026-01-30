@@ -10,11 +10,15 @@ import { Drawer } from "@axori/ui";
 import {
   AlertTriangle,
   Bot,
+  CheckCircle,
+  Clock,
   ExternalLink,
   GitBranch,
+  History,
   Sparkles,
   Tag,
   X,
+  XCircle,
 } from "lucide-react";
 import { clsx } from "clsx";
 import type { ForgeTicket, ForgeTicketInsert } from "@axori/db/types";
@@ -501,6 +505,55 @@ export function TicketDrawer({
                 Assign an AI Agent
               </button>
             )}
+          </div>
+        )}
+
+        {/* Execution History (Edit mode, when there's history) */}
+        {isEditMode && ticket?.executionHistory && ticket.executionHistory.length > 0 && (
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wide mb-3 flex items-center gap-2">
+              <History className="w-4 h-4" />
+              Execution History
+              <span className="ml-auto text-xs font-normal text-slate-400">
+                {ticket.executionHistory.length} run{ticket.executionHistory.length !== 1 ? "s" : ""}
+              </span>
+            </h3>
+            <div className="space-y-3">
+              {[...ticket.executionHistory].reverse().map((entry, index) => (
+                <div
+                  key={entry.executionId || index}
+                  className="p-3 rounded-lg bg-black/20 border border-white/5"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      {entry.status === "completed" ? (
+                        <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                      )}
+                      <span className="text-sm text-white capitalize">
+                        {entry.protocol.replace(/_/g, " ")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      {entry.tokensUsed && (
+                        <span>{entry.tokensUsed.toLocaleString()} tokens</span>
+                      )}
+                      <Clock className="w-3 h-3" />
+                      <span>
+                        {new Date(entry.completedAt).toLocaleDateString()}{" "}
+                        {new Date(entry.completedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                  </div>
+                  {entry.summary && (
+                    <p className="mt-2 text-xs text-slate-400 line-clamp-2">
+                      {entry.summary}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
