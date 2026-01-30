@@ -48,7 +48,7 @@ export function useTickets(
         });
       }
       const queryString = params.toString();
-      const endpoint = `/forge/tickets${queryString ? `?${queryString}` : ""}`;
+      const endpoint = `/api/forge/tickets${queryString ? `?${queryString}` : ""}`;
       return apiFetch<Array<ForgeTicket>>(endpoint, { clerkId: user?.id });
     },
     enabled: !!user?.id,
@@ -68,7 +68,7 @@ export function useTicket(
   return useQuery({
     queryKey: ticketKeys.detail(id),
     queryFn: async () => {
-      return apiFetch<ForgeTicket>(`/forge/tickets/${id}`, {
+      return apiFetch<ForgeTicket>(`/api/forge/tickets/${id}`, {
         clerkId: user?.id,
       });
     },
@@ -86,7 +86,7 @@ export function useCreateTicket() {
 
   return useMutation({
     mutationFn: async (data: Omit<ForgeTicketInsert, "id" | "identifier">) => {
-      return apiFetch<ForgeTicket>("/forge/tickets", {
+      return apiFetch<ForgeTicket>("/api/forge/tickets", {
         method: "POST",
         body: JSON.stringify(data),
         clerkId: user?.id,
@@ -110,7 +110,7 @@ export function useUpdateTicket() {
       id,
       ...data
     }: Partial<ForgeTicket> & { id: string }) => {
-      return apiFetch<ForgeTicket>(`/forge/tickets/${id}`, {
+      return apiFetch<ForgeTicket>(`/api/forge/tickets/${id}`, {
         method: "PUT",
         body: JSON.stringify(data),
         clerkId: user?.id,
@@ -140,7 +140,7 @@ export function useUpdateTicketStatus() {
       status: ForgeTicket["status"];
       statusOrder?: number;
     }) => {
-      return apiFetch<ForgeTicket>(`/forge/tickets/${id}/status`, {
+      return apiFetch<ForgeTicket>(`/api/forge/tickets/${id}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status, statusOrder }),
         clerkId: user?.id,
@@ -183,7 +183,7 @@ export function useDeleteTicket() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      return apiFetch<{ success: boolean }>(`/forge/tickets/${id}`, {
+      return apiFetch<{ success: boolean }>(`/api/forge/tickets/${id}`, {
         method: "DELETE",
         clerkId: user?.id,
       });
@@ -211,7 +211,7 @@ export function useAssignAgent() {
       protocol: ForgeTicket["assignedAgent"];
       additionalContext?: string;
     }) => {
-      return apiFetch<ForgeTicket>(`/forge/tickets/${ticketId}/assign-agent`, {
+      return apiFetch<ForgeTicket>(`/api/forge/tickets/${ticketId}/assign-agent`, {
         method: "POST",
         body: JSON.stringify({ protocol, additionalContext }),
         clerkId: user?.id,

@@ -78,7 +78,7 @@ export function useAgentProtocols() {
   return useQuery({
     queryKey: agentKeys.protocols(),
     queryFn: async () => {
-      const response = await api.get<Array<AgentProtocol>>("/forge/agents/protocols")
+      const response = await api.get<Array<AgentProtocol>>("/api/forge/agents/protocols")
       return response
     },
   })
@@ -91,7 +91,7 @@ export function useAgentProtocol(id: string) {
   return useQuery({
     queryKey: agentKeys.protocol(id),
     queryFn: async () => {
-      const response = await api.get<AgentProtocol>(`/forge/agents/protocols/${id}`)
+      const response = await api.get<AgentProtocol>(`/api/forge/agents/protocols/${id}`)
       return response
     },
     enabled: !!id,
@@ -108,7 +108,7 @@ export function useSuggestProtocol() {
       estimate?: number | null
       labels?: Array<string> | null
     }) => {
-      const response = await api.post<ProtocolSuggestion>("/forge/agents/suggest", ticket)
+      const response = await api.post<ProtocolSuggestion>("/api/forge/agents/suggest", ticket)
       return response
     },
   })
@@ -135,7 +135,7 @@ export function useExecutions(filters?: {
       if (filters?.limit) params.set("limit", filters.limit.toString())
 
       const response = await api.get<Array<AgentExecution>>(
-        `/forge/executions?${params.toString()}`
+        `/api/forge/executions?${params.toString()}`
       )
       return response
     },
@@ -149,7 +149,7 @@ export function useExecution(id: string) {
   return useQuery({
     queryKey: agentKeys.execution(id),
     queryFn: async () => {
-      const response = await api.get<AgentExecution>(`/forge/executions/${id}`)
+      const response = await api.get<AgentExecution>(`/api/forge/executions/${id}`)
       return response
     },
     enabled: !!id,
@@ -164,7 +164,7 @@ export function useTicketExecutions(ticketId: string) {
     queryKey: agentKeys.ticketExecutions(ticketId),
     queryFn: async () => {
       const response = await api.get<Array<AgentExecution>>(
-        `/forge/executions?ticketId=${ticketId}`
+        `/api/forge/executions?ticketId=${ticketId}`
       )
       return response
     },
@@ -184,7 +184,7 @@ export function useCreateExecution() {
       protocol: string
       prompt: string
     }) => {
-      const response = await api.post<AgentExecution>("/forge/executions", data)
+      const response = await api.post<AgentExecution>("/api/forge/executions", data)
       return response
     },
     onSuccess: (_, variables) => {
@@ -206,7 +206,7 @@ export function usePauseExecution() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.post<AgentExecution>(`/forge/executions/${id}/pause`)
+      const response = await api.post<AgentExecution>(`/api/forge/executions/${id}/pause`)
       return response
     },
     onSuccess: (data) => {
@@ -224,7 +224,7 @@ export function useResumeExecution() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.post<AgentExecution>(`/forge/executions/${id}/resume`)
+      const response = await api.post<AgentExecution>(`/api/forge/executions/${id}/resume`)
       return response
     },
     onSuccess: (data) => {
@@ -242,7 +242,7 @@ export function useCancelExecution() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.post<AgentExecution>(`/forge/executions/${id}/cancel`)
+      const response = await api.post<AgentExecution>(`/api/forge/executions/${id}/cancel`)
       return response
     },
     onSuccess: (data) => {

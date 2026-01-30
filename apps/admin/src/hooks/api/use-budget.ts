@@ -138,7 +138,7 @@ export function useTodayBudget() {
   return useQuery({
     queryKey: budgetKeys.today(),
     queryFn: async () => {
-      return api.get<TodayBudget>("/forge/budget/today")
+      return api.get<TodayBudget>("/api/forge/budget/today")
     },
     refetchInterval: 60000, // Refetch every minute
   })
@@ -151,7 +151,7 @@ export function useBudgetHistory(days = 30) {
   return useQuery({
     queryKey: budgetKeys.history(days),
     queryFn: async () => {
-      return api.get<BudgetHistory>(`/forge/budget/history?days=${days}`)
+      return api.get<BudgetHistory>(`/api/forge/budget/history?days=${days}`)
     },
   })
 }
@@ -163,7 +163,7 @@ export function useTokenUsage(days = 7) {
   return useQuery({
     queryKey: budgetKeys.usage(days),
     queryFn: async () => {
-      return api.get<TokenUsage>(`/forge/budget/usage?days=${days}`)
+      return api.get<TokenUsage>(`/api/forge/budget/usage?days=${days}`)
     },
   })
 }
@@ -175,7 +175,7 @@ export function useRecentUsage(limit = 50) {
   return useQuery({
     queryKey: budgetKeys.recent(limit),
     queryFn: async () => {
-      return api.get<Array<RecentUsageEntry>>(`/forge/budget/recent?limit=${limit}`)
+      return api.get<Array<RecentUsageEntry>>(`/api/forge/budget/recent?limit=${limit}`)
     },
   })
 }
@@ -187,7 +187,7 @@ export function useBudgetStats() {
   return useQuery({
     queryKey: budgetKeys.stats(),
     queryFn: async () => {
-      return api.get<BudgetStats>("/forge/budget/stats")
+      return api.get<BudgetStats>("/api/forge/budget/stats")
     },
     refetchInterval: 60000, // Refetch every minute
   })
@@ -206,7 +206,7 @@ export function useUpdateBudget() {
       autopilotEnabled?: boolean
       autopilotMaxTokensPerTask?: number
     }) => {
-      return api.put<TodayBudget>("/forge/budget/today", data)
+      return api.put<TodayBudget>("/api/forge/budget/today", data)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: budgetKeys.today() })
