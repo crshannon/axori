@@ -3,6 +3,11 @@
  *
  * Real implementations of tools that agents can use to interact
  * with the codebase, run commands, and manage git operations.
+ *
+ * Token Optimization Features:
+ * - Smart file reading with automatic summarization for large files
+ * - Focused file reading (specific line ranges)
+ * - Code structure extraction instead of full content
  */
 
 import { exec } from "child_process";
@@ -12,6 +17,115 @@ import * as path from "path";
 import { Octokit } from "@octokit/rest";
 
 const execAsync = promisify(exec);
+
+// =============================================================================
+// Token-Optimized File Reading
+// =============================================================================
+
+/**
+ * Configuration for smart file reading
+ */
+export interface SmartReadOptions {
+  maxTokens?: number; // Max tokens to return (default: 2000)
+  mode?: "full" | "summary" | "structure"; // Reading mode
+  lineStart?: number; // Start line for focused reading
+  lineEnd?: number; // End line for focused reading
+  includeLineNumbers?: boolean; // Include line numbers in output
+}
+
+const DEFAULT_READ_OPTIONS: SmartReadOptions = {
+  maxTokens: 2000,
+  mode: "full",
+  includeLineNumbers: false,
+};
+
+/**
+ * Extract code structure (imports, exports, function signatures, etc.)
+ */
+function extractCodeStructure(content: string, filePath: string): string {
+  const lines = content.split("\n");
+  const ext = path.extname(filePath).toLowerCase();
+
+  const structures: Array<{ type: string; line: number; text: string }> = [];
+
+  lines.forEach((line, idx) => {
+    const trimmed = line.trim();
+
+    // TypeScript/JavaScript patterns
+    if ([".ts", ".tsx", ".js", ".jsx"].includes(ext)) {
+      if (trimmed.startsWith("import ")) {
+        structures.push({ type: "import", line: idx + 1, text: trimmed });
+      } else if (trimmed.startsWith("export ")) {
+        structures.push({ type: "export", line: idx + 1, text: trimmed.slice(0, 150) });
+      } else if (trimmed.match(/^(async\s+)?function\s+\w+/)) {
+        structures.push({ type: "function", line: idx + 1, text: trimmed.slice(0, 100) });
+      } else if (trimmed.match(/^(export\s+)?(default\s+)?class\s+\w+/)) {
+        structures.push({ type: "class", line: idx + 1, text: trimmed.slice(0, 100) });
+      } else if (trimmed.match(/^(export\s+)?(type|interface)\s+\w+/)) {
+        structures.push({ type: "type", line: idx + 1, text: trimmed.slice(0, 100) });
+      } else if (trimmed.match(/^(const|let|var)\s+\w+\s*=/)) {
+        // Only top-level declarations (not indented)
+        if (!line.startsWith(" ") && !line.startsWith("\t")) {
+          structures.push({ type: "const", line: idx + 1, text: trimmed.slice(0, 100) });
+        }
+      }
+    }
+
+    // Python patterns
+    if (ext === ".py") {
+      if (trimmed.startsWith("import ") || trimmed.startsWith("from ")) {
+        structures.push({ type: "import", line: idx + 1, text: trimmed });
+      } else if (trimmed.startsWith("def ")) {
+        structures.push({ type: "function", line: idx + 1, text: trimmed.slice(0, 100) });
+      } else if (trimmed.startsWith("class ")) {
+        structures.push({ type: "class", line: idx + 1, text: trimmed.slice(0, 100) });
+      }
+    }
+  });
+
+  // Group by type
+  const grouped: Record<string, Array<{ line: number; text: string }>> = {};
+  for (const s of structures) {
+    if (!grouped[s.type]) grouped[s.type] = [];
+    grouped[s.type].push({ line: s.line, text: s.text });
+  }
+
+  // Format output
+  let output = `# File Structure: ${filePath}\n`;
+  output += `# Total lines: ${lines.length}\n\n`;
+
+  const order = ["import", "type", "class", "function", "export", "const"];
+  for (const type of order) {
+    if (grouped[type] && grouped[type].length > 0) {
+      output += `## ${type.charAt(0).toUpperCase() + type.slice(1)}s (${grouped[type].length})\n`;
+      for (const item of grouped[type].slice(0, 20)) {
+        output += `L${item.line}: ${item.text}\n`;
+      }
+      if (grouped[type].length > 20) {
+        output += `... and ${grouped[type].length - 20} more\n`;
+      }
+      output += "\n";
+    }
+  }
+
+  return output;
+}
+
+/**
+ * Create a summary of file content
+ */
+function summarizeFileContent(content: string, filePath: string, maxTokens: number): string {
+  const maxChars = maxTokens * 4;
+
+  // Start with structure
+  const structure = extractCodeStructure(content, filePath);
+  if (structure.length <= maxChars) {
+    return structure;
+  }
+
+  // If structure is too long, truncate it
+  return structure.slice(0, maxChars - 50) + "\n\n[Structure truncated]";
+}
 
 // =============================================================================
 // Configuration
@@ -135,24 +249,102 @@ function isCommandAllowed(command: string): boolean {
 // =============================================================================
 
 /**
- * Read a file's contents
+ * Read a file's contents with smart token optimization
+ *
+ * @param filePath - Path to the file
+ * @param options - Smart reading options
  */
-export async function readFile(filePath: string): Promise<string> {
+export async function readFile(
+  filePath: string,
+  options?: SmartReadOptions
+): Promise<string> {
   const resolved = safePath(filePath);
+  const opts = { ...DEFAULT_READ_OPTIONS, ...options };
 
   try {
     const content = await fs.readFile(resolved, "utf-8");
-    // Truncate very large files
-    if (content.length > 100000) {
-      return content.slice(0, 100000) + "\n\n[File truncated - showing first 100k characters]";
+    const lines = content.split("\n");
+    const maxChars = (opts.maxTokens || 2000) * 4;
+
+    // Handle focused line range reading
+    if (opts.lineStart !== undefined || opts.lineEnd !== undefined) {
+      const start = Math.max(0, (opts.lineStart || 1) - 1);
+      const end = Math.min(lines.length, opts.lineEnd || lines.length);
+      const selectedLines = lines.slice(start, end);
+
+      let output = `# ${filePath} (lines ${start + 1}-${end} of ${lines.length})\n\n`;
+      if (opts.includeLineNumbers) {
+        output += selectedLines
+          .map((line, idx) => `${(start + idx + 1).toString().padStart(4)}: ${line}`)
+          .join("\n");
+      } else {
+        output += selectedLines.join("\n");
+      }
+
+      // Truncate if still too large
+      if (output.length > maxChars) {
+        return output.slice(0, maxChars - 50) + "\n\n[Output truncated]";
+      }
+      return output;
     }
-    return content;
+
+    // Handle different reading modes
+    switch (opts.mode) {
+      case "structure":
+        return extractCodeStructure(content, filePath);
+
+      case "summary":
+        return summarizeFileContent(content, filePath, opts.maxTokens || 2000);
+
+      case "full":
+      default:
+        // For small files, return full content
+        if (content.length <= maxChars) {
+          return content;
+        }
+
+        // For medium files (up to 50k chars), truncate with notice
+        if (content.length <= 50000) {
+          return (
+            content.slice(0, maxChars - 100) +
+            `\n\n[File truncated - showing ${maxChars} of ${content.length} characters. ` +
+            `Use mode: "structure" to see file overview, or specify lineStart/lineEnd for specific sections]`
+          );
+        }
+
+        // For large files, auto-switch to structure mode
+        console.log(
+          `[readFile] Large file detected (${content.length} chars), auto-switching to structure mode`
+        );
+        return (
+          `[Large file: ${content.length} characters, ${lines.length} lines - showing structure]\n\n` +
+          extractCodeStructure(content, filePath)
+        );
+    }
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       throw new Error(`File not found: ${filePath}`);
     }
     throw error;
   }
+}
+
+/**
+ * Read file with explicit structure extraction (token-efficient)
+ */
+export async function readFileStructure(filePath: string): Promise<string> {
+  return readFile(filePath, { mode: "structure" });
+}
+
+/**
+ * Read specific lines from a file (token-efficient)
+ */
+export async function readFileLines(
+  filePath: string,
+  lineStart: number,
+  lineEnd: number
+): Promise<string> {
+  return readFile(filePath, { lineStart, lineEnd, includeLineNumbers: true });
 }
 
 /**

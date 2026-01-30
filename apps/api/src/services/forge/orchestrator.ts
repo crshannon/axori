@@ -11,7 +11,6 @@ import {
   forgeTickets,
   forgeTokenUsage,
   eq,
-  sql,
 } from "@axori/db";
 import {
   getAnthropicClient,
@@ -19,6 +18,7 @@ import {
   type ToolDefinition,
 } from "./anthropic";
 import { executeTool, type ToolContext } from "./tools";
+import { getRateLimiter, estimateProtocolTokens } from "./rate-limiter";
 
 // =============================================================================
 // Types
@@ -371,6 +371,9 @@ export async function startExecution(executionId: string): Promise<void> {
     throw new Error("Anthropic API key not configured");
   }
 
+  // Get rate limiter
+  const rateLimiter = getRateLimiter();
+
   // Get execution and ticket details
   const [result] = await db
     .select({
@@ -399,6 +402,14 @@ export async function startExecution(executionId: string): Promise<void> {
 
   // Get protocol config
   const config = PROTOCOL_CONFIGS[execution.protocol] || DEFAULT_CONFIG;
+
+  // Check rate limiter and wait for capacity
+  const estimatedTokens = estimateProtocolTokens(execution.protocol);
+  console.log(
+    `[${executionId}] Checking rate limit capacity for ${execution.protocol} (est. ${estimatedTokens} tokens)`
+  );
+  await rateLimiter.waitForCapacity(executionId, estimatedTokens);
+  console.log(`[${executionId}] Rate limit check passed, starting execution`);
 
   // Build context
   const context: ExecutionContext = {
@@ -441,7 +452,9 @@ export async function startExecution(executionId: string): Promise<void> {
       }
     );
 
-    // Log token usage
+    // Log token usage and record with rate limiter
+    const totalTokens = result.totalInputTokens + result.totalOutputTokens;
+    rateLimiter.recordUsage(executionId, totalTokens);
     await logTokenUsage(executionId, config.model, result);
 
     // Update execution as completed
