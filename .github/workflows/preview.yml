@@ -14,6 +14,7 @@ jobs:
     outputs:
       web: ${{ steps.filter.outputs.web }}
       admin: ${{ steps.filter.outputs.admin }}
+      api: ${{ steps.filter.outputs.api }}
       any-code: ${{ steps.filter.outputs.any-code }}
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +35,14 @@ jobs:
             admin:
               - 'apps/admin/**'
               - 'packages/ui/**'
+              - 'packages/db/**'
+              - 'packages/permissions/**'
+              - 'packages/shared/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+            api:
+              - 'apps/api/**'
               - 'packages/db/**'
               - 'packages/permissions/**'
               - 'packages/shared/**'
@@ -140,8 +149,8 @@ jobs:
 
   notify:
     runs-on: ubuntu-latest
-    needs: [detect-changes, deploy-web, deploy-admin]
-    if: always() && (needs.deploy-web.result == 'success' || needs.deploy-admin.result == 'success')
+    needs: [detect-changes, ci, deploy-web, deploy-admin]
+    if: always() && needs.ci.result == 'success'
     permissions:
       contents: read
       pull-requests: write
@@ -175,8 +184,9 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const webDeployed = '${{ needs.detect-changes.outputs.web }}' === 'true';
-            const adminDeployed = '${{ needs.detect-changes.outputs.admin }}' === 'true';
+            const webChanged = '${{ needs.detect-changes.outputs.web }}' === 'true';
+            const adminChanged = '${{ needs.detect-changes.outputs.admin }}' === 'true';
+            const apiChanged = '${{ needs.detect-changes.outputs.api }}' === 'true';
             const webPreviewUrl = '${{ needs.deploy-web.outputs.preview-url }}';
             const adminPreviewUrl = '${{ needs.deploy-admin.outputs.preview-url }}';
             const ticketId = '${{ steps.branch.outputs.ticket_id }}';
@@ -185,16 +195,26 @@ jobs:
             body += `| App | Status | Preview URL |\n`;
             body += `|-----|--------|-------------|\n`;
 
-            if (webDeployed && webPreviewUrl) {
+            if (webChanged && webPreviewUrl) {
               body += `| Web | ✅ Deployed | [${webPreviewUrl}](${webPreviewUrl}) |\n`;
+            } else if (webChanged) {
+              body += `| Web | ⚠️ Deploy failed | - |\n`;
             } else {
-              body += `| Web | ⏭️ Skipped | No changes detected |\n`;
+              body += `| Web | ⏭️ Skipped | No changes |\n`;
             }
 
-            if (adminDeployed && adminPreviewUrl) {
+            if (adminChanged && adminPreviewUrl) {
               body += `| Admin | ✅ Deployed | [${adminPreviewUrl}](${adminPreviewUrl}) |\n`;
+            } else if (adminChanged) {
+              body += `| Admin | ⚠️ Deploy failed | - |\n`;
             } else {
-              body += `| Admin | ⏭️ Skipped | No changes detected |\n`;
+              body += `| Admin | ⏭️ Skipped | No changes |\n`;
+            }
+
+            if (apiChanged) {
+              body += `| API | ✅ CI Passed | Deploys on merge to main |\n`;
+            } else {
+              body += `| API | ⏭️ Skipped | No changes |\n`;
             }
 
             if (ticketId) {
