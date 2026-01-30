@@ -669,6 +669,61 @@ describe("MyComponent", () => {
 
 ---
 
+## Deployment Strategy
+
+### Overview
+
+We use a **tag-based release strategy** for production deployments:
+
+| Trigger | Environment | Description |
+|---------|-------------|-------------|
+| Push to `main` | **Staging** | Automatic deployment for testing |
+| Tag `v*` (e.g., `v1.0.0`) | **Production** | Manual release via Git tags |
+| Manual dispatch | Either | On-demand deployment |
+
+### Hosting Providers
+
+| App | Provider | Staging URL | Production URL |
+|-----|----------|-------------|----------------|
+| Web | Vercel | `staging.axori.com` | `axori.com` |
+| API | Railway | `staging-api.axori.com` | `api.axori.com` |
+| Admin | Vercel | `staging-admin.axori.com` | `admin.axori.com` |
+
+### GitHub Environments
+
+Secrets are configured per-environment in GitHub (Settings → Environments):
+
+**Staging Environment:**
+- `RAILWAY_TOKEN` - Railway API token
+- `RAILWAY_PROJECT_ID` - Railway project ID
+- `RAILWAY_SERVICE_ID` - Staging service ID
+- `RAILWAY_ENVIRONMENT_NAME` - `staging`
+
+**Production Environment:**
+- Same secrets as staging, but pointing to production service/environment
+
+### Workflow Files
+
+| Workflow | Purpose | Trigger |
+|----------|---------|---------|
+| `api-deploy.yml` | Deploy API to Railway | Push to main (staging) or tag (production) |
+| `preview.yml` | Preview deployments | PRs and feature branches |
+| `staging.yml` | Web staging deployment | Push to main |
+| `production.yml` | Web production deployment | Tag releases |
+
+### Creating a Production Release
+
+```bash
+# 1. Ensure main is stable and tested on staging
+# 2. Create and push a version tag
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+This triggers production deployments across all services.
+
+---
+
 ## Important Notes
 
 - Use `workspace:*` for internal package dependencies
