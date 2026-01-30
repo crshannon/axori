@@ -220,7 +220,7 @@ export function useCreateExecution() {
         queryKey: agentKeys.ticketExecutions(variables.ticketId),
       })
       // Also invalidate tickets since agent assignment changes ticket state
-      queryClient.invalidateQueries({ queryKey: ["tickets"] })
+      queryClient.invalidateQueries({ queryKey: ["forge", "tickets"] })
     },
   })
 }
@@ -284,7 +284,7 @@ export function useCancelExecution() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: agentKeys.execution(data.id) })
       queryClient.invalidateQueries({ queryKey: agentKeys.executions() })
-      queryClient.invalidateQueries({ queryKey: ["tickets"] })
+      queryClient.invalidateQueries({ queryKey: ["forge", "tickets"] })
     },
   })
 }
