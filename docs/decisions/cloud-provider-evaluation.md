@@ -2,22 +2,47 @@
 
 **Date:** January 2026
 **Current Stack:** Railway (API) + Vercel (Web/Admin) + Supabase (DB) + Clerk (Auth)
-**Goal:** Evaluate migration to a major cloud provider for long-term scalability and cost optimization
+**Goal:** Evaluate migration to a major cloud provider for compliance, private AI, and long-term scalability
 
 ---
 
 ## Executive Summary
 
+### Critical Requirements (Weighted Heavily)
+
+| Requirement | Current Stack | AWS | GCP | Azure |
+|-------------|--------------|-----|-----|-------|
+| **🔒 Security Compliance** | ⚠️ Limited | ✅ Best | ✅ Good | ✅ Best |
+| **🤖 Private AI (VPC-isolated)** | ❌ None | ✅ Bedrock | ✅ Vertex AI | ✅ Azure OpenAI |
+| **📄 Document Processing** | ❌ External APIs | ✅ Textract | ✅ Document AI | ✅ Doc Intelligence |
+| **🔐 Data Residency Control** | ⚠️ Limited | ✅ Full | ✅ Full | ✅ Full |
+
+### Full Comparison
+
 | Factor | Current Stack | AWS | GCP | Azure |
 |--------|--------------|-----|-----|-------|
-| **Monthly Cost (Est.)** | ~$150-300 | ~$200-400 | ~$180-350 | ~$200-400 |
-| **Migration Effort** | N/A | High (4-6 weeks) | Medium (3-4 weeks) | High (4-6 weeks) |
-| **Operational Complexity** | Low | High | Medium | High |
-| **Vendor Lock-in** | Medium | High | Medium | High |
-| **Scaling Ceiling** | Medium | Unlimited | Unlimited | Unlimited |
-| **Best For** | Startups, MVPs | Enterprise, Complex | Developer-friendly | Microsoft shops |
+| **Compliance Certs** | SOC2 (vendor) | 143+ | 100+ | 100+ |
+| **Private AI Models** | ❌ | Claude, Llama, Titan | Gemini, Claude, Llama | GPT-4, Claude |
+| **VPC/Private Networking** | ❌ | ✅ PrivateLink | ✅ VPC-SC | ✅ Private Endpoints |
+| **Document OCR/Processing** | ❌ | Textract | Document AI | Doc Intelligence |
+| **Monthly Cost (Est.)** | ~$150-300 | ~$300-600 | ~$280-500 | ~$320-600 |
+| **Migration Effort** | N/A | High (6-8 weeks) | Medium (5-6 weeks) | High (6-8 weeks) |
+| **Best For** | MVPs | **Compliance-first** | Developer-friendly | Microsoft shops |
 
-**Recommendation:** Stay on current stack until you hit specific scaling pain points OR have a clear enterprise requirement. If you must migrate, **GCP is the best fit** for your tech stack.
+### Updated Recommendation
+
+Given your requirements for **security compliance** and **private AI processing**, migration to a major cloud provider is now justified.
+
+**🏆 Recommended: AWS**
+
+AWS is the best choice when compliance and private AI are top priorities:
+1. **Most compliance certifications** (HIPAA, SOC2, FedRAMP, PCI-DSS, ISO 27001)
+2. **AWS Bedrock** provides Claude, Llama, and other models entirely within your VPC
+3. **Textract** for document processing stays within your network boundary
+4. **S3 with SSE-KMS** for encrypted document storage with customer-managed keys
+5. **Most enterprises already trust AWS** - easier sales conversations
+
+**Runner-up: Azure** (if you need GPT-4 specifically or have Microsoft enterprise agreements)
 
 ---
 
@@ -296,6 +321,300 @@ These integrations work with any cloud provider:
 
 ---
 
+## Security & Compliance Comparison
+
+### Why This Matters for Axori
+
+Hosting tenant documents, emails, and receipts means you're handling **sensitive PII and financial data**. Enterprise customers (property management companies, landlords with portfolios) will require:
+
+1. **SOC 2 Type II** - Security controls audit (table stakes for B2B SaaS)
+2. **Data residency guarantees** - Data stays in specific regions
+3. **Encryption at rest and in transit** - Customer-managed keys preferred
+4. **Audit logging** - Who accessed what, when
+5. **Access controls** - Role-based, least privilege
+6. **Incident response** - Documented breach procedures
+
+### Current Stack Compliance Gaps
+
+| Requirement | Current Status | Gap |
+|-------------|----------------|-----|
+| SOC 2 | Vendor-level only (Vercel, Supabase have SOC2) | Your application layer is not audited |
+| Data Residency | Limited control | Supabase region selection, but no guarantees |
+| Encryption | TLS + at-rest (provider-managed) | No customer-managed keys (BYOK) |
+| Audit Logs | Basic (Clerk, Supabase logs) | No centralized, tamper-proof audit trail |
+| Private Networking | ❌ None | All services communicate over public internet |
+| BAA for HIPAA | ❌ Not available | Cannot sign BAA with current stack |
+
+### Compliance Certifications by Provider
+
+| Certification | AWS | GCP | Azure | Relevance |
+|---------------|-----|-----|-------|-----------|
+| **SOC 2 Type II** | ✅ | ✅ | ✅ | Required for enterprise sales |
+| **SOC 1 / SSAE 18** | ✅ | ✅ | ✅ | Financial controls |
+| **ISO 27001** | ✅ | ✅ | ✅ | Information security |
+| **ISO 27017** | ✅ | ✅ | ✅ | Cloud security |
+| **ISO 27018** | ✅ | ✅ | ✅ | PII protection |
+| **PCI DSS Level 1** | ✅ | ✅ | ✅ | Payment card data |
+| **HIPAA BAA** | ✅ | ✅ | ✅ | Healthcare data |
+| **FedRAMP High** | ✅ | ✅ | ✅ | US Government |
+| **GDPR** | ✅ | ✅ | ✅ | EU data protection |
+| **StateRAMP** | ✅ | ⚠️ Limited | ✅ | US State governments |
+| **Total Certifications** | **143+** | **100+** | **100+** | - |
+
+**Winner: AWS** - Most comprehensive compliance coverage, especially for US government and healthcare.
+
+### Security Features Comparison
+
+| Feature | AWS | GCP | Azure |
+|---------|-----|-----|-------|
+| **VPC/Private Networking** | VPC + PrivateLink | VPC + VPC Service Controls | VNet + Private Endpoints |
+| **Customer-Managed Keys (CMK)** | KMS with BYOK | Cloud KMS with BYOK | Key Vault with BYOK |
+| **Hardware Security Modules** | CloudHSM | Cloud HSM | Dedicated HSM |
+| **Secrets Management** | Secrets Manager | Secret Manager | Key Vault |
+| **WAF (Web Application Firewall)** | AWS WAF | Cloud Armor | Azure WAF |
+| **DDoS Protection** | Shield (Standard/Advanced) | Cloud Armor | DDoS Protection |
+| **Audit Logging** | CloudTrail | Cloud Audit Logs | Azure Monitor |
+| **SIEM Integration** | Security Hub | Security Command Center | Sentinel |
+| **Compliance Reporting** | Artifact | Compliance Reports | Trust Center |
+
+### Document Storage Security
+
+For storing tenant documents, emails, and receipts:
+
+| Feature | AWS (S3) | GCP (Cloud Storage) | Azure (Blob Storage) |
+|---------|----------|---------------------|---------------------|
+| **Server-Side Encryption** | SSE-S3, SSE-KMS, SSE-C | Google-managed, CMEK, CSEK | Microsoft-managed, CMK |
+| **Client-Side Encryption** | ✅ SDK support | ✅ SDK support | ✅ SDK support |
+| **Object Lock (Immutability)** | ✅ Governance/Compliance modes | ✅ Retention policies | ✅ Immutable storage |
+| **Versioning** | ✅ | ✅ | ✅ |
+| **Access Logging** | ✅ S3 access logs | ✅ Data access logs | ✅ Diagnostic logs |
+| **Cross-Region Replication** | ✅ | ✅ | ✅ |
+| **Legal Hold** | ✅ | ✅ | ✅ |
+
+---
+
+## Private AI Processing Capabilities
+
+### Why Private AI Matters
+
+Your requirement: **AI document processing that never leaves your network boundary.**
+
+This rules out:
+- ❌ OpenAI API (data sent to OpenAI servers)
+- ❌ Anthropic API directly (data sent to Anthropic)
+- ❌ Third-party AI SaaS tools (data leaves your control)
+
+What you need:
+- ✅ AI models running **inside your VPC/VNet**
+- ✅ Data never traverses the public internet
+- ✅ No third-party access to customer documents
+- ✅ Audit trail of all AI inference requests
+
+### Private AI Options by Provider
+
+#### AWS: Amazon Bedrock (Recommended)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Your AWS VPC                            │
+│  ┌───────────────┐    ┌─────────────────────────────────────┐  │
+│  │  Your API     │    │         AWS Bedrock                 │  │
+│  │  (ECS/Lambda) │───▶│  ┌─────────┐  ┌─────────────────┐  │  │
+│  │               │    │  │ Claude  │  │ Llama 3 / Titan │  │  │
+│  └───────────────┘    │  │ 3.5/4   │  │                 │  │  │
+│         │             │  └─────────┘  └─────────────────┘  │  │
+│         │             └─────────────────────────────────────┘  │
+│         ▼                            │                         │
+│  ┌───────────────┐    ┌──────────────▼──────────────────────┐  │
+│  │ S3 (Documents)│    │  AWS Textract (Document Processing) │  │
+│  │ Encrypted     │───▶│  - OCR                              │  │
+│  │ Customer Keys │    │  - Table extraction                 │  │
+│  └───────────────┘    │  - Form parsing                     │  │
+│                       └─────────────────────────────────────┘  │
+│                                                                 │
+│  ════════════════════ VPC BOUNDARY ════════════════════════   │
+│              (No data leaves without explicit egress)          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Available Models via Bedrock:**
+| Model | Provider | Best For |
+|-------|----------|----------|
+| Claude 3.5 Sonnet | Anthropic | General reasoning, document analysis |
+| Claude 3 Opus | Anthropic | Complex analysis, high accuracy |
+| Llama 3.1 70B/405B | Meta | Open source, cost-effective |
+| Amazon Titan | Amazon | Text, embeddings, images |
+| Mistral Large | Mistral | European data residency option |
+| Cohere Command R+ | Cohere | RAG, enterprise search |
+
+**Key Features:**
+- **PrivateLink** - Access Bedrock without internet gateway
+- **VPC Endpoints** - Traffic stays within AWS network
+- **CloudTrail logging** - Full audit of all inference calls
+- **No data retention** - AWS doesn't store your prompts/responses
+- **Model customization** - Fine-tune on your data (stays in your account)
+
+**Pricing (Bedrock):**
+| Model | Input (per 1M tokens) | Output (per 1M tokens) |
+|-------|----------------------|------------------------|
+| Claude 3.5 Sonnet | $3.00 | $15.00 |
+| Claude 3 Opus | $15.00 | $75.00 |
+| Llama 3.1 70B | $2.65 | $3.50 |
+| Titan Text | $0.50 | $1.50 |
+
+#### GCP: Vertex AI
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Your GCP VPC                            │
+│  ┌───────────────┐    ┌─────────────────────────────────────┐  │
+│  │  Your API     │    │         Vertex AI                   │  │
+│  │  (Cloud Run)  │───▶│  ┌─────────┐  ┌─────────────────┐  │  │
+│  │               │    │  │ Gemini  │  │ Claude / Llama  │  │  │
+│  └───────────────┘    │  │ 1.5 Pro │  │ (Model Garden)  │  │  │
+│         │             │  └─────────┘  └─────────────────┘  │  │
+│         │             └─────────────────────────────────────┘  │
+│         ▼                            │                         │
+│  ┌───────────────┐    ┌──────────────▼──────────────────────┐  │
+│  │ Cloud Storage │    │  Document AI                        │  │
+│  │ (CMEK)        │───▶│  - OCR (200+ languages)             │  │
+│  │               │    │  - Custom document extractors       │  │
+│  └───────────────┘    │  - Form parsing                     │  │
+│                       └─────────────────────────────────────┘  │
+│                                                                 │
+│  ════════════════════ VPC-SC BOUNDARY ═════════════════════   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Available Models via Vertex AI:**
+| Model | Provider | Notes |
+|-------|----------|-------|
+| Gemini 1.5 Pro | Google | Native, best integration |
+| Gemini 1.5 Flash | Google | Faster, cheaper |
+| Claude 3.5 Sonnet | Anthropic | Via Model Garden |
+| Llama 3.1 | Meta | Self-hosted or managed |
+| PaLM 2 | Google | Legacy, still available |
+
+**Key Features:**
+- **VPC Service Controls** - Data exfiltration prevention
+- **Private Google Access** - No public IP needed
+- **CMEK** - Customer-managed encryption keys
+- **Data residency** - Choose processing region
+
+**Pricing (Vertex AI):**
+| Model | Input (per 1M tokens) | Output (per 1M tokens) |
+|-------|----------------------|------------------------|
+| Gemini 1.5 Pro | $1.25 | $5.00 |
+| Gemini 1.5 Flash | $0.075 | $0.30 |
+| Claude 3.5 Sonnet | $3.00 | $15.00 |
+
+#### Azure: Azure OpenAI Service
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Your Azure VNet                         │
+│  ┌───────────────┐    ┌─────────────────────────────────────┐  │
+│  │  Your API     │    │      Azure OpenAI Service           │  │
+│  │  (Container   │───▶│  ┌─────────┐  ┌─────────────────┐  │  │
+│  │   Apps)       │    │  │ GPT-4o  │  │ GPT-4 Turbo     │  │  │
+│  └───────────────┘    │  │         │  │                 │  │  │
+│         │             │  └─────────┘  └─────────────────┘  │  │
+│         │             └─────────────────────────────────────┘  │
+│         ▼                            │                         │
+│  ┌───────────────┐    ┌──────────────▼──────────────────────┐  │
+│  │ Blob Storage  │    │  Azure AI Document Intelligence     │  │
+│  │ (CMK)         │───▶│  - OCR                              │  │
+│  │               │    │  - Custom models                    │  │
+│  └───────────────┘    │  - Pre-built extractors             │  │
+│                       └─────────────────────────────────────┘  │
+│                                                                 │
+│  ════════════════════ VNET BOUNDARY ═══════════════════════   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Available Models via Azure OpenAI:**
+| Model | Provider | Notes |
+|-------|----------|-------|
+| GPT-4o | OpenAI | Latest multimodal |
+| GPT-4 Turbo | OpenAI | 128k context |
+| GPT-4 | OpenAI | Original |
+| GPT-3.5 Turbo | OpenAI | Fast, cheap |
+| Claude (Preview) | Anthropic | Limited availability |
+
+**Key Features:**
+- **Private Endpoints** - Access over private network only
+- **Customer Managed Keys** - BYOK via Key Vault
+- **Content filtering** - Built-in safety controls
+- **Data, privacy, security** - Microsoft's enterprise commitments
+
+**Pricing (Azure OpenAI):**
+| Model | Input (per 1M tokens) | Output (per 1M tokens) |
+|-------|----------------------|------------------------|
+| GPT-4o | $2.50 | $10.00 |
+| GPT-4 Turbo | $10.00 | $30.00 |
+| GPT-3.5 Turbo | $0.50 | $1.50 |
+
+### Document Processing Comparison
+
+| Feature | AWS Textract | GCP Document AI | Azure Doc Intelligence |
+|---------|-------------|-----------------|----------------------|
+| **OCR Accuracy** | Excellent | Excellent | Excellent |
+| **Table Extraction** | ✅ | ✅ | ✅ |
+| **Form Parsing** | ✅ | ✅ | ✅ |
+| **Invoice Processing** | ✅ Analyze Expense | ✅ Invoice Parser | ✅ Invoice Model |
+| **Receipt Processing** | ✅ Analyze Expense | ✅ Receipt Parser | ✅ Receipt Model |
+| **Custom Models** | ✅ Custom Queries | ✅ Custom Extractors | ✅ Custom Models |
+| **Handwriting** | ✅ | ✅ | ✅ |
+| **Private Endpoint** | ✅ VPC Endpoint | ✅ VPC-SC | ✅ Private Endpoint |
+| **Pricing** | $1.50/1000 pages | $1.50/1000 pages | $1.50/1000 pages |
+
+### Private AI Architecture Recommendation
+
+For Axori's document processing pipeline:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    Recommended: AWS Architecture                     │
+│                                                                      │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────────────┐│
+│  │  User Upload │────▶│  API Gateway │────▶│  Lambda / ECS        ││
+│  │  (Encrypted) │     │  (Private)   │     │  (Document Processor)││
+│  └──────────────┘     └──────────────┘     └──────────┬───────────┘│
+│                                                        │            │
+│                                            ┌───────────▼──────────┐ │
+│                                            │    Step Functions    │ │
+│                                            │    (Orchestration)   │ │
+│                                            └───────────┬──────────┘ │
+│                                                        │            │
+│         ┌──────────────────────────────────────────────┼──────────┐ │
+│         │                                              │          │ │
+│         ▼                                              ▼          │ │
+│  ┌─────────────┐   ┌─────────────┐   ┌─────────────────────────┐ │ │
+│  │  S3 Bucket  │   │  Textract   │   │       Bedrock           │ │ │
+│  │  (SSE-KMS)  │──▶│  (OCR)      │──▶│  (Claude for analysis)  │ │ │
+│  │             │   │             │   │                         │ │ │
+│  └─────────────┘   └─────────────┘   └───────────┬─────────────┘ │ │
+│         │                                        │               │ │
+│         │              ┌─────────────────────────▼─────────────┐ │ │
+│         │              │  RDS PostgreSQL                       │ │ │
+│         └─────────────▶│  (Extracted data, metadata, vectors)  │ │ │
+│                        │  + pgvector for semantic search       │ │ │
+│                        └───────────────────────────────────────┘ │ │
+│                                                                   │ │
+│  ══════════════════════ VPC BOUNDARY ════════════════════════════ │
+│              ALL traffic via PrivateLink / VPC Endpoints          │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Why This Works:**
+1. **Documents uploaded** → Encrypted at rest in S3 (customer-managed keys)
+2. **Textract processes** → OCR extracts text, tables, forms (never leaves VPC)
+3. **Bedrock analyzes** → Claude classifies, summarizes, extracts entities
+4. **Data stored** → PostgreSQL with pgvector for semantic search
+5. **Audit trail** → CloudTrail logs every access and inference
+
+---
+
 ## Migration Complexity Analysis
 
 ### From Current Stack → AWS
@@ -372,74 +691,244 @@ These integrations work with any cloud provider:
 
 ## Recommendation
 
-### Short Term (Next 6-12 months): Stay on Current Stack
+### Primary Recommendation: Migrate to AWS
 
-**Rationale:**
-1. Your current setup works and is optimized for developer velocity
-2. Migration would consume 4-6 weeks of engineering time
-3. No clear ROI until you hit scaling limits or compliance requirements
-4. Supabase already runs on GCP (partial cloud benefit)
+Given your stated priorities of **security compliance** and **private AI processing**, AWS is the clear winner.
 
-**Optimizations to consider now:**
-- Consolidate on Supabase Auth instead of Clerk (saves ~$25/month, reduces vendors)
-- Use Vercel's Edge Functions for latency-sensitive API routes
-- Add Redis caching when you see database bottlenecks
+**Why AWS:**
 
-### Medium Term (If Migration Needed): Choose GCP
+1. **Most Compliance Certifications (143+)**
+   - SOC 2, HIPAA, FedRAMP, PCI-DSS, ISO 27001, StateRAMP
+   - Enterprise customers will trust AWS infrastructure
+   - Easier to pass security questionnaires
 
-**Rationale:**
-1. **Cloud Run is ideal for your stack** - Hono, Node.js, containers all work seamlessly
-2. **Lowest migration effort** - Similar mental model to Railway
-3. **Supabase affinity** - Already runs on GCP, easier data migration
-4. **Firebase for mobile** - Natural fit for React Native/Expo
-5. **Cost competitive** - Generally 10-20% cheaper than AWS for your use case
+2. **Best Private AI Story (Bedrock)**
+   - Claude 3.5/Opus available via PrivateLink
+   - No data leaves your VPC boundary
+   - Full CloudTrail audit of all inference
+   - Fine-tuning stays in your account
 
-### When to Reconsider AWS
+3. **Complete Document Pipeline**
+   - S3 with customer-managed encryption (KMS)
+   - Textract for OCR/extraction (VPC isolated)
+   - Bedrock for AI analysis
+   - All in one ecosystem, one bill
 
-Choose AWS over GCP if:
-- Enterprise customers mandate AWS (common in healthcare, finance, government)
-- You need specific AWS services (SageMaker, Bedrock, etc.)
-- You're hiring and AWS experience is more common in your talent pool
-- You anticipate SOC2/HIPAA compliance in next 12 months
+4. **Enterprise Sales Advantage**
+   - "We run on AWS" opens doors
+   - BAA available for healthcare customers
+   - Well-understood security posture
+
+**Migration Timeline: 6-8 weeks**
+
+| Phase | Duration | Key Deliverables |
+|-------|----------|------------------|
+| **1. Foundation** | Week 1-2 | VPC, IAM, KMS, networking |
+| **2. Data Layer** | Week 2-3 | RDS PostgreSQL, S3, migration |
+| **3. Compute** | Week 3-4 | ECS/App Runner, ALB, API |
+| **4. Frontend** | Week 4-5 | Amplify or CloudFront + S3 |
+| **5. AI Services** | Week 5-6 | Bedrock, Textract, Step Functions |
+| **6. Cutover** | Week 6-8 | DNS, testing, monitoring |
+
+### Alternative: Azure (Second Choice)
+
+Choose Azure over AWS if:
+- You need **GPT-4** specifically (Azure OpenAI has best GPT-4 access)
+- You have a **Microsoft Enterprise Agreement** (significant discounts)
+- Your enterprise customers are **Microsoft shops** (Azure AD integration)
+- You're considering **Microsoft 365 integration** for email processing
+
+### When GCP Still Makes Sense
+
+Choose GCP if:
+- Compliance is **not** a top priority
+- You want **simplest migration** (Cloud Run is easiest)
+- You prefer **Gemini** over Claude/GPT-4
+- Cost is the **primary concern** (GCP is ~10-20% cheaper)
+
+### Not Recommended: Stay on Current Stack
+
+Your current stack (Railway + Vercel + Supabase) **cannot meet** your requirements:
+- ❌ No private networking between services
+- ❌ No way to run AI models inside your network boundary
+- ❌ Limited compliance certifications
+- ❌ No customer-managed encryption keys
+- ❌ Cannot sign BAA for HIPAA
+
+**Verdict:** Migration is necessary to meet your compliance and private AI requirements. The question is which provider, not whether to migrate.
 
 ---
 
 ## Cost Comparison Summary
 
+### Base Infrastructure Costs (Monthly)
+
 | Scenario | Current | AWS | GCP | Azure |
 |----------|---------|-----|-----|-------|
-| **Startup (low traffic)** | $75-150 | $100-200 | $70-150 | $100-180 |
-| **Growth (moderate traffic)** | $150-300 | $200-400 | $150-300 | $200-350 |
-| **Scale (high traffic)** | $300-600 | $400-800 | $300-600 | $400-700 |
+| **Startup (low traffic)** | $75-150 | $150-250 | $100-180 | $150-220 |
+| **Growth (moderate traffic)** | $150-300 | $300-500 | $250-400 | $300-480 |
+| **Scale (high traffic)** | $300-600 | $500-900 | $400-700 | $500-850 |
 
-*Note: Current stack costs increase faster at scale due to usage-based pricing. Cloud providers offer reserved capacity discounts at scale.*
+### AI & Document Processing Costs (Additional)
+
+| Use Case | AWS | GCP | Azure |
+|----------|-----|-----|-------|
+| **Document OCR** (10K pages/month) | $15 | $15 | $15 |
+| **AI Analysis** (1M tokens/month) | $18 (Claude 3.5) | $6 (Gemini) | $12 (GPT-4o) |
+| **AI Analysis** (10M tokens/month) | $180 | $60 | $125 |
+| **Vector Search** (pgvector on RDS) | Included | Included | Included |
+
+### Compliance & Security Costs (Additional)
+
+| Service | AWS | GCP | Azure |
+|---------|-----|-----|-------|
+| **WAF** | $5 + $0.60/M requests | $5 + $0.75/M requests | $20 + rules |
+| **KMS (CMK)** | $1/key + $0.03/10K requests | $0.06/key/hour | $1/key |
+| **CloudTrail / Audit Logs** | $2/100K events | Free (basic) | $2.76/GB |
+| **Security Hub / Command Center** | $0.0010/check | Free tier | Included |
+| **Secrets Manager** | $0.40/secret | $0.06/secret | $0.03/operation |
+
+### Estimated Total Monthly Cost (AWS with AI + Compliance)
+
+| Component | Low Usage | Medium Usage | High Usage |
+|-----------|-----------|--------------|------------|
+| Compute (ECS/Lambda) | $50 | $150 | $400 |
+| Database (RDS) | $30 | $100 | $300 |
+| Storage (S3) | $5 | $25 | $100 |
+| Networking (ALB, NAT) | $40 | $80 | $150 |
+| AI (Bedrock) | $20 | $100 | $500 |
+| Document Processing | $15 | $50 | $200 |
+| Security (WAF, KMS, etc.) | $20 | $40 | $80 |
+| **Total** | **$180** | **$545** | **$1,730** |
+
+*Note: Reserved capacity and Savings Plans can reduce costs by 30-40% at scale.*
 
 ---
 
-## Next Steps If You Decide to Migrate
+## Next Steps: AWS Migration Roadmap
 
-### Phase 1: Preparation (Week 1)
-- [ ] Document all environment variables and secrets
-- [ ] Create infrastructure-as-code (Terraform/Pulumi) for target cloud
-- [ ] Set up development environment on cloud provider
-- [ ] Create database backup strategy
+### Phase 1: Foundation (Weeks 1-2)
 
-### Phase 2: Infrastructure Setup (Weeks 2-3)
-- [ ] Deploy database and verify connectivity
-- [ ] Deploy API service and validate
-- [ ] Deploy Web/Admin apps
-- [ ] Configure networking, SSL, domains
+**Infrastructure as Code Setup:**
+- [ ] Create AWS Organization and accounts (dev, staging, prod)
+- [ ] Set up Terraform/Pulumi project structure
+- [ ] Configure VPC with public/private subnets across 2 AZs
+- [ ] Set up NAT Gateway for private subnet egress
+- [ ] Create KMS keys for encryption (database, S3, secrets)
+- [ ] Configure IAM roles and policies (least privilege)
+- [ ] Set up CloudTrail for audit logging
 
-### Phase 3: Migration (Week 4)
-- [ ] Migrate database (pg_dump/pg_restore)
-- [ ] Update DNS with low TTL
-- [ ] Cut over to new infrastructure
-- [ ] Monitor for 48 hours
+**Networking:**
+- [ ] Create VPC endpoints for S3, Secrets Manager, Bedrock
+- [ ] Configure security groups (API, database, internal)
+- [ ] Set up Route 53 hosted zone
 
-### Phase 4: Cleanup (Week 5)
-- [ ] Decommission old infrastructure
+### Phase 2: Data Layer (Weeks 2-3)
+
+**Database:**
+- [ ] Deploy RDS PostgreSQL (Multi-AZ for production)
+- [ ] Enable encryption at rest with CMK
+- [ ] Configure automated backups and point-in-time recovery
+- [ ] Install pgvector extension for semantic search
+- [ ] Test connection from development environment
+
+**Storage:**
+- [ ] Create S3 buckets (documents, backups)
+- [ ] Enable versioning and encryption (SSE-KMS)
+- [ ] Configure lifecycle policies for cost optimization
+- [ ] Set up S3 access logging
+
+**Migration:**
+- [ ] Export Supabase database (pg_dump)
+- [ ] Import to RDS PostgreSQL
+- [ ] Verify data integrity
+- [ ] Test application queries
+
+### Phase 3: Compute Layer (Weeks 3-4)
+
+**API Service:**
+- [ ] Create ECR repository for API Docker image
+- [ ] Deploy ECS Fargate cluster (or App Runner for simplicity)
+- [ ] Configure Application Load Balancer
+- [ ] Set up auto-scaling policies
+- [ ] Configure health checks
+
+**Frontend:**
+- [ ] Deploy Web app to AWS Amplify (SSR support)
+- [ ] Deploy Admin app to Amplify
+- [ ] Configure CloudFront for caching
+- [ ] Set up SSL certificates (ACM)
+
+**CI/CD:**
+- [ ] Update GitHub Actions to deploy to AWS
+- [ ] Configure AWS credentials in GitHub Secrets
+- [ ] Test deployment pipeline
+
+### Phase 4: AI & Document Processing (Weeks 5-6)
+
+**Bedrock Setup:**
+- [ ] Enable Bedrock in your region
+- [ ] Request access to Claude models
+- [ ] Create VPC endpoint for Bedrock (PrivateLink)
+- [ ] Test inference from within VPC (no internet egress)
+
+**Textract Setup:**
+- [ ] Create VPC endpoint for Textract
+- [ ] Build document processing Lambda/service
+- [ ] Test OCR on sample documents
+
+**Integration:**
+- [ ] Create Step Functions workflow (upload → OCR → AI → store)
+- [ ] Implement document upload API endpoint
+- [ ] Store extracted data in PostgreSQL
+- [ ] Generate embeddings for semantic search
+
+### Phase 5: Security & Compliance (Week 6-7)
+
+**Security Hardening:**
+- [ ] Enable AWS WAF on ALB
+- [ ] Configure AWS Shield (DDoS protection)
+- [ ] Set up GuardDuty (threat detection)
+- [ ] Enable Security Hub
+- [ ] Review and remediate findings
+
+**Compliance:**
+- [ ] Document data flow diagrams
+- [ ] Create incident response runbook
+- [ ] Enable AWS Config for compliance monitoring
+- [ ] Generate compliance reports (AWS Artifact)
+
+**Audit:**
+- [ ] Verify CloudTrail captures all API calls
+- [ ] Set up alerts for security events
+- [ ] Test audit log retrieval
+
+### Phase 6: Cutover & Go-Live (Week 7-8)
+
+**Pre-Cutover:**
+- [ ] Final database sync (if running in parallel)
+- [ ] Lower DNS TTL to 60 seconds (24 hours before)
+- [ ] Notify customers of maintenance window
+
+**Cutover:**
+- [ ] Final database export/import
+- [ ] Update DNS to point to AWS
+- [ ] Verify all services operational
+- [ ] Monitor for errors (CloudWatch, application logs)
+
+**Post-Cutover:**
+- [ ] Monitor for 48-72 hours
+- [ ] Increase DNS TTL back to normal
+- [ ] Decommission Railway, Vercel, Supabase
 - [ ] Update documentation
-- [ ] Train team on new platform
+
+### Phase 7: Optimization (Ongoing)
+
+- [ ] Implement Savings Plans or Reserved Instances
+- [ ] Fine-tune auto-scaling based on actual usage
+- [ ] Optimize Bedrock usage (caching, model selection)
+- [ ] Set up cost alerts and budgets
+- [ ] Regular security reviews
 
 ---
 
