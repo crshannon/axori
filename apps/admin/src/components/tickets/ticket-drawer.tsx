@@ -12,6 +12,8 @@ import {
   Bot,
   CheckCircle,
   Clock,
+  Copy,
+  Check,
   ExternalLink,
   GitBranch,
   History,
@@ -100,6 +102,7 @@ export function TicketDrawer({
   const [labelInput, setLabelInput] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showExpandedLogs, setShowExpandedLogs] = useState(false);
+  const [copiedForClaude, setCopiedForClaude] = useState(false);
 
   // Mutations
   const createTicket = useCreateTicket();
@@ -129,6 +132,7 @@ export function TicketDrawer({
     setShowDeleteConfirm(false);
     setLabelInput("");
     setShowExpandedLogs(false);
+    setCopiedForClaude(false);
   }, [ticket, isOpen]);
 
   const handleSave = () => {
@@ -190,6 +194,27 @@ export function TicketDrawer({
       e.preventDefault();
       handleAddLabel();
     }
+  };
+
+  const handleCopyForClaude = async () => {
+    if (!ticket) return;
+
+    const claudePrompt = `Work on ${ticket.identifier}: ${ticket.title}
+
+**Type:** ${ticket.type || 'feature'}
+**Priority:** ${ticket.priority || 'medium'}
+**Status:** ${ticket.status || 'backlog'}
+
+**Description:**
+${ticket.description || 'No description provided.'}
+
+${ticket.acceptanceCriteria ? `**Acceptance Criteria:**\n${ticket.acceptanceCriteria}` : ''}
+
+Please create a branch, implement the changes, and create a PR.`;
+
+    await navigator.clipboard.writeText(claudePrompt);
+    setCopiedForClaude(true);
+    setTimeout(() => setCopiedForClaude(false), 2000);
   };
 
   const isPending = createTicket.isPending || updateTicket.isPending;
@@ -274,6 +299,35 @@ export function TicketDrawer({
               </div>
             </div>
           </div>
+        )}
+
+        {/* Copy for Claude Code Button (Edit mode only) */}
+        {isEditMode && ticket && (
+          <button
+            onClick={handleCopyForClaude}
+            className={clsx(
+              "w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all",
+              "border border-amber-500/30 hover:border-amber-500/50",
+              copiedForClaude
+                ? "bg-amber-500/20 text-amber-300"
+                : "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+            )}
+          >
+            {copiedForClaude ? (
+              <>
+                <Check className="w-4 h-4" />
+                <span className="text-sm font-medium">Copied for Claude Code!</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6zm4 4h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <span className="text-sm font-medium">Copy for Claude Code</span>
+                <Copy className="w-3.5 h-3.5 ml-1 opacity-60" />
+              </>
+            )}
+          </button>
         )}
 
         {/* Title */}
