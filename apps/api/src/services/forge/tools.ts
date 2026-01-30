@@ -25,10 +25,16 @@ function getRepoRoot(): string {
   return root;
 }
 
-// GitHub configuration
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_OWNER = process.env.GITHUB_OWNER || "axori";
-const GITHUB_REPO = process.env.GITHUB_REPO || "axori";
+// GitHub configuration - use getters to ensure env is read after it's loaded
+function getGithubToken(): string | undefined {
+  return process.env.GITHUB_TOKEN;
+}
+function getGithubOwner(): string {
+  return process.env.GITHUB_OWNER || "axori";
+}
+function getGithubRepo(): string {
+  return process.env.GITHUB_REPO || "axori";
+}
 
 // Safety: commands that are allowed to run
 const ALLOWED_COMMANDS = [
@@ -276,11 +282,11 @@ export async function runCommand(command: string): Promise<string> {
 let octokit: Octokit | null = null;
 
 function getOctokit(): Octokit {
-  if (!GITHUB_TOKEN) {
+  if (!getGithubToken()) {
     throw new Error("GITHUB_TOKEN not configured");
   }
   if (!octokit) {
-    octokit = new Octokit({ auth: GITHUB_TOKEN });
+    octokit = new Octokit({ auth: getGithubToken() });
   }
   return octokit;
 }
@@ -423,8 +429,8 @@ export async function createPullRequest(
 
     // Create PR via GitHub API
     const { data: pr } = await client.pulls.create({
-      owner: GITHUB_OWNER,
-      repo: GITHUB_REPO,
+      owner: getGithubOwner(),
+      repo: getGithubRepo(),
       title,
       body: body + "\n\n---\n🤖 Created by Forge AI Agent",
       head: branchName,
@@ -528,7 +534,7 @@ export function checkToolsHealth(): {
   return {
     fileSystemAccess: true, // Would check fs access
     gitAccess: true, // Would check git is available
-    githubAccess: !!GITHUB_TOKEN,
+    githubAccess: !!getGithubToken(),
     repoRoot: getRepoRoot(),
   };
 }
