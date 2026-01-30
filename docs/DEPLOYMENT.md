@@ -122,11 +122,14 @@ This ensures deployments only happen through GitHub Actions.
 
 ## Part 2: Railway Setup (API)
 
-### Step 1: Create Railway Project
+### Step 1: Create Railway Project and Service
 
 1. Go to https://railway.app/new
 2. Create a new project named `axori-api`
-3. Note the **Project ID** from project settings
+3. Click **+ New Service** → **Empty Service**
+4. Name the service `api` (or any name you prefer)
+5. Note the **Project ID** from project settings
+6. Note the **Service Name** for GitHub secrets
 
 ### Step 2: Get Railway Token
 
@@ -173,6 +176,7 @@ Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions**
 | `VERCEL_PROJECT_ID_ADMIN` | `prj_xxx` | From `apps/admin/.vercel/project.json` |
 | `RAILWAY_TOKEN` | `your-railway-token` | Railway API token |
 | `RAILWAY_PROJECT_ID` | `xxx` | Railway project ID |
+| `RAILWAY_SERVICE_NAME` | `api` | Name of your API service in Railway |
 | `PROD_DATABASE_URL` | `postgresql://...` | Production Supabase connection |
 | `FORGE_WEBHOOK_SECRET` | `xxx` | For deployment notifications (optional) |
 
