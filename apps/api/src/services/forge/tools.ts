@@ -18,7 +18,10 @@ const execAsync = promisify(exec);
 // =============================================================================
 
 // The root directory of the codebase - agents work within this directory
-const REPO_ROOT = process.env.FORGE_REPO_ROOT || process.cwd();
+// Use a getter to ensure env is read after it's loaded
+function getRepoRoot(): string {
+  return process.env.FORGE_getRepoRoot() || process.cwd();
+}
 
 // GitHub configuration
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -62,15 +65,15 @@ const FORBIDDEN_PATHS = [
  */
 function safePath(inputPath: string): string {
   // Resolve to absolute path
-  const resolved = path.resolve(REPO_ROOT, inputPath);
+  const resolved = path.resolve(getRepoRoot(), inputPath);
 
   // Ensure it's within the repo root
-  if (!resolved.startsWith(REPO_ROOT)) {
+  if (!resolved.startsWith(getRepoRoot())) {
     throw new Error(`Path "${inputPath}" is outside the repository`);
   }
 
   // Check against forbidden paths
-  const relative = path.relative(REPO_ROOT, resolved);
+  const relative = path.relative(getRepoRoot(), resolved);
   for (const forbidden of FORBIDDEN_PATHS) {
     if (relative === forbidden || relative.startsWith(forbidden + "/")) {
       throw new Error(`Access to "${inputPath}" is not allowed`);
@@ -165,7 +168,7 @@ export async function searchCode(pattern: string, searchPath?: string): Promise<
     // Use grep for searching
     const { stdout } = await execAsync(
       `grep -r -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --include="*.json" --include="*.md" "${pattern}" "${resolved}" 2>/dev/null | head -50`,
-      { cwd: REPO_ROOT, timeout: 30000 }
+      { cwd: getRepoRoot(), timeout: 30000 }
     );
 
     if (!stdout.trim()) {
@@ -175,7 +178,7 @@ export async function searchCode(pattern: string, searchPath?: string): Promise<
     // Make paths relative for cleaner output
     const lines = stdout
       .split("\n")
-      .map((line) => line.replace(REPO_ROOT + "/", ""))
+      .map((line) => line.replace(getRepoRoot() + "/", ""))
       .join("\n");
 
     return lines;
@@ -204,7 +207,7 @@ export async function runCommand(command: string): Promise<string> {
 
   try {
     const { stdout, stderr } = await execAsync(command, {
-      cwd: REPO_ROOT,
+      cwd: getRepoRoot(),
       timeout: 120000, // 2 minute timeout
       maxBuffer: 1024 * 1024, // 1MB max output
     });
@@ -257,7 +260,7 @@ export async function createBranch(branchName: string, ticketId: string): Promis
   try {
     // First, commit any staged changes and create branch locally
     await execAsync(`git checkout -b ${fullBranchName}`, {
-      cwd: REPO_ROOT,
+      cwd: getRepoRoot(),
       timeout: 30000,
     });
 
@@ -274,11 +277,11 @@ export async function createBranch(branchName: string, ticketId: string): Promis
 export async function commitChanges(message: string): Promise<string> {
   try {
     // Stage all changes
-    await execAsync("git add -A", { cwd: REPO_ROOT, timeout: 30000 });
+    await execAsync("git add -A", { cwd: getRepoRoot(), timeout: 30000 });
 
     // Check if there are changes to commit
     const { stdout: status } = await execAsync("git status --porcelain", {
-      cwd: REPO_ROOT,
+      cwd: getRepoRoot(),
       timeout: 30000,
     });
 
@@ -288,7 +291,7 @@ export async function commitChanges(message: string): Promise<string> {
 
     // Commit
     await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, {
-      cwd: REPO_ROOT,
+      cwd: getRepoRoot(),
       timeout: 30000,
     });
 
@@ -312,7 +315,7 @@ export async function createPullRequest(
   try {
     // Push branch to remote
     await execAsync(`git push -u origin ${branchName}`, {
-      cwd: REPO_ROOT,
+      cwd: getRepoRoot(),
       timeout: 60000,
     });
 
@@ -418,6 +421,6 @@ export function checkToolsHealth(): {
     fileSystemAccess: true, // Would check fs access
     gitAccess: true, // Would check git is available
     githubAccess: !!GITHUB_TOKEN,
-    repoRoot: REPO_ROOT,
+    repoRoot: getRepoRoot(),
   };
 }
