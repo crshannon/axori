@@ -95,7 +95,7 @@ jobs:
       - name: Link to Railway service
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway link -p ${{ secrets.RAILWAY_PROJECT_ID }} -s ${{ secrets.RAILWAY_SERVICE_NAME }}
+        run: railway link -p ${{ secrets.RAILWAY_PROJECT_ID }} -s ${{ secrets.RAILWAY_SERVICE_ID }} -e ${{ secrets.RAILWAY_ENVIRONMENT_NAME }}
 
       - name: Deploy to Railway
         env:
