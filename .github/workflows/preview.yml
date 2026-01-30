@@ -161,8 +161,11 @@ jobs:
         run: |
           BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
           TICKET_ID=$(echo "$BRANCH_NAME" | grep -oP 'AXO-\d+' || echo "")
+          # Create URL-safe branch name (replace / and special chars with -)
+          SAFE_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]' | cut -c1-50)
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
           echo "ticket_id=$TICKET_ID" >> $GITHUB_OUTPUT
+          echo "safe_branch=$SAFE_BRANCH" >> $GITHUB_OUTPUT
 
       - name: Notify Forge
         if: steps.branch.outputs.ticket_id != ''
@@ -182,29 +185,40 @@ jobs:
 
       - name: Post preview URL to PR
         uses: actions/github-script@v7
+        env:
+          VERCEL_TEAM_SLUG: ${{ vars.VERCEL_TEAM_SLUG || 'craigs-projects-68193f30' }}
         with:
           script: |
             const webChanged = '${{ needs.detect-changes.outputs.web }}' === 'true';
             const adminChanged = '${{ needs.detect-changes.outputs.admin }}' === 'true';
             const apiChanged = '${{ needs.detect-changes.outputs.api }}' === 'true';
-            const webPreviewUrl = '${{ needs.deploy-web.outputs.preview-url }}';
-            const adminPreviewUrl = '${{ needs.deploy-admin.outputs.preview-url }}';
+            const safeBranch = '${{ steps.branch.outputs.safe_branch }}';
             const ticketId = '${{ steps.branch.outputs.ticket_id }}';
+            const teamSlug = process.env.VERCEL_TEAM_SLUG;
+
+            // Stable branch URLs (these persist across commits to the same branch)
+            const webBranchUrl = `https://axori-web-git-${safeBranch}-${teamSlug}.vercel.app`;
+            const adminBranchUrl = `https://axori-admin-git-${safeBranch}-${teamSlug}.vercel.app`;
+
+            // Also include the latest commit URLs for reference
+            const webCommitUrl = '${{ needs.deploy-web.outputs.preview-url }}';
+            const adminCommitUrl = '${{ needs.deploy-admin.outputs.preview-url }}';
 
             let body = `## Preview Deployment Ready\n\n`;
-            body += `| App | Status | Preview URL |\n`;
-            body += `|-----|--------|-------------|\n`;
+            body += `> **Tip:** Use the stable branch URLs below - they update automatically with each push.\n\n`;
+            body += `| App | Status | Stable Branch URL |\n`;
+            body += `|-----|--------|-------------------|\n`;
 
-            if (webChanged && webPreviewUrl) {
-              body += `| Web | ✅ Deployed | [${webPreviewUrl}](${webPreviewUrl}) |\n`;
+            if (webChanged && webCommitUrl) {
+              body += `| Web | ✅ Deployed | [${webBranchUrl}](${webBranchUrl}) |\n`;
             } else if (webChanged) {
               body += `| Web | ⚠️ Deploy failed | - |\n`;
             } else {
               body += `| Web | ⏭️ Skipped | No changes |\n`;
             }
 
-            if (adminChanged && adminPreviewUrl) {
-              body += `| Admin | ✅ Deployed | [${adminPreviewUrl}](${adminPreviewUrl}) |\n`;
+            if (adminChanged && adminCommitUrl) {
+              body += `| Admin | ✅ Deployed | [${adminBranchUrl}](${adminBranchUrl}) |\n`;
             } else if (adminChanged) {
               body += `| Admin | ⚠️ Deploy failed | - |\n`;
             } else {
@@ -221,9 +235,35 @@ jobs:
               body += `\n**Ticket:** ${ticketId}`;
             }
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            body += `\n\n<details><summary>Latest commit URLs</summary>\n\n`;
+            if (webCommitUrl) body += `- Web: ${webCommitUrl}\n`;
+            if (adminCommitUrl) body += `- Admin: ${adminCommitUrl}\n`;
+            body += `</details>`;
+
+            // Find and update existing comment, or create new one
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body
+              issue_number: context.issue.number,
             });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('## Preview Deployment Ready')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body
+              });
+            }
