@@ -20,7 +20,9 @@ const execAsync = promisify(exec);
 // The root directory of the codebase - agents work within this directory
 // Use a getter to ensure env is read after it's loaded
 function getRepoRoot(): string {
-  return process.env.FORGE_getRepoRoot() || process.cwd();
+  const root = process.env.FORGE_REPO_ROOT || process.cwd();
+  console.log(`[tools] FORGE_REPO_ROOT=${root}`);
+  return root;
 }
 
 // GitHub configuration
