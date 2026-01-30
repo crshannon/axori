@@ -9,13 +9,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-preview:
+  ci:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-      deployments: write
-
     steps:
       - uses: actions/checkout@v4
 
@@ -38,38 +33,63 @@ jobs:
       - name: Run tests
         run: pnpm test --filter=!@axori/mobile
 
-      - name: Build
-        run: pnpm build --filter=!@axori/mobile
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
-          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.STAGING_CLERK_PUBLISHABLE_KEY }}
+  deploy-web:
+    runs-on: ubuntu-latest
+    needs: ci
+    permissions:
+      contents: read
+      pull-requests: write
+      deployments: write
+    outputs:
+      preview-url: ${{ steps.deploy.outputs.preview-url }}
 
-      - name: Extract branch info
-        id: branch
-        run: |
-          BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
-          TICKET_ID=$(echo "$BRANCH_NAME" | grep -oP 'AXO-\d+' || echo "")
-          PREVIEW_SUBDOMAIN=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9-]/-/g' | cut -c1-20)
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
-          echo "ticket_id=$TICKET_ID" >> $GITHUB_OUTPUT
-          echo "preview_subdomain=$PREVIEW_SUBDOMAIN" >> $GITHUB_OUTPUT
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Deploy Web to Vercel Preview
-        id: deploy-web
+        id: deploy
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
 
+  deploy-admin:
+    runs-on: ubuntu-latest
+    needs: ci
+    permissions:
+      contents: read
+      pull-requests: write
+      deployments: write
+    outputs:
+      preview-url: ${{ steps.deploy.outputs.preview-url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Deploy Admin to Vercel Preview
-        id: deploy-admin
+        id: deploy
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy-web, deploy-admin]
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Extract branch info
+        id: branch
+        run: |
+          BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+          TICKET_ID=$(echo "$BRANCH_NAME" | grep -oP 'AXO-\d+' || echo "")
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "ticket_id=$TICKET_ID" >> $GITHUB_OUTPUT
 
       - name: Notify Forge
         if: steps.branch.outputs.ticket_id != ''
@@ -79,8 +99,8 @@ jobs:
             -H "X-Webhook-Secret: ${{ secrets.FORGE_WEBHOOK_SECRET }}" \
             -d '{
               "ticket_id": "${{ steps.branch.outputs.ticket_id }}",
-              "preview_url": "${{ steps.deploy-web.outputs.preview-url }}",
-              "admin_preview_url": "${{ steps.deploy-admin.outputs.preview-url }}",
+              "preview_url": "${{ needs.deploy-web.outputs.preview-url }}",
+              "admin_preview_url": "${{ needs.deploy-admin.outputs.preview-url }}",
               "branch": "${{ steps.branch.outputs.branch_name }}",
               "status": "deployed",
               "commit_sha": "${{ github.sha }}"
@@ -91,8 +111,8 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const webPreviewUrl = '${{ steps.deploy-web.outputs.preview-url }}';
-            const adminPreviewUrl = '${{ steps.deploy-admin.outputs.preview-url }}';
+            const webPreviewUrl = '${{ needs.deploy-web.outputs.preview-url }}';
+            const adminPreviewUrl = '${{ needs.deploy-admin.outputs.preview-url }}';
             const ticketId = '${{ steps.branch.outputs.ticket_id }}';
 
             const body = `## Preview Deployment Ready
