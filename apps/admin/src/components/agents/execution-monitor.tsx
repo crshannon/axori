@@ -64,6 +64,9 @@ export function ExecutionMonitor({
   const queryClient = useQueryClient();
   const { data: execution, isLoading } = useExecution(executionId);
 
+  // Copy state - MUST be before any early returns
+  const [copied, setCopied] = useState(false);
+
   // Poll for updates while running
   useEffect(() => {
     if (!execution || execution.status === "completed" || execution.status === "failed") {
@@ -103,9 +106,6 @@ export function ExecutionMonitor({
 
   // Parse logs into lines
   const logLines = execution.executionLog?.split("\n").filter(Boolean) || [];
-
-  // Copy state
-  const [copied, setCopied] = useState(false);
 
   const handleCopyLogs = async () => {
     const logText = logLines.join("\n");
