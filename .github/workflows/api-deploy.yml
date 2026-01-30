@@ -92,11 +92,15 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
+      - name: Link to Railway service
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway link -p ${{ secrets.RAILWAY_PROJECT_ID }} -s ${{ secrets.RAILWAY_SERVICE_NAME }}
+
       - name: Deploy to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-        run: railway up --detach --service ${{ secrets.RAILWAY_SERVICE_NAME }}
+        run: railway up --detach
 
       - name: Post deployment summary
         uses: actions/github-script@v7
