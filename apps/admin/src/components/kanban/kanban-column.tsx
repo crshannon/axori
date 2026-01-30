@@ -12,9 +12,10 @@ interface KanbanColumnProps {
   title: string;
   color: string;
   tickets: Array<ForgeTicket>;
+  onTicketClick?: (ticket: ForgeTicket) => void;
 }
 
-export function KanbanColumn({ id, title, color, tickets }: KanbanColumnProps) {
+export function KanbanColumn({ id, title, color, tickets, onTicketClick }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
   });
@@ -48,7 +49,7 @@ export function KanbanColumn({ id, title, color, tickets }: KanbanColumnProps) {
         >
           <div className="flex flex-col gap-2">
             {tickets.map((ticket) => (
-              <TicketCard key={ticket.id} ticket={ticket} />
+              <TicketCard key={ticket.id} ticket={ticket} onClick={onTicketClick} />
             ))}
           </div>
         </SortableContext>
