@@ -11,6 +11,7 @@ import {
   forgeTickets,
   forgeTokenUsage,
   eq,
+  sql,
 } from "@axori/db";
 import {
   getAnthropicClient,
@@ -458,12 +459,36 @@ export async function startExecution(executionId: string): Promise<void> {
     const prInfo = executionPRs.get(executionId);
     const branchName = executionBranches.get(executionId);
 
+    // Build execution history entry
+    const historyEntry = {
+      executionId,
+      protocol: context.protocol,
+      status: "completed" as const,
+      summary: result.finalResponse?.slice(0, 500) || "Execution completed",
+      completedAt: new Date().toISOString(),
+      tokensUsed: result.totalInputTokens + result.totalOutputTokens,
+    };
+
+    // Get current execution history
+    const [currentTicket] = await db
+      .select({ executionHistory: forgeTickets.executionHistory })
+      .from(forgeTickets)
+      .where(eq(forgeTickets.id, context.ticketId))
+      .limit(1);
+
+    const updatedHistory = [
+      ...(currentTicket?.executionHistory || []),
+      historyEntry,
+    ];
+
     // Update ticket: clear agent, add PR info, move to in_review if PR created
     await db
       .update(forgeTickets)
       .set({
         assignedAgent: null,
         agentSessionId: null,
+        lastExecutionId: executionId,
+        executionHistory: updatedHistory,
         // If PR was created, link it and move to in_review
         ...(prInfo && {
           prUrl: prInfo.prUrl,
@@ -495,12 +520,35 @@ export async function startExecution(executionId: string): Promise<void> {
       })
       .where(eq(forgeAgentExecutions.id, executionId));
 
+    // Build failed execution history entry
+    const failedHistoryEntry = {
+      executionId,
+      protocol: context.protocol,
+      status: "failed" as const,
+      summary: error instanceof Error ? error.message : "Unknown error occurred",
+      completedAt: new Date().toISOString(),
+    };
+
+    // Get current execution history
+    const [currentTicketOnFail] = await db
+      .select({ executionHistory: forgeTickets.executionHistory })
+      .from(forgeTickets)
+      .where(eq(forgeTickets.id, context.ticketId))
+      .limit(1);
+
+    const updatedFailHistory = [
+      ...(currentTicketOnFail?.executionHistory || []),
+      failedHistoryEntry,
+    ];
+
     // Clear agent from ticket (keep in_progress status for manual handling)
     await db
       .update(forgeTickets)
       .set({
         assignedAgent: null,
         agentSessionId: null,
+        lastExecutionId: executionId,
+        executionHistory: updatedFailHistory,
         updatedAt: new Date(),
       })
       .where(eq(forgeTickets.id, context.ticketId));

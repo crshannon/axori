@@ -228,6 +228,18 @@ export const forgeTickets = forgeSchema.table(
     assignedAgent: forgeAgentProtocolEnum("assigned_agent"),
     agentSessionId: uuid("agent_session_id"),
 
+    // Agent Execution History
+    lastExecutionId: uuid("last_execution_id"),
+    executionHistory: jsonb("execution_history").$type<Array<{
+      executionId: string;
+      protocol: string;
+      status: "completed" | "failed";
+      summary: string;
+      completedAt: string;
+      tokensUsed?: number;
+      filesChanged?: string[];
+    }>>(),
+
     // Git Integration
     branchName: text("branch_name"),
     previewUrl: text("preview_url"),
