@@ -69,16 +69,16 @@ jobs:
           alias-domains: ${{ vars.STAGING_ADMIN_DOMAIN || '' }}
 
       - name: Run E2E tests
-        if: vars.STAGING_DOMAIN != ''
+        if: ${{ vars.STAGING_DOMAIN != '' }}
         run: pnpm test:e2e
         env:
           BASE_URL: https://${{ vars.STAGING_DOMAIN }}
         continue-on-error: true
 
       - name: Notify Forge
-        if: secrets.FORGE_WEBHOOK_URL != ''
+        if: ${{ vars.FORGE_WEBHOOK_URL != '' }}
         run: |
-          curl -X POST "${{ secrets.FORGE_WEBHOOK_URL }}/api/webhooks/github/staging" \
+          curl -X POST "${{ vars.FORGE_WEBHOOK_URL }}/api/webhooks/github/staging" \
             -H "Content-Type: application/json" \
             -H "X-Webhook-Secret: ${{ secrets.FORGE_WEBHOOK_SECRET }}" \
             -d '{
