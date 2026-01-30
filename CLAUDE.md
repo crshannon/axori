@@ -720,6 +720,12 @@ Secrets are configured per-environment in GitHub (Settings → Environments):
 | `staging.yml` | Web staging deployment | Push to main |
 | `production.yml` | Web production deployment | Tag releases |
 
+### Deployment Decisions
+
+- **GitHub Actions for all deployments** - We use GitHub Actions workflows to deploy to Vercel/Railway, NOT Vercel's native Git integration. This gives us more control over the deployment pipeline and keeps CI/CD in one place.
+- **Vercel deployment retention** - Configure in Vercel Project Settings → Deployment Retention to auto-cleanup old preview deployments (recommend 7-14 days for previews).
+- **Use branch URLs for PR testing** - Vercel provides stable branch URLs (e.g., `axori-git-branch-name.vercel.app`) that update with each push. Share these instead of commit-hash URLs.
+
 ### Creating a Production Release
 
 ```bash
@@ -742,3 +748,18 @@ This triggers production deployments across all services.
 - Always validate with Zod before database operations
 - Use `withErrorHandling` wrapper on all API routes
 - Drawers are URL-based, not React state
+
+---
+
+## Documenting Decisions
+
+**IMPORTANT:** When making architectural, tooling, or workflow decisions during a session, always update this CLAUDE.md file to document the decision. This prevents repeated discussions and ensures consistency across sessions.
+
+Examples of decisions to document:
+- Deployment strategy choices (e.g., GitHub Actions vs native provider integration)
+- Library/framework selections and why
+- API design patterns chosen
+- Naming conventions adopted
+- Workflow preferences (e.g., branch strategy, PR process)
+
+Format: Add decisions to the relevant section, or create a new section if needed. Keep it concise but include the "what" and "why".
