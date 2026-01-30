@@ -322,6 +322,7 @@ export async function createBranch(branchName: string, ticketId: string): Promis
  */
 export async function commitChanges(message: string, targetBranch?: string): Promise<string> {
   const repoRoot = getRepoRoot();
+  console.log(`[commitChanges] targetBranch=${targetBranch}`);
 
   try {
     // Get current branch to restore later
@@ -330,6 +331,7 @@ export async function commitChanges(message: string, targetBranch?: string): Pro
       timeout: 30000,
     });
     const originalBranch = currentBranch.trim() || "main";
+    console.log(`[commitChanges] originalBranch=${originalBranch}, targetBranch=${targetBranch}`);
 
     // Stage all changes
     await execAsync("git add -A", { cwd: repoRoot, timeout: 30000 });
@@ -344,6 +346,7 @@ export async function commitChanges(message: string, targetBranch?: string): Pro
       return "No changes to commit";
     }
 
+    console.log(`[commitChanges] Will use stash workflow: ${!!(targetBranch && targetBranch !== originalBranch)}`);
     // If we have a target branch different from current, use stash to move changes
     if (targetBranch && targetBranch !== originalBranch) {
       // Stash the staged changes (include untracked for new files)
@@ -486,6 +489,7 @@ export async function executeTool(
     }
 
     case "commit_changes":
+      console.log(`[executeTool] commit_changes called with context.branchName=${context.branchName}`);
       return commitChanges(input.message as string, context.branchName);
 
     case "create_pr": {
