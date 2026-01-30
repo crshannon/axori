@@ -39,15 +39,13 @@ export default defineConfig(({ mode, command }) => {
     },
     build: {
       rollupOptions: {
-        external: (id) => {
-          if (id === "@axori/db") {
-            return true;
-          }
-          if (id === "@axori/db/types") {
-            return false;
-          }
-          return false;
-        },
+        // Server-only modules that should not be in the client bundle
+        // These contain Node.js-specific code (postgres driver, etc.)
+        external: [
+          "@axori/db",
+          "postgres",
+          "drizzle-orm",
+        ],
       },
     },
     plugins: [

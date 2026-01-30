@@ -16,7 +16,7 @@ import { Filter, Loader2, Plus, Search } from "lucide-react";
 import { KanbanColumn } from "./kanban-column";
 import { TicketCard } from "./ticket-card";
 import type {DragEndEvent, DragOverEvent, DragStartEvent} from "@dnd-kit/core";
-import type { ForgeTicket } from "@axori/db";
+import type { ForgeTicket } from "@axori/db/types";
 import { useTickets, useUpdateTicketStatus } from "@/hooks/api/use-tickets";
 
 // Ticket status columns configuration

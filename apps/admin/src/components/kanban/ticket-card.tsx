@@ -13,7 +13,7 @@ import {
   Wrench,
   Zap,
 } from "lucide-react";
-import type { ForgeTicket } from "@axori/db";
+import type { ForgeTicket } from "@axori/db/types";
 
 interface TicketCardProps {
   ticket: ForgeTicket;
