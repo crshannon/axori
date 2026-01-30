@@ -130,6 +130,7 @@ const ticketFilterSchema = z.object({
   projectId: z.string().uuid().optional(),
   search: z.string().optional(),
   parentId: z.string().uuid().optional(),
+  prefix: z.enum(["FORGE", "AXO"]).optional(), // Filter by identifier prefix
 });
 
 // =============================================================================
@@ -172,6 +173,11 @@ router.get(
       if (filters.search) {
         conditions.push(
           sql`(${forgeTickets.title} ILIKE ${"%" + filters.search + "%"} OR ${forgeTickets.identifier} ILIKE ${"%" + filters.search + "%"})`
+        );
+      }
+      if (filters.prefix) {
+        conditions.push(
+          sql`${forgeTickets.identifier} LIKE ${filters.prefix + "-%"}`
         );
       }
 
@@ -246,7 +252,7 @@ router.post(
         operation: "createForgeTicket",
       });
 
-      // Generate identifier (AXO-XXX)
+      // Generate identifier (FORGE-XXX for Forge tickets)
       const [lastTicket] = await db
         .select({ identifier: forgeTickets.identifier })
         .from(forgeTickets)
@@ -255,13 +261,14 @@ router.post(
 
       let nextNumber = 1;
       if (lastTicket?.identifier) {
-        const match = lastTicket.identifier.match(/AXO-(\d+)/);
+        // Support both FORGE- and legacy AXO- prefixes
+        const match = lastTicket.identifier.match(/(?:FORGE|AXO)-(\d+)/);
         if (match) {
           nextNumber = parseInt(match[1], 10) + 1;
         }
       }
 
-      const identifier = `AXO-${nextNumber.toString().padStart(3, "0")}`;
+      const identifier = `FORGE-${nextNumber.toString().padStart(3, "0")}`;
 
       const [created] = await db
         .insert(forgeTickets)

@@ -196,6 +196,28 @@ VERCEL_TOKEN=
 
 ---
 
+## Implementation Notes (Updated)
+
+### Ticket Identifiers
+- **Forge tickets** use the `FORGE-` prefix (e.g., `FORGE-001`)
+- **Legacy Axori tickets** use the `AXO-` prefix (e.g., `AXO-123`)
+- Both prefixes are supported for backward compatibility
+- Filter by prefix using `?prefix=FORGE` or `?prefix=AXO`
+
+### API Endpoints
+- Tickets: `GET/POST /api/forge/tickets`
+- Executions: `GET/POST /api/forge/executions`
+- Health check: `GET /api/forge/executions/health`
+- Budgets: `GET /api/forge/budget/*`
+
+### Key Changes from Original Spec
+- Agent orchestrator runs on API server, not admin app
+- Simulated tools in Phase 1 (real git integration in Phase 2)
+- Playwright E2E tests set up in admin app
+- Ticket drawer supports create/edit/delete
+
+---
+
 ## Full Spec
 
 For complete details on:

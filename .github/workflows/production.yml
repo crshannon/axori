@@ -205,7 +205,7 @@ jobs:
       - name: Extract tickets from commits
         id: tickets
         run: |
-          TICKETS=$(git log --oneline HEAD~10..HEAD | grep -oP 'AXO-\d+' | sort -u | tr '\n' ',' | sed 's/,$//')
+          TICKETS=$(git log --oneline HEAD~10..HEAD | grep -oP '(FORGE|AXO)-\d+' | sort -u | tr '\n' ',' | sed 's/,$//')
           echo "tickets=$TICKETS" >> $GITHUB_OUTPUT
 
       - name: Notify Forge

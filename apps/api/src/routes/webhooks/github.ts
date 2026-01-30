@@ -90,7 +90,7 @@ router.post("/preview", verifyWebhookSecret, async (c) => {
 
   // If ticket ID provided, update ticket with preview URL
   if (ticket_id && status === "deployed") {
-    // Find ticket by identifier (e.g., AXO-123)
+    // Find ticket by identifier (e.g., FORGE-123 or AXO-123)
     const [ticket] = await db
       .select()
       .from(forgeTickets)
