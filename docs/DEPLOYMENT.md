@@ -124,23 +124,23 @@ For each project in Vercel Dashboard:
 
 | Setting | Value |
 |---------|-------|
-| Framework Preset | Other |
+| Framework Preset | TanStack Start |
 | Root Directory | `apps/web` |
-| Build Command | `pnpm build` |
-| Output Directory | `.output` |
-| Install Command | `pnpm install` |
+| Build Command | (use default) |
+| Output Directory | (use default) |
+| Install Command | (use default) |
 
 **Admin App (axori-admin):**
 
 | Setting | Value |
 |---------|-------|
-| Framework Preset | Other |
+| Framework Preset | TanStack Start |
 | Root Directory | `apps/admin` |
-| Build Command | `pnpm build` |
-| Output Directory | `.output` |
-| Install Command | `pnpm install` |
+| Build Command | (use default) |
+| Output Directory | (use default) |
+| Install Command | (use default) |
 
-> **Note:** Both apps use TanStack Start with Nitro, which outputs to `.output` (not `dist`). The Framework Preset should be "Other" since TanStack Start has its own build process.
+> **Note:** The TanStack Start preset automatically configures the correct build settings.
 
 ### Environment Variables
 
