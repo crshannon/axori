@@ -154,7 +154,7 @@ Add these in Vercel Dashboard → Project → **Settings** → **Environment Var
 | `VITE_SUPABASE_ANON_KEY` | `eyJhbGci...` | All | Supabase anon/public key |
 | `VITE_CLERK_PUBLISHABLE_KEY` | `pk_test_xxx...` | All | Clerk publishable key |
 | `VITE_API_URL` | `https://api.axori.com` | Production | Production API URL |
-| `VITE_API_URL` | `http://localhost:3001` | Preview, Development | Dev/preview API URL |
+| `VITE_API_URL` | `https://staging-api.axori.com` | Preview | Staging API URL for previews |
 | `VITE_COMING_SOON_MODE` | `false` | All | Set to `true` to show landing page |
 
 **Admin App (axori-admin):**
@@ -163,7 +163,7 @@ Add these in Vercel Dashboard → Project → **Settings** → **Environment Var
 |----------|-------|--------------|-------------|
 | `VITE_CLERK_PUBLISHABLE_KEY` | `pk_test_xxx...` | All | Clerk publishable key |
 | `VITE_API_URL` | `https://api.axori.com` | Production | Production API URL |
-| `VITE_API_URL` | `http://localhost:3001` | Preview, Development | Dev/preview API URL |
+| `VITE_API_URL` | `https://staging-api.axori.com` | Preview | Staging API URL for previews |
 
 > **Note:** The admin app communicates with the database through the API, so it doesn't need direct Supabase credentials.
 
