@@ -104,7 +104,10 @@ Go to your GitHub repo → **Settings** → **Secrets and variables** → **Acti
 
 | Variable | Value | Description |
 |----------|-------|-------------|
-| `PRODUCTION_DOMAIN` | `app.axori.com` | Custom production domain (optional) |
+| `PRODUCTION_DOMAIN` | `app.axori.com` | Web app production domain (optional) |
+| `PRODUCTION_ADMIN_DOMAIN` | `admin.axori.com` | Admin app production domain (optional) |
+| `STAGING_DOMAIN` | `staging.axori.com` | Web app staging domain (optional) |
+| `STAGING_ADMIN_DOMAIN` | `staging-admin.axori.com` | Admin app staging domain (optional) |
 
 ---
 

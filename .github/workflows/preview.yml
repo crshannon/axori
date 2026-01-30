@@ -55,13 +55,21 @@ jobs:
           echo "ticket_id=$TICKET_ID" >> $GITHUB_OUTPUT
           echo "preview_subdomain=$PREVIEW_SUBDOMAIN" >> $GITHUB_OUTPUT
 
-      - name: Deploy to Vercel Preview
-        id: deploy
+      - name: Deploy Web to Vercel Preview
+        id: deploy-web
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
+
+      - name: Deploy Admin to Vercel Preview
+        id: deploy-admin
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
 
       - name: Notify Forge
         if: steps.branch.outputs.ticket_id != ''
@@ -71,7 +79,8 @@ jobs:
             -H "X-Webhook-Secret: ${{ secrets.FORGE_WEBHOOK_SECRET }}" \
             -d '{
               "ticket_id": "${{ steps.branch.outputs.ticket_id }}",
-              "preview_url": "${{ steps.deploy.outputs.preview-url }}",
+              "preview_url": "${{ steps.deploy-web.outputs.preview-url }}",
+              "admin_preview_url": "${{ steps.deploy-admin.outputs.preview-url }}",
               "branch": "${{ steps.branch.outputs.branch_name }}",
               "status": "deployed",
               "commit_sha": "${{ github.sha }}"
@@ -82,12 +91,16 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const previewUrl = '${{ steps.deploy.outputs.preview-url }}';
+            const webPreviewUrl = '${{ steps.deploy-web.outputs.preview-url }}';
+            const adminPreviewUrl = '${{ steps.deploy-admin.outputs.preview-url }}';
             const ticketId = '${{ steps.branch.outputs.ticket_id }}';
 
             const body = `## Preview Deployment Ready
 
-            **Preview:** [${previewUrl}](${previewUrl})
+            | App | Preview URL |
+            |-----|-------------|
+            | Web | [${webPreviewUrl}](${webPreviewUrl}) |
+            | Admin | [${adminPreviewUrl}](${adminPreviewUrl}) |
 
             ${ticketId ? `**Ticket:** ${ticketId}` : ''}`;
 

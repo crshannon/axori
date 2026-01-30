@@ -48,8 +48,8 @@ jobs:
           VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.STAGING_CLERK_PUBLISHABLE_KEY }}
           VITE_API_URL: ${{ secrets.STAGING_API_URL }}
 
-      - name: Deploy to Vercel
-        id: deploy
+      - name: Deploy Web to Vercel
+        id: deploy-web
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -57,6 +57,16 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
           vercel-args: '--prod'
           alias-domains: ${{ vars.STAGING_DOMAIN || '' }}
+
+      - name: Deploy Admin to Vercel
+        id: deploy-admin
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
+          vercel-args: '--prod'
+          alias-domains: ${{ vars.STAGING_ADMIN_DOMAIN || '' }}
 
       - name: Run E2E tests
         if: vars.STAGING_DOMAIN != ''
@@ -76,7 +86,8 @@ jobs:
               "status": "deployed",
               "commit_sha": "${{ github.sha }}",
               "branch": "main",
-              "deploy_url": "${{ steps.deploy.outputs.preview-url }}"
+              "web_deploy_url": "${{ steps.deploy-web.outputs.preview-url }}",
+              "admin_deploy_url": "${{ steps.deploy-admin.outputs.preview-url }}"
             }'
         continue-on-error: true
 
@@ -84,14 +95,18 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const stagingDomain = '${{ vars.STAGING_DOMAIN }}' || '${{ steps.deploy.outputs.preview-url }}';
+            const webDomain = '${{ vars.STAGING_DOMAIN }}' || '${{ steps.deploy-web.outputs.preview-url }}';
+            const adminDomain = '${{ vars.STAGING_ADMIN_DOMAIN }}' || '${{ steps.deploy-admin.outputs.preview-url }}';
 
             const summary = `## Staging Deployment Complete
 
             **Commit:** ${{ github.sha }}
             **Branch:** main
 
-            **Staging URL:** [${stagingDomain}](https://${stagingDomain})
+            | App | Staging URL |
+            |-----|-------------|
+            | Web | [${webDomain}](https://${webDomain}) |
+            | Admin | [${adminDomain}](https://${adminDomain}) |
 
             Ready for QA. Create a release tag to deploy to production.
             `;

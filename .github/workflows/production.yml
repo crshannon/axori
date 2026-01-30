@@ -58,8 +58,8 @@ jobs:
           VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.PROD_CLERK_PUBLISHABLE_KEY }}
           VITE_API_URL: ${{ secrets.PROD_API_URL }}
 
-      - name: Deploy to Vercel
-        id: deploy
+      - name: Deploy Web to Vercel
+        id: deploy-web
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -67,6 +67,16 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
           vercel-args: '--prod'
           alias-domains: ${{ vars.PRODUCTION_DOMAIN || '' }}
+
+      - name: Deploy Admin to Vercel
+        id: deploy-admin
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
+          vercel-args: '--prod'
+          alias-domains: ${{ vars.PRODUCTION_ADMIN_DOMAIN || '' }}
 
       - name: Get release tag
         id: tag
@@ -138,7 +148,8 @@ jobs:
               "commit_sha": "${{ github.sha }}",
               "release_tag": "${{ steps.tag.outputs.tag }}",
               "tickets": "${{ steps.tickets.outputs.tickets }}",
-              "deploy_url": "${{ steps.deploy.outputs.preview-url }}"
+              "web_deploy_url": "${{ steps.deploy-web.outputs.preview-url }}",
+              "admin_deploy_url": "${{ steps.deploy-admin.outputs.preview-url }}"
             }'
         continue-on-error: true
 
@@ -148,7 +159,8 @@ jobs:
           script: |
             const releaseTag = '${{ steps.tag.outputs.tag }}';
             const tickets = '${{ steps.tickets.outputs.tickets }}'.split(',').filter(Boolean);
-            const prodDomain = '${{ vars.PRODUCTION_DOMAIN }}' || '${{ steps.deploy.outputs.preview-url }}';
+            const webDomain = '${{ vars.PRODUCTION_DOMAIN }}' || '${{ steps.deploy-web.outputs.preview-url }}';
+            const adminDomain = '${{ vars.PRODUCTION_ADMIN_DOMAIN }}' || '${{ steps.deploy-admin.outputs.preview-url }}';
 
             const summary = `## Production Deployment Complete
 
@@ -157,7 +169,10 @@ jobs:
 
             ${tickets.length > 0 ? `### Tickets Included\n${tickets.map(t => `- ${t}`).join('\n')}` : ''}
 
-            **Live at:** [${prodDomain}](https://${prodDomain})
+            | App | Production URL |
+            |-----|----------------|
+            | Web | [${webDomain}](https://${webDomain}) |
+            | Admin | [${adminDomain}](https://${adminDomain}) |
             `;
 
             await core.summary
