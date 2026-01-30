@@ -95,6 +95,7 @@ export function TicketDrawer({
   const [labels, setLabels] = useState<Array<string>>([]);
   const [labelInput, setLabelInput] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showExpandedLogs, setShowExpandedLogs] = useState(false);
 
   // Mutations
   const createTicket = useCreateTicket();
@@ -123,6 +124,7 @@ export function TicketDrawer({
     }
     setShowDeleteConfirm(false);
     setLabelInput("");
+    setShowExpandedLogs(false);
   }, [ticket, isOpen]);
 
   const handleSave = () => {
@@ -229,6 +231,16 @@ export function TicketDrawer({
         </div>
       }
     >
+      {/* Expanded Logs View */}
+      {showExpandedLogs && ticket?.agentSessionId ? (
+        <div className="h-full">
+          <ExecutionMonitor
+            executionId={ticket.agentSessionId}
+            expanded={true}
+            onCollapse={() => setShowExpandedLogs(false)}
+          />
+        </div>
+      ) : (
       <div className="space-y-6">
         {/* Delete Confirmation */}
         {showDeleteConfirm && (
@@ -461,7 +473,10 @@ export function TicketDrawer({
             </h3>
             {ticket?.agentSessionId ? (
               // Show execution monitor when there's an active execution
-              <ExecutionMonitor executionId={ticket.agentSessionId} />
+              <ExecutionMonitor
+                executionId={ticket.agentSessionId}
+                onExpand={() => setShowExpandedLogs(true)}
+              />
             ) : ticket?.assignedAgent ? (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -489,6 +504,7 @@ export function TicketDrawer({
           </div>
         )}
       </div>
+      )}
     </Drawer>
   );
 }

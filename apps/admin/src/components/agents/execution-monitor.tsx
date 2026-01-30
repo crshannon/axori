@@ -4,14 +4,20 @@
  * Shows real-time status and logs for an agent execution
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bot, CheckCircle, Clock, Loader2, XCircle } from "lucide-react";
+import { ArrowLeft, Bot, CheckCircle, Clock, Copy, Check, Expand, Loader2, XCircle } from "lucide-react";
 import { useExecution, agentKeys } from "@/hooks/api/use-agents";
 
 interface ExecutionMonitorProps {
   executionId: string;
   onComplete?: () => void;
+  /** When true, shows full-height expanded view */
+  expanded?: boolean;
+  /** Called when user clicks to expand the logs */
+  onExpand?: () => void;
+  /** Called when user clicks back from expanded view */
+  onCollapse?: () => void;
 }
 
 const STATUS_CONFIG = {
@@ -48,7 +54,13 @@ const STATUS_CONFIG = {
   },
 };
 
-export function ExecutionMonitor({ executionId, onComplete }: ExecutionMonitorProps) {
+export function ExecutionMonitor({
+  executionId,
+  onComplete,
+  expanded = false,
+  onExpand,
+  onCollapse,
+}: ExecutionMonitorProps) {
   const queryClient = useQueryClient();
   const { data: execution, isLoading } = useExecution(executionId);
 
@@ -92,6 +104,109 @@ export function ExecutionMonitor({ executionId, onComplete }: ExecutionMonitorPr
   // Parse logs into lines
   const logLines = execution.executionLog?.split("\n").filter(Boolean) || [];
 
+  // Copy state
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLogs = async () => {
+    const logText = logLines.join("\n");
+    await navigator.clipboard.writeText(logText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Expanded view - full height logs display
+  if (expanded) {
+    return (
+      <div className="flex flex-col h-full">
+        {/* Header with back button */}
+        <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+          <button
+            onClick={onCollapse}
+            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="text-sm">Back to ticket</span>
+          </button>
+          <div className="flex items-center gap-2">
+            <div className={`p-1.5 rounded-lg ${config.bgColor}`}>
+              <StatusIcon
+                className={`h-4 w-4 ${config.color} ${"animate" in config && config.animate ? "animate-spin" : ""}`}
+              />
+            </div>
+            <span className={`text-sm font-medium ${config.color}`}>{config.label}</span>
+          </div>
+        </div>
+
+        {/* Full height log area */}
+        <div className="flex-1 rounded-lg bg-black/30 border border-white/5 p-4 overflow-y-auto">
+          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-white/5">
+            <Bot className="h-4 w-4 text-violet-400" />
+            <span className="text-sm font-medium text-slate-300">Agent Activity Log</span>
+            <div className="flex items-center gap-3 ml-auto">
+              <span className="text-xs text-slate-500">
+                {logLines.length} entries
+              </span>
+              {logLines.length > 0 && (
+                <button
+                  onClick={handleCopyLogs}
+                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-3 w-3 text-green-400" />
+                      <span className="text-green-400">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3 w-3" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+          {logLines.length > 0 ? (
+            <div className="space-y-2 font-mono text-sm">
+              {logLines.map((line, i) => (
+                <div key={i} className="text-slate-400 leading-relaxed hover:text-slate-300 transition-colors">
+                  {line}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
+              {execution.status === "running" ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Waiting for agent activity...</span>
+                </div>
+              ) : (
+                <span>No log entries</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer with timestamps */}
+        <div className="flex items-center justify-between pt-4 mt-4 border-t border-white/10 text-xs text-slate-500">
+          <div className="flex items-center gap-4">
+            {execution.startedAt && (
+              <span>Started: {new Date(execution.startedAt).toLocaleTimeString()}</span>
+            )}
+            {execution.completedAt && (
+              <span>Completed: {new Date(execution.completedAt).toLocaleTimeString()}</span>
+            )}
+          </div>
+          {execution.tokensUsed && (
+            <span>{execution.tokensUsed.toLocaleString()} tokens</span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Compact view (default)
   return (
     <div className="space-y-4">
       {/* Status Header */}
@@ -99,7 +214,7 @@ export function ExecutionMonitor({ executionId, onComplete }: ExecutionMonitorPr
         <div className="flex items-center gap-2">
           <div className={`p-1.5 rounded-lg ${config.bgColor}`}>
             <StatusIcon
-              className={`h-4 w-4 ${config.color} ${config.animate ? "animate-spin" : ""}`}
+              className={`h-4 w-4 ${config.color} ${"animate" in config && config.animate ? "animate-spin" : ""}`}
             />
           </div>
           <div>
@@ -118,10 +233,19 @@ export function ExecutionMonitor({ executionId, onComplete }: ExecutionMonitorPr
 
       {/* Execution Log */}
       {logLines.length > 0 && (
-        <div className="rounded-lg bg-black/30 border border-white/5 p-3 max-h-48 overflow-y-auto">
+        <div
+          onClick={onExpand}
+          className="rounded-lg bg-black/30 border border-white/5 p-3 max-h-48 overflow-y-auto cursor-pointer hover:border-violet-500/30 transition-colors group"
+        >
           <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/5">
             <Bot className="h-3 w-3 text-violet-400" />
             <span className="text-xs font-medium text-slate-300">Agent Activity</span>
+            {onExpand && (
+              <button className="ml-auto flex items-center gap-1 text-xs text-slate-500 group-hover:text-violet-400 transition-colors">
+                <Expand className="h-3 w-3" />
+                <span>Expand</span>
+              </button>
+            )}
           </div>
           <div className="space-y-1 font-mono text-xs">
             {logLines.slice(-10).map((line, i) => (

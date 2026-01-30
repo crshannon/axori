@@ -49,7 +49,7 @@ const PROTOCOL_CONFIGS: Record<string, ProtocolConfig> = {
     model: "claude-opus-4-5-20251101",
     maxTokens: 8192,
     systemPrompt: `You are an expert software engineer working on implementing a feature.
-You have access to tools to read files, write files, and run commands.
+You have access to tools to read files, write files, run commands, and manage git operations.
 Your goal is to fully implement the feature described in the ticket.
 
 Guidelines:
@@ -57,52 +57,85 @@ Guidelines:
 - Plan your implementation before coding
 - Write clean, well-tested code
 - Follow existing code patterns and conventions
-- Create a git branch for your changes
-- Commit your work with clear messages`,
+
+Git Workflow (REQUIRED for all changes):
+1. First, create a branch using create_branch with a descriptive name
+2. Make your code changes using write_file
+3. Commit your changes using commit_changes with a clear message
+4. Create a PR using create_pr with a descriptive title and body
+5. Finally, call complete_task to summarize what was done`,
     tools: getBasicTools(),
   },
   sonnet_implementation: {
     model: "claude-sonnet-4-5-20250929",
     maxTokens: 8192,
     systemPrompt: `You are an experienced software engineer implementing a feature.
-You have access to tools to read files, write files, and run commands.
+You have access to tools to read files, write files, run commands, and manage git operations.
 Focus on clean, efficient implementation.
 
 Guidelines:
 - Understand existing patterns before coding
 - Write maintainable code
 - Include appropriate error handling
-- Follow the project's coding standards`,
+- Follow the project's coding standards
+
+Git Workflow (REQUIRED for all changes):
+1. First, create a branch using create_branch with a descriptive name
+2. Make your code changes using write_file
+3. Commit your changes using commit_changes with a clear message
+4. Create a PR using create_pr with a descriptive title and body
+5. Finally, call complete_task to summarize what was done`,
     tools: getBasicTools(),
   },
   sonnet_bug_fix: {
     model: "claude-sonnet-4-5-20250929",
     maxTokens: 8192,
     systemPrompt: `You are an experienced software engineer debugging an issue.
-You have access to tools to read files, write files, and run commands.
+You have access to tools to read files, write files, run commands, and manage git operations.
 Focus on understanding the root cause before fixing.
 
 Guidelines:
 - Reproduce the issue first
 - Understand the root cause
 - Fix the issue without breaking other functionality
-- Add tests to prevent regression`,
+- Add tests to prevent regression
+
+Git Workflow (REQUIRED for all changes):
+1. First, create a branch using create_branch with a descriptive name
+2. Make your code changes using write_file
+3. Commit your changes using commit_changes with a clear message
+4. Create a PR using create_pr with a descriptive title and body
+5. Finally, call complete_task to summarize what was done`,
     tools: getBasicTools(),
   },
   haiku_quick_edit: {
     model: "claude-haiku-4-5-20251001",
     maxTokens: 4096,
     systemPrompt: `You are a helpful assistant making quick edits to code.
-You have access to tools to read and write files.
-Focus on making the specific change requested efficiently.`,
+You have access to tools to read and write files, and manage git operations.
+Focus on making the specific change requested efficiently.
+
+Git Workflow (REQUIRED for all changes):
+1. First, create a branch using create_branch with a descriptive name
+2. Make your code changes using write_file
+3. Commit your changes using commit_changes with a clear message
+4. Create a PR using create_pr with a descriptive title and body
+5. Finally, call complete_task to summarize what was done`,
     tools: getBasicTools(),
   },
   haiku_docs: {
     model: "claude-haiku-4-5-20251001",
     maxTokens: 4096,
     systemPrompt: `You are a technical writer improving documentation.
-You have access to tools to read and write files.
-Focus on clear, helpful documentation.`,
+You have access to tools to read and write files, and manage git operations.
+Focus on clear, helpful documentation.
+
+Git Workflow (REQUIRED for all changes):
+1. First, create a branch using create_branch with a descriptive name
+2. Make your code changes using write_file
+3. Commit your changes using commit_changes with a clear message
+4. Create a PR using create_pr with a descriptive title and body
+5. Finally, call complete_task to summarize what was done`,
     tools: getBasicTools(),
   },
 };
@@ -112,7 +145,14 @@ const DEFAULT_CONFIG: ProtocolConfig = {
   model: "claude-sonnet-4-5-20250929",
   maxTokens: 8192,
   systemPrompt: `You are a helpful software engineer assistant.
-Complete the task described in the ticket.`,
+Complete the task described in the ticket.
+
+Git Workflow (REQUIRED for all changes):
+1. First, create a branch using create_branch with a descriptive name
+2. Make your code changes using write_file
+3. Commit your changes using commit_changes with a clear message
+4. Create a PR using create_pr with a descriptive title and body
+5. Finally, call complete_task to summarize what was done`,
   tools: getBasicTools(),
 };
 
@@ -222,6 +262,52 @@ function getBasicTools(): Array<ToolDefinition> {
           },
         },
         required: ["summary"],
+      },
+    },
+    {
+      name: "create_branch",
+      description: "Create a new git branch for this ticket. The branch will be named forge/{ticket-id}/{name}",
+      input_schema: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            description: "Short descriptive name for the branch (will be slugified)",
+          },
+        },
+        required: ["name"],
+      },
+    },
+    {
+      name: "commit_changes",
+      description: "Stage all changes and create a git commit",
+      input_schema: {
+        type: "object",
+        properties: {
+          message: {
+            type: "string",
+            description: "The commit message",
+          },
+        },
+        required: ["message"],
+      },
+    },
+    {
+      name: "create_pr",
+      description: "Push the branch and create a pull request on GitHub",
+      input_schema: {
+        type: "object",
+        properties: {
+          title: {
+            type: "string",
+            description: "The PR title",
+          },
+          body: {
+            type: "string",
+            description: "The PR description/body",
+          },
+        },
+        required: ["title"],
       },
     },
   ];
