@@ -9,7 +9,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      admin: ${{ steps.filter.outputs.admin }}
+      any-code: ${{ steps.filter.outputs.any-code }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            web:
+              - 'apps/web/**'
+              - 'packages/ui/**'
+              - 'packages/db/**'
+              - 'packages/permissions/**'
+              - 'packages/shared/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+            admin:
+              - 'apps/admin/**'
+              - 'packages/ui/**'
+              - 'packages/db/**'
+              - 'packages/permissions/**'
+              - 'packages/shared/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+            any-code:
+              - 'apps/**'
+              - 'packages/**'
+
   ci:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.any-code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,7 +56,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+
+      - uses: actions/cache@v4
+        name: Setup turbo cache
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-turbo-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -35,7 +90,11 @@ jobs:
 
   deploy-web:
     runs-on: ubuntu-latest
-    needs: ci
+    needs: [detect-changes, ci]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.web == 'true' &&
+      (needs.ci.result == 'success' || needs.ci.result == 'skipped')
     permissions:
       contents: read
       pull-requests: write
@@ -56,7 +115,11 @@ jobs:
 
   deploy-admin:
     runs-on: ubuntu-latest
-    needs: ci
+    needs: [detect-changes, ci]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.admin == 'true' &&
+      (needs.ci.result == 'success' || needs.ci.result == 'skipped')
     permissions:
       contents: read
       pull-requests: write
@@ -77,7 +140,8 @@ jobs:
 
   notify:
     runs-on: ubuntu-latest
-    needs: [deploy-web, deploy-admin]
+    needs: [detect-changes, deploy-web, deploy-admin]
+    if: always() && (needs.deploy-web.result == 'success' || needs.deploy-admin.result == 'success')
     permissions:
       contents: read
       pull-requests: write
@@ -111,18 +175,31 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const webDeployed = '${{ needs.detect-changes.outputs.web }}' === 'true';
+            const adminDeployed = '${{ needs.detect-changes.outputs.admin }}' === 'true';
             const webPreviewUrl = '${{ needs.deploy-web.outputs.preview-url }}';
             const adminPreviewUrl = '${{ needs.deploy-admin.outputs.preview-url }}';
             const ticketId = '${{ steps.branch.outputs.ticket_id }}';
 
-            const body = `## Preview Deployment Ready
+            let body = `## Preview Deployment Ready\n\n`;
+            body += `| App | Status | Preview URL |\n`;
+            body += `|-----|--------|-------------|\n`;
 
-            | App | Preview URL |
-            |-----|-------------|
-            | Web | [${webPreviewUrl}](${webPreviewUrl}) |
-            | Admin | [${adminPreviewUrl}](${adminPreviewUrl}) |
+            if (webDeployed && webPreviewUrl) {
+              body += `| Web | ✅ Deployed | [${webPreviewUrl}](${webPreviewUrl}) |\n`;
+            } else {
+              body += `| Web | ⏭️ Skipped | No changes detected |\n`;
+            }
 
-            ${ticketId ? `**Ticket:** ${ticketId}` : ''}`;
+            if (adminDeployed && adminPreviewUrl) {
+              body += `| Admin | ✅ Deployed | [${adminPreviewUrl}](${adminPreviewUrl}) |\n`;
+            } else {
+              body += `| Admin | ⏭️ Skipped | No changes detected |\n`;
+            }
+
+            if (ticketId) {
+              body += `\n**Ticket:** ${ticketId}`;
+            }
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,

@@ -1,0 +1,114 @@
+name: API Deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'packages/db/**'
+      - 'packages/shared/**'
+      - 'packages/permissions/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - production
+
+concurrency:
+  group: api-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  detect-trigger:
+    runs-on: ubuntu-latest
+    outputs:
+      is-production: ${{ steps.check.outputs.is-production }}
+    steps:
+      - name: Check trigger type
+        id: check
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]] || [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
+            echo "is-production=true" >> $GITHUB_OUTPUT
+          else
+            echo "is-production=false" >> $GITHUB_OUTPUT
+          fi
+
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+
+      - uses: actions/cache@v4
+        name: Setup turbo cache
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-turbo-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm type-check --filter=@axori/api...
+
+      - name: Lint
+        run: pnpm lint --filter=@axori/api...
+
+      - name: Test
+        run: pnpm test --filter=@axori/api...
+
+  deploy:
+    needs: [detect-trigger, ci]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.detect-trigger.outputs.is-production == 'true' && 'production' || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+          railway up --detach
+
+      - name: Post deployment summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const isProduction = '${{ needs.detect-trigger.outputs.is-production }}' === 'true';
+            const environment = isProduction ? 'Production' : 'Staging';
+
+            let summary = `## API Deployment Complete\n\n`;
+            summary += `**Environment:** ${environment}\n`;
+            summary += `**Commit:** ${{ github.sha }}\n`;
+
+            await core.summary.addRaw(summary).write();
