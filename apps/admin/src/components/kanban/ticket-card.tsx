@@ -18,6 +18,7 @@ import type { ForgeTicket } from "@axori/db/types";
 interface TicketCardProps {
   ticket: ForgeTicket;
   isDragging?: boolean;
+  onClick?: (ticket: ForgeTicket) => void;
 }
 
 const PRIORITY_COLORS = {
@@ -37,7 +38,7 @@ const TYPE_ICONS = {
   design: Paintbrush,
 };
 
-export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
+export function TicketCard({ ticket, isDragging = false, onClick }: TicketCardProps) {
   const {
     attributes,
     listeners,
@@ -57,17 +58,26 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
   const TypeIcon = TYPE_ICONS[ticket.type as keyof typeof TYPE_ICONS] || Lightbulb;
   const priorityColor = PRIORITY_COLORS[ticket.priority as keyof typeof PRIORITY_COLORS] || PRIORITY_COLORS.medium;
 
+  // Handle click - only trigger if not dragging
+  const handleClick = () => {
+    // Don't open drawer if we're in the middle of a drag
+    if (isSortableDragging || isDragging) return;
+    onClick?.(ticket);
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
+      onClick={handleClick}
       className={clsx(
         "ticket-card cursor-grab rounded-lg border bg-[#1e293b] p-3 active:cursor-grabbing",
         isDragging || isSortableDragging
           ? "border-violet-500 shadow-lg shadow-violet-500/20 opacity-90"
-          : "border-white/10 hover:border-white/20"
+          : "border-white/10 hover:border-white/20",
+        onClick && "cursor-pointer"
       )}
     >
       {/* Header: ID + Priority */}

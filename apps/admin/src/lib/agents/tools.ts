@@ -330,7 +330,7 @@ export function createToolExecutors(context: {
       return results.map((r) => r.path).join("\n")
     },
 
-    run_command: (input) => {
+    run_command: async (input) => {
       const command = input.command as string
 
       if (!isCommandSafe(command)) {

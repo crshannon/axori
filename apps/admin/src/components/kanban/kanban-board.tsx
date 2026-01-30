@@ -15,6 +15,7 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Filter, Loader2, Plus, Search } from "lucide-react";
 import { KanbanColumn } from "./kanban-column";
 import { TicketCard } from "./ticket-card";
+import { TicketDrawer } from "@/components/tickets";
 import type {DragEndEvent, DragOverEvent, DragStartEvent} from "@dnd-kit/core";
 import type { ForgeTicket } from "@axori/db/types";
 import { useTickets, useUpdateTicketStatus } from "@/hooks/api/use-tickets";
@@ -151,6 +152,26 @@ export function KanbanBoard() {
   const [optimisticUpdates, setOptimisticUpdates] = useState<
     Map<string, TicketStatus>
   >(new Map());
+
+  // Drawer state
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<ForgeTicket | undefined>(undefined);
+
+  // Drawer handlers
+  const handleNewTicket = () => {
+    setSelectedTicket(undefined);
+    setIsDrawerOpen(true);
+  };
+
+  const handleTicketClick = (ticket: ForgeTicket) => {
+    setSelectedTicket(ticket);
+    setIsDrawerOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setIsDrawerOpen(false);
+    setSelectedTicket(undefined);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -325,7 +346,10 @@ export function KanbanBoard() {
           </button>
 
           {/* New Ticket */}
-          <button className="flex h-9 items-center gap-2 rounded-lg bg-violet-600 px-4 text-sm font-medium text-white hover:bg-violet-500 transition-colors">
+          <button
+            onClick={handleNewTicket}
+            className="flex h-9 items-center gap-2 rounded-lg bg-violet-600 px-4 text-sm font-medium text-white hover:bg-violet-500 transition-colors"
+          >
             <Plus className="h-4 w-4" />
             New Ticket
           </button>
@@ -349,6 +373,7 @@ export function KanbanBoard() {
                 title={column.title}
                 color={column.color}
                 tickets={getTicketsByStatus(column.id)}
+                onTicketClick={handleTicketClick}
               />
             ))}
           </div>
@@ -360,6 +385,13 @@ export function KanbanBoard() {
           </DragOverlay>
         </DndContext>
       </div>
+
+      {/* Ticket Drawer */}
+      <TicketDrawer
+        isOpen={isDrawerOpen}
+        onClose={handleDrawerClose}
+        ticket={selectedTicket}
+      />
     </div>
   );
 }

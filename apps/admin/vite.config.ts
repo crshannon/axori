@@ -8,7 +8,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 
-export default defineConfig(({ mode, command }) => {
+export default defineConfig(({ mode, command: _command }) => {
   const isTest = process.env.VITEST || mode === "test";
   // Load env vars from root directory first, then app directory (app takes precedence)
   const rootEnv = loadEnv(mode, resolve(__dirname, "../.."), "");
