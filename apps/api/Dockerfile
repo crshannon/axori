@@ -31,16 +31,19 @@ COPY tsconfig.json ./
 # Build the API (tsup bundles everything)
 RUN pnpm --filter @axori/api build
 
+# Create production deployment (resolves pnpm symlinks)
+RUN pnpm --filter @axori/api deploy --prod /app/deployed
+
 # Production stage
 FROM node:20-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy built output and node_modules for external dependencies
+# Copy the deployed package with resolved dependencies
+COPY --from=builder /app/deployed/node_modules ./node_modules
+COPY --from=builder /app/deployed/package.json ./
 COPY --from=builder /app/apps/api/dist ./dist
-COPY --from=builder /app/apps/api/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
