@@ -201,6 +201,9 @@ importers:
       '@react-email/render':
         specifier: ^2.0.4
         version: 2.0.4(react-dom@19.2.3)(react@19.2.3)
+      '@supabase/supabase-js':
+        specifier: ^2.93.1
+        version: 2.93.1
       archiver:
         specifier: ^7.0.1
         version: 7.0.1
@@ -210,6 +213,9 @@ importers:
       drizzle-orm:
         specifier: 0.45.1
         version: 0.45.1(postgres@3.4.7)
+      drizzle-zod:
+        specifier: ^0.8.3
+        version: 0.8.3(drizzle-orm@0.45.1)(zod@3.25.76)
       hono:
         specifier: ^4.0.0
         version: 4.11.3
