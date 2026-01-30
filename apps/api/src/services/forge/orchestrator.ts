@@ -231,8 +231,9 @@ function getBasicTools(): Array<ToolDefinition> {
 // Tool Executor
 // =============================================================================
 
-// Store branch names per execution for PR creation
+// Store execution state (branch names, PR info) per execution
 const executionBranches = new Map<string, string>();
+const executionPRs = new Map<string, { prUrl: string; prNumber: number }>();
 
 /**
  * Execute a tool call with real implementations
@@ -256,6 +257,14 @@ async function executeToolCall(
   // Store branch name if one was created
   if (toolContext.branchName && !executionBranches.has(context.executionId)) {
     executionBranches.set(context.executionId, toolContext.branchName);
+  }
+
+  // Store PR info if a PR was created
+  if (toolContext.prUrl && toolContext.prNumber) {
+    executionPRs.set(context.executionId, {
+      prUrl: toolContext.prUrl,
+      prNumber: toolContext.prNumber,
+    });
   }
 
   return result;
@@ -359,17 +368,33 @@ export async function startExecution(executionId: string): Promise<void> {
       })
       .where(eq(forgeAgentExecutions.id, executionId));
 
-    // Clear agent from ticket
+    // Get PR info if created
+    const prInfo = executionPRs.get(executionId);
+    const branchName = executionBranches.get(executionId);
+
+    // Update ticket: clear agent, add PR info, move to in_review if PR created
     await db
       .update(forgeTickets)
       .set({
         assignedAgent: null,
         agentSessionId: null,
+        // If PR was created, link it and move to in_review
+        ...(prInfo && {
+          prUrl: prInfo.prUrl,
+          prNumber: prInfo.prNumber,
+          status: "in_review",
+        }),
+        // Store branch name if created
+        ...(branchName && { branchName }),
         updatedAt: new Date(),
       })
       .where(eq(forgeTickets.id, context.ticketId));
 
-    console.log(`[${executionId}] Execution completed successfully`);
+    // Clean up execution state
+    executionBranches.delete(executionId);
+    executionPRs.delete(executionId);
+
+    console.log(`[${executionId}] Execution completed successfully${prInfo ? ` - PR #${prInfo.prNumber}` : ""}`);
   } catch (error) {
     console.error(`[${executionId}] Execution failed:`, error);
 
@@ -384,7 +409,7 @@ export async function startExecution(executionId: string): Promise<void> {
       })
       .where(eq(forgeAgentExecutions.id, executionId));
 
-    // Clear agent from ticket
+    // Clear agent from ticket (keep in_progress status for manual handling)
     await db
       .update(forgeTickets)
       .set({
@@ -393,6 +418,10 @@ export async function startExecution(executionId: string): Promise<void> {
         updatedAt: new Date(),
       })
       .where(eq(forgeTickets.id, context.ticketId));
+
+    // Clean up execution state
+    executionBranches.delete(executionId);
+    executionPRs.delete(executionId);
 
     throw error;
   }

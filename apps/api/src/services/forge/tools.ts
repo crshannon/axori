@@ -348,6 +348,8 @@ export interface ToolContext {
   ticketId: string;
   ticketIdentifier: string;
   branchName?: string;
+  prUrl?: string;
+  prNumber?: number;
 }
 
 /**
@@ -396,6 +398,9 @@ export async function executeTool(
         input.body as string || "",
         context.branchName
       );
+      // Store PR info in context for ticket update
+      context.prUrl = prUrl;
+      context.prNumber = prNumber;
       return `Created PR #${prNumber}: ${prUrl}`;
     }
 
