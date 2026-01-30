@@ -25,6 +25,7 @@ export interface TicketFilters {
   milestoneId?: string;
   projectId?: string;
   search?: string;
+  prefix?: "FORGE" | "AXO"; // Filter by identifier prefix
 }
 
 /**

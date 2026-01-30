@@ -130,6 +130,7 @@ const ticketFilterSchema = z.object({
   projectId: z.string().uuid().optional(),
   search: z.string().optional(),
   parentId: z.string().uuid().optional(),
+  prefix: z.enum(["FORGE", "AXO"]).optional(), // Filter by identifier prefix
 });
 
 // =============================================================================
@@ -172,6 +173,11 @@ router.get(
       if (filters.search) {
         conditions.push(
           sql`(${forgeTickets.title} ILIKE ${"%" + filters.search + "%"} OR ${forgeTickets.identifier} ILIKE ${"%" + filters.search + "%"})`
+        );
+      }
+      if (filters.prefix) {
+        conditions.push(
+          sql`${forgeTickets.identifier} LIKE ${filters.prefix + "-%"}`
         );
       }
 
