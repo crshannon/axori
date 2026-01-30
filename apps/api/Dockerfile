@@ -31,26 +31,15 @@ COPY tsconfig.json ./
 # Build the API (tsup bundles everything)
 RUN pnpm --filter @axori/api build
 
-# Production stage
-FROM base AS runner
+# Production stage - minimal image since everything is bundled
+FROM node:20-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy package files for production dependency install
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-COPY packages/db/package.json ./packages/db/
-COPY packages/shared/package.json ./packages/shared/
-COPY packages/permissions/package.json ./packages/permissions/
-COPY apps/api/package.json ./apps/api/
-
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
-
-# Copy built output
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-
-WORKDIR /app/apps/api
+# Copy only the bundled output - no dependencies needed
+COPY --from=builder /app/apps/api/dist ./dist
+COPY --from=builder /app/apps/api/package.json ./
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
