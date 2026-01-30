@@ -15,6 +15,9 @@ function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pendingVerification, setPendingVerification] = useState(false);
+  const [secondFactorStrategy, setSecondFactorStrategy] = useState<
+    "totp" | "email_code" | "phone_code" | null
+  >(null);
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -64,12 +67,30 @@ function SignInPage() {
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         navigate({ to: "/board" as any });
-      } else {
-        if (result.status === "needs_second_factor") {
+      } else if (result.status === "needs_second_factor") {
+        // Check what 2FA methods are available
+        const factors = result.supportedSecondFactors;
+
+        if (factors?.some((f) => f.strategy === "totp")) {
+          setSecondFactorStrategy("totp");
+          setPendingVerification(true);
+        } else if (factors?.some((f) => f.strategy === "email_code")) {
+          // Prepare email code - this sends the code
+          await signIn.prepareSecondFactor({ strategy: "email_code" });
+          setSecondFactorStrategy("email_code");
+          setPendingVerification(true);
+        } else if (factors?.some((f) => f.strategy === "phone_code")) {
+          // Prepare phone code - this sends the code
+          await signIn.prepareSecondFactor({ strategy: "phone_code" });
+          setSecondFactorStrategy("phone_code");
           setPendingVerification(true);
         } else {
-          setError("Sign in incomplete. Please try again.");
+          setError("No supported second factor method available.");
         }
+      } else if (result.status === "needs_first_factor") {
+        setError("Additional verification required. Please try again.");
+      } else {
+        setError("Sign in incomplete. Please try again.");
       }
     } catch (err: any) {
       setError(err.errors?.[0]?.message || "An error occurred during sign in");
@@ -88,8 +109,13 @@ function SignInPage() {
     }
 
     try {
+      if (!secondFactorStrategy) {
+        setError("No verification method selected.");
+        return;
+      }
+
       const completeSignIn = await signIn.attemptSecondFactor({
-        strategy: "totp",
+        strategy: secondFactorStrategy,
         code,
       });
 
@@ -189,11 +215,17 @@ function SignInPage() {
           <div className="p-10 md:p-14 rounded-3xl border bg-white/5 border-white/10">
             <header className="mb-10 text-center">
               <h2 className="text-2xl font-bold uppercase tracking-tight mb-2">
-                {pendingVerification ? "Verify Code" : "Sign In"}
+                {pendingVerification ? "Two-Factor Auth" : "Sign In"}
               </h2>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
                 {pendingVerification
-                  ? "Enter your verification code"
+                  ? secondFactorStrategy === "totp"
+                    ? "Enter code from your authenticator app"
+                    : secondFactorStrategy === "email_code"
+                      ? `Code sent to ${email}`
+                      : secondFactorStrategy === "phone_code"
+                        ? "Code sent to your phone"
+                        : "Enter your verification code"
                   : "Authorized personnel only"}
               </p>
             </header>
@@ -208,14 +240,22 @@ function SignInPage() {
               <form onSubmit={handleVerify} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">
-                    Verification Code
+                    {secondFactorStrategy === "totp"
+                      ? "Authenticator Code"
+                      : "Verification Code"}
                   </label>
                   <input
                     type="text"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    placeholder="Enter verification code"
+                    placeholder={
+                      secondFactorStrategy === "totp"
+                        ? "6-digit code from app"
+                        : "Enter code"
+                    }
                     required
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
                     className="w-full px-5 py-4 rounded-xl text-sm font-medium border bg-white/5 border-white/10 focus:bg-white/10 focus:border-violet-500/50 text-white outline-none transition-all placeholder:text-slate-500"
                   />
                 </div>
@@ -225,6 +265,18 @@ function SignInPage() {
                   className="w-full py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? "Verifying..." : "Verify Code"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingVerification(false);
+                    setSecondFactorStrategy(null);
+                    setCode("");
+                    setError("");
+                  }}
+                  className="w-full py-3 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+                >
+                  Back to Sign In
                 </button>
               </form>
             ) : (
