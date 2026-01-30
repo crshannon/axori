@@ -10,7 +10,6 @@ on:
       - 'packages/permissions/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
-  push:
     tags:
       - 'v*'
   workflow_dispatch:
