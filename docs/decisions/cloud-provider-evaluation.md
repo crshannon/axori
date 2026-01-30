@@ -325,14 +325,30 @@ These integrations work with any cloud provider:
 
 ### Why This Matters for Axori
 
-Hosting tenant documents, emails, and receipts means you're handling **sensitive PII and financial data**. Enterprise customers (property management companies, landlords with portfolios) will require:
+**Target customers:** Real estate investors, families managing properties, landlords scaling portfolios.
+
+You're handling **sensitive financial and personal data**:
+- Bank account connections (Plaid)
+- Financial documents (receipts, invoices, tax documents)
+- Property records and valuations
+- Personal information (tenant details, owner info)
+- Email communications
+
+Enterprise customers (property management companies, institutional investors) will require:
 
 1. **SOC 2 Type II** - Security controls audit (table stakes for B2B SaaS)
 2. **Data residency guarantees** - Data stays in specific regions
 3. **Encryption at rest and in transit** - Customer-managed keys preferred
 4. **Audit logging** - Who accessed what, when
 5. **Access controls** - Role-based, least privilege
-6. **Incident response** - Documented breach procedures
+6. **Financial data handling** - PCI-DSS awareness (Stripe handles card data, you handle receipts)
+
+**Not required (currently):**
+- HIPAA - No healthcare customers expected
+- FedRAMP - No government customers
+- StateRAMP - No state government customers
+
+*Note: AWS supports all of these if your customer base evolves, but don't over-engineer for them now.*
 
 ### Current Stack Compliance Gaps
 
@@ -343,25 +359,24 @@ Hosting tenant documents, emails, and receipts means you're handling **sensitive
 | Encryption | TLS + at-rest (provider-managed) | No customer-managed keys (BYOK) |
 | Audit Logs | Basic (Clerk, Supabase logs) | No centralized, tamper-proof audit trail |
 | Private Networking | ❌ None | All services communicate over public internet |
-| BAA for HIPAA | ❌ Not available | Cannot sign BAA with current stack |
+| Private AI | ❌ Not possible | Financial documents sent to external AI APIs |
 
 ### Compliance Certifications by Provider
 
-| Certification | AWS | GCP | Azure | Relevance |
-|---------------|-----|-----|-------|-----------|
-| **SOC 2 Type II** | ✅ | ✅ | ✅ | Required for enterprise sales |
-| **SOC 1 / SSAE 18** | ✅ | ✅ | ✅ | Financial controls |
-| **ISO 27001** | ✅ | ✅ | ✅ | Information security |
-| **ISO 27017** | ✅ | ✅ | ✅ | Cloud security |
-| **ISO 27018** | ✅ | ✅ | ✅ | PII protection |
-| **PCI DSS Level 1** | ✅ | ✅ | ✅ | Payment card data |
-| **HIPAA BAA** | ✅ | ✅ | ✅ | Healthcare data |
-| **FedRAMP High** | ✅ | ✅ | ✅ | US Government |
-| **GDPR** | ✅ | ✅ | ✅ | EU data protection |
-| **StateRAMP** | ✅ | ⚠️ Limited | ✅ | US State governments |
+| Certification | AWS | GCP | Azure | Relevance for Axori |
+|---------------|-----|-----|-------|---------------------|
+| **SOC 2 Type II** | ✅ | ✅ | ✅ | **HIGH** - Required for enterprise sales |
+| **SOC 1 / SSAE 18** | ✅ | ✅ | ✅ | **HIGH** - Financial controls for investor data |
+| **ISO 27001** | ✅ | ✅ | ✅ | **HIGH** - Information security baseline |
+| **ISO 27018** | ✅ | ✅ | ✅ | **HIGH** - PII protection (tenant/owner data) |
+| **GDPR** | ✅ | ✅ | ✅ | **MEDIUM** - If you have EU users |
+| **CCPA** | ✅ | ✅ | ✅ | **MEDIUM** - California privacy law |
+| **PCI DSS Level 1** | ✅ | ✅ | ✅ | **LOW** - Stripe handles card data |
+| **HIPAA BAA** | ✅ | ✅ | ✅ | **FUTURE** - Not needed now |
+| **FedRAMP High** | ✅ | ✅ | ✅ | **FUTURE** - Not needed now |
 | **Total Certifications** | **143+** | **100+** | **100+** | - |
 
-**Winner: AWS** - Most comprehensive compliance coverage, especially for US government and healthcare.
+**All three providers meet your current compliance needs.** AWS has the most certifications if your customer base evolves toward regulated industries.
 
 ### Security Features Comparison
 
@@ -697,27 +712,27 @@ Given your stated priorities of **security compliance** and **private AI process
 
 **Why AWS:**
 
-1. **Most Compliance Certifications (143+)**
-   - SOC 2, HIPAA, FedRAMP, PCI-DSS, ISO 27001, StateRAMP
-   - Enterprise customers will trust AWS infrastructure
-   - Easier to pass security questionnaires
-
-2. **Best Private AI Story (Bedrock)**
+1. **Private AI is the Killer Feature (Bedrock)**
    - Claude 3.5/Opus available via PrivateLink
-   - No data leaves your VPC boundary
-   - Full CloudTrail audit of all inference
-   - Fine-tuning stays in your account
+   - Financial documents never leave your VPC boundary
+   - Full CloudTrail audit of all AI inference
+   - No third-party access to investor data
 
-3. **Complete Document Pipeline**
+2. **Complete Document Pipeline**
    - S3 with customer-managed encryption (KMS)
    - Textract for OCR/extraction (VPC isolated)
    - Bedrock for AI analysis
    - All in one ecosystem, one bill
 
-4. **Enterprise Sales Advantage**
-   - "We run on AWS" opens doors
-   - BAA available for healthcare customers
+3. **SOC 2 + Enterprise Trust**
+   - "We run on AWS" opens doors with institutional investors
    - Well-understood security posture
+   - Room to grow into HIPAA/FedRAMP if needed later
+
+4. **Financial Data Handling**
+   - Encryption at rest with keys you control
+   - Audit trails for who accessed what
+   - VPC isolation for Plaid/bank data flows
 
 **Migration Timeline: 6-8 weeks**
 
@@ -748,14 +763,14 @@ Choose GCP if:
 
 ### Not Recommended: Stay on Current Stack
 
-Your current stack (Railway + Vercel + Supabase) **cannot meet** your requirements:
+Your current stack (Railway + Vercel + Supabase) **cannot meet** your private AI requirements:
 - ❌ No private networking between services
 - ❌ No way to run AI models inside your network boundary
-- ❌ Limited compliance certifications
+- ❌ Financial documents would be sent to external AI APIs
 - ❌ No customer-managed encryption keys
-- ❌ Cannot sign BAA for HIPAA
+- ❌ Limited audit trail capabilities
 
-**Verdict:** Migration is necessary to meet your compliance and private AI requirements. The question is which provider, not whether to migrate.
+**Verdict:** Migration is necessary to meet your private AI requirement. If you didn't need VPC-isolated AI processing, you could stay on the current stack longer. But processing investor financial documents through external AI APIs is a non-starter for enterprise customers.
 
 ---
 
