@@ -118,18 +118,29 @@ For each project in Vercel Dashboard:
 ### Build Settings
 
 1. Go to Project → **Settings** → **General**
-2. Set:
-   - **Framework Preset**: Vite
-   - **Build Command**: `pnpm build:web` (or `pnpm build:admin`)
-   - **Output Directory**: `dist`
-   - **Install Command**: `pnpm install`
+2. Configure settings based on the app:
 
-### Root Directory
+**Web App (axori-web):**
 
-1. Go to Project → **Settings** → **General**
-2. Set **Root Directory**:
-   - Web: `apps/web`
-   - Admin: `apps/admin`
+| Setting | Value |
+|---------|-------|
+| Framework Preset | Other |
+| Root Directory | `apps/web` |
+| Build Command | `pnpm build` |
+| Output Directory | `.output` |
+| Install Command | `pnpm install` |
+
+**Admin App (axori-admin):**
+
+| Setting | Value |
+|---------|-------|
+| Framework Preset | Other |
+| Root Directory | `apps/admin` |
+| Build Command | `pnpm build` |
+| Output Directory | `.output` |
+| Install Command | `pnpm install` |
+
+> **Note:** Both apps use TanStack Start with Nitro, which outputs to `.output` (not `dist`). The Framework Preset should be "Other" since TanStack Start has its own build process.
 
 ### Environment Variables
 
