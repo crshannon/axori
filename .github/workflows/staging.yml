@@ -9,10 +9,51 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy-staging:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      admin: ${{ steps.filter.outputs.admin }}
+      db: ${{ steps.filter.outputs.db }}
+      any-code: ${{ steps.filter.outputs.any-code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            db:
+              - 'packages/db/**'
+            web:
+              - 'apps/web/**'
+              - 'packages/ui/**'
+              - 'packages/db/**'
+              - 'packages/permissions/**'
+              - 'packages/shared/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+            admin:
+              - 'apps/admin/**'
+              - 'packages/ui/**'
+              - 'packages/db/**'
+              - 'packages/permissions/**'
+              - 'packages/shared/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+            any-code:
+              - 'apps/**'
+              - 'packages/**'
+
+  ci:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.any-code == 'true'
     runs-on: ubuntu-latest
     environment: staging
-
     steps:
       - uses: actions/checkout@v4
 
@@ -21,7 +62,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+
+      - uses: actions/cache@v4
+        name: Setup turbo cache
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-turbo-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -35,48 +94,96 @@ jobs:
       - name: Run tests
         run: pnpm test --filter=!@axori/mobile
 
+  migrate:
+    needs: [detect-changes, ci]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.db == 'true' &&
+      needs.ci.result == 'success'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Run database migrations
-        run: pnpm db:push
+        run: pnpm db:migrate
         env:
-          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
 
-      - name: Build
-        run: pnpm build --filter=!@axori/mobile
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
-          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.STAGING_CLERK_PUBLISHABLE_KEY }}
-          VITE_API_URL: ${{ secrets.STAGING_API_URL }}
+  deploy-web:
+    needs: [detect-changes, ci, migrate]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.web == 'true' &&
+      needs.ci.result == 'success' &&
+      (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment: staging
+    outputs:
+      preview-url: ${{ steps.deploy.outputs.preview-url }}
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Deploy Web to Vercel
-        id: deploy-web
+      - name: Deploy Web to Vercel Preview
+        id: deploy
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
-          vercel-args: '--prod'
-          alias-domains: ${{ vars.STAGING_DOMAIN || '' }}
 
-      - name: Deploy Admin to Vercel
-        id: deploy-admin
+  deploy-admin:
+    needs: [detect-changes, ci, migrate]
+    if: |
+      always() &&
+      needs.detect-changes.outputs.admin == 'true' &&
+      needs.ci.result == 'success' &&
+      (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment: staging
+    outputs:
+      preview-url: ${{ steps.deploy.outputs.preview-url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Admin to Vercel Preview
+        id: deploy
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
-          vercel-args: '--prod'
-          alias-domains: ${{ vars.STAGING_ADMIN_DOMAIN || '' }}
 
-      - name: Run E2E tests
-        if: ${{ vars.STAGING_DOMAIN != '' }}
-        run: pnpm test:e2e
-        env:
-          BASE_URL: https://${{ vars.STAGING_DOMAIN }}
-        continue-on-error: true
-
+  summary:
+    needs: [detect-changes, ci, deploy-web, deploy-admin]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
       - name: Notify Forge
-        if: ${{ vars.FORGE_WEBHOOK_URL != '' }}
+        if: |
+          (needs.deploy-web.result == 'success' || needs.deploy-admin.result == 'success') &&
+          vars.FORGE_WEBHOOK_URL != ''
         run: |
           curl -X POST "${{ vars.FORGE_WEBHOOK_URL }}/api/webhooks/github/staging" \
             -H "Content-Type: application/json" \
@@ -86,8 +193,8 @@ jobs:
               "status": "deployed",
               "commit_sha": "${{ github.sha }}",
               "branch": "main",
-              "web_deploy_url": "${{ steps.deploy-web.outputs.preview-url }}",
-              "admin_deploy_url": "${{ steps.deploy-admin.outputs.preview-url }}"
+              "web_deploy_url": "${{ needs.deploy-web.outputs.preview-url }}",
+              "admin_deploy_url": "${{ needs.deploy-admin.outputs.preview-url }}"
             }'
         continue-on-error: true
 
@@ -95,22 +202,36 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const webDomain = '${{ vars.STAGING_DOMAIN }}' || '${{ steps.deploy-web.outputs.preview-url }}';
-            const adminDomain = '${{ vars.STAGING_ADMIN_DOMAIN }}' || '${{ steps.deploy-admin.outputs.preview-url }}';
+            const webDeployed = '${{ needs.detect-changes.outputs.web }}' === 'true';
+            const adminDeployed = '${{ needs.detect-changes.outputs.admin }}' === 'true';
+            const webUrl = '${{ needs.deploy-web.outputs.preview-url }}';
+            const adminUrl = '${{ needs.deploy-admin.outputs.preview-url }}';
+            const ciResult = '${{ needs.ci.result }}';
 
-            const summary = `## Staging Deployment Complete
+            let summary = `## Staging Deployment Summary\n\n`;
+            summary += `**Commit:** ${{ github.sha }}\n`;
+            summary += `**Branch:** main\n\n`;
 
-            **Commit:** ${{ github.sha }}
-            **Branch:** main
+            if (ciResult === 'failure') {
+              summary += `### ❌ CI Failed\n\nDeployment was skipped due to CI failure.\n`;
+            } else {
+              summary += `### Staging URLs\n\n`;
+              summary += `| App | Status | URL |\n`;
+              summary += `|-----|--------|-----|\n`;
 
-            | App | Staging URL |
-            |-----|-------------|
-            | Web | [${webDomain}](https://${webDomain}) |
-            | Admin | [${adminDomain}](https://${adminDomain}) |
+              if (webDeployed && webUrl) {
+                summary += `| Web | ✅ Deployed | [${webUrl}](${webUrl}) |\n`;
+              } else {
+                summary += `| Web | ⏭️ Skipped | No changes detected |\n`;
+              }
 
-            Ready for QA. Create a release tag to deploy to production.
-            `;
+              if (adminDeployed && adminUrl) {
+                summary += `| Admin | ✅ Deployed | [${adminUrl}](${adminUrl}) |\n`;
+              } else {
+                summary += `| Admin | ⏭️ Skipped | No changes detected |\n`;
+              }
 
-            await core.summary
-              .addRaw(summary)
-              .write();
+              summary += `\n---\nReady for QA. Create a release tag to deploy to production.`;
+            }
+
+            await core.summary.addRaw(summary).write();

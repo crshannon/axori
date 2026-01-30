@@ -60,7 +60,23 @@ app.use("*", logger());
 app.use(
   "*",
   cors({
-    origin: process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:3000"],
+    origin: (origin) => {
+      // Allow requests with no origin (mobile apps, curl, server-to-server)
+      if (!origin) return origin;
+
+      // Check explicit allowed origins from environment
+      const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
+      if (allowedOrigins.includes(origin)) return origin;
+
+      // Allow all Vercel preview URLs (for PR previews and staging)
+      if (origin.endsWith(".vercel.app")) return origin;
+
+      // Allow localhost for development
+      if (origin.startsWith("http://localhost:")) return origin;
+
+      // Reject by returning null
+      return null;
+    },
     credentials: true,
   })
 );

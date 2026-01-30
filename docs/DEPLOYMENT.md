@@ -1,38 +1,54 @@
 # Deployment Guide
 
-This guide covers setting up Vercel deployments for the Axori web and admin apps.
+This guide covers setting up deployments for the Axori platform.
 
 ## Overview
 
-| App | Directory | Production URL | Preview |
-|-----|-----------|----------------|---------|
-| Web | `apps/web` | app.axori.com | Auto-generated Vercel URLs |
-| Admin (Forge) | `apps/admin` | admin.axori.com | Auto-generated Vercel URLs |
+| App | Directory | Platform | Production URL |
+|-----|-----------|----------|----------------|
+| Web | `apps/web` | Vercel | app.axori.com |
+| Admin (Forge) | `apps/admin` | Vercel | admin.axori.com |
+| API | `apps/api` | Railway | api.axori.com |
 
-> **Note:** Staging deploys automatically when merging to `main`. Production deploys via tag releases (e.g., `v1.0.0`).
+> **Note:** Staging deploys automatically when merging to `main` (uses Vercel preview URLs). Production deploys via tag releases (e.g., `v1.0.0`).
+
+## Architecture
+
+```
+                    GitHub Actions
+                          │
+          ┌───────────────┼───────────────┐
+          │               │               │
+          ▼               ▼               ▼
+   ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+   │   Vercel    │ │   Railway   │ │  Supabase   │
+   │  Web/Admin  │ │     API     │ │  Database   │
+   └─────────────┘ └─────────────┘ └─────────────┘
+```
 
 ## Prerequisites
 
 - GitHub repository with Actions enabled
-- Vercel account (free tier works for production + previews)
+- Vercel account (free tier works)
+- Railway account (Starter plan recommended)
 - Supabase project
 - Clerk application
 
 ---
 
-## Step 1: Install Vercel CLI
+## Part 1: Vercel Setup (Web & Admin)
+
+### Step 1: Install Vercel CLI
 
 ```bash
 npm install -g vercel
 ```
 
----
-
-## Step 2: Create Vercel Projects
+### Step 2: Create Vercel Projects
 
 You need **two separate Vercel projects** - one for web, one for admin.
 
-### Web App
+#### Web App
 
 ```bash
 cd apps/web
@@ -56,7 +72,7 @@ This creates `apps/web/.vercel/project.json`:
 
 **Save these values** - you'll need them for GitHub secrets.
 
-### Admin App
+#### Admin App
 
 ```bash
 cd apps/admin
@@ -68,9 +84,7 @@ Follow the same prompts:
 
 This creates `apps/admin/.vercel/project.json` with different project ID.
 
----
-
-## Step 3: Get Vercel API Token
+### Step 3: Get Vercel API Token
 
 1. Go to https://vercel.com/account/tokens
 2. Click **Create Token**
@@ -79,196 +93,156 @@ This creates `apps/admin/.vercel/project.json` with different project ID.
 5. Expiration: No expiration (or set reminder to rotate)
 6. **Copy the token immediately** - you won't see it again
 
----
-
-## Step 4: Configure GitHub Secrets
-
-Go to your GitHub repo → **Settings** → **Secrets and variables** → **Actions**
-
-### Repository Secrets
-
-**Path:** Settings → Secrets and variables → Actions → **Repository secrets** → New repository secret
-
-| Secret | Value | Description |
-|--------|-------|-------------|
-| `VERCEL_TOKEN` | `your-token` | From Step 3 |
-| `VERCEL_ORG_ID` | `team_xxx` | From `.vercel/project.json` |
-| `VERCEL_PROJECT_ID_WEB` | `prj_xxx` | From `apps/web/.vercel/project.json` |
-| `VERCEL_PROJECT_ID_ADMIN` | `prj_xxx` | From `apps/admin/.vercel/project.json` |
-| `PROD_DATABASE_URL` | `postgresql://...` | Supabase connection string |
-| `FORGE_WEBHOOK_SECRET` | `openssl rand -base64 32` | For deployment notifications (optional) |
-
-### Repository Variables
-
-**Path:** Settings → Secrets and variables → Actions → **Variables** tab → New repository variable
-
-| Variable | Value | Description |
-|----------|-------|-------------|
-| `PRODUCTION_DOMAIN` | `app.axori.com` | Web app production domain (optional) |
-| `PRODUCTION_ADMIN_DOMAIN` | `admin.axori.com` | Admin app production domain (optional) |
-| `STAGING_DOMAIN` | `staging.axori.com` | Web app staging domain (optional) |
-| `STAGING_ADMIN_DOMAIN` | `staging-admin.axori.com` | Admin app staging domain (optional) |
-
----
-
-## Step 5: Configure Vercel Project Settings
+### Step 4: Configure Vercel Project Settings
 
 For each project in Vercel Dashboard:
 
-### Build Settings
+#### Build Settings
 
 1. Go to Project → **Settings** → **General**
-2. Configure settings based on the app:
-
-**Web App (axori-web):**
+2. Configure:
 
 | Setting | Value |
 |---------|-------|
 | Framework Preset | TanStack Start |
-| Root Directory | `apps/web` |
+| Root Directory | `apps/web` (or `apps/admin`) |
 | Build Command | (use default) |
 | Output Directory | (use default) |
-| Install Command | (use default) |
 
-**Admin App (axori-admin):**
+#### Disable Auto-Deploy (Important!)
 
-| Setting | Value |
-|---------|-------|
-| Framework Preset | TanStack Start |
-| Root Directory | `apps/admin` |
-| Build Command | (use default) |
-| Output Directory | (use default) |
-| Install Command | (use default) |
-
-> **Note:** The TanStack Start preset automatically configures the correct build settings.
-
-### Environment Variables
-
-Add these in Vercel Dashboard → Project → **Settings** → **Environment Variables**
-
-**Web App (axori-web):**
-
-| Variable | Value | Environments | Description |
-|----------|-------|--------------|-------------|
-| `VITE_SUPABASE_URL` | `https://xxx.supabase.co` | All | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | `eyJhbGci...` | All | Supabase anon/public key |
-| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_test_xxx...` | All | Clerk publishable key |
-| `VITE_API_URL` | `https://api.axori.com` | Production | Production API URL |
-| `VITE_API_URL` | `https://staging-api.axori.com` | Preview | Staging API URL for previews |
-| `VITE_COMING_SOON_MODE` | `false` | All | Set to `true` to show landing page |
-
-**Admin App (axori-admin):**
-
-| Variable | Value | Environments | Description |
-|----------|-------|--------------|-------------|
-| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_test_xxx...` | All | Clerk publishable key |
-| `VITE_API_URL` | `https://api.axori.com` | Production | Production API URL |
-| `VITE_API_URL` | `https://staging-api.axori.com` | Preview | Staging API URL for previews |
-
-> **Note:** The admin app communicates with the database through the API, so it doesn't need direct Supabase credentials.
-
-**Where to find these values:**
-
-- **Supabase URL & Anon Key**: https://supabase.com/dashboard/project/YOUR_PROJECT/settings/api
-- **Clerk Publishable Key**: https://dashboard.clerk.com → Your app → API Keys
-
----
-
-## Step 6: Configure Custom Domain (Production Only)
-
-### In Vercel Dashboard
-
-1. Go to Project → **Settings** → **Domains**
-2. Add your production domain: `app.axori.com`
-
-### DNS Configuration
-
-Add this record in your DNS provider (Cloudflare, Namecheap, etc.):
-
-| Type | Name | Value |
-|------|------|-------|
-| CNAME | app | cname.vercel-dns.com |
-
-For admin app, repeat with `admin` subdomain.
-
----
-
-## Step 7: Disable Vercel Auto-Deploy
-
-**Important:** By default, Vercel auto-deploys when you push to GitHub, bypassing your CI checks. You must disable this so deployments only happen through GitHub Actions.
-
-### Option A: Disable Auto-Build (Recommended)
-
-1. Go to **Vercel Dashboard** → Your Project → **Settings** → **Git**
+1. Go to **Settings** → **Git**
 2. Scroll to **"Ignored Build Step"**
 3. Select **"Custom"** and enter: `exit 0`
 4. Click **Save**
 
-This tells Vercel to skip its automatic builds. Deployments will only happen via GitHub Actions.
-
-### Option B: Disconnect GitHub Integration
-
-1. Go to **Vercel Dashboard** → Your Project → **Settings** → **Git**
-2. Click **"Disconnect"** under Git Repository
-3. Confirm disconnection
-
-This completely removes the auto-deploy integration. Only GitHub Actions will deploy via the Vercel CLI.
-
-> **Note:** Repeat for both web and admin projects.
+This ensures deployments only happen through GitHub Actions.
 
 ---
 
-## Deployment Flow
+## Part 2: Railway Setup (API)
+
+### Step 1: Create Railway Project
+
+1. Go to https://railway.app/new
+2. Create a new project named `axori-api`
+3. Note the **Project ID** from project settings
+
+### Step 2: Get Railway Token
+
+1. Go to https://railway.app/account/tokens
+2. Create a new token named `GitHub Actions - Axori`
+3. Copy the token immediately
+
+### Step 3: Configure Railway Environment Variables
+
+In Railway Dashboard → Your Project → **Variables** (use Shared Variables):
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | Supabase PostgreSQL connection string |
+| `CLERK_SECRET_KEY` | Clerk backend API key |
+| `ALLOWED_ORIGINS` | Production URLs: `https://app.axori.com,https://admin.axori.com` |
+| `STRIPE_SECRET_KEY` | Stripe API key (if using billing) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret |
+| `RESEND_API_KEY` | Resend email API key |
+| `ANTHROPIC_API_KEY` | Anthropic API key (for AI features) |
+| `APP_URL` | `https://app.axori.com` |
+
+> **Note:** `PORT` is set automatically by Railway.
+
+### Step 4: Configure Custom Domain (Optional)
+
+1. In Railway dashboard, go to service settings
+2. Add custom domain: `api.axori.com`
+3. Configure DNS CNAME record pointing to Railway's domain
+
+---
+
+## Part 3: GitHub Configuration
+
+### Repository Secrets
+
+Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions** → **Secrets**
+
+| Secret | Value | Description |
+|--------|-------|-------------|
+| `VERCEL_TOKEN` | `your-vercel-token` | Vercel API token |
+| `VERCEL_ORG_ID` | `team_xxx` | From `.vercel/project.json` |
+| `VERCEL_PROJECT_ID_WEB` | `prj_xxx` | From `apps/web/.vercel/project.json` |
+| `VERCEL_PROJECT_ID_ADMIN` | `prj_xxx` | From `apps/admin/.vercel/project.json` |
+| `RAILWAY_TOKEN` | `your-railway-token` | Railway API token |
+| `RAILWAY_PROJECT_ID` | `xxx` | Railway project ID |
+| `PROD_DATABASE_URL` | `postgresql://...` | Production Supabase connection |
+| `FORGE_WEBHOOK_SECRET` | `xxx` | For deployment notifications (optional) |
+
+### Repository Variables
+
+Go to **Variables** tab:
+
+| Variable | Value | Description |
+|----------|-------|-------------|
+| `PRODUCTION_DOMAIN` | `app.axori.com` | Web production domain |
+| `PRODUCTION_ADMIN_DOMAIN` | `admin.axori.com` | Admin production domain |
+
+---
+
+## Deployment Flows
 
 ### Preview Deployments (Pull Requests)
 
 ```
-Open/update PR against main
+PR opened/updated
     ↓
-GitHub Actions runs Preview workflow
+Detect changes (path filtering)
     ↓
-Type check → Lint → Test → Build
+CI: Type check → Lint → Test
     ↓
-Deploy to Vercel Preview URL
+Deploy changed apps to Vercel preview
     ↓
-Comment on PR with preview URL (e.g., axori-web-abc123.vercel.app)
+Comment on PR with preview URLs
 ```
+
+**Path filtering:** Only deploys apps that have changed:
+- Web changes → Deploy web preview
+- Admin changes → Deploy admin preview
+- Both changed → Deploy both
 
 ### Staging Deployments (Merge to Main)
 
 ```
 Merge PR to main
     ↓
-GitHub Actions runs Staging workflow
+Detect changes (path filtering)
     ↓
-Type check → Lint → Test → Build
+CI: Type check → Lint → Test
     ↓
-Run database migrations
+Run database migrations (if db changed)
     ↓
-Deploy to staging URL
+Deploy to Vercel preview URLs (staging)
     ↓
-Run E2E tests (if staging domain configured)
+Deploy API to Railway (if api changed)
 ```
+
+> **Note:** Staging uses Vercel **preview URLs**, not custom domains. This works on Vercel's free tier.
 
 ### Production Deployments (Tag Release)
 
 ```
-Create and push a release tag (e.g., v1.0.0)
+Create and push tag (e.g., v1.0.0)
     ↓
-GitHub Actions runs Production workflow
-    ↓
-Type check → Lint → Test → Build
+CI: Type check → Lint → Test
     ↓
 Run database migrations
     ↓
-Deploy to production URL
+Deploy Web/Admin to Vercel production (--prod)
     ↓
-Create GitHub Release with release notes
+Deploy API to Railway production
+    ↓
+Create GitHub Release
 ```
 
 ### Creating a Release
-
-To deploy to production, create a tag:
 
 ```bash
 # Create an annotated tag
@@ -278,10 +252,6 @@ git tag -a v1.0.0 -m "Release v1.0.0"
 git push origin v1.0.0
 ```
 
-**Tag naming convention:** `v{major}.{minor}.{patch}` (e.g., `v1.0.0`, `v1.2.3`)
-
-You can also trigger a manual production deployment from GitHub Actions → Production Deployment → Run workflow.
-
 ---
 
 ## Troubleshooting
@@ -290,31 +260,32 @@ You can also trigger a manual production deployment from GitHub Actions → Prod
 
 Ensure the secret is added in GitHub repo settings, not just locally.
 
+### "RAILWAY_TOKEN is not set"
+
+Add Railway token to GitHub secrets.
+
 ### Build fails with "Cannot find module"
 
 Check that the Root Directory is set correctly in Vercel project settings.
 
-### Preview URL not working
+### API CORS errors
 
-1. Check Vercel deployment logs
-2. Check if build completed successfully
-3. Ensure environment variables are set for "Preview" environment
+The API automatically allows:
+- Origins listed in `ALLOWED_ORIGINS` environment variable
+- All `*.vercel.app` URLs (for previews)
+- `localhost` (for development)
 
 ### Database connection errors
 
-1. Verify DATABASE_URL secret is correct
-2. Check Supabase project is not paused (free tier pauses after 1 week)
-3. Ensure IP allowlist includes Vercel's IPs (or allow all: `0.0.0.0/0`)
-
-### Type errors in CI but not locally
-
-Run `pnpm type-check` locally before pushing. CI uses strict checks.
+1. Verify DATABASE_URL is correct
+2. Check Supabase project is not paused
+3. Ensure IP allowlist includes Railway's IPs
 
 ---
 
 ## Security Notes
 
-1. **Never commit secrets** - Use GitHub Secrets and Vercel Environment Variables
+1. **Never commit secrets** - Use GitHub Secrets and platform environment variables
 2. **Rotate tokens periodically** - Set calendar reminders
 3. **.env.local is gitignored** - Safe for local development secrets
 
@@ -322,16 +293,28 @@ Run `pnpm type-check` locally before pushing. CI uses strict checks.
 
 ## Quick Start Checklist
 
+### Vercel (Web & Admin)
 - [ ] Install Vercel CLI (`npm i -g vercel`)
 - [ ] Run `vercel link` in `apps/web`
 - [ ] Run `vercel link` in `apps/admin`
 - [ ] Generate Vercel API token
-- [ ] Add GitHub repository secrets (VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID_WEB, VERCEL_PROJECT_ID_ADMIN, PROD_DATABASE_URL)
-- [ ] Set Root Directory in Vercel project settings
-- [ ] Add environment variables in Vercel dashboard
-- [ ] **Disable Vercel auto-deploy** (Step 7 - Important!)
-- [ ] Configure custom domain (optional)
+- [ ] Disable Vercel auto-deploy (set "Ignored Build Step" to `exit 0`)
+
+### Railway (API)
+- [ ] Create Railway project
+- [ ] Generate Railway API token
+- [ ] Configure environment variables in Railway
+
+### GitHub
+- [ ] Add Vercel secrets (VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID_WEB, VERCEL_PROJECT_ID_ADMIN)
+- [ ] Add Railway secrets (RAILWAY_TOKEN, RAILWAY_PROJECT_ID)
+- [ ] Add database secret (PROD_DATABASE_URL)
+- [ ] Add production domain variables
+
+### Test
 - [ ] Open a PR to test preview deployment
+- [ ] Merge to main to test staging
+- [ ] Create a tag to test production
 
 ---
 
@@ -348,8 +331,6 @@ The admin app uses role-based access control (RBAC) stored in Clerk user metadat
 | `developer` | Forge: tickets, agents, deployments, registry |
 | `viewer` | Read-only access to Forge dashboards |
 
-Users can have multiple roles (e.g., `admin` + `developer`).
-
 ### Setting Up Initial Admin Roles
 
 **Via Clerk Dashboard:**
@@ -365,61 +346,23 @@ Users can have multiple roles (e.g., `admin` + `developer`).
    ```
 5. Save changes
 
-**For Developers:**
-```json
-{
-  "adminRoles": ["developer"]
-}
-```
-
-**For Combined Access:**
-```json
-{
-  "adminRoles": ["admin", "developer"]
-}
-```
-
-### Via Clerk API (Automation)
-
-```typescript
-import { clerkClient } from "@clerk/clerk-sdk-node";
-
-// Grant developer role
-await clerkClient.users.updateUserMetadata(userId, {
-  publicMetadata: {
-    adminRoles: ["developer"],
-  },
-});
-
-// Grant multiple roles
-await clerkClient.users.updateUserMetadata(userId, {
-  publicMetadata: {
-    adminRoles: ["admin", "developer"],
-  },
-});
-```
-
-### Role Verification
-
-After setting roles, the user should:
-1. Sign out of the admin app
-2. Sign back in
-3. Verify they can see the appropriate navigation items
-
 ---
 
-## Staging Environment Setup
+## Future: Isolated PR Environments (Phase 5)
 
-Staging is automatically deployed when code is merged to `main`. To configure:
+When you need fully isolated preview environments per PR:
 
-1. **GitHub Environment**: Create `staging` environment in GitHub (Settings → Environments)
-2. **Secrets**: Add staging-specific secrets:
-   - `STAGING_DATABASE_URL`
-   - `STAGING_SUPABASE_URL`
-   - `STAGING_SUPABASE_ANON_KEY`
-   - `STAGING_CLERK_PUBLISHABLE_KEY`
-   - `STAGING_API_URL`
-3. **Variables**: Add `STAGING_DOMAIN` variable (e.g., `staging.axori.com`)
-4. **Vercel**: Configure the staging domain alias in Vercel project settings
+1. **Enable Railway PR Environments** - Creates separate API for each PR
+2. **Create staging Supabase project** - Isolated database for non-production
+3. **Coordinate Vercel + Railway URLs** - Pass Railway PR URL to Vercel build
 
-Note: Staging deployments use the same Vercel project as production but with a different domain alias.
+This gives each PR:
+- Its own API instance on Railway
+- Connected to staging database (not production)
+- Full isolation for testing
+
+**Prerequisites:**
+- Staging Supabase project
+- Railway Starter plan (for multiple environments)
+
+See implementation details in the deployment strategy plan.
