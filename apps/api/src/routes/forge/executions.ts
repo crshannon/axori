@@ -18,6 +18,7 @@ import {
 } from "@axori/db";
 import { requireAuth } from "../../middleware/permissions";
 import { withErrorHandling, validateData, ApiError } from "../../utils/errors";
+import { startExecution, checkHealth } from "../../services/forge";
 
 const router = new Hono();
 
@@ -224,8 +225,11 @@ router.post(
         })
         .where(eq(forgeTickets.id, validated.ticketId));
 
-      // TODO: In Phase 1 Step 4, this will trigger the agent orchestrator
-      // For now, we just create the execution record
+      // Trigger agent execution in background
+      // We don't await this - the execution runs asynchronously
+      startExecution(created.id).catch((error) => {
+        console.error(`[${created.id}] Background execution failed:`, error);
+      });
 
       return c.json(created, 201);
     },
@@ -478,6 +482,22 @@ router.post(
       return c.json(created, 201);
     },
     { operation: "logTokenUsage" }
+  )
+);
+
+/**
+ * GET /forge/executions/health
+ * Check orchestrator health and API key configuration
+ */
+router.get(
+  "/health",
+  requireAuth(),
+  withErrorHandling(
+    async (c) => {
+      const health = await checkHealth();
+      return c.json(health);
+    },
+    { operation: "checkOrchestratorHealth" }
   )
 );
 
