@@ -652,6 +652,15 @@ describe("MyComponent", () => {
 - **TypeScript**: strict mode, no unused locals/parameters
 - **Unused vars**: prefix with `_` to ignore (`argsIgnorePattern: "^_"`)
 
+### Safe Find & Replace
+
+When doing bulk/global replacements:
+
+1. **Check for existing prefixes** - Before replacing `/foo/` with `/api/foo/`, verify there are no existing `/api/foo/` that would become `/api/api/foo/`
+2. **Review the diff** - Always check `git diff` after replacements to catch unintended changes
+3. **Use specific patterns** - Prefer `"/forge/` over `/forge/` to avoid matching in comments or other contexts
+4. **Test incrementally** - For large changes, do one file at a time and verify
+
 ---
 
 ## Key File Locations
