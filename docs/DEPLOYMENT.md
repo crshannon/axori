@@ -146,6 +146,8 @@ For each project in Vercel Dashboard:
 
 Add these in Vercel Dashboard → Project → **Settings** → **Environment Variables**
 
+**Web App (axori-web):**
+
 | Variable | Value | Environments | Description |
 |----------|-------|--------------|-------------|
 | `VITE_SUPABASE_URL` | `https://xxx.supabase.co` | All | Supabase project URL |
@@ -154,6 +156,16 @@ Add these in Vercel Dashboard → Project → **Settings** → **Environment Var
 | `VITE_API_URL` | `https://api.axori.com` | Production | Production API URL |
 | `VITE_API_URL` | `http://localhost:3001` | Preview, Development | Dev/preview API URL |
 | `VITE_COMING_SOON_MODE` | `false` | All | Set to `true` to show landing page |
+
+**Admin App (axori-admin):**
+
+| Variable | Value | Environments | Description |
+|----------|-------|--------------|-------------|
+| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_test_xxx...` | All | Clerk publishable key |
+| `VITE_API_URL` | `https://api.axori.com` | Production | Production API URL |
+| `VITE_API_URL` | `http://localhost:3001` | Preview, Development | Dev/preview API URL |
+
+> **Note:** The admin app communicates with the database through the API, so it doesn't need direct Supabase credentials.
 
 **Where to find these values:**
 
