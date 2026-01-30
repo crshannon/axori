@@ -287,6 +287,7 @@ function getOctokit(): Octokit {
 
 /**
  * Create a new git branch
+ * NOTE: Creates branch from current HEAD without switching to it
  */
 export async function createBranch(branchName: string, ticketId: string): Promise<string> {
   // Sanitize branch name
@@ -298,30 +299,44 @@ export async function createBranch(branchName: string, ticketId: string): Promis
   const fullBranchName = `forge/${ticketId.toLowerCase()}/${safeBranch}`;
 
   try {
-    // First, commit any staged changes and create branch locally
-    await execAsync(`git checkout -b ${fullBranchName}`, {
+    // Create branch without switching to it (keeps user on their current branch)
+    await execAsync(`git branch ${fullBranchName}`, {
       cwd: getRepoRoot(),
       timeout: 30000,
     });
 
-    return `Created branch: ${fullBranchName}`;
+    return `Created branch: ${fullBranchName} (from current HEAD)`;
   } catch (error) {
     const err = error as { message?: string };
+    // Branch might already exist
+    if (err.message?.includes("already exists")) {
+      return `Branch ${fullBranchName} already exists, will use it`;
+    }
     throw new Error(`Failed to create branch: ${err.message}`);
   }
 }
 
 /**
- * Commit changes
+ * Commit changes to a specific branch without switching user's working directory
+ * Uses stash to safely move changes to the target branch
  */
-export async function commitChanges(message: string): Promise<string> {
+export async function commitChanges(message: string, targetBranch?: string): Promise<string> {
+  const repoRoot = getRepoRoot();
+
   try {
+    // Get current branch to restore later
+    const { stdout: currentBranch } = await execAsync("git branch --show-current", {
+      cwd: repoRoot,
+      timeout: 30000,
+    });
+    const originalBranch = currentBranch.trim() || "main";
+
     // Stage all changes
-    await execAsync("git add -A", { cwd: getRepoRoot(), timeout: 30000 });
+    await execAsync("git add -A", { cwd: repoRoot, timeout: 30000 });
 
     // Check if there are changes to commit
     const { stdout: status } = await execAsync("git status --porcelain", {
-      cwd: getRepoRoot(),
+      cwd: repoRoot,
       timeout: 30000,
     });
 
@@ -329,9 +344,53 @@ export async function commitChanges(message: string): Promise<string> {
       return "No changes to commit";
     }
 
-    // Commit
+    // If we have a target branch different from current, use stash to move changes
+    if (targetBranch && targetBranch !== originalBranch) {
+      // Stash the staged changes (include untracked for new files)
+      await execAsync("git stash push --include-untracked -m 'forge-agent-changes'", {
+        cwd: repoRoot,
+        timeout: 30000,
+      });
+
+      try {
+        // Switch to target branch
+        await execAsync(`git checkout ${targetBranch}`, {
+          cwd: repoRoot,
+          timeout: 30000,
+        });
+
+        // Apply stashed changes
+        await execAsync("git stash pop", { cwd: repoRoot, timeout: 30000 });
+
+        // Stage and commit
+        await execAsync("git add -A", { cwd: repoRoot, timeout: 30000 });
+        await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, {
+          cwd: repoRoot,
+          timeout: 30000,
+        });
+
+        const commitResult = `Committed to ${targetBranch}: ${message}`;
+
+        // Switch back to original branch
+        await execAsync(`git checkout ${originalBranch}`, {
+          cwd: repoRoot,
+          timeout: 30000,
+        });
+
+        return commitResult;
+      } catch (error) {
+        // Try to recover - switch back to original branch
+        await execAsync(`git checkout ${originalBranch}`, {
+          cwd: repoRoot,
+          timeout: 30000,
+        }).catch(() => {});
+        throw error;
+      }
+    }
+
+    // No target branch specified, commit on current branch
     await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, {
-      cwd: getRepoRoot(),
+      cwd: repoRoot,
       timeout: 30000,
     });
 
@@ -427,7 +486,7 @@ export async function executeTool(
     }
 
     case "commit_changes":
-      return commitChanges(input.message as string);
+      return commitChanges(input.message as string, context.branchName);
 
     case "create_pr": {
       if (!context.branchName) {
