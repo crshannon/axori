@@ -37,7 +37,7 @@ type TicketStatus = (typeof COLUMNS)[number]["id"];
 const MOCK_TICKETS: Array<ForgeTicket> = [
   {
     id: "1",
-    identifier: "AXO-001",
+    identifier: "FORGE-001",
     title: "Create Kanban Board Component",
     description: null,
     status: "in_progress",
@@ -68,7 +68,7 @@ const MOCK_TICKETS: Array<ForgeTicket> = [
   },
   {
     id: "2",
-    identifier: "AXO-002",
+    identifier: "FORGE-002",
     title: "Set up Forge Database Schema",
     description: null,
     status: "done",
@@ -99,7 +99,7 @@ const MOCK_TICKETS: Array<ForgeTicket> = [
   },
   {
     id: "3",
-    identifier: "AXO-003",
+    identifier: "FORGE-003",
     title: "Implement Agent Orchestrator",
     description: null,
     status: "backlog",

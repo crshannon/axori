@@ -246,7 +246,7 @@ router.post(
         operation: "createForgeTicket",
       });
 
-      // Generate identifier (AXO-XXX)
+      // Generate identifier (FORGE-XXX for Forge tickets)
       const [lastTicket] = await db
         .select({ identifier: forgeTickets.identifier })
         .from(forgeTickets)
@@ -255,13 +255,14 @@ router.post(
 
       let nextNumber = 1;
       if (lastTicket?.identifier) {
-        const match = lastTicket.identifier.match(/AXO-(\d+)/);
+        // Support both FORGE- and legacy AXO- prefixes
+        const match = lastTicket.identifier.match(/(?:FORGE|AXO)-(\d+)/);
         if (match) {
           nextNumber = parseInt(match[1], 10) + 1;
         }
       }
 
-      const identifier = `AXO-${nextNumber.toString().padStart(3, "0")}`;
+      const identifier = `FORGE-${nextNumber.toString().padStart(3, "0")}`;
 
       const [created] = await db
         .insert(forgeTickets)
