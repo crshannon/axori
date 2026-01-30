@@ -58,6 +58,23 @@ const FORBIDDEN_PATHS = [
   ".git/credentials",
 ];
 
+// Safety: dangerous git subcommands that should be blocked
+// These can destroy work or change state in unexpected ways
+const FORBIDDEN_GIT_SUBCOMMANDS = [
+  "restore",    // Can revert changes
+  "reset",      // Can lose commits
+  "checkout",   // Can switch branches unexpectedly or revert files
+  "clean",      // Can delete untracked files
+  "stash",      // Can hide changes
+  "rebase",     // Can rewrite history
+  "merge",      // Can cause conflicts
+  "cherry-pick", // Can duplicate commits
+  "revert",     // Can create revert commits
+  "push",       // Should use create_pr instead
+  "pull",       // Can cause conflicts
+  "fetch",      // Not needed for agent workflow
+];
+
 // =============================================================================
 // Path Safety
 // =============================================================================
@@ -89,8 +106,22 @@ function safePath(inputPath: string): string {
  * Check if a command is allowed
  */
 function isCommandAllowed(command: string): boolean {
-  const firstWord = command.trim().split(/\s+/)[0];
-  return ALLOWED_COMMANDS.includes(firstWord);
+  const words = command.trim().split(/\s+/);
+  const firstWord = words[0];
+
+  if (!ALLOWED_COMMANDS.includes(firstWord)) {
+    return false;
+  }
+
+  // Special handling for git commands - block dangerous subcommands
+  if (firstWord === "git" && words.length > 1) {
+    const gitSubcommand = words[1];
+    if (FORBIDDEN_GIT_SUBCOMMANDS.includes(gitSubcommand)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 // =============================================================================
@@ -202,6 +233,13 @@ export async function searchCode(pattern: string, searchPath?: string): Promise<
  */
 export async function runCommand(command: string): Promise<string> {
   if (!isCommandAllowed(command)) {
+    const words = command.trim().split(/\s+/);
+    // Provide helpful error for blocked git subcommands
+    if (words[0] === "git" && words.length > 1 && FORBIDDEN_GIT_SUBCOMMANDS.includes(words[1])) {
+      throw new Error(
+        `Git subcommand "${words[1]}" is not allowed. Use the dedicated git tools instead: create_branch, commit_changes, create_pr`
+      );
+    }
     throw new Error(
       `Command not allowed. Allowed commands: ${ALLOWED_COMMANDS.join(", ")}`
     );
