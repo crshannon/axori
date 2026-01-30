@@ -6,7 +6,7 @@
  */
 
 import { Navigate } from "@tanstack/react-router";
-import type { AdminFeature, AdminRole } from "@axori/permissions";
+import type { AdminFeature, AdminRole } from "@axori/permissions/admin-roles";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 
 export interface RequireRoleProps {

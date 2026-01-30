@@ -5,7 +5,7 @@ import {
 } from "@dnd-kit/sortable";
 import { clsx } from "clsx";
 import { TicketCard } from "./ticket-card";
-import type { ForgeTicket } from "@axori/db";
+import type { ForgeTicket } from "@axori/db/types";
 
 interface KanbanColumnProps {
   id: string;

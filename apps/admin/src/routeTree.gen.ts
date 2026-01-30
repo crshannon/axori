@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
+import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
@@ -18,6 +19,11 @@ import { Route as AuthedBoardRouteImport } from './routes/_authed/board'
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
   path: '/unauthorized',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
@@ -42,12 +48,14 @@ const AuthedBoardRoute = AuthedBoardRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/sign-in': typeof SignInRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/board': typeof AuthedBoardRoute
   '/dashboard': typeof AuthedDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/sign-in': typeof SignInRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/board': typeof AuthedBoardRoute
   '/dashboard': typeof AuthedDashboardRoute
@@ -56,19 +64,21 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
+  '/sign-in': typeof SignInRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/_authed/board': typeof AuthedBoardRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/unauthorized' | '/board' | '/dashboard'
+  fullPaths: '/' | '/sign-in' | '/unauthorized' | '/board' | '/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/unauthorized' | '/board' | '/dashboard'
+  to: '/' | '/sign-in' | '/unauthorized' | '/board' | '/dashboard'
   id:
     | '__root__'
     | '/'
     | '/_authed'
+    | '/sign-in'
     | '/unauthorized'
     | '/_authed/board'
     | '/_authed/dashboard'
@@ -77,6 +87,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
+  SignInRoute: typeof SignInRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
 }
 
@@ -87,6 +98,13 @@ declare module '@tanstack/react-router' {
       path: '/unauthorized'
       fullPath: '/unauthorized'
       preLoaderRoute: typeof UnauthorizedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -136,6 +154,7 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
+  SignInRoute: SignInRoute,
   UnauthorizedRoute: UnauthorizedRoute,
 }
 export const routeTree = rootRouteImport

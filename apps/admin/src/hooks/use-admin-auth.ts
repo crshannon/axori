@@ -15,8 +15,8 @@ import {
   isReadOnlyUser,
   isSuperAdmin,
   parseAdminRoles,
-} from "@axori/permissions";
-import type { AdminFeature, AdminRole } from "@axori/permissions";
+} from "@axori/permissions/admin-roles";
+import type { AdminFeature, AdminRole } from "@axori/permissions/admin-roles";
 
 export interface AdminAuthState {
   /** User's admin roles from Clerk metadata */

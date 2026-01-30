@@ -38,12 +38,12 @@ function LandingPage() {
                 Enter Forge
               </Link>
             ) : (
-              <a
-                href="/sign-in"
+              <Link
+                to={"/sign-in" as any}
                 className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-500 transition-colors"
               >
                 Sign In
-              </a>
+              </Link>
             )}
           </div>
         )}

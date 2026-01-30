@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { useUser } from "@clerk/clerk-react";
 import type {UseQueryOptions} from "@tanstack/react-query";
-import type { ForgeTicket, ForgeTicketInsert } from "@axori/db";
+import type { ForgeTicket, ForgeTicketInsert } from "@axori/db/types";
 import { apiFetch } from "@/lib/api/client";
 
 // Query keys for tickets

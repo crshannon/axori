@@ -25,6 +25,9 @@ function SignInPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [pendingVerification, setPendingVerification] = useState(false)
+  const [secondFactorStrategy, setSecondFactorStrategy] = useState<
+    'totp' | 'email_code' | 'phone_code' | null
+  >(null)
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -105,13 +108,30 @@ function SignInPage() {
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId })
         setJustSignedIn(true)
-      } else {
-        // Handle two-factor authentication or other incomplete statuses
-        if (result.status === 'needs_second_factor') {
+      } else if (result.status === 'needs_second_factor') {
+        // Check what 2FA methods are available
+        const factors = result.supportedSecondFactors
+
+        if (factors?.some((f) => f.strategy === 'totp')) {
+          setSecondFactorStrategy('totp')
+          setPendingVerification(true)
+        } else if (factors?.some((f) => f.strategy === 'email_code')) {
+          // Prepare email code - this sends the code
+          await signIn.prepareSecondFactor({ strategy: 'email_code' })
+          setSecondFactorStrategy('email_code')
+          setPendingVerification(true)
+        } else if (factors?.some((f) => f.strategy === 'phone_code')) {
+          // Prepare phone code - this sends the code
+          await signIn.prepareSecondFactor({ strategy: 'phone_code' })
+          setSecondFactorStrategy('phone_code')
           setPendingVerification(true)
         } else {
-          setError('Sign in incomplete. Please try again.')
+          setError('No supported second factor method available.')
         }
+      } else if (result.status === 'needs_first_factor') {
+        setError('Additional verification required. Please try again.')
+      } else {
+        setError('Sign in incomplete. Please try again.')
       }
     } catch (err: any) {
       setError(err.errors?.[0]?.message || 'An error occurred during sign in')
@@ -130,8 +150,13 @@ function SignInPage() {
     }
 
     try {
+      if (!secondFactorStrategy) {
+        setError('No verification method selected.')
+        return
+      }
+
       const completeSignIn = await signIn.attemptSecondFactor({
-        strategy: 'totp',
+        strategy: secondFactorStrategy,
         code,
       })
 
@@ -249,11 +274,17 @@ function SignInPage() {
           <div className="p-10 md:p-14 rounded-[3.5rem] border transition-all duration-500 shadow-2xl dark:bg-[#1A1A1A] dark:border-white/5 bg-white border-slate-200">
             <header className="mb-10 text-center">
               <h2 className="text-3xl font-black uppercase tracking-tighter mb-2 transition-colors text-slate-900 dark:text-white">
-                {pendingVerification ? 'Verify Code' : 'Sign In'}
+                {pendingVerification ? 'Two-Factor Auth' : 'Sign In'}
               </h2>
               <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
                 {pendingVerification
-                  ? 'Enter your verification code'
+                  ? secondFactorStrategy === 'totp'
+                    ? 'Enter code from your authenticator app'
+                    : secondFactorStrategy === 'email_code'
+                      ? `Code sent to ${email}`
+                      : secondFactorStrategy === 'phone_code'
+                        ? 'Code sent to your phone'
+                        : 'Enter your verification code'
                   : 'Access your investment DNA.'}
               </p>
             </header>
@@ -270,14 +301,22 @@ function SignInPage() {
               <form onSubmit={handleVerify} className="space-y-6">
                 <div className="space-y-1.5">
                   <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-4 text-slate-700 dark:text-slate-300">
-                    Verification Code
+                    {secondFactorStrategy === 'totp'
+                      ? 'Authenticator Code'
+                      : 'Verification Code'}
                   </label>
                   <input
                     type="text"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    placeholder="Enter verification code"
+                    placeholder={
+                      secondFactorStrategy === 'totp'
+                        ? '6-digit code from app'
+                        : 'Enter code'
+                    }
                     required
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
                     className="w-full px-6 py-4 rounded-2xl text-sm font-bold border transition-all outline-none dark:bg-white/5 dark:border-white/5 dark:focus:bg-white/10 dark:focus:border-[#E8FF4D]/30 dark:text-white bg-slate-100 border-slate-200 focus:bg-white focus:border-violet-300 text-slate-900"
                   />
                 </div>
@@ -287,6 +326,18 @@ function SignInPage() {
                   className="w-full mt-6 py-5 rounded-3xl font-black text-xs uppercase tracking-widest transition-all shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-[#E8FF4D] dark:text-black dark:shadow-[#E8FF4D]/20 bg-violet-600 text-white shadow-violet-200"
                 >
                   {isLoading ? 'Verifying...' : 'Verify Code'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingVerification(false)
+                    setSecondFactorStrategy(null)
+                    setCode('')
+                    setError('')
+                  }}
+                  className="w-full py-3 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
+                  Back to Sign In
                 </button>
               </form>
             ) : (

@@ -13,7 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { clsx } from "clsx";
-import type { AdminFeature } from "@axori/permissions";
+import type { AdminFeature } from "@axori/permissions/admin-roles";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 
 interface NavItem {
