@@ -1,7 +1,12 @@
 // Load environment variables from root .env.local or .env
 import { config } from "dotenv";
-import { resolve } from "path";
+import { resolve, dirname } from "path";
 import { existsSync } from "fs";
+import { fileURLToPath } from "url";
+
+// ESM equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Try to load .env files in order of precedence
 // Check both relative to __dirname (for compiled code) and process.cwd() (for tsx watch)
@@ -60,7 +65,23 @@ app.use("*", logger());
 app.use(
   "*",
   cors({
-    origin: process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:3000"],
+    origin: (origin) => {
+      // Allow requests with no origin (mobile apps, curl, server-to-server)
+      if (!origin) return origin;
+
+      // Check explicit allowed origins from environment
+      const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
+      if (allowedOrigins.includes(origin)) return origin;
+
+      // Allow all Vercel preview URLs (for PR previews and staging)
+      if (origin.endsWith(".vercel.app")) return origin;
+
+      // Allow localhost for development
+      if (origin.startsWith("http://localhost:")) return origin;
+
+      // Reject by returning null
+      return null;
+    },
     credentials: true,
   })
 );

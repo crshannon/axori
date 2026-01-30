@@ -16,10 +16,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy-production:
+  ci:
     runs-on: ubuntu-latest
     environment: production
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,7 +30,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+
+      - uses: actions/cache@v4
+        name: Setup turbo cache
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-turbo-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -45,21 +62,55 @@ jobs:
       - name: Run tests
         run: pnpm test --filter=!@axori/mobile
 
+  migrate:
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Run database migrations
-        run: pnpm db:push
+        run: pnpm db:migrate
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
 
-      - name: Build
-        run: pnpm build --filter=!@axori/mobile
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.PROD_SUPABASE_ANON_KEY }}
-          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.PROD_CLERK_PUBLISHABLE_KEY }}
-          VITE_API_URL: ${{ secrets.PROD_API_URL }}
+  deploy-web:
+    needs: [ci, migrate]
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      preview-url: ${{ steps.deploy.outputs.preview-url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
 
       - name: Deploy Web to Vercel
-        id: deploy-web
+        id: deploy
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -68,8 +119,19 @@ jobs:
           vercel-args: '--prod'
           alias-domains: ${{ vars.PRODUCTION_DOMAIN || '' }}
 
+  deploy-admin:
+    needs: [ci, migrate]
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      preview-url: ${{ steps.deploy.outputs.preview-url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
       - name: Deploy Admin to Vercel
-        id: deploy-admin
+        id: deploy
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -77,6 +139,16 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
           vercel-args: '--prod'
           alias-domains: ${{ vars.PRODUCTION_ADMIN_DOMAIN || '' }}
+
+  release:
+    needs: [deploy-web, deploy-admin]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.tag || github.ref }}
 
       - name: Get release tag
         id: tag
@@ -137,7 +209,7 @@ jobs:
           echo "tickets=$TICKETS" >> $GITHUB_OUTPUT
 
       - name: Notify Forge
-        if: ${{ vars.FORGE_WEBHOOK_URL != '' }}
+        if: vars.FORGE_WEBHOOK_URL != ''
         run: |
           curl -X POST "${{ vars.FORGE_WEBHOOK_URL }}/api/webhooks/github/production" \
             -H "Content-Type: application/json" \
@@ -148,8 +220,8 @@ jobs:
               "commit_sha": "${{ github.sha }}",
               "release_tag": "${{ steps.tag.outputs.tag }}",
               "tickets": "${{ steps.tickets.outputs.tickets }}",
-              "web_deploy_url": "${{ steps.deploy-web.outputs.preview-url }}",
-              "admin_deploy_url": "${{ steps.deploy-admin.outputs.preview-url }}"
+              "web_deploy_url": "${{ needs.deploy-web.outputs.preview-url }}",
+              "admin_deploy_url": "${{ needs.deploy-admin.outputs.preview-url }}"
             }'
         continue-on-error: true
 
@@ -159,22 +231,23 @@ jobs:
           script: |
             const releaseTag = '${{ steps.tag.outputs.tag }}';
             const tickets = '${{ steps.tickets.outputs.tickets }}'.split(',').filter(Boolean);
-            const webDomain = '${{ vars.PRODUCTION_DOMAIN }}' || '${{ steps.deploy-web.outputs.preview-url }}';
-            const adminDomain = '${{ vars.PRODUCTION_ADMIN_DOMAIN }}' || '${{ steps.deploy-admin.outputs.preview-url }}';
+            const webDomain = '${{ vars.PRODUCTION_DOMAIN }}' || '${{ needs.deploy-web.outputs.preview-url }}';
+            const adminDomain = '${{ vars.PRODUCTION_ADMIN_DOMAIN }}' || '${{ needs.deploy-admin.outputs.preview-url }}';
 
-            const summary = `## Production Deployment Complete
+            let summary = `## Production Deployment Complete\n\n`;
+            summary += `**Release:** ${releaseTag}\n`;
+            summary += `**Commit:** ${{ github.sha }}\n\n`;
 
-            **Release:** ${releaseTag}
-            **Commit:** ${{ github.sha }}
+            if (tickets.length > 0) {
+              summary += `### Tickets Included\n`;
+              summary += tickets.map(t => `- ${t}`).join('\n');
+              summary += '\n\n';
+            }
 
-            ${tickets.length > 0 ? `### Tickets Included\n${tickets.map(t => `- ${t}`).join('\n')}` : ''}
+            summary += `### Production URLs\n\n`;
+            summary += `| App | URL |\n`;
+            summary += `|-----|-----|\n`;
+            summary += `| Web | [${webDomain}](https://${webDomain}) |\n`;
+            summary += `| Admin | [${adminDomain}](https://${adminDomain}) |\n`;
 
-            | App | Production URL |
-            |-----|----------------|
-            | Web | [${webDomain}](https://${webDomain}) |
-            | Admin | [${adminDomain}](https://${adminDomain}) |
-            `;
-
-            await core.summary
-              .addRaw(summary)
-              .write();
+            await core.summary.addRaw(summary).write();
