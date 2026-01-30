@@ -5,7 +5,8 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { api } from "@/lib/api/client"
+import { useUser } from "@clerk/clerk-react"
+import { apiFetch } from "@/lib/api/client"
 
 // =============================================================================
 // Types
@@ -75,12 +76,16 @@ export const agentKeys = {
  * Get all available agent protocols
  */
 export function useAgentProtocols() {
+  const { user } = useUser()
+
   return useQuery({
     queryKey: agentKeys.protocols(),
     queryFn: async () => {
-      const response = await api.get<Array<AgentProtocol>>("/api/forge/agents/protocols")
-      return response
+      return apiFetch<Array<AgentProtocol>>("/api/forge/agents/protocols", {
+        clerkId: user?.id,
+      })
     },
+    enabled: !!user?.id,
   })
 }
 
@@ -88,13 +93,16 @@ export function useAgentProtocols() {
  * Get a specific protocol
  */
 export function useAgentProtocol(id: string) {
+  const { user } = useUser()
+
   return useQuery({
     queryKey: agentKeys.protocol(id),
     queryFn: async () => {
-      const response = await api.get<AgentProtocol>(`/api/forge/agents/protocols/${id}`)
-      return response
+      return apiFetch<AgentProtocol>(`/api/forge/agents/protocols/${id}`, {
+        clerkId: user?.id,
+      })
     },
-    enabled: !!id,
+    enabled: !!id && !!user?.id,
   })
 }
 
@@ -102,14 +110,20 @@ export function useAgentProtocol(id: string) {
  * Get protocol suggestion for a ticket
  */
 export function useSuggestProtocol() {
+  const { user } = useUser()
+
   return useMutation({
     mutationFn: async (ticket: {
       type: string
       estimate?: number | null
       labels?: Array<string> | null
     }) => {
-      const response = await api.post<ProtocolSuggestion>("/api/forge/agents/suggest", ticket)
-      return response
+      return apiFetch<ProtocolSuggestion>("/api/forge/agents/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ticket),
+        clerkId: user?.id,
+      })
     },
   })
 }
@@ -126,6 +140,8 @@ export function useExecutions(filters?: {
   status?: string
   limit?: number
 }) {
+  const { user } = useUser()
+
   return useQuery({
     queryKey: [...agentKeys.executions(), filters],
     queryFn: async () => {
@@ -134,11 +150,12 @@ export function useExecutions(filters?: {
       if (filters?.status) params.set("status", filters.status)
       if (filters?.limit) params.set("limit", filters.limit.toString())
 
-      const response = await api.get<Array<AgentExecution>>(
-        `/api/forge/executions?${params.toString()}`
+      return apiFetch<Array<AgentExecution>>(
+        `/api/forge/executions?${params.toString()}`,
+        { clerkId: user?.id }
       )
-      return response
     },
+    enabled: !!user?.id,
   })
 }
 
@@ -146,13 +163,16 @@ export function useExecutions(filters?: {
  * Get a specific execution
  */
 export function useExecution(id: string) {
+  const { user } = useUser()
+
   return useQuery({
     queryKey: agentKeys.execution(id),
     queryFn: async () => {
-      const response = await api.get<AgentExecution>(`/api/forge/executions/${id}`)
-      return response
+      return apiFetch<AgentExecution>(`/api/forge/executions/${id}`, {
+        clerkId: user?.id,
+      })
     },
-    enabled: !!id,
+    enabled: !!id && !!user?.id,
   })
 }
 
@@ -160,15 +180,17 @@ export function useExecution(id: string) {
  * Get executions for a ticket
  */
 export function useTicketExecutions(ticketId: string) {
+  const { user } = useUser()
+
   return useQuery({
     queryKey: agentKeys.ticketExecutions(ticketId),
     queryFn: async () => {
-      const response = await api.get<Array<AgentExecution>>(
-        `/api/forge/executions?ticketId=${ticketId}`
+      return apiFetch<Array<AgentExecution>>(
+        `/api/forge/executions?ticketId=${ticketId}`,
+        { clerkId: user?.id }
       )
-      return response
     },
-    enabled: !!ticketId,
+    enabled: !!ticketId && !!user?.id,
   })
 }
 
@@ -176,6 +198,7 @@ export function useTicketExecutions(ticketId: string) {
  * Create a new execution (assign agent to ticket)
  */
 export function useCreateExecution() {
+  const { user } = useUser()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -184,8 +207,12 @@ export function useCreateExecution() {
       protocol: string
       prompt: string
     }) => {
-      const response = await api.post<AgentExecution>("/api/forge/executions", data)
-      return response
+      return apiFetch<AgentExecution>("/api/forge/executions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        clerkId: user?.id,
+      })
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: agentKeys.executions() })
@@ -202,12 +229,15 @@ export function useCreateExecution() {
  * Pause an execution
  */
 export function usePauseExecution() {
+  const { user } = useUser()
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.post<AgentExecution>(`/api/forge/executions/${id}/pause`)
-      return response
+      return apiFetch<AgentExecution>(`/api/forge/executions/${id}/pause`, {
+        method: "POST",
+        clerkId: user?.id,
+      })
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: agentKeys.execution(data.id) })
@@ -220,12 +250,15 @@ export function usePauseExecution() {
  * Resume a paused execution
  */
 export function useResumeExecution() {
+  const { user } = useUser()
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.post<AgentExecution>(`/api/forge/executions/${id}/resume`)
-      return response
+      return apiFetch<AgentExecution>(`/api/forge/executions/${id}/resume`, {
+        method: "POST",
+        clerkId: user?.id,
+      })
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: agentKeys.execution(data.id) })
@@ -238,12 +271,15 @@ export function useResumeExecution() {
  * Cancel an execution
  */
 export function useCancelExecution() {
+  const { user } = useUser()
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.post<AgentExecution>(`/api/forge/executions/${id}/cancel`)
-      return response
+      return apiFetch<AgentExecution>(`/api/forge/executions/${id}/cancel`, {
+        method: "POST",
+        clerkId: user?.id,
+      })
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: agentKeys.execution(data.id) })

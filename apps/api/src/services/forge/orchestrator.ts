@@ -17,6 +17,7 @@ import {
   type ClaudeModel,
   type ToolDefinition,
 } from "./anthropic";
+import { executeTool, type ToolContext } from "./tools";
 
 // =============================================================================
 // Types
@@ -230,44 +231,34 @@ function getBasicTools(): Array<ToolDefinition> {
 // Tool Executor
 // =============================================================================
 
+// Store branch names per execution for PR creation
+const executionBranches = new Map<string, string>();
+
 /**
- * Execute a tool call
- *
- * Note: In Phase 1, we're using simulated tool execution.
- * In Phase 2, this will integrate with actual file system and git operations.
+ * Execute a tool call with real implementations
  */
 async function executeToolCall(
   name: string,
   input: Record<string, unknown>,
-  _context: ExecutionContext
+  context: ExecutionContext
 ): Promise<string> {
-  switch (name) {
-    case "read_file":
-      // Simulated - would read actual file in production
-      return `[Simulated] Contents of ${input.path}:\n// File contents would appear here`;
+  // Build tool context
+  const toolContext: ToolContext = {
+    executionId: context.executionId,
+    ticketId: context.ticketId,
+    ticketIdentifier: context.ticketIdentifier,
+    branchName: executionBranches.get(context.executionId),
+  };
 
-    case "write_file":
-      // Simulated - would write actual file in production
-      return `[Simulated] Wrote ${(input.content as string)?.length || 0} characters to ${input.path}`;
+  // Execute the tool
+  const result = await executeTool(name, input, toolContext);
 
-    case "list_files":
-      // Simulated - would list actual files in production
-      return `[Simulated] Files in ${input.path}:\n- file1.ts\n- file2.ts`;
-
-    case "search_code":
-      // Simulated - would search actual code in production
-      return `[Simulated] Search for "${input.pattern}" in ${input.path || "."}:\nNo matches found`;
-
-    case "run_command":
-      // Simulated - would run actual command in production
-      return `[Simulated] Command "${input.command}" executed successfully`;
-
-    case "complete_task":
-      return `Task completed: ${input.summary}`;
-
-    default:
-      return `Unknown tool: ${name}`;
+  // Store branch name if one was created
+  if (toolContext.branchName && !executionBranches.has(context.executionId)) {
+    executionBranches.set(context.executionId, toolContext.branchName);
   }
+
+  return result;
 }
 
 // =============================================================================

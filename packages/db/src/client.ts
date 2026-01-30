@@ -1,20 +1,22 @@
 // Load environment variables from root .env.local or .env
 // Only load in Node.js environment (not in browser)
-// Use a function to avoid top-level Node.js module imports that Vite tries to bundle
-function loadEnvIfNeeded() {
+// Use async function to properly handle ESM dynamic imports
+async function loadEnvIfNeeded() {
   // Check if we're in a Node.js environment
   if (typeof window !== 'undefined' || typeof process === 'undefined' || !process.versions?.node) {
     return; // Skip in browser environments
   }
 
   try {
-    // Use require to avoid static analysis by Vite
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { config } = require("dotenv");
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { resolve } = require("path");
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { existsSync } = require("fs");
+    // Use dynamic imports for ESM compatibility
+    const { config } = await import("dotenv");
+    const { resolve, dirname } = await import("path");
+    const { existsSync } = await import("fs");
+    const { fileURLToPath } = await import("url");
+
+    // Get __dirname equivalent for ESM
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
 
     // Try to load .env files in order of precedence
     const cwd = process.cwd();
@@ -36,13 +38,13 @@ function loadEnvIfNeeded() {
         break;
       }
     }
-  } catch (error) {
+  } catch (_error) {
     // Silently fail in browser environments or if Node.js modules aren't available
     // This is expected when this code is analyzed by Vite for client builds
   }
 }
 
-// Only call in Node.js environment
+// Only call in Node.js environment - fire and forget since it's for side effects
 loadEnvIfNeeded();
 
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -86,8 +88,6 @@ export const db = new Proxy({} as ReturnType<typeof drizzle>, {
     if (!dbInstance) {
       dbInstance = createDb();
     }
-    return (dbInstance as any)[prop];
+    return (dbInstance as unknown as Record<string, unknown>)[prop];
   },
 }) as ReturnType<typeof drizzle>;
-
-

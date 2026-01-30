@@ -18,6 +18,7 @@ import { TicketCard } from "./ticket-card";
 import type {DragEndEvent, DragOverEvent, DragStartEvent} from "@dnd-kit/core";
 import type { ForgeTicket } from "@axori/db/types";
 import { TicketDrawer } from "@/components/tickets";
+import { AssignAgentModal } from "@/components/agents/assign-agent-modal";
 import { useTickets, useUpdateTicketStatus } from "@/hooks/api/use-tickets";
 
 // Ticket status columns configuration
@@ -157,6 +158,10 @@ export function KanbanBoard() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<ForgeTicket | undefined>(undefined);
 
+  // Agent modal state
+  const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
+  const [agentModalTicket, setAgentModalTicket] = useState<ForgeTicket | null>(null);
+
   // Drawer handlers
   const handleNewTicket = () => {
     setSelectedTicket(undefined);
@@ -171,6 +176,19 @@ export function KanbanBoard() {
   const handleDrawerClose = () => {
     setIsDrawerOpen(false);
     setSelectedTicket(undefined);
+  };
+
+  // Handle assign agent - close drawer first, then open modal
+  const handleAssignAgent = (ticket: ForgeTicket) => {
+    setIsDrawerOpen(false);
+    setSelectedTicket(undefined);
+    setAgentModalTicket(ticket);
+    setIsAgentModalOpen(true);
+  };
+
+  const handleAgentModalClose = () => {
+    setIsAgentModalOpen(false);
+    setAgentModalTicket(null);
   };
 
   const sensors = useSensors(
@@ -391,6 +409,14 @@ export function KanbanBoard() {
         isOpen={isDrawerOpen}
         onClose={handleDrawerClose}
         ticket={selectedTicket}
+        onAssignAgent={handleAssignAgent}
+      />
+
+      {/* Agent Assignment Modal */}
+      <AssignAgentModal
+        isOpen={isAgentModalOpen}
+        onClose={handleAgentModalClose}
+        ticket={agentModalTicket}
       />
     </div>
   );
