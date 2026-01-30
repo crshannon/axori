@@ -1,7 +1,12 @@
 // Load environment variables from root .env.local or .env
 import { config } from "dotenv";
-import { resolve } from "path";
+import { resolve, dirname } from "path";
 import { existsSync } from "fs";
+import { fileURLToPath } from "url";
+
+// ESM equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Try to load .env files in order of precedence
 // Check both relative to __dirname (for compiled code) and process.cwd() (for tsx watch)
