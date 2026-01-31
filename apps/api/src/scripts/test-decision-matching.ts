@@ -1,6 +1,6 @@
 /**
  * Test the decision matching service
- * Run with: npx tsx packages/db/src/scripts/test-decision-matching.ts
+ * Run with: npx tsx apps/api/src/scripts/test-decision-matching.ts
  */
 import { config } from "dotenv";
 import { resolve, dirname } from "path";
@@ -16,7 +16,7 @@ import {
   getActiveDecisions,
   matchDecisionsForTicket,
   formatDecisionsForPrompt,
-} from "../../../../apps/api/src/services/forge/decisions.js";
+} from "../services/forge/decisions.js";
 
 async function main() {
   console.log("=== Decision Matching Smoke Test ===\n");
