@@ -34,6 +34,7 @@
     "react-dom": "^19.0.0",
     "resend": "^6.8.0",
     "stripe": "^14.0.0",
+    "ts-morph": "^27.0.2",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -42,6 +43,7 @@
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",
     "eslint": "^9.39.2",
+    "memfs": "^4.56.10",
     "tsup": "^8.0.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3",

@@ -34,3 +34,13 @@ export {
 export type { RateLimitConfig } from "./rate-limiter";
 
 export type { SmartReadOptions } from "./tools";
+
+export {
+  scanDirectory,
+  scanUIComponents,
+  scanHooks,
+  scanUtilities,
+  detectUnusedExports,
+  clearProjectCache,
+} from "./registry-scanner";
+export type { RegistryScanResult, RegistryItemType } from "./registry-scanner";
