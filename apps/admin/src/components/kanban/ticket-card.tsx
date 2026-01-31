@@ -10,10 +10,12 @@ import {
   Lightbulb,
   Paintbrush,
   RefreshCw,
+  Square,
   Wrench,
   Zap,
 } from "lucide-react";
 import type { ForgeTicket } from "@axori/db/types";
+import { useCancelExecution } from "@/hooks/api/use-agents";
 
 interface TicketCardProps {
   ticket: ForgeTicket;
@@ -39,6 +41,8 @@ const TYPE_ICONS = {
 };
 
 export function TicketCard({ ticket, isDragging = false, onClick }: TicketCardProps) {
+  const cancelExecution = useCancelExecution();
+
   const {
     attributes,
     listeners,
@@ -49,6 +53,13 @@ export function TicketCard({ ticket, isDragging = false, onClick }: TicketCardPr
   } = useSortable({
     id: ticket.id,
   });
+
+  const handleCancelAgent = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (ticket.agentSessionId) {
+      cancelExecution.mutate(ticket.agentSessionId);
+    }
+  };
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -161,13 +172,22 @@ export function TicketCard({ ticket, isDragging = false, onClick }: TicketCardPr
 
       {/* Agent Status (if assigned) */}
       {ticket.assignedAgent && (
-        <div className="flex items-center gap-2 pt-2 border-t border-white/5 mt-2">
+        <div className="flex items-center justify-between pt-2 border-t border-white/5 mt-2">
           <div className="flex items-center gap-1">
             <div className="h-2 w-2 rounded-full bg-green-400 agent-active" />
             <span className="text-xs text-green-400">
               {ticket.assignedAgent.replace(/_/g, " ")}
             </span>
           </div>
+          <button
+            onClick={handleCancelAgent}
+            disabled={cancelExecution.isPending}
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-red-400 hover:bg-red-400/10 transition-colors disabled:opacity-50"
+            title="Cancel agent execution"
+          >
+            <Square className="h-3 w-3" />
+            {cancelExecution.isPending ? "..." : "Stop"}
+          </button>
         </div>
       )}
     </div>
