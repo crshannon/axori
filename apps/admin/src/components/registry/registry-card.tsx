@@ -83,6 +83,7 @@ export function RegistryCard({ item, onView, onDelete }: RegistryCardProps) {
         <div className="relative" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => setShowMenu(!showMenu)}
+            aria-label="Open menu"
             className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
           >
             <MoreVertical className="h-4 w-4" />

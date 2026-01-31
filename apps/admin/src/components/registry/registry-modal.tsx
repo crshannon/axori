@@ -162,6 +162,7 @@ export function RegistryModal({
           </h2>
           <button
             onClick={onClose}
+            aria-label="Close modal"
             className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white"
           >
             <X className="h-5 w-5" />
@@ -313,6 +314,7 @@ export function RegistryModal({
                     {isEditMode && (
                       <button
                         onClick={() => handleRemoveExport(exp)}
+                        aria-label={`Remove export ${exp}`}
                         className="hover:text-white"
                       >
                         <X className="h-3 w-3" />
@@ -366,6 +368,7 @@ export function RegistryModal({
                     {isEditMode && (
                       <button
                         onClick={() => handleRemoveDependency(dep)}
+                        aria-label={`Remove dependency ${dep}`}
                         className="hover:text-white"
                       >
                         <X className="h-3 w-3" />
@@ -421,6 +424,7 @@ export function RegistryModal({
                     {isEditMode && (
                       <button
                         onClick={() => handleRemoveTag(tag)}
+                        aria-label={`Remove tag ${tag}`}
                         className="hover:text-white"
                       >
                         <X className="h-3 w-3" />
