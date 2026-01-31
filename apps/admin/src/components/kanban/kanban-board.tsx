@@ -335,9 +335,9 @@ export function KanbanBoard() {
   }
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Header - fixed at top, doesn't scroll with board */}
+      <header className="flex-shrink-0 flex items-center justify-between border-b border-white/10 px-6 py-4">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-white">Board</h1>
           <span className="text-sm text-slate-400">
@@ -380,8 +380,8 @@ export function KanbanBoard() {
         </div>
       </header>
 
-      {/* Board */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
+      {/* Board - scrolls horizontally independently */}
+      <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden p-6">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
