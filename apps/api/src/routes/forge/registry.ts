@@ -150,8 +150,6 @@ router.get(
       const status = c.req.query("status");
       const search = c.req.query("search");
 
-      let query = db.select().from(forgeRegistry).$dynamic();
-
       const conditions = [];
 
       if (type) {
@@ -178,15 +176,11 @@ router.get(
         );
       }
 
-      if (conditions.length > 0) {
-        for (const condition of conditions) {
-          if (condition) {
-            query = query.where(condition);
-          }
-        }
-      }
-
-      const items = await query.orderBy(desc(forgeRegistry.lastUpdated));
+      const items = await db
+        .select()
+        .from(forgeRegistry)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(forgeRegistry.lastUpdated));
 
       return c.json(items);
     },
@@ -424,7 +418,14 @@ router.post(
           const customFullPath = path.isAbsolute(validated.customPath)
             ? validated.customPath
             : path.join(projectRoot, validated.customPath);
-          scanResults = await scanDirectory(customFullPath);
+
+          // Validate that custom path stays within project root (prevent path traversal)
+          const resolvedPath = path.resolve(customFullPath);
+          if (!resolvedPath.startsWith(projectRoot)) {
+            throw new ApiError("Custom path must be within project root", 400);
+          }
+
+          scanResults = await scanDirectory(resolvedPath);
           break;
         }
 
