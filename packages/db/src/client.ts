@@ -88,6 +88,7 @@ export const db = new Proxy({} as ReturnType<typeof drizzle>, {
     if (!dbInstance) {
       dbInstance = createDb();
     }
-    return (dbInstance as unknown as Record<string | symbol, unknown>)[prop];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (dbInstance as any)[prop];
   },
 }) as ReturnType<typeof drizzle>;
