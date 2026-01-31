@@ -162,6 +162,18 @@ export const forgeTrendEnum = forgeSchema.enum("trend", [
 // TABLES
 // =============================================================================
 
+// Foundries (business area groupings)
+export const forgeFoundries = forgeSchema.table("foundries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  description: text("description"),
+  color: text("color").default("#f59e0b"), // amber-500
+  icon: text("icon").default("briefcase"),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Milestones (Feature Sets)
 export const forgeMilestones = forgeSchema.table("milestones", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -512,6 +524,54 @@ export const forgeDeployments = forgeSchema.table("deployments", {
   completedAt: timestamp("completed_at"),
 });
 
+// Token Spikes (per-call rate limiting events)
+export const forgeTokenSpikes = forgeSchema.table(
+  "token_spikes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    // Execution context
+    executionId: uuid("execution_id").references(() => forgeAgentExecutions.id),
+    ticketId: uuid("ticket_id").references(() => forgeTickets.id),
+    ticketIdentifier: text("ticket_identifier"), // e.g., "AXO-42"
+
+    // Timing
+    iteration: integer("iteration").notNull(), // Which iteration in the execution loop
+    protocol: text("protocol").notNull(), // The agent protocol used
+    model: text("model").notNull(), // The model used (e.g., "claude-3-sonnet")
+
+    // Token breakdown
+    totalTokens: integer("total_tokens").notNull(), // Total tokens in the API call
+    thresholdTokens: integer("threshold_tokens").notNull(), // The threshold that was exceeded
+    systemPromptTokens: integer("system_prompt_tokens"), // Tokens from system prompt
+    toolDefinitionsTokens: integer("tool_definitions_tokens"), // Tokens from tool definitions
+    messageHistoryTokens: integer("message_history_tokens"), // Tokens from conversation history
+
+    // Attribution (what caused the spike)
+    largestComponents: jsonb("largest_components").$type<
+      Array<{ type: string; source: string; tokens: number }>
+    >(),
+
+    // Outcome
+    wasBlocked: boolean("was_blocked").default(false), // Whether the call was blocked
+    actualApiTokens: integer("actual_api_tokens"), // Actual tokens used if call proceeded
+
+    // Resolution tracking
+    status: text("status").default("open"), // "open", "resolved", "ignored"
+    resolution: text("resolution"), // How the spike was resolved
+    resolvedAt: timestamp("resolved_at"),
+
+    // Timestamps
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    executionIdx: index("idx_forge_token_spikes_execution").on(table.executionId),
+    ticketIdx: index("idx_forge_token_spikes_ticket").on(table.ticketId),
+    statusIdx: index("idx_forge_token_spikes_status").on(table.status),
+    createdAtIdx: index("idx_forge_token_spikes_created_at").on(table.createdAt),
+  })
+);
+
 // Success Metrics
 export const forgeSuccessMetrics = forgeSchema.table(
   "success_metrics",
@@ -578,6 +638,7 @@ export const forgeTicketsRelations = relations(
     fileLocks: many(forgeFileLocks),
     decisionApplications: many(forgeDecisionApplications),
     deployments: many(forgeDeployments),
+    tokenSpikes: many(forgeTokenSpikes),
   })
 );
 
@@ -606,6 +667,7 @@ export const forgeAgentExecutionsRelations = relations(
       references: [forgeTickets.id],
     }),
     tokenUsage: many(forgeTokenUsage),
+    tokenSpikes: many(forgeTokenSpikes),
   })
 );
 
@@ -675,6 +737,20 @@ export const forgeDeploymentsRelations = relations(
   ({ one }) => ({
     ticket: one(forgeTickets, {
       fields: [forgeDeployments.ticketId],
+      references: [forgeTickets.id],
+    }),
+  })
+);
+
+export const forgeTokenSpikesRelations = relations(
+  forgeTokenSpikes,
+  ({ one }) => ({
+    execution: one(forgeAgentExecutions, {
+      fields: [forgeTokenSpikes.executionId],
+      references: [forgeAgentExecutions.id],
+    }),
+    ticket: one(forgeTickets, {
+      fields: [forgeTokenSpikes.ticketId],
       references: [forgeTickets.id],
     }),
   })
