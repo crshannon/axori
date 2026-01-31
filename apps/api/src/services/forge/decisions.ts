@@ -27,7 +27,11 @@ let anthropicClient: Anthropic | null = null;
 
 function getAnthropicClient(): Anthropic {
   if (!anthropicClient) {
-    anthropicClient = new Anthropic();
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error("ANTHROPIC_API_KEY environment variable is required");
+    }
+    anthropicClient = new Anthropic({ apiKey });
   }
   return anthropicClient;
 }
@@ -133,7 +137,10 @@ Respond with just the JSON array, no explanation.`,
 
     return matched;
   } catch (error) {
-    console.error("[matchDecisions] Error matching decisions:", error);
+    console.error(
+      `[matchDecisions] Error matching decisions for ticket "${context.title}":`,
+      error instanceof Error ? error.message : error
+    );
     // Fallback: return first 5 decisions on error
     return allDecisions.slice(0, 5);
   }
