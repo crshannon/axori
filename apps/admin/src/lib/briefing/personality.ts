@@ -119,14 +119,20 @@ export const easterEggs = {
 };
 
 /**
- * Pick a random item from an array
+ * Picks a random item from an array.
+ * @template T The type of items in the array
+ * @param {Array<T>} arr Array to pick from
+ * @returns {T} A random element from the array
  */
 function pickRandom<T>(arr: Array<T>): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
 /**
- * Replace placeholders in a string
+ * Replaces {placeholders} with values in a template string.
+ * @param {string} template String with {key} placeholders
+ * @param {Record<string, unknown>} values Object with values to interpolate
+ * @returns {string} Interpolated string with placeholders replaced
  */
 function interpolate(
   template: string,
@@ -136,7 +142,9 @@ function interpolate(
 }
 
 /**
- * Check for easter egg conditions
+ * Checks date and conditions for easter egg triggers.
+ * @param {BriefingData} data Briefing data with date and metrics
+ * @returns {string | null} Easter egg message or null if no conditions met
  */
 function checkEasterEgg(data: BriefingData): string | null {
   const now = new Date();
