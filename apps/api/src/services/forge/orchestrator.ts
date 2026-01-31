@@ -32,6 +32,10 @@ interface ExecutionContext {
   ticketDescription: string | null;
   protocol: string;
   prompt: string;
+  // Existing branch/PR info to prevent duplicates
+  existingBranch: string | null;
+  existingPrUrl: string | null;
+  existingPrNumber: number | null;
 }
 
 interface ProtocolConfig {
@@ -267,7 +271,7 @@ function getBasicTools(): Array<ToolDefinition> {
     },
     {
       name: "create_branch",
-      description: "Create a new git branch for this ticket. The branch will be named forge/{ticket-id}/{name}",
+      description: "Create a new git branch for this ticket. The branch will be named forge/{ticket-id}/{name}. IMPORTANT: Do NOT call this if a branch already exists for this ticket - check the ticket context first.",
       input_schema: {
         type: "object",
         properties: {
@@ -420,7 +424,27 @@ export async function startExecution(executionId: string): Promise<void> {
     ticketDescription: ticket.description,
     protocol: execution.protocol,
     prompt: execution.prompt,
+    // Include existing branch/PR info to prevent duplicates
+    existingBranch: ticket.branchName,
+    existingPrUrl: ticket.prUrl,
+    existingPrNumber: ticket.prNumber,
   };
+
+  // If ticket already has a branch, pre-populate the execution state
+  // This prevents the agent from creating a duplicate branch
+  if (ticket.branchName) {
+    console.log(`[${executionId}] Ticket already has branch: ${ticket.branchName}`);
+    executionBranches.set(executionId, ticket.branchName);
+  }
+
+  // If ticket already has PR info, pre-populate that too
+  if (ticket.prUrl && ticket.prNumber) {
+    console.log(`[${executionId}] Ticket already has PR: #${ticket.prNumber}`);
+    executionPRs.set(executionId, {
+      prUrl: ticket.prUrl,
+      prNumber: ticket.prNumber,
+    });
+  }
 
   // Build the user message
   const userMessage = buildUserMessage(context);
@@ -619,14 +643,27 @@ function buildUserMessage(context: ExecutionContext): string {
     : "";
   const additionalContext = truncateToTokens(context.prompt, 4000);
 
+  // Build existing work section if branch/PR already exists
+  let existingWorkSection = "";
+  if (context.existingBranch || context.existingPrUrl) {
+    existingWorkSection = "\n## Existing Work (DO NOT DUPLICATE)\n";
+    if (context.existingBranch) {
+      existingWorkSection += `- **Branch already exists**: \`${context.existingBranch}\` - DO NOT create a new branch, work on this existing branch instead\n`;
+    }
+    if (context.existingPrUrl && context.existingPrNumber) {
+      existingWorkSection += `- **PR already exists**: #${context.existingPrNumber} (${context.existingPrUrl}) - DO NOT create a new PR, update the existing one if needed\n`;
+    }
+    existingWorkSection += "\n";
+  }
+
   const totalEstimate = Math.ceil(
-    (context.ticketTitle.length + description.length + additionalContext.length + 200) / 4
+    (context.ticketTitle.length + description.length + additionalContext.length + existingWorkSection.length + 200) / 4
   );
   console.log(`[buildUserMessage] Estimated prompt tokens: ${totalEstimate}`);
 
   return `# Task: ${context.ticketIdentifier} - ${context.ticketTitle}
 
-${description ? `## Description\n${description}\n\n` : ""}## Additional Context
+${description ? `## Description\n${description}\n\n` : ""}${existingWorkSection}## Additional Context
 ${additionalContext}
 
 Please complete this task. Use the available tools to read files, make changes, and complete the work.
