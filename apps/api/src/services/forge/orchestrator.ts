@@ -11,7 +11,6 @@ import {
   forgeTickets,
   forgeTokenUsage,
   eq,
-  sql,
 } from "@axori/db";
 import {
   getAnthropicClient,
@@ -19,6 +18,7 @@ import {
   type ToolDefinition,
 } from "./anthropic";
 import { executeTool, type ToolContext } from "./tools";
+import { getRateLimiter, estimateProtocolTokens } from "./rate-limiter";
 
 // =============================================================================
 // Types
@@ -371,6 +371,9 @@ export async function startExecution(executionId: string): Promise<void> {
     throw new Error("Anthropic API key not configured");
   }
 
+  // Get rate limiter
+  const rateLimiter = getRateLimiter();
+
   // Get execution and ticket details
   const [result] = await db
     .select({
@@ -400,6 +403,14 @@ export async function startExecution(executionId: string): Promise<void> {
   // Get protocol config
   const config = PROTOCOL_CONFIGS[execution.protocol] || DEFAULT_CONFIG;
 
+  // Check rate limiter and wait for capacity
+  const estimatedTokens = estimateProtocolTokens(execution.protocol);
+  console.log(
+    `[${executionId}] Checking rate limit capacity for ${execution.protocol} (est. ${estimatedTokens} tokens)`
+  );
+  await rateLimiter.waitForCapacity(executionId, estimatedTokens);
+  console.log(`[${executionId}] Rate limit check passed, starting execution`);
+
   // Build context
   const context: ExecutionContext = {
     executionId,
@@ -413,6 +424,23 @@ export async function startExecution(executionId: string): Promise<void> {
 
   // Build the user message
   const userMessage = buildUserMessage(context);
+
+  // Pre-flight token estimate
+  const toolsJsonSize = JSON.stringify(config.tools).length;
+  const systemPromptSize = config.systemPrompt.length;
+  const userMessageSize = userMessage.length;
+  const estimatedInputTokens = Math.ceil((toolsJsonSize + systemPromptSize + userMessageSize) / 4);
+
+  console.log(`[${executionId}] Pre-flight token estimate:`);
+  console.log(`  - Tools: ~${Math.ceil(toolsJsonSize / 4)} tokens`);
+  console.log(`  - System prompt: ~${Math.ceil(systemPromptSize / 4)} tokens`);
+  console.log(`  - User message: ~${Math.ceil(userMessageSize / 4)} tokens`);
+  console.log(`  - Total estimate: ~${estimatedInputTokens} tokens`);
+
+  // Warn if estimate is high (Haiku limit is often 50k TPM)
+  if (estimatedInputTokens > 40000) {
+    console.warn(`[${executionId}] WARNING: High token estimate (${estimatedInputTokens}). May hit rate limits.`);
+  }
 
   try {
     // Execute with tools
@@ -441,7 +469,9 @@ export async function startExecution(executionId: string): Promise<void> {
       }
     );
 
-    // Log token usage
+    // Log token usage and record with rate limiter
+    const totalTokens = result.totalInputTokens + result.totalOutputTokens;
+    rateLimiter.recordUsage(executionId, totalTokens);
     await logTokenUsage(executionId, config.model, result);
 
     // Update execution as completed
@@ -562,13 +592,42 @@ export async function startExecution(executionId: string): Promise<void> {
 }
 
 /**
- * Build the user message for the agent
+ * Truncate text to fit within a token budget
+ * Rough estimate: 4 characters ≈ 1 token
+ */
+function truncateToTokens(text: string, maxTokens: number): string {
+  const maxChars = maxTokens * 4;
+  if (text.length <= maxChars) {
+    return text;
+  }
+  return text.slice(0, maxChars - 50) + `\n\n[... truncated to ${maxTokens} tokens]`;
+}
+
+/**
+ * Build the user message for the agent with token limits
+ *
+ * Token budget breakdown (for ~8k total user message):
+ * - Title/structure: ~100 tokens
+ * - Description: max 3000 tokens
+ * - Additional context: max 4000 tokens
+ * - Instructions: ~100 tokens
  */
 function buildUserMessage(context: ExecutionContext): string {
+  // Truncate description and prompt to prevent token explosion
+  const description = context.ticketDescription
+    ? truncateToTokens(context.ticketDescription, 3000)
+    : "";
+  const additionalContext = truncateToTokens(context.prompt, 4000);
+
+  const totalEstimate = Math.ceil(
+    (context.ticketTitle.length + description.length + additionalContext.length + 200) / 4
+  );
+  console.log(`[buildUserMessage] Estimated prompt tokens: ${totalEstimate}`);
+
   return `# Task: ${context.ticketIdentifier} - ${context.ticketTitle}
 
-${context.ticketDescription ? `## Description\n${context.ticketDescription}\n\n` : ""}## Additional Context
-${context.prompt}
+${description ? `## Description\n${description}\n\n` : ""}## Additional Context
+${additionalContext}
 
 Please complete this task. Use the available tools to read files, make changes, and complete the work.
 When you're done, use the complete_task tool to summarize what you did.`;

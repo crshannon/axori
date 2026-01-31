@@ -6,8 +6,8 @@
 
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Bot, CheckCircle, Clock, Copy, Check, Expand, Loader2, XCircle } from "lucide-react";
-import { useExecution, agentKeys } from "@/hooks/api/use-agents";
+import { ArrowLeft, Bot, Check, CheckCircle, Clock, Copy, Expand, Loader2, XCircle } from "lucide-react";
+import { agentKeys, useExecution } from "@/hooks/api/use-agents";
 
 interface ExecutionMonitorProps {
   executionId: string;
@@ -101,7 +101,7 @@ export function ExecutionMonitor({
     );
   }
 
-  const config = STATUS_CONFIG[execution.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
+  const config = STATUS_CONFIG[execution.status] || STATUS_CONFIG.pending;
   const StatusIcon = config.icon;
 
   // Parse logs into lines
