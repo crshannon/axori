@@ -544,6 +544,23 @@ export async function commitChanges(message: string, targetBranch?: string): Pro
       return "No changes to commit";
     }
 
+    // Run lint:fix and format to auto-fix issues before committing
+    console.log("[commitChanges] Running lint:fix and format...");
+    try {
+      await execAsync("pnpm lint --fix", { cwd: repoRoot, timeout: 120000 });
+    } catch {
+      // Log but don't fail - some lint errors may not be auto-fixable
+      console.log("[commitChanges] lint:fix completed with warnings/errors (continuing)");
+    }
+    try {
+      await execAsync("pnpm format", { cwd: repoRoot, timeout: 60000 });
+    } catch {
+      console.log("[commitChanges] format completed with warnings (continuing)");
+    }
+
+    // Re-stage any files modified by lint:fix or format
+    await execAsync("git add -A", { cwd: repoRoot, timeout: 30000 });
+
     console.log(`[commitChanges] Will use stash workflow: ${!!(targetBranch && targetBranch !== originalBranch)}`);
     // If we have a target branch different from current, use stash to move changes
     if (targetBranch && targetBranch !== originalBranch) {

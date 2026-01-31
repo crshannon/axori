@@ -5,6 +5,7 @@ import { tanstackConfig } from '@tanstack/eslint-config'
 export default [
   {
     ignores: [
+      '.nitro/**',
       '.output/**',
       'dist/**',
       'build/**',
