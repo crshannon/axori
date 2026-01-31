@@ -26,6 +26,11 @@ import {
   validateData,
   ApiError,
 } from "../../utils/errors";
+import {
+  getPRStatus,
+  mergePR,
+  isGithubConfigured,
+} from "../../services/forge/github";
 
 const router = new Hono();
 
@@ -641,6 +646,124 @@ router.post(
       return c.json(created, 201);
     },
     { operation: "createComment" }
+  )
+);
+
+// =============================================================================
+// PR Operations
+// =============================================================================
+
+/**
+ * GET /forge/tickets/:id/pr-status
+ * Get the status of a ticket's pull request
+ */
+router.get(
+  ":id/pr-status",
+  requireAuth(),
+  withErrorHandling(
+    async (c) => {
+      const id = c.req.param("id");
+
+      if (!isGithubConfigured()) {
+        throw new ApiError("GitHub not configured", 503);
+      }
+
+      // Get ticket with PR number
+      const [ticket] = await db
+        .select({
+          id: forgeTickets.id,
+          prNumber: forgeTickets.prNumber,
+          prUrl: forgeTickets.prUrl,
+        })
+        .from(forgeTickets)
+        .where(eq(forgeTickets.id, id))
+        .limit(1);
+
+      if (!ticket) {
+        throw new ApiError("Ticket not found", 404);
+      }
+
+      if (!ticket.prNumber) {
+        throw new ApiError("Ticket has no associated PR", 404);
+      }
+
+      const status = await getPRStatus(ticket.prNumber);
+      return c.json(status);
+    },
+    { operation: "getPRStatus" }
+  )
+);
+
+/**
+ * POST /forge/tickets/:id/merge
+ * Merge a ticket's pull request
+ */
+router.post(
+  ":id/merge",
+  requireAuth(),
+  withErrorHandling(
+    async (c) => {
+      const id = c.req.param("id");
+
+      if (!isGithubConfigured()) {
+        throw new ApiError("GitHub not configured", 503);
+      }
+
+      // Get ticket with PR number
+      const [ticket] = await db
+        .select({
+          id: forgeTickets.id,
+          identifier: forgeTickets.identifier,
+          title: forgeTickets.title,
+          prNumber: forgeTickets.prNumber,
+        })
+        .from(forgeTickets)
+        .where(eq(forgeTickets.id, id))
+        .limit(1);
+
+      if (!ticket) {
+        throw new ApiError("Ticket not found", 404);
+      }
+
+      if (!ticket.prNumber) {
+        throw new ApiError("Ticket has no associated PR", 404);
+      }
+
+      // Check if PR can be merged
+      const status = await getPRStatus(ticket.prNumber);
+      if (!status.canMerge) {
+        throw new ApiError(
+          `PR cannot be merged: ${status.mergeableState}`,
+          400
+        );
+      }
+
+      // Merge the PR
+      const result = await mergePR(ticket.prNumber, {
+        mergeMethod: "squash",
+        commitTitle: `${ticket.identifier}: ${ticket.title}`,
+      });
+
+      if (!result.merged) {
+        throw new ApiError(`Merge failed: ${result.message}`, 500);
+      }
+
+      // Update ticket status to done
+      await db
+        .update(forgeTickets)
+        .set({
+          status: "done",
+          updatedAt: new Date(),
+        })
+        .where(eq(forgeTickets.id, id));
+
+      return c.json({
+        merged: true,
+        sha: result.sha,
+        ticketStatus: "done",
+      });
+    },
+    { operation: "mergePR" }
   )
 );
 

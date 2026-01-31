@@ -224,3 +224,65 @@ export function useAssignAgent() {
     },
   });
 }
+
+// =============================================================================
+// PR Operations
+// =============================================================================
+
+export interface PRStatus {
+  number: number;
+  state: "open" | "closed" | "merged";
+  mergeable: boolean | null;
+  mergeableState: string;
+  checksStatus: "pending" | "success" | "failure" | "unknown";
+  checksDetails: Array<{
+    name: string;
+    status: string;
+    conclusion: string | null;
+  }>;
+  reviewStatus: "approved" | "changes_requested" | "pending" | "none";
+  canMerge: boolean;
+}
+
+/**
+ * Get the status of a ticket's pull request
+ */
+export function usePRStatus(ticketId: string, options?: { enabled?: boolean }) {
+  const { user } = useUser();
+
+  return useQuery({
+    queryKey: [...ticketKeys.detail(ticketId), "pr-status"],
+    queryFn: async () => {
+      return apiFetch<PRStatus>(`/api/forge/tickets/${ticketId}/pr-status`, {
+        clerkId: user?.id,
+      });
+    },
+    enabled: !!ticketId && !!user?.id && options?.enabled !== false,
+    refetchInterval: 30000, // Refresh every 30 seconds
+    staleTime: 15000, // Consider stale after 15 seconds
+  });
+}
+
+/**
+ * Merge a ticket's pull request
+ */
+export function useMergePR() {
+  const queryClient = useQueryClient();
+  const { user } = useUser();
+
+  return useMutation({
+    mutationFn: async (ticketId: string) => {
+      return apiFetch<{ merged: boolean; sha: string; ticketStatus: string }>(
+        `/api/forge/tickets/${ticketId}/merge`,
+        {
+          method: "POST",
+          clerkId: user?.id,
+        }
+      );
+    },
+    onSuccess: (_, ticketId) => {
+      queryClient.invalidateQueries({ queryKey: ticketKeys.detail(ticketId) });
+      queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
+    },
+  });
+}

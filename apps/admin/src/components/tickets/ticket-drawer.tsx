@@ -18,7 +18,9 @@ import {
   Copy,
   ExternalLink,
   GitBranch,
+  GitMerge,
   History,
+  Loader2,
   Sparkles,
   Tag,
   X,
@@ -29,6 +31,8 @@ import type { ForgeTicket, ForgeTicketInsert } from "@axori/db/types";
 import {
   useCreateTicket,
   useDeleteTicket,
+  useMergePR,
+  usePRStatus,
   useUpdateTicket,
 } from "@/hooks/api/use-tickets";
 import { ExecutionMonitor } from "@/components/agents/execution-monitor";
@@ -79,6 +83,178 @@ const STATUSES = [
   { value: "done", label: "Done" },
   { value: "blocked", label: "Blocked" },
 ] as const;
+
+// =============================================================================
+// Git Integration Section
+// =============================================================================
+
+function GitIntegrationSection({ ticket }: { ticket: ForgeTicket }) {
+  const { data: prStatus, isLoading: prStatusLoading } = usePRStatus(ticket.id, {
+    enabled: !!ticket.prNumber,
+  });
+  const mergePR = useMergePR();
+
+  const handleMerge = () => {
+    if (confirm("Are you sure you want to merge this PR?")) {
+      mergePR.mutate(ticket.id);
+    }
+  };
+
+  const getChecksStatusIcon = () => {
+    if (!prStatus) return null;
+    switch (prStatus.checksStatus) {
+      case "success":
+        return <CheckCircle className="w-4 h-4 text-green-400" />;
+      case "failure":
+        return <XCircle className="w-4 h-4 text-red-400" />;
+      case "pending":
+        return <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />;
+      default:
+        return <Clock className="w-4 h-4 text-slate-400" />;
+    }
+  };
+
+  const getChecksStatusText = () => {
+    if (!prStatus) return "Unknown";
+    switch (prStatus.checksStatus) {
+      case "success":
+        return "Checks passing";
+      case "failure":
+        return "Checks failing";
+      case "pending":
+        return "Checks running";
+      default:
+        return "Unknown";
+    }
+  };
+
+  return (
+    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+      <h3 className="text-sm font-semibold text-white uppercase tracking-wide mb-3 flex items-center gap-2">
+        <GitBranch className="w-4 h-4" />
+        Git Integration
+      </h3>
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-slate-400">Branch</span>
+          <code className="px-2 py-0.5 rounded bg-black/30 text-violet-300 font-mono text-xs">
+            {ticket.branchName}
+          </code>
+        </div>
+        {ticket.prUrl && (
+          <>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Pull Request</span>
+              <a
+                href={ticket.prUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors"
+              >
+                #{ticket.prNumber}
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
+            {/* PR Status */}
+            {prStatusLoading ? (
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Status</span>
+                <span className="flex items-center gap-1 text-slate-400">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Loading...
+                </span>
+              </div>
+            ) : prStatus ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">CI Status</span>
+                  <span className="flex items-center gap-1">
+                    {getChecksStatusIcon()}
+                    <span className={clsx(
+                      prStatus.checksStatus === "success" && "text-green-400",
+                      prStatus.checksStatus === "failure" && "text-red-400",
+                      prStatus.checksStatus === "pending" && "text-yellow-400",
+                      prStatus.checksStatus === "unknown" && "text-slate-400"
+                    )}>
+                      {getChecksStatusText()}
+                    </span>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Mergeable</span>
+                  <span className={clsx(
+                    "flex items-center gap-1",
+                    prStatus.mergeable ? "text-green-400" : "text-yellow-400"
+                  )}>
+                    {prStatus.mergeable ? (
+                      <>
+                        <CheckCircle className="w-3 h-3" />
+                        Yes
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="w-3 h-3" />
+                        {prStatus.mergeableState}
+                      </>
+                    )}
+                  </span>
+                </div>
+                {prStatus.state === "merged" ? (
+                  <div className="mt-3 py-2 px-3 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center gap-2 text-violet-300">
+                    <GitMerge className="w-4 h-4" />
+                    PR has been merged
+                  </div>
+                ) : prStatus.state === "closed" ? (
+                  <div className="mt-3 py-2 px-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-2 text-red-300">
+                    <XCircle className="w-4 h-4" />
+                    PR has been closed
+                  </div>
+                ) : prStatus.canMerge ? (
+                  <button
+                    onClick={handleMerge}
+                    disabled={mergePR.isPending}
+                    className="mt-3 w-full py-2 px-4 rounded-lg bg-green-600 hover:bg-green-500 disabled:bg-green-600/50 text-white font-medium flex items-center justify-center gap-2 transition-colors"
+                  >
+                    {mergePR.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Merging...
+                      </>
+                    ) : (
+                      <>
+                        <GitMerge className="w-4 h-4" />
+                        Merge PR
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <div className="mt-3 py-2 px-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-xs">
+                    PR cannot be merged yet. Ensure all checks pass and there are no conflicts.
+                  </div>
+                )}
+              </>
+            ) : null}
+          </>
+        )}
+        {ticket.previewUrl && (
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400">Preview</span>
+            <a
+              href={ticket.previewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors"
+            >
+              View Preview
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // =============================================================================
 // Component
@@ -481,48 +657,7 @@ Please create a branch, implement the changes, and create a PR.`;
 
         {/* Git Info (Edit mode with branch) */}
         {isEditMode && ticket?.branchName && (
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wide mb-3 flex items-center gap-2">
-              <GitBranch className="w-4 h-4" />
-              Git Integration
-            </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">Branch</span>
-                <code className="px-2 py-0.5 rounded bg-black/30 text-violet-300 font-mono text-xs">
-                  {ticket.branchName}
-                </code>
-              </div>
-              {ticket.prUrl && (
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Pull Request</span>
-                  <a
-                    href={ticket.prUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors"
-                  >
-                    #{ticket.prNumber}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              )}
-              {ticket.previewUrl && (
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Preview</span>
-                  <a
-                    href={ticket.previewUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors"
-                  >
-                    View Preview
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              )}
-            </div>
-          </div>
+          <GitIntegrationSection ticket={ticket} />
         )}
 
         {/* Agent Assignment (Edit mode) */}
