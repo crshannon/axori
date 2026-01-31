@@ -94,7 +94,7 @@ const releaseClassificationEnum = z.enum([
 // Create ticket schema
 const createTicketSchema = z.object({
   title: z.string().min(1, "Title is required").max(500),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
   status: ticketStatusEnum.optional().default("backlog"),
   priority: ticketPriorityEnum.optional().default("medium"),
   type: ticketTypeEnum.optional().default("feature"),
@@ -103,8 +103,8 @@ const createTicketSchema = z.object({
   parentId: z.string().uuid().optional(),
   projectId: z.string().uuid().optional(),
   milestoneId: z.string().uuid().optional(),
-  estimate: z.number().int().min(0).max(100).optional(),
-  labels: z.array(z.string()).optional(),
+  estimate: z.number().int().min(0).max(100).nullable().optional(),
+  labels: z.array(z.string()).nullable().optional(),
   isBreakingChange: z.boolean().optional().default(false),
   migrationNotes: z.string().optional(),
 });
