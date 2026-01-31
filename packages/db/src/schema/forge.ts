@@ -207,6 +207,8 @@ export const forgeMilestones = forgeSchema.table("milestones", {
   progressPercent: integer("progress_percent").default(0),
   color: text("color").default("#6366f1"),
   sortOrder: integer("sort_order").default(0),
+  version: text("version"), // semver e.g. "0.1.0"
+  isActive: boolean("is_active").default(false), // Only ONE release is active
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
