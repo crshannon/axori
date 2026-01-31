@@ -502,16 +502,6 @@ export function detectUnusedExports(
   // from the AST to track which specific exports are used. For now, we use
   // a simplified check based on file path matching in dependencies.
 
-  // For now, we track all exports and mark those not imported elsewhere
-  const allExports = new Map<string, { filePath: string; exports: Set<string> }>();
-
-  for (const result of scanResults) {
-    allExports.set(result.filePath, {
-      filePath: result.filePath,
-      exports: new Set(result.exports),
-    });
-  }
-
   // Build import graph by checking if each file is imported by other files
   for (const result of scanResults) {
     // Check if this file's exports are imported by other files
