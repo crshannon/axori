@@ -36,6 +36,7 @@
     "db:studio": "pnpm --filter @axori/db db:studio",
     "db:seed": "pnpm --filter @axori/db db:seed",
     "db:seed:user": "pnpm --filter @axori/db db:seed:user",
+    "db:seed:roadmap": "pnpm --filter @axori/db db:seed:roadmap",
     "db:seed:cleanup": "pnpm --filter @axori/db db:cleanup:user",
     "clean": "turbo run clean"
   },
