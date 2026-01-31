@@ -545,15 +545,18 @@ export async function commitChanges(message: string, targetBranch?: string): Pro
     }
 
     // Run lint:fix and format to auto-fix issues before committing
+    // Note: Use "-- --fix" to pass the flag through turbo to eslint
     console.log("[commitChanges] Running lint:fix and format...");
     try {
-      await execAsync("pnpm lint --fix", { cwd: repoRoot, timeout: 120000 });
+      await execAsync("pnpm lint -- --fix", { cwd: repoRoot, timeout: 120000 });
+      console.log("[commitChanges] lint:fix completed successfully");
     } catch {
       // Log but don't fail - some lint errors may not be auto-fixable
       console.log("[commitChanges] lint:fix completed with warnings/errors (continuing)");
     }
     try {
       await execAsync("pnpm format", { cwd: repoRoot, timeout: 60000 });
+      console.log("[commitChanges] format completed successfully");
     } catch {
       console.log("[commitChanges] format completed with warnings (continuing)");
     }
