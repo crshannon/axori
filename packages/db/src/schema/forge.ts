@@ -174,6 +174,29 @@ export const forgeFoundries = forgeSchema.table("foundries", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Features (long-lived capabilities within a Foundry)
+export const forgeFeatures = forgeSchema.table(
+  "features",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    identifier: text("identifier").notNull().unique(), // "FEAT-001"
+    name: text("name").notNull(),
+    description: text("description"),
+    foundryId: uuid("foundry_id").references(() => forgeFoundries.id),
+    color: text("color"),
+    icon: text("icon"),
+    status: text("status").default("active"), // active, deprecated, planned
+    owner: text("owner"),
+    sortOrder: integer("sort_order").default(0),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    foundryIdx: index("idx_forge_features_foundry").on(table.foundryId),
+    identifierIdx: index("idx_forge_features_identifier").on(table.identifier),
+  })
+);
+
 // Milestones (Feature Sets)
 export const forgeMilestones = forgeSchema.table("milestones", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -196,6 +219,7 @@ export const forgeProjects = forgeSchema.table("projects", {
   color: text("color").default("#6366f1"),
   icon: text("icon").default("folder"),
   milestoneId: uuid("milestone_id").references(() => forgeMilestones.id),
+  featureId: uuid("feature_id").references(() => forgeFeatures.id),
   sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -601,12 +625,34 @@ export const forgeMilestonesRelations = relations(
   })
 );
 
+export const forgeFoundriesRelations = relations(
+  forgeFoundries,
+  ({ many }) => ({
+    features: many(forgeFeatures),
+  })
+);
+
+export const forgeFeaturesRelations = relations(
+  forgeFeatures,
+  ({ one, many }) => ({
+    foundry: one(forgeFoundries, {
+      fields: [forgeFeatures.foundryId],
+      references: [forgeFoundries.id],
+    }),
+    projects: many(forgeProjects),
+  })
+);
+
 export const forgeProjectsRelations = relations(
   forgeProjects,
   ({ one, many }) => ({
     milestone: one(forgeMilestones, {
       fields: [forgeProjects.milestoneId],
       references: [forgeMilestones.id],
+    }),
+    feature: one(forgeFeatures, {
+      fields: [forgeProjects.featureId],
+      references: [forgeFeatures.id],
     }),
     tickets: many(forgeTickets),
   })
