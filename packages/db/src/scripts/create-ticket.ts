@@ -8,7 +8,7 @@
  *   --title, -t       Ticket title (required)
  *   --description, -d Ticket description
  *   --type            Ticket type: feature, bug, chore, spike (default: feature)
- *   --status, -s      Status: backlog, todo, in_progress, in_review, done (default: backlog)
+ *   --status, -s      Status: backlog, design, planned, in_progress, in_review, testing, done, blocked (default: backlog)
  *   --priority, -p    Priority: low, medium, high, critical (default: medium)
  *   --estimate, -e    Story points estimate (number)
  *   --labels, -l      Comma-separated labels
@@ -33,7 +33,7 @@ import { forgeTickets } from "../schema/index.js";
 import { sql } from "drizzle-orm";
 
 const VALID_TYPES = ["feature", "bug", "chore", "spike"] as const;
-const VALID_STATUSES = ["backlog", "todo", "in_progress", "in_review", "done"] as const;
+const VALID_STATUSES = ["backlog", "design", "planned", "in_progress", "in_review", "testing", "done", "blocked"] as const;
 const VALID_PRIORITIES = ["low", "medium", "high", "critical"] as const;
 
 async function generateNextIdentifier(): Promise<string> {
@@ -77,7 +77,7 @@ Options:
   --title, -t       Ticket title (required)
   --description, -d Ticket description
   --type            Ticket type: feature, bug, chore, spike (default: feature)
-  --status, -s      Status: backlog, todo, in_progress, in_review, done (default: backlog)
+  --status, -s      Status: backlog, design, planned, in_progress, in_review, testing, done, blocked (default: backlog)
   --priority, -p    Priority: low, medium, high, critical (default: medium)
   --estimate, -e    Story points estimate (number)
   --labels, -l      Comma-separated labels
@@ -161,6 +161,6 @@ Example:
 }
 
 main().catch((err) => {
-  console.error("Error:", err.message);
+  console.error("Error:", err);
   process.exit(1);
 });
