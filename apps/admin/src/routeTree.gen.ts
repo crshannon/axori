@@ -13,6 +13,7 @@ import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthedDecisionsRouteImport } from './routes/_authed/decisions'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedBoardRouteImport } from './routes/_authed/board'
 
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedDecisionsRoute = AuthedDecisionsRouteImport.update({
+  id: '/decisions',
+  path: '/decisions',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/unauthorized': typeof UnauthorizedRoute
   '/board': typeof AuthedBoardRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/decisions': typeof AuthedDecisionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/unauthorized': typeof UnauthorizedRoute
   '/board': typeof AuthedBoardRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/decisions': typeof AuthedDecisionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +76,25 @@ export interface FileRoutesById {
   '/unauthorized': typeof UnauthorizedRoute
   '/_authed/board': typeof AuthedBoardRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
+  '/_authed/decisions': typeof AuthedDecisionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sign-in' | '/unauthorized' | '/board' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/sign-in'
+    | '/unauthorized'
+    | '/board'
+    | '/dashboard'
+    | '/decisions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sign-in' | '/unauthorized' | '/board' | '/dashboard'
+  to:
+    | '/'
+    | '/sign-in'
+    | '/unauthorized'
+    | '/board'
+    | '/dashboard'
+    | '/decisions'
   id:
     | '__root__'
     | '/'
@@ -82,6 +103,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/_authed/board'
     | '/_authed/dashboard'
+    | '/_authed/decisions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -121,6 +143,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/decisions': {
+      id: '/_authed/decisions'
+      path: '/decisions'
+      fullPath: '/decisions'
+      preLoaderRoute: typeof AuthedDecisionsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/dashboard': {
       id: '/_authed/dashboard'
       path: '/dashboard'
@@ -141,11 +170,13 @@ declare module '@tanstack/react-router' {
 interface AuthedRouteChildren {
   AuthedBoardRoute: typeof AuthedBoardRoute
   AuthedDashboardRoute: typeof AuthedDashboardRoute
+  AuthedDecisionsRoute: typeof AuthedDecisionsRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedBoardRoute: AuthedBoardRoute,
   AuthedDashboardRoute: AuthedDashboardRoute,
+  AuthedDecisionsRoute: AuthedDecisionsRoute,
 }
 
 const AuthedRouteWithChildren =
