@@ -71,7 +71,11 @@ pnpm db:seed            # Seed market data
 **CRITICAL: Always run these checks locally BEFORE committing or pushing code:**
 
 ```bash
-# Run ALL of these in order - all must pass
+# 1. First, verify you're on the correct branch with your changes
+git status              # Check branch name and changed files
+git diff --stat         # Review what's being changed
+
+# 2. Run ALL of these in order - all must pass
 pnpm type-check         # Must pass - no TypeScript errors
 pnpm lint               # Must pass - no ESLint errors (--max-warnings 0)
 pnpm test               # Must pass - all tests green
@@ -82,6 +86,7 @@ pnpm test               # Must pass - all tests green
 - **Before every commit**: Run at minimum `pnpm type-check` and `pnpm lint`
 - **Before every push**: Run all three checks
 - **After fixing lint errors**: Re-run `pnpm lint` to confirm fixes
+- **After pulling/rebasing**: Re-run checks to catch conflicts or issues from merged code
 
 ### Common Lint Issues
 
@@ -101,6 +106,18 @@ These checks run in GitHub Actions CI with `--max-warnings 0`. Failing to run th
 - Creates unnecessary fix-up commits
 
 **Run checks locally first. Always.**
+
+### CI Runs These Exact Commands
+
+The GitHub Actions workflow runs:
+```bash
+pnpm install
+pnpm type-check    # Runs tsc --noEmit across ALL packages
+pnpm lint          # Runs eslint with --max-warnings 0
+pnpm test          # Runs vitest
+```
+
+If any of these fail locally, they WILL fail in CI. The type-check is especially important because it checks **all packages** (db, shared, api, web, admin, etc.) - not just the one you're working in.
 
 ---
 
