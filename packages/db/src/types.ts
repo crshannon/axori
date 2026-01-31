@@ -29,6 +29,8 @@ import {
   accountDeletionRequests,
   dataExportRequests,
   // Forge schema tables
+  forgeFoundries,
+  forgeFeatures,
   forgeMilestones,
   forgeProjects,
   forgeTickets,
@@ -465,6 +467,20 @@ export type DataExportRequestInsert = InferInsertModel<typeof dataExportRequests
 // ============================================================================
 // FORGE SCHEMA TYPES (Internal Dev Workflow Engine)
 // ============================================================================
+
+/**
+ * Forge Foundry type (for read operations)
+ * Represents a business area grouping
+ */
+export type ForgeFoundry = InferSelectModel<typeof forgeFoundries>
+export type ForgeFoundryInsert = InferInsertModel<typeof forgeFoundries>
+
+/**
+ * Forge Feature type (for read operations)
+ * Represents a long-lived capability within a Foundry
+ */
+export type ForgeFeature = InferSelectModel<typeof forgeFeatures>
+export type ForgeFeatureInsert = InferInsertModel<typeof forgeFeatures>
 
 /**
  * Forge Milestone type (for read operations)

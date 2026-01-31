@@ -37,6 +37,10 @@ export type {
   PropertyDocument,
   PropertyDocumentInsert,
   // Forge types
+  ForgeFeature,
+  ForgeFeatureInsert,
+  ForgeFoundry,
+  ForgeFoundryInsert,
   ForgeMilestone,
   ForgeMilestoneInsert,
   ForgeProject,

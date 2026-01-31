@@ -9,6 +9,7 @@ import { z } from "zod";
 import {
   db,
   forgeMilestones,
+  forgeProjects,
   forgeTickets,
   eq,
   desc,
@@ -33,6 +34,8 @@ const createMilestoneSchema = z.object({
   status: milestoneStatusEnum.optional().default("active"),
   color: z.string().optional().default("#6366f1"),
   sortOrder: z.number().int().optional().default(0),
+  version: z.string().optional(),
+  isActive: z.boolean().optional(),
 });
 
 const updateMilestoneSchema = createMilestoneSchema.partial().extend({
@@ -71,6 +74,74 @@ router.get(
       return c.json(milestones);
     },
     { operation: "listForgeMilestones" }
+  )
+);
+
+/**
+ * GET /forge/milestones/active
+ * Get the active release with stats
+ */
+router.get(
+  "/active",
+  requireAuth(),
+  withErrorHandling(
+    async (c) => {
+      // Get the active milestone
+      const [milestone] = await db
+        .select()
+        .from(forgeMilestones)
+        .where(eq(forgeMilestones.isActive, true))
+        .limit(1);
+
+      if (!milestone) {
+        return c.json(null);
+      }
+
+      // Get projects for this milestone
+      const projects = await db
+        .select()
+        .from(forgeProjects)
+        .where(eq(forgeProjects.milestoneId, milestone.id));
+
+      // Get ticket stats for all projects in this milestone
+      const projectIds = projects.map((p) => p.id);
+      let totalTickets = 0;
+      let doneTickets = 0;
+      let blockedTickets = 0;
+
+      if (projectIds.length > 0) {
+        const ticketStats = await db
+          .select({
+            status: forgeTickets.status,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(forgeTickets)
+          .where(eq(forgeTickets.milestoneId, milestone.id))
+          .groupBy(forgeTickets.status);
+
+        totalTickets = ticketStats.reduce((sum, ts) => sum + ts.count, 0);
+        doneTickets =
+          ticketStats.find((ts) => ts.status === "done")?.count || 0;
+        blockedTickets =
+          ticketStats.find((ts) => ts.status === "blocked")?.count || 0;
+      }
+
+      return c.json({
+        ...milestone,
+        projects,
+        stats: {
+          totalEpics: projects.length,
+          totalTickets,
+          doneTickets,
+          blockedTickets,
+          progress:
+            totalTickets > 0
+              ? Math.round((doneTickets / totalTickets) * 100)
+              : 0,
+        },
+      });
+    },
+    { operation: "getActiveRelease" }
   )
 );
 
@@ -184,6 +255,40 @@ router.put(
       return c.json(updated);
     },
     { operation: "updateForgeMilestone" }
+  )
+);
+
+/**
+ * PUT /forge/milestones/:id/activate
+ * Set a milestone as the active release
+ */
+router.put(
+  "/:id/activate",
+  requireAuth(),
+  withErrorHandling(
+    async (c) => {
+      const id = c.req.param("id");
+
+      // Deactivate all other milestones
+      await db
+        .update(forgeMilestones)
+        .set({ isActive: false })
+        .where(eq(forgeMilestones.isActive, true));
+
+      // Activate this one
+      const [updated] = await db
+        .update(forgeMilestones)
+        .set({ isActive: true, updatedAt: new Date() })
+        .where(eq(forgeMilestones.id, id))
+        .returning();
+
+      if (!updated) {
+        throw new ApiError("Milestone not found", 404);
+      }
+
+      return c.json(updated);
+    },
+    { operation: "activateMilestone" }
   )
 );
 
