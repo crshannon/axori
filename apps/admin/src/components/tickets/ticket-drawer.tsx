@@ -12,6 +12,8 @@ import {
   Bot,
   Check,
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
   Clock,
   Copy,
   ExternalLink,
@@ -103,6 +105,7 @@ export function TicketDrawer({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showExpandedLogs, setShowExpandedLogs] = useState(false);
   const [copiedForClaude, setCopiedForClaude] = useState(false);
+  const [expandedExecutions, setExpandedExecutions] = useState<Set<string>>(new Set());
 
   // Mutations
   const createTicket = useCreateTicket();
@@ -573,40 +576,79 @@ Please create a branch, implement the changes, and create a PR.`;
               </span>
             </h3>
             <div className="space-y-3">
-              {[...ticket.executionHistory].reverse().map((entry, index) => (
-                <div
-                  key={entry.executionId || index}
-                  className="p-3 rounded-lg bg-black/20 border border-white/5"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      {entry.status === "completed" ? (
-                        <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                      )}
-                      <span className="text-sm text-white capitalize">
-                        {entry.protocol.replace(/_/g, " ")}
-                      </span>
+              {[...ticket.executionHistory].reverse().map((entry, index) => {
+                const entryId = entry.executionId || `entry-${index}`;
+                const isExpanded = expandedExecutions.has(entryId);
+                const toggleExpand = () => {
+                  setExpandedExecutions(prev => {
+                    const next = new Set(prev);
+                    if (next.has(entryId)) {
+                      next.delete(entryId);
+                    } else {
+                      next.add(entryId);
+                    }
+                    return next;
+                  });
+                };
+
+                return (
+                  <div
+                    key={entryId}
+                    className="p-3 rounded-lg bg-black/20 border border-white/5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        {entry.status === "completed" ? (
+                          <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                        )}
+                        <span className="text-sm text-white capitalize">
+                          {entry.protocol.replace(/_/g, " ")}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        {entry.tokensUsed && (
+                          <span>{entry.tokensUsed.toLocaleString()} tokens</span>
+                        )}
+                        <Clock className="w-3 h-3" />
+                        <span>
+                          {new Date(entry.completedAt).toLocaleDateString()}{" "}
+                          {new Date(entry.completedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      {entry.tokensUsed && (
-                        <span>{entry.tokensUsed.toLocaleString()} tokens</span>
-                      )}
-                      <Clock className="w-3 h-3" />
-                      <span>
-                        {new Date(entry.completedAt).toLocaleDateString()}{" "}
-                        {new Date(entry.completedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </div>
+                    {entry.summary && (
+                      <div className="mt-2">
+                        <p className={clsx(
+                          "text-xs text-slate-400",
+                          !isExpanded && "line-clamp-2"
+                        )}>
+                          {entry.summary}
+                        </p>
+                        {entry.summary.length > 100 && (
+                          <button
+                            onClick={toggleExpand}
+                            className="mt-1 flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                          >
+                            {isExpanded ? (
+                              <>
+                                <ChevronUp className="w-3 h-3" />
+                                Show less
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown className="w-3 h-3" />
+                                Show more
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {entry.summary && (
-                    <p className="mt-2 text-xs text-slate-400 line-clamp-2">
-                      {entry.summary}
-                    </p>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
