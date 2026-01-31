@@ -71,7 +71,11 @@ pnpm db:seed            # Seed market data
 **CRITICAL: Always run these checks locally BEFORE committing or pushing code:**
 
 ```bash
-# Run ALL of these in order - all must pass
+# 1. First, verify you're on the correct branch with your changes
+git status              # Check branch name and changed files
+git diff --stat         # Review what's being changed
+
+# 2. Run ALL of these in order - all must pass
 pnpm type-check         # Must pass - no TypeScript errors
 pnpm lint               # Must pass - no ESLint errors (--max-warnings 0)
 pnpm test               # Must pass - all tests green
@@ -82,6 +86,7 @@ pnpm test               # Must pass - all tests green
 - **Before every commit**: Run at minimum `pnpm type-check` and `pnpm lint`
 - **Before every push**: Run all three checks
 - **After fixing lint errors**: Re-run `pnpm lint` to confirm fixes
+- **After pulling/rebasing**: Re-run checks to catch conflicts or issues from merged code
 
 ### Common Lint Issues
 
@@ -101,6 +106,18 @@ These checks run in GitHub Actions CI with `--max-warnings 0`. Failing to run th
 - Creates unnecessary fix-up commits
 
 **Run checks locally first. Always.**
+
+### CI Runs These Exact Commands
+
+The GitHub Actions workflow runs:
+```bash
+pnpm install
+pnpm type-check    # Runs tsc --noEmit across ALL packages
+pnpm lint          # Runs eslint with --max-warnings 0
+pnpm test          # Runs vitest
+```
+
+If any of these fail locally, they WILL fail in CI. The type-check is especially important because it checks **all packages** (db, shared, api, web, admin, etc.) - not just the one you're working in.
 
 ---
 
@@ -760,6 +777,113 @@ git push origin v1.0.0
 ```
 
 This triggers production deployments across all services.
+
+---
+
+## Forge Agent System
+
+Forge is our AI agent orchestration system that handles autonomous code changes. It integrates with Claude Code for planning and executes tasks independently.
+
+### Token Optimization Strategy
+
+**Problem**: Hitting Anthropic's 30k tokens-per-minute (TPM) tier 1 limit due to:
+- Conversation history accumulating (each API call re-sends all previous messages)
+- Large file reads stored in context
+- Tool results not compressed
+
+**Solution** (implemented in `apps/api/src/services/forge/`):
+
+1. **Context Window Management** (`anthropic.ts`)
+   - Sliding window keeps only recent messages
+   - Middle messages summarized into digest
+   - Default: 15k token limit, keep last 6 messages
+
+2. **Rate Limiting** (`rate-limiter.ts`)
+   - Tracks TPM usage with sliding window
+   - Auto-calculates cooldowns between executions
+   - Queues executions when near limit
+
+3. **Smart File Reading** (`tools.ts`)
+   - Auto-switches to "structure mode" for large files
+   - Extracts key definitions (imports, exports, functions, classes)
+   - Supports focused line-range reading
+
+### Claude Code → Forge Workflow
+
+**The Pattern**: Claude Code handles **deep thinking and planning**, then pushes **well-scoped tickets** to Forge for autonomous execution.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        CLAUDE CODE                              │
+│  - Understands full context and requirements                    │
+│  - Designs architecture and approach                            │
+│  - Decomposes into micro-tasks                                  │
+│  - Creates Forge tickets with clear scope                       │
+└─────────────────┬───────────────────────────────────────────────┘
+                  │ Creates tickets via API
+                  ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                          FORGE                                  │
+│  - Executes focused tasks autonomously                          │
+│  - Uses optimal protocol (Haiku for small, Sonnet for medium)   │
+│  - Rate-limited to stay under TPM thresholds                    │
+│  - Creates PRs with changes                                     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Why This Works**:
+- Claude Code has unlimited context (via summarization)
+- Forge executions stay small and focused (2-10k tokens each)
+- Multiple Forge tasks can run serially without hitting limits
+- Human reviews Claude Code's plan before Forge executes
+
+### Task Decomposition Guidelines
+
+When Claude Code creates tickets for Forge:
+
+| Task Size | Protocol | Est. Tokens | Example |
+|-----------|----------|-------------|---------|
+| Tiny (≤1 pt) | `haiku_quick_edit` | 2-5k | Fix typo, update config |
+| Small (2-3 pt) | `haiku_docs` | 3-8k | Add docstrings, update README |
+| Medium (3-5 pt) | `sonnet_implementation` | 10-25k | New component, API endpoint |
+| Large (5-8 pt) | `sonnet_bug_fix` | 8-20k | Debug complex issue |
+| X-Large (8+ pt) | `opus_planning` | 15-30k | Architecture planning only |
+
+**Best Practice**: Break large features into 3-5 medium tickets rather than 1 large one.
+
+### Creating Forge Tickets from Claude Code
+
+```bash
+# Via API (Claude Code can use curl/fetch)
+POST /forge/tickets
+{
+  "title": "Add dark mode toggle to settings",
+  "description": "Create a toggle component...",
+  "type": "feature",
+  "priority": "medium",
+  "estimation": 3,
+  "labels": ["ui", "settings"]
+}
+
+# Then assign to agent
+POST /forge/executions
+{
+  "ticketId": "<uuid>",
+  "protocol": "sonnet_implementation",
+  "prompt": "Additional context from Claude Code planning..."
+}
+```
+
+### Forge Key Files
+
+| File | Purpose |
+|------|---------|
+| `apps/api/src/services/forge/anthropic.ts` | Claude API client with context management |
+| `apps/api/src/services/forge/orchestrator.ts` | Execution lifecycle management |
+| `apps/api/src/services/forge/rate-limiter.ts` | TPM rate limiting |
+| `apps/api/src/services/forge/tools.ts` | File/git tools with compression |
+| `apps/api/src/routes/forge/tickets.ts` | Ticket CRUD API |
+| `apps/api/src/routes/forge/executions.ts` | Execution management API |
 
 ---
 

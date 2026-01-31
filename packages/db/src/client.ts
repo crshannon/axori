@@ -84,10 +84,11 @@ function createDb() {
 let dbInstance: ReturnType<typeof drizzle> | null = null;
 
 export const db = new Proxy({} as ReturnType<typeof drizzle>, {
-  get(_target, prop) {
+  get(_target, prop: string | symbol) {
     if (!dbInstance) {
       dbInstance = createDb();
     }
-    return (dbInstance as unknown as Record<string, unknown>)[prop];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (dbInstance as any)[prop];
   },
 }) as ReturnType<typeof drizzle>;
