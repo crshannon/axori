@@ -13,6 +13,7 @@ import agentsRouter from "./agents";
 import budgetRouter from "./budget";
 import planningRouter from "./planning";
 import briefingRouter from "./briefing";
+import decisionsRouter from "./decisions";
 
 const router = new Hono();
 
@@ -25,5 +26,6 @@ router.route("/agents", agentsRouter);
 router.route("/budget", budgetRouter);
 router.route("/planning", planningRouter);
 router.route("/briefing", briefingRouter);
+router.route("/decisions", decisionsRouter);
 
 export default router;
