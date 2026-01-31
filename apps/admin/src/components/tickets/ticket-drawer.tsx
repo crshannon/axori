@@ -10,10 +10,10 @@ import { Drawer } from "@axori/ui";
 import {
   AlertTriangle,
   Bot,
+  Check,
   CheckCircle,
   Clock,
   Copy,
-  Check,
   ExternalLink,
   GitBranch,
   History,
