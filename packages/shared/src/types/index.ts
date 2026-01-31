@@ -47,4 +47,5 @@ export type PropertyTransactionUpdateApi = zod.infer<typeof propertyTransactionU
 // (from base/loans.ts via drizzle-zod). The legacy schemas from normalized-property
 // are deprecated and will be removed in Phase 8.
 
-
+// Export Forge Briefing types
+export type { BriefingResponse, BriefingTicket } from "./briefing";
