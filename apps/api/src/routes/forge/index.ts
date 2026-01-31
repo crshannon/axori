@@ -14,6 +14,7 @@ import budgetRouter from "./budget";
 import planningRouter from "./planning";
 import briefingRouter from "./briefing";
 import decisionsRouter from "./decisions";
+import registryRouter from "./registry";
 
 const router = new Hono();
 
@@ -27,5 +28,6 @@ router.route("/budget", budgetRouter);
 router.route("/planning", planningRouter);
 router.route("/briefing", briefingRouter);
 router.route("/decisions", decisionsRouter);
+router.route("/registry", registryRouter);
 
 export default router;
