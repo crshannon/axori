@@ -19,6 +19,10 @@ import {
 } from "./anthropic";
 import { executeTool, type ToolContext } from "./tools";
 import { getRateLimiter, estimateProtocolTokens } from "./rate-limiter";
+import {
+  matchDecisionsForTicket,
+  formatDecisionsForPrompt,
+} from "./decisions";
 
 // =============================================================================
 // Types
@@ -30,6 +34,8 @@ interface ExecutionContext {
   ticketIdentifier: string;
   ticketTitle: string;
   ticketDescription: string | null;
+  ticketType: string | null;
+  ticketLabels: Array<string> | null;
   protocol: string;
   prompt: string;
   // Existing branch/PR info to prevent duplicates
@@ -422,6 +428,8 @@ export async function startExecution(executionId: string): Promise<void> {
     ticketIdentifier: ticket.identifier,
     ticketTitle: ticket.title || "",
     ticketDescription: ticket.description,
+    ticketType: ticket.type,
+    ticketLabels: ticket.labels,
     protocol: execution.protocol,
     prompt: execution.prompt,
     // Include existing branch/PR info to prevent duplicates
@@ -447,7 +455,7 @@ export async function startExecution(executionId: string): Promise<void> {
   }
 
   // Build the user message
-  const userMessage = buildUserMessage(context);
+  const userMessage = await buildUserMessage(context);
 
   // Pre-flight token estimate
   const toolsJsonSize = JSON.stringify(config.tools).length;
@@ -636,7 +644,7 @@ function truncateToTokens(text: string, maxTokens: number): string {
  * - Additional context: max 4000 tokens
  * - Instructions: ~100 tokens
  */
-function buildUserMessage(context: ExecutionContext): string {
+async function buildUserMessage(context: ExecutionContext): Promise<string> {
   // Truncate description and prompt to prevent token explosion
   const description = context.ticketDescription
     ? truncateToTokens(context.ticketDescription, 3000)
@@ -656,14 +664,29 @@ function buildUserMessage(context: ExecutionContext): string {
     existingWorkSection += "\n";
   }
 
+  // Fetch and format relevant decisions
+  let decisionsSection = "";
+  try {
+    const decisions = await matchDecisionsForTicket({
+      title: context.ticketTitle,
+      description: context.ticketDescription,
+      type: context.ticketType,
+      labels: context.ticketLabels,
+    });
+    decisionsSection = formatDecisionsForPrompt(decisions);
+  } catch (error) {
+    console.warn("[buildUserMessage] Failed to fetch decisions:", error);
+    // Continue without decisions
+  }
+
   const totalEstimate = Math.ceil(
-    (context.ticketTitle.length + description.length + additionalContext.length + existingWorkSection.length + 200) / 4
+    (context.ticketTitle.length + description.length + additionalContext.length + existingWorkSection.length + decisionsSection.length + 200) / 4
   );
   console.log(`[buildUserMessage] Estimated prompt tokens: ${totalEstimate}`);
 
   return `# Task: ${context.ticketIdentifier} - ${context.ticketTitle}
 
-${description ? `## Description\n${description}\n\n` : ""}${existingWorkSection}## Additional Context
+${description ? `## Description\n${description}\n\n` : ""}${existingWorkSection}${decisionsSection}## Additional Context
 ${additionalContext}
 
 Please complete this task. Use the available tools to read files, make changes, and complete the work.
