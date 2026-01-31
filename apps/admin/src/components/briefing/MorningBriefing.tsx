@@ -78,7 +78,7 @@ export function MorningBriefing() {
   }
 
   if (error) {
-    return <BriefingError error={error as Error} />;
+    return <BriefingError error={error} />;
   }
 
   if (!briefing) {
