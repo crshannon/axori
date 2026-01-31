@@ -3,7 +3,7 @@ import { UserButton } from "@clerk/clerk-react";
 import {
   BookOpen,
   Bot,
-  Flag,
+  Flame,
   Kanban,
   LayoutDashboard,
   Scale,
@@ -30,7 +30,7 @@ interface NavItem {
 const forgeNavItems: Array<NavItem> = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/board", icon: Kanban, label: "Board", feature: "forge:board" },
-  { to: "/milestones", icon: Flag, label: "Milestones", feature: "forge:tickets" },
+  { to: "/foundry", icon: Flame, label: "Foundry", feature: "forge:tickets" },
   { to: "/registry", icon: BookOpen, label: "Registry", feature: "forge:registry" },
   { to: "/decisions", icon: Scale, label: "Decisions", feature: "forge:tickets" },
   { to: "/budget", icon: Wallet, label: "Budget", feature: "forge:budget" },
@@ -95,6 +95,7 @@ export function SideNav() {
         {visibleForgeItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
           const Icon = item.icon;
+          const isFoundry = item.to === "/foundry";
 
           return (
             <Link
@@ -103,7 +104,9 @@ export function SideNav() {
               className={clsx(
                 "group relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
                 isActive
-                  ? "bg-violet-600/20 text-violet-400"
+                  ? isFoundry
+                    ? "bg-amber-600/20 text-amber-400"
+                    : "bg-violet-600/20 text-violet-400"
                   : "text-slate-400 hover:bg-white/5 hover:text-white"
               )}
             >

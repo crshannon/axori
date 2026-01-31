@@ -11,10 +11,12 @@ import {
   forgeProjects,
   forgeTickets,
   forgeMilestones,
+  forgeFeatures,
   eq,
   desc,
   asc,
   sql,
+  and,
 } from "@axori/db";
 import { requireAuth } from "../../middleware/permissions";
 import { withErrorHandling, validateData, ApiError } from "../../utils/errors";
@@ -30,7 +32,8 @@ const createProjectSchema = z.object({
   description: z.string().optional(),
   color: z.string().optional().default("#6366f1"),
   icon: z.string().optional().default("folder"),
-  milestoneId: z.string().uuid().optional(),
+  milestoneId: z.string().uuid().optional().nullable(),
+  featureId: z.string().uuid().optional().nullable(),
   sortOrder: z.number().int().optional().default(0),
 });
 
@@ -42,7 +45,7 @@ const updateProjectSchema = createProjectSchema.partial();
 
 /**
  * GET /forge/projects
- * List all projects
+ * List all projects (epics)
  */
 router.get(
   "/",
@@ -50,20 +53,32 @@ router.get(
   withErrorHandling(
     async (c) => {
       const milestoneId = c.req.query("milestoneId");
+      const featureId = c.req.query("featureId");
 
       const conditions = [];
       if (milestoneId) {
         conditions.push(eq(forgeProjects.milestoneId, milestoneId));
       }
+      if (featureId) {
+        conditions.push(eq(forgeProjects.featureId, featureId));
+      }
+
+      const whereCondition = conditions.length > 0
+        ? conditions.length === 1
+          ? conditions[0]
+          : and(...conditions)
+        : undefined;
 
       const projects = await db
         .select({
           project: forgeProjects,
           milestone: forgeMilestones,
+          feature: forgeFeatures,
         })
         .from(forgeProjects)
         .leftJoin(forgeMilestones, eq(forgeProjects.milestoneId, forgeMilestones.id))
-        .where(conditions.length > 0 ? conditions[0] : undefined)
+        .leftJoin(forgeFeatures, eq(forgeProjects.featureId, forgeFeatures.id))
+        .where(whereCondition)
         .orderBy(asc(forgeProjects.sortOrder), desc(forgeProjects.createdAt));
 
       // Flatten and add ticket counts
@@ -86,6 +101,7 @@ router.get(
       const result = projects.map((p) => ({
         ...p.project,
         milestone: p.milestone,
+        feature: p.feature,
         ticketCount: countMap.get(p.project.id) || 0,
       }));
 

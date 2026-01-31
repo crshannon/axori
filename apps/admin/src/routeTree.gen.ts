@@ -14,6 +14,7 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedRegistryRouteImport } from './routes/_authed/registry'
+import { Route as AuthedFoundryRouteImport } from './routes/_authed/foundry'
 import { Route as AuthedDecisionsRouteImport } from './routes/_authed/decisions'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedBoardRouteImport } from './routes/_authed/board'
@@ -42,6 +43,11 @@ const AuthedRegistryRoute = AuthedRegistryRouteImport.update({
   path: '/registry',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedFoundryRoute = AuthedFoundryRouteImport.update({
+  id: '/foundry',
+  path: '/foundry',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedDecisionsRoute = AuthedDecisionsRouteImport.update({
   id: '/decisions',
   path: '/decisions',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/board': typeof AuthedBoardRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/decisions': typeof AuthedDecisionsRoute
+  '/foundry': typeof AuthedFoundryRoute
   '/registry': typeof AuthedRegistryRoute
 }
 export interface FileRoutesByTo {
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/board': typeof AuthedBoardRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/decisions': typeof AuthedDecisionsRoute
+  '/foundry': typeof AuthedFoundryRoute
   '/registry': typeof AuthedRegistryRoute
 }
 export interface FileRoutesById {
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/_authed/board': typeof AuthedBoardRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/decisions': typeof AuthedDecisionsRoute
+  '/_authed/foundry': typeof AuthedFoundryRoute
   '/_authed/registry': typeof AuthedRegistryRoute
 }
 export interface FileRouteTypes {
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/board'
     | '/dashboard'
     | '/decisions'
+    | '/foundry'
     | '/registry'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/board'
     | '/dashboard'
     | '/decisions'
+    | '/foundry'
     | '/registry'
   id:
     | '__root__'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/_authed/board'
     | '/_authed/dashboard'
     | '/_authed/decisions'
+    | '/_authed/foundry'
     | '/_authed/registry'
   fileRoutesById: FileRoutesById
 }
@@ -162,6 +174,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedRegistryRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/foundry': {
+      id: '/_authed/foundry'
+      path: '/foundry'
+      fullPath: '/foundry'
+      preLoaderRoute: typeof AuthedFoundryRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/decisions': {
       id: '/_authed/decisions'
       path: '/decisions'
@@ -190,6 +209,7 @@ interface AuthedRouteChildren {
   AuthedBoardRoute: typeof AuthedBoardRoute
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedDecisionsRoute: typeof AuthedDecisionsRoute
+  AuthedFoundryRoute: typeof AuthedFoundryRoute
   AuthedRegistryRoute: typeof AuthedRegistryRoute
 }
 
@@ -197,6 +217,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedBoardRoute: AuthedBoardRoute,
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedDecisionsRoute: AuthedDecisionsRoute,
+  AuthedFoundryRoute: AuthedFoundryRoute,
   AuthedRegistryRoute: AuthedRegistryRoute,
 }
 
